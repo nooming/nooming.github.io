@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta name="description" content="一款免费的在线转盘，让选择变得简单又有趣。无论是随机点名、抽奖活动，还是日常的小决定，都能帮你快速做出公平选择。">
+    <meta name="keywords" content="在线转盘,随机选择,抽奖工具,选择困难症,决策工具">
+    
+    <title>在线转盘 - 免费随机选择工具</title>
+
+    <link rel="apple-touch-icon" sizes="180x180" href="../../favicon_io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../favicon_io/favicon-16x16.png">
+    <link rel="manifest" href="../../favicon_io/site.webmanifest">
+    <link rel="shortcut icon" href="../../favicon_io/favicon.ico">
+
+    <link as="style" href="../assets/css/style.min.css" rel="preload">
+    <link href="../assets/css/style.min.css" rel="stylesheet">
+    <style>
+        /* 精简UI样式 */
+        header {
+            padding: 10px 20px !important;
+            margin-bottom: 20px !important;
+        }
+        .header-center-box {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        .wheel-box {
+            margin: 20px 0 !important;
+        }
+        footer {
+            text-align: center !important;
+            margin-top: 30px !important;
+            padding-top: 15px !important;
+            color: #95a5a6 !important;
+            border-top: 1px solid #ecf0f1 !important;
+            font-size: 0.85rem !important;
+            width: 100% !important;
+        }
+        footer p {
+            text-align: center !important;
+            margin: 0 auto !important;
+        }
+        /* 精简导航 */
+        .nav-links {
+            gap: 15px !important;
+        }
+        .nav-links a {
+            font-size: 0.9rem !important;
+            padding: 5px 10px !important;
+        }
+        /* 隐藏语言选择器 */
+        .language-selector {
+            display: none !important;
+        }
+        /* 图标提示样式 */
+        .wheel-panel-operate-change-box,
+        .wheel-panel-operate-preset-box {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            cursor: pointer !important;
+            padding: 5px !important;
+        }
+        .wheel-panel-operate-change-box:hover,
+        .wheel-panel-operate-preset-box:hover {
+            background-color: rgba(52, 152, 219, 0.1) !important;
+            border-radius: 4px !important;
+        }
+    </style>
+
+    <link as="script" href="../assets/js/script.min.js" rel="preload">
+
+    <link rel="preload" href="../assets/css/spin.min.css" as="style">
+    <link href="../assets/css/spin.min.css" rel="stylesheet">
+
+    <link rel="preload" href="../assets/js/wheel.min.js" as="script">
+    <link rel="preload" href="../assets/js/jscolor.min.js" as="script">
+    <link rel="preload" href="../assets/js/confetti.browser.min.js" as="script">
+
+    <link rel="preload" href="../assets/js/spin.min.js" as="script">
+
+</head>
+<body>
+<header>
+    <div class="header-left-box">
+        <div class="header-left-content-box">
+            <a href="../../index.html" style="text-decoration: none; color: #2c3e50; font-weight: 500; font-size: 0.9rem;">
+                主页
+            </a>
+        </div>
+    </div>
+    <div class="header-center-box">
+        <h1 style="margin: 0; font-size: 1.5rem; font-weight: 600; color: #2c3e50; white-space: nowrap;">在线转盘</h1>
+    </div>
+    <div class="header-right-box">
+        <div class="header-right-content-box">
+            <nav class="nav-links">
+                <a href="coin-flip/index.html">抛硬币</a>
+                <a href="quick-choice/index.html">快速选择</a>
+            </nav>
+        </div>
+    </div>
+</header>
+<main>
+    <section id="spin" aria-label="互动转盘工具" class="wheel-box">
+        <div class="wheel-scope-box">
+            <div class="wheel-scope-left-box">
+                <div class="my-wheel-box" id="myWheelBox">
+                    <div id="my-wheel">
+                        <!-- Spin the Wheel Rendering -->
+                    </div>
+                </div>
+            </div>
+            <div class="wheel-scope-center-box" onclick="theExpandMode()">
+                <!-- Center point, Enlargeable Spin the Wheel -->
+            </div>
+            <div class="wheel-scope-right-box">
+                <div class="wheel-panel-box">
+                    <div class="wheel-panel-operate-box">
+                        <div class="wheel-panel-operate-left-box">
+                            <div class="wheel-panel-operate-entries-box" onclick="switchToEntriesMode()" role="button" tabindex="0" aria-label="切换到选项模式">
+                                选项
+                            </div>
+                            <div class="wheel-panel-operate-results-box" onclick="switchToResultsMode()" role="button" tabindex="0" aria-label="切换到结果模式">
+                                结果
+                            </div>
+                        </div>
+                        <div class="wheel-panel-operate-right-box">
+                            <div class="wheel-panel-operate-change-box" onclick="switchToChangeMode()" aria-label="切换模式" title="切换模式：在简单模式和高级模式之间切换">
+                                <span style="font-size: 1.2rem;">🍃</span>
+                                <span style="font-size: 0.75rem; display: block; margin-top: 2px; color: #7f8c8d;">切换模式</span>
+                            </div>
+                            <div class="wheel-panel-operate-preset-box" aria-label="预设管理" title="预设管理：保存和加载常用选项组合">
+                                <span style="font-size: 1.2rem;">🍂</span>
+                                <span style="font-size: 0.75rem; display: block; margin-top: 2px; color: #7f8c8d;">预设</span>
+                                <div class="wheel-preset-box">
+                                    <div class="wheel-preset-text-box">
+                                        <div class="wheel-preset-text-add-box">
+                                            <div class="wheel-preset-text-add-input-box">
+                                                <input placeholder="输入预设...">
+                                            </div>
+                                            <div class="wheel-preset-text-add-add-box">
+                                                <div class="wheel-preset-text-add-add-inner-box" aria-label="添加预设">
+                                                    +
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="wheel-preset-text-list-box">
+                                            <div class="wheel-preset-text-overflow-box">
+                                                <div class="wheel-preset-text-item-box">
+                                                    <!-- JS-generated elements -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="wheel-panel-entries-box">
+                        <div class="wheel-panel-entries-operate-box">
+                            <div class="wheel-panel-entries-operate-left-box">
+                                <div class="wheel-panel-entries-operate-shuffle-box" onclick="entriesShuffleSwitchClick()" role="button" tabindex="0" aria-label="随机选项">
+                                    随机
+                                </div>
+                                <div class="wheel-panel-entries-operate-sort-box" onclick="entriesSortSwitchClick()" role="button" tabindex="0" aria-label="排序选项">
+                                    排序
+                                </div>
+                                <div class="wheel-panel-entries-operate-advanced-box" onclick="switchToAdvancedMode()" role="button" tabindex="0" aria-label="切换到高级模式">
+                                    高级
+                                </div>
+                            </div>
+                        </div>
+                        <div class="wheel-panel-entries-inputs-box">
+                            <div class="wheel-panel-entries-inputs-text-box">
+                                <textarea id="prize-input" placeholder="输入选项..." wrap="off"></textarea>
+                            </div>
+                        </div>
+                        <div class="wheel-panel-entries-advanced-box">
+                            <div class="wheel-panel-entries-advanced-text-box">
+                                <div class="wheel-panel-entries-advanced-text-add-box">
+                                    <div class="wheel-panel-entries-advanced-text-add-input-box">
+                                        <input placeholder="输入选项...">
+                                    </div>
+                                    <div class="wheel-panel-entries-advanced-text-add-background-color-box">
+                                        <div class="wheel-panel-entries-advanced-text-add-background-color-inner-box" data-jscolor="" data-key="add-background-color">
+                                            <!-- Custom background color -->
+                                        </div>
+                                    </div>
+                                    <div class="wheel-panel-entries-advanced-text-add-color-box">
+                                        <div class="wheel-panel-entries-advanced-text-add-color-inner-box" data-jscolor="" data-key="add-color-color">
+                                            <!-- Custom font color -->
+                                        </div>
+                                    </div>
+                                    <div class="wheel-panel-entries-advanced-text-add-add-box">
+                                        <div class="wheel-panel-entries-advanced-text-add-add-inner-box" aria-label="添加选项">
+                                            +
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="wheel-panel-entries-advanced-text-list-box">
+                                    <div class="wheel-panel-entries-advanced-text-overflow-box" id="item-container">
+                                        <!-- JS-generated elements -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="wheel-panel-results-box">
+                        <div class="wheel-panel-results-operate-box">
+                            <div class="wheel-panel-results-operate-left-box">
+                                <div class="wheel-panel-results-operate-shuffle-box" onclick="resultsShuffleSwitchClick()" role="button" tabindex="0" aria-label="随机结果">
+                                    随机
+                                </div>
+                                <div class="wheel-panel-results-operate-clear-box" onclick="resultsClearSwitchClick()" role="button" tabindex="0" aria-label="清除结果">
+                                    清除
+                                </div>
+                            </div>
+                        </div>
+                        <div class="wheel-panel-results-inputs-box">
+                            <div class="wheel-panel-results-inputs-text-box">
+                                <textarea id="prize-result" readonly wrap="off"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<footer>
+    <p>© 2025 个人学习网站 | 仅用于学习交流，请勿用于商业用途</p>
+</footer>
+
+<div class="lucky-modal hidden" id="luckySuccessModal">
+    <div class="lucky-modal-content">
+        <h2>🎉🎉🎉</h2>
+        <p id="luckyPrizeText">你获得了奖品</p>
+        <button onclick="closeLuckyModal()" aria-label="关闭结果显示">关闭</button>
+    </div>
+</div>
+
+<script defer src="../assets/js/script.min.js"></script>
+
+<script defer src="../assets/js/wheel.min.js"></script>
+<script defer src="../assets/js/jscolor.min.js"></script>
+<script defer src="../assets/js/confetti.browser.min.js"></script>
+
+<script defer src="../assets/js/spin.min.js"></script>
+</body>
+</html>

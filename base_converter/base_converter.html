@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="在线进制转换器 - 支持二进制、八进制、十进制、十六进制互转，附带进制计算说明与示例，适合编程学习">
+    <meta name="keywords" content="进制转换,二进制,八进制,十进制,十六进制,编程工具,在线工具">
+    
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../favicon_io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../favicon_io/favicon-16x16.png">
+    <link rel="manifest" href="../favicon_io/site.webmanifest">
+    <link rel="shortcut icon" href="../favicon_io/favicon.ico">
+    
+    <!-- 公共样式 -->
+    <link rel="stylesheet" href="../common/css/common.css">
+    <!-- 本地样式文件 -->
+    <link rel="stylesheet" href="css/converter.css">
+</head>
+<body>
+    <!-- 返回主页按钮 -->
+    <a href="../index.html" class="back-btn">← 返回主页</a>
+    <h1>进制转换器小工具</h1>
+
+    <div class="converter">
+        <!-- 输入区域 -->
+        <div class="input-group">
+            <label>请选择进制并输入数字</label>
+            <div class="input-row">
+                <select id="inputBase">
+                    <option value="2">二进制</option>
+                    <option value="8">八进制</option>
+                    <option value="10" selected>十进制</option>
+                    <option value="16">十六进制</option>
+                </select>
+                <input type="text" id="inputNumber" placeholder="例如：123 / 1111011">
+            </div>
+            <p id="errorTip" class="error-tip">输入格式错误，请检查！</p>
+        </div>
+
+        <!-- 功能按钮 -->
+        <div class="btn-group">
+            <button id="convertBtn" class="convert-btn">转换</button>
+            <button id="clearBtn" class="clear-btn">清空</button>
+        </div>
+
+        <!-- 结果展示区域 -->
+        <div class="result-group">
+            <div class="result-item">
+                <span>二进制：</span>
+                <div class="result-content">
+                    <span id="binaryResult">——</span>
+                    <button class="copy-btn" data-target="binaryResult">复制</button>
+                </div>
+            </div>
+            <div class="result-item">
+                <span>八进制：</span>
+                <div class="result-content">
+                    <span id="octalResult">——</span>
+                    <button class="copy-btn" data-target="octalResult">复制</button>
+                </div>
+            </div>
+            <div class="result-item">
+                <span>十进制：</span>
+                <div class="result-content">
+                    <span id="decimalResult">——</span>
+                    <button class="copy-btn" data-target="decimalResult">复制</button>
+                </div>
+            </div>
+            <div class="result-item">
+                <span>十六进制：</span>
+                <div class="result-content">
+                    <span id="hexResult">——</span>
+                    <button class="copy-btn" data-target="hexResult">复制</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 公共工具函数 -->
+    <script src="../common/js/utils.js"></script>
+    <!-- 本地JS文件 -->
+    <script src="js/converter.js"></script>
+</body>
+</html>

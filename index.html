@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="个人学习网站 - 提供实用工具集合、技术心得分享，包括进制转换器、音频格式转换器、选择困难症转盘等在线工具">
+    <meta name="keywords" content="在线工具,进制转换,音频转换,选择转盘,学习工具,实用工具">
+    <meta name="author" content="nooming">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="我的个人主页 - 学习与工具集合">
+    <meta property="og:description" content="个人学习网站 - 提供实用工具集合、技术心得分享">
+    
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon_io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon_io/favicon-16x16.png">
+    <link rel="manifest" href="favicon_io/site.webmanifest">
+    <link rel="shortcut icon" href="favicon_io/favicon.ico">
+    
+    <!-- 公共样式 -->
+    <link rel="stylesheet" href="common/css/common.css">
+    
+    <style>
+        /* 主页特定样式 */
+        body {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        /* 头部样式 */
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #3498db;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 2.2rem;
+            font-weight: 600;
+        }
+        .intro {
+            font-size: 1.1rem;
+            color: #7f8c8d;
+            margin: 8px 0;
+        }
+        .github-link {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .github-link:hover {
+            color: #2980b9;
+            text-decoration: underline;
+        }
+        /* 通用区块样式 */
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .section-title {
+            color: #2c3e50;
+            margin-bottom: 25px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #ecf0f1;
+            font-size: 1.6rem;
+            font-weight: 600;
+        }
+        /* 心得与功能卡片布局 */
+        .tips-cards, .features {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+        @media (min-width: 768px) {
+            .features {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        /* 卡片样式 */
+        .tips-card, .feature-card {
+            border: 1px solid #ecf0f1;
+            border-radius: 10px;
+            padding: 28px;
+            transition: all 0.3s ease;
+        }
+        .tips-card:hover, .feature-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        }
+        /* 卡片标题与标签 */
+        .tips-title, .feature-title {
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        .tips-title {
+            color: #e74c3c;
+        }
+        .feature-title {
+            color: #3498db;
+        }
+        .tips-tag, .feature-tag {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+        .tips-tag {
+            background-color: #fef0f0;
+            color: #e74c3c;
+        }
+        .feature-tag {
+            background-color: #e8f4fd;
+            color: #3498db;
+        }
+        /* 按钮样式 */
+        .tips-btn, .tool-btn {
+            display: inline-block;
+            padding: 11px 22px;
+            border-radius: 8px;
+            font-size: 1rem;
+            text-decoration: none !important;
+            margin-top: 18px;
+            color: white !important;
+            font-weight: 500;
+        }
+        .tips-btn {
+            background-color: #e74c3c;
+        }
+        .tips-btn:hover {
+            background-color: #c0392b;
+        }
+        .tool-btn {
+            background-color: #3498db;
+        }
+        .tool-btn:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>欢迎来到我的个人主页</h1>
+        <p class="intro">
+            GitHub Pages搭建 | 我的GitHub：<a href="https://github.com/nooming" target="_blank" class="github-link">点击访问</a>
+        </p>
+        <p class="intro">个人学习记录 · 实用工具集合 · 技术心得分享</p>
+    </header>
+
+    <!-- 爬取心得区块：链接到望文生义的HTML文件 -->
+    <section class="section">
+        <h2 class="section-title">📝 爬取资源心得</h2>
+        <div class="tips-cards">
+            <div class="tips-card">
+                <span class="tips-tag">浏览器工具 · 实战教程</span>
+                <h3 class="tips-title">浏览器开发者工具实战</h3>
+                <p>详细讲解如何使用浏览器自带的开发者工具（Network面板、Console等）分析并获取网页资源，包含8个步骤的实战操作指南和技术限制说明。</p>
+                <a href="crawler_experience/crawler_experience.html" class="tips-btn">查看教程详情</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 选择困难工具区块 -->
+    <section class="section">
+        <h2 class="section-title">选择困难？看这里</h2>
+        <div class="features">
+            <!-- 选择困难症转盘 -->
+            <div class="feature-card">
+                <span class="feature-tag">趣味工具 · 随机选择</span>
+                <h3 class="feature-title">选择困难症转盘</h3>
+                <p>自定义选项、设置概率权重，随机抽取结果，支持历史记录保存与导出，解决选择困难症。</p>
+                <a href="decision_wheel/zh/index.html" class="tool-btn">开始选择</a>
+            </div>
+
+            <!-- 抛硬币 -->
+            <div class="feature-card">
+                <span class="feature-tag">趣味工具 · 随机选择</span>
+                <h3 class="feature-title">抛硬币</h3>
+                <p>一键在线抛硬币，随机生成正反面结果，帮助你快速做决定、抽签、玩游戏或处理生活中的小选择问题。</p>
+                <a href="decision_wheel/zh/coin-flip/index.html" class="tool-btn">开始抛硬币</a>
+            </div>
+
+            <!-- 快速选择 -->
+            <div class="feature-card">
+                <span class="feature-tag">快速决策 · 即时结果</span>
+                <h3 class="feature-title">快速选择</h3>
+                <p>输入选项，立即获得随机选择结果，无需复杂设置，适合快速决策场景。</p>
+                <a href="decision_wheel/zh/quick-choice/index.html" class="tool-btn">快速选择</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 实用工具区块：链接到各望文生义的HTML文件 -->
+    <section class="section">
+        <h2 class="section-title">🔧 实用工具</h2>
+        <div class="features">
+            <!-- 音频格式转换器 -->
+            <div class="feature-card">
+                <span class="feature-tag">音频处理 · 格式转换</span>
+                <h3 class="feature-title">音频格式转换器</h3>
+                <p>支持各种音频格式转换为 MP3 或 WAV，MP3 适合压缩体积，WAV 保持无损音质，操作简单高效。</p>
+                <a href="audio_converter/audio_converter.html" class="tool-btn">使用转换器</a>
+            </div>
+
+            <!-- 进制转换器 -->
+            <div class="feature-card">
+                <span class="feature-tag">编程辅助 · 进制计算</span>
+                <h3 class="feature-title">进制转换器</h3>
+                <p>支持二进制、八进制、十进制、十六进制互转，附带进制计算说明与示例，适合编程学习。</p>
+                <a href="base_converter/base_converter.html" class="tool-btn">进入工具</a>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>© 2025 个人学习网站 | 仅用于学习交流，请勿用于商业用途</p>
+    </footer>
+
+    <!-- 公共工具函数 -->
+    <script src="common/js/utils.js"></script>
+</body>
+</html>
