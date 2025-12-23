@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="在线二维码生成器 - 快速生成二维码，支持文本、网址、联系方式等内容，可自定义尺寸和颜色，方便分享和打印">
+    <meta name="keywords" content="二维码,QR码,二维码生成,在线工具,QR Code Generator">
+    
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../favicon-io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../favicon-io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../favicon-io/favicon-16x16.png">
+    <link rel="manifest" href="../favicon-io/site.webmanifest">
+    <link rel="shortcut icon" href="../favicon-io/favicon.ico">
+    
+    <!-- 公共样式 -->
+    <link rel="stylesheet" href="../common/css/common.css">
+    <!-- 本地样式文件 -->
+    <link rel="stylesheet" href="css/qr-code.css">
+</head>
+<body>
+    <!-- 返回主页按钮 -->
+    <a href="../index.html" class="back-btn">← 返回主页</a>
+    <h1>二维码生成器</h1>
+
+    <div class="generator">
+        <!-- 生成区域 -->
+        <section class="gen-section">
+            <!-- 输入区域 -->
+            <div class="input-group">
+                <label>输入要生成二维码的内容</label>
+                <textarea id="qrInput" placeholder="请输入文本、网址、联系方式等内容，例如：https://github.com/nooming"></textarea>
+                <p id="errorTip" class="error-tip">请输入内容！</p>
+            </div>
+
+            <!-- 设置区域 -->
+            <div class="settings-group">
+                <h3>自定义设置</h3>
+                <div class="settings-row">
+                    <div class="setting-item">
+                        <label for="qrSize">尺寸：</label>
+                        <select id="qrSize">
+                            <option value="200">200x200</option>
+                            <option value="300" selected>300x300</option>
+                            <option value="400">400x400</option>
+                            <option value="500">500x500</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label for="qrColor">前景色：</label>
+                        <input type="color" id="qrColor" value="#000000">
+                    </div>
+                    <div class="setting-item">
+                        <label for="qrBgColor">背景色：</label>
+                        <input type="color" id="qrBgColor" value="#FFFFFF">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 功能按钮 -->
+            <div class="btn-group">
+                <button id="generateBtn" class="generate-btn">生成二维码</button>
+                <button id="clearBtn" class="clear-btn">清空</button>
+            </div>
+
+            <!-- 二维码展示区域 -->
+            <div class="result-group">
+                <div class="qr-display">
+                    <div id="qrCode"></div>
+                    <p class="qr-placeholder">二维码将显示在这里</p>
+                </div>
+                <div class="download-group">
+                    <button id="downloadBtn" class="download-btn" disabled>下载二维码</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 识别区域 -->
+        <section class="decode-section">
+            <h2 class="decode-title">识别二维码内容</h2>
+            <p class="decode-desc">上传一张包含二维码的图片，自动识别其中的文本或链接。</p>
+
+            <div class="decode-upload-row">
+                <label for="decodeFile" class="decode-label">选择二维码图片：</label>
+                <input type="file" id="decodeFile" accept="image/*">
+                <button id="decodeBtn" class="decode-btn">开始识别</button>
+                <button id="decodeClearBtn" class="decode-clear-btn">清空</button>
+            </div>
+            <p id="decodeErrorTip" class="error-tip">请选择要识别的二维码图片！</p>
+
+            <div class="decode-preview-group">
+                <div class="decode-preview-box">
+                    <img id="decodePreview" alt="待识别的二维码预览" class="decode-preview-img">
+                    <p class="decode-preview-placeholder">预览将显示在这里</p>
+                </div>
+                <div class="decode-result-box">
+                    <div class="decode-result-header-row">
+                        <div class="decode-result-header">识别结果：</div>
+                        <button id="decodeCopyBtn" class="decode-copy-btn" disabled>复制结果</button>
+                    </div>
+                    <pre id="decodeResult" class="decode-result-content">——</pre>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- 公共工具函数 -->
+    <script src="../common/js/utils.js"></script>
+    <!-- 本地JS文件（加版本号，避免浏览器缓存旧代码） -->
+    <script src="js/qr-code.js?v=2"></script>
+</body>
+</html>
+

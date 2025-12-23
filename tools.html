@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="实用工具合集 - 包含音频格式转换、进制转换、Base64 编码解码、二维码生成与识别等常用小工具。">
+    <meta name="keywords" content="音频转换,进制转换,Base64,二维码生成,二维码识别,在线工具">
+    
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon-io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-io/favicon-16x16.png">
+    <link rel="manifest" href="favicon-io/site.webmanifest">
+    <link rel="shortcut icon" href="favicon-io/favicon.ico">
+
+    <!-- 公共样式 -->
+    <link rel="stylesheet" href="common/css/common.css">
+
+    <style>
+        body {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .section-title {
+            color: #2c3e50;
+            margin-bottom: 25px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #ecf0f1;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+        @media (min-width: 768px) {
+            .features {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        .feature-card {
+            border: 1px solid #ecf0f1;
+            border-radius: 10px;
+            padding: 28px;
+            transition: all 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        }
+        .feature-title {
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #3498db;
+        }
+        .feature-card p {
+            font-size: 0.95rem;
+            color: #7f8c8d;
+            line-height: 1.6;
+        }
+        .tool-btn {
+            display: inline-block;
+            padding: 11px 22px;
+            border-radius: 8px;
+            font-size: 1rem;
+            text-decoration: none !important;
+            margin-top: 18px;
+            color: white !important;
+            font-weight: 500;
+            background-color: #3498db;
+        }
+        .tool-btn:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-btn">← 返回主页</a>
+    <h1>实用工具合集</h1>
+
+    <section class="section">
+        <div class="features">
+            <div class="feature-card">
+                <h3 class="feature-title">音频格式转换器</h3>
+                <p>支持多种音频格式转换为 MP3 或 WAV，MP3 适合压缩体积，WAV 保持无损音质，适合批量转换与格式统一。</p>
+                <a href="audio-converter/audio-converter.html" class="tool-btn">使用音频转换器</a>
+            </div>
+
+            <div class="feature-card">
+                <h3 class="feature-title">进制转换器</h3>
+                <p>支持二进制、八进制、十进制、十六进制互转，附带格式校验，适合学习和日常编程时的进制换算。</p>
+                <a href="base-converter/base-converter.html" class="tool-btn">进入进制转换</a>
+            </div>
+
+            <div class="feature-card">
+                <h3 class="feature-title">Base64 编码解码</h3>
+                <p>支持 Base64 编码和解码，快速在文本与 Base64 字符串之间转换，便于数据传输与调试。</p>
+                <a href="base64-converter/base64-converter.html" class="tool-btn">进入 Base64 工具</a>
+            </div>
+
+            <div class="feature-card">
+                <h3 class="feature-title">二维码生成与识别</h3>
+                <p>支持生成和识别二维码，自定义尺寸与颜色生成二维码，也可上传图片识别二维码内容，并一键复制识别结果。</p>
+                <a href="qr-code-generator/qr-code-generator.html" class="tool-btn">进入二维码工具</a>
+            </div>
+        </div>
+    </section>
+
+    <script src="common/js/utils.js"></script>
+</body>
+</html>
+
+
