@@ -70,6 +70,66 @@
             background-color: rgba(52, 152, 219, 0.1) !important;
             border-radius: 4px !important;
         }
+        /* 移动端适配 */
+        @media (max-width: 767.98px) {
+            header {
+                padding: 10px 12px !important;
+                height: auto !important;
+                min-height: 64px !important;
+                flex-wrap: wrap !important;
+            }
+            .header-left-box {
+                flex: 0 0 auto !important;
+                min-width: auto !important;
+                width: auto !important;
+            }
+            .header-left-content-box {
+                width: auto !important;
+                margin-right: 8px !important;
+            }
+            .header-center-box {
+                flex: 1 1 auto !important;
+                min-width: 0 !important;
+                margin: 0 8px !important;
+                width: auto !important;
+            }
+            .header-center-box h1 {
+                font-size: 1.2rem !important;
+            }
+            .header-right-box {
+                flex: 0 0 auto !important;
+                min-width: 0 !important;
+                width: auto !important;
+                margin-left: 0 !important;
+            }
+            .header-right-content-box {
+                width: auto !important;
+                margin-left: 0 !important;
+            }
+            .nav-links {
+                display: flex !important;
+                gap: 8px !important;
+                flex-wrap: wrap !important;
+            }
+            .nav-links a {
+                display: flex !important;
+                font-size: 0.8rem !important;
+                padding: 4px 8px !important;
+                white-space: nowrap !important;
+            }
+        }
+        @media (max-width: 480px) {
+            .header-center-box h1 {
+                font-size: 1rem !important;
+            }
+            .nav-links {
+                gap: 6px !important;
+            }
+            .nav-links a {
+                font-size: 0.75rem !important;
+                padding: 3px 6px !important;
+            }
+        }
     </style>
 
     <link as="script" href="../assets/js/script.min.js" rel="preload">
