@@ -22,10 +22,50 @@
             padding: 10px 20px !important;
             margin-bottom: 20px !important;
         }
+        /* 移除椭圆/圆形背景，使用现代扁平设计 */
+        .header-left-box {
+            background-color: transparent !important;
+            border-radius: 0 !important;
+            height: auto !important;
+        }
         .header-center-box {
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
+            background: transparent !important;
+            border-radius: 0 !important;
+            width: auto !important;
+            height: auto !important;
+            margin: 0 15px !important;
+        }
+        .header-right-box {
+            background-color: transparent !important;
+            border-radius: 0 !important;
+            height: auto !important;
+        }
+        .nav-links a {
+            border-radius: 0 !important;
+            background-color: transparent !important;
+            position: relative !important;
+            border-bottom: 2px solid transparent !important;
+            transition: all 0.3s ease !important;
+        }
+        .nav-links a:hover {
+            background-color: transparent !important;
+            border-bottom-color: #3498db !important;
+            color: #3498db !important;
+        }
+        .header-left-content-box a {
+            padding: 8px 16px !important;
+            border-radius: 0 !important;
+            position: relative !important;
+            border-bottom: 2px solid transparent !important;
+            transition: all 0.3s ease !important;
+            display: inline-block !important;
+        }
+        .header-left-content-box a:hover {
+            border-bottom-color: #3498db !important;
+            color: #3498db !important;
         }
         .wheel-box {
             margin: 20px 0 !important;
@@ -114,8 +154,11 @@
             .nav-links a {
                 display: flex !important;
                 font-size: 0.8rem !important;
-                padding: 4px 8px !important;
+                padding: 6px 12px !important;
                 white-space: nowrap !important;
+            }
+            .header-left-content-box a {
+                padding: 6px 12px !important;
             }
         }
         @media (max-width: 480px) {
@@ -127,7 +170,10 @@
             }
             .nav-links a {
                 font-size: 0.75rem !important;
-                padding: 3px 6px !important;
+                padding: 5px 10px !important;
+            }
+            .header-left-content-box a {
+                padding: 5px 10px !important;
             }
         }
     </style>

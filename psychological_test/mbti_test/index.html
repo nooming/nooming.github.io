@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="免费在线MBTI性格测试 - 了解你的性格类型，发现真实的自己">
+    <meta name="keywords" content="MBTI测试,性格测试,心理测试,人格测试">
+    <title>MBTI性格测试 - 免费在线测试</title>
+    
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../../favicon_io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../favicon_io/favicon-16x16.png">
+    <link rel="manifest" href="../../favicon_io/site.webmanifest">
+    <link rel="shortcut icon" href="../../favicon_io/favicon.ico">
+    
+    <!-- 公共样式 -->
+    <link rel="stylesheet" href="../../common/css/common.css">
+    
+    <style>
+        body {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .test-container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2rem;
+            text-align: center;
+        }
+        
+        .test-intro {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 1rem;
+        }
+        
+        .question-container {
+            display: none;
+        }
+        
+        .question-container.active {
+            display: block;
+        }
+        
+        .question {
+            font-size: 1.2rem;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-weight: 500;
+            line-height: 1.6;
+        }
+        
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .option {
+            padding: 18px 24px;
+            border: 2px solid #ecf0f1;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            font-size: 1rem;
+            color: #2c3e50;
+        }
+        
+        .option:hover {
+            border-color: #3498db;
+            background: #e8f4fd;
+            transform: translateX(5px);
+        }
+        
+        .option.selected {
+            border-color: #3498db;
+            background: #3498db;
+            color: white;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #ecf0f1;
+            border-radius: 4px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2980b9);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .progress-text {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .btn-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .result-container {
+            display: none;
+            text-align: center;
+        }
+        
+        .result-container.show {
+            display: block;
+        }
+        
+        .result-type {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #3498db;
+            margin: 20px 0;
+        }
+        
+        .result-title {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        .result-description {
+            color: #7f8c8d;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            text-align: left;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .restart-btn {
+            margin-top: 30px;
+            padding: 12px 28px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .restart-btn:hover {
+            background: #229954;
+        }
+        
+        @media (max-width: 768px) {
+            .test-container {
+                padding: 25px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .question {
+                font-size: 1.1rem;
+            }
+            
+            .result-type {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="../../index.html" class="back-btn">← 返回主页</a>
+    
+    <div class="test-container">
+        <h1>MBTI性格测试</h1>
+        <p class="test-intro">通过回答以下问题，了解你的MBTI性格类型</p>
+        
+        <div class="progress-text">
+            <span id="progress-text">问题 1 / 28</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        
+        <div id="questions-container">
+            <!-- 问题将通过JavaScript动态生成 -->
+        </div>
+        
+        <div class="btn-container">
+            <button class="btn btn-secondary" id="prev-btn" onclick="previousQuestion()" disabled>上一题</button>
+            <button class="btn btn-primary" id="next-btn" onclick="nextQuestion()">下一题</button>
+        </div>
+        
+        <div class="result-container" id="result-container">
+            <h2 class="result-title">你的MBTI类型是</h2>
+            <div class="result-type" id="result-type"></div>
+            <div class="result-description" id="result-description"></div>
+            <button class="restart-btn" onclick="restartTest()">重新测试</button>
+        </div>
+    </div>
+    
+    <footer>
+        <p>© 2025 个人学习网站 | 仅用于学习交流，请勿用于商业用途</p>
+    </footer>
+    
+    <script>
+        // MBTI测试题目
+        const questions = [
+            { q: "你更倾向于", a: "外向(E)", b: "内向(I)", dim: "EI" },
+            { q: "在聚会中，你通常", a: "主动与很多人交流", b: "与少数人深入交谈", dim: "EI" },
+            { q: "你更喜欢", a: "与他人一起工作", b: "独自工作", dim: "EI" },
+            { q: "你更倾向于", a: "先行动后思考", b: "先思考后行动", dim: "EI" },
+            { q: "你更倾向于", a: "通过观察和体验学习", b: "通过阅读和思考学习", dim: "SN" },
+            { q: "你更关注", a: "事实和细节", b: "可能性和整体", dim: "SN" },
+            { q: "你更倾向于", a: "实际和具体", b: "抽象和理论", dim: "SN" },
+            { q: "你更喜欢", a: "按部就班", b: "灵活应变", dim: "SN" },
+            { q: "做决定时，你更注重", a: "逻辑和客观分析", b: "价值观和他人感受", dim: "TF" },
+            { q: "你更倾向于", a: "公正和公平", b: "和谐和同情", dim: "TF" },
+            { q: "你更可能", a: "指出错误", b: "避免冲突", dim: "TF" },
+            { q: "你更重视", a: "真理和原则", b: "关系和情感", dim: "TF" },
+            { q: "你更倾向于", a: "有计划和组织", b: "灵活和适应", dim: "JP" },
+            { q: "你更喜欢", a: "提前完成工作", b: "在截止日期前完成", dim: "JP" },
+            { q: "你更倾向于", a: "做决定并坚持", b: "保持选择开放", dim: "JP" },
+            { q: "你更喜欢", a: "结构化和有序", b: "自发和即兴", dim: "JP" },
+            { q: "在压力下，你更可能", a: "变得外向和活跃", b: "变得内向和安静", dim: "EI" },
+            { q: "你更倾向于", a: "关注现在", b: "关注未来", dim: "SN" },
+            { q: "你更可能", a: "直接表达意见", b: "考虑他人感受", dim: "TF" },
+            { q: "你更喜欢", a: "明确的规则", b: "灵活的方法", dim: "JP" },
+            { q: "你更倾向于", a: "与他人分享想法", b: "独自思考", dim: "EI" },
+            { q: "你更关注", a: "具体经验", b: "概念和理论", dim: "SN" },
+            { q: "做决定时，你更依赖", a: "客观标准", b: "个人价值观", dim: "TF" },
+            { q: "你更倾向于", a: "提前规划", b: "随机应变", dim: "JP" },
+            { q: "你更喜欢", a: "团队合作", b: "独立工作", dim: "EI" },
+            { q: "你更倾向于", a: "关注细节", b: "关注大局", dim: "SN" },
+            { q: "你更可能", a: "坚持原则", b: "适应情况", dim: "TF" },
+            { q: "你更喜欢", a: "完成后再开始新任务", b: "同时处理多个任务", dim: "JP" }
+        ];
+        
+        // MBTI类型描述
+        const typeDescriptions = {
+            "INTJ": "建筑师 - 你是一个战略思想家，喜欢独立工作，追求创新和效率。你善于分析复杂问题，制定长期计划，并坚持自己的理想。",
+            "INTP": "逻辑学家 - 你是一个创新者，对理论和抽象概念充满热情。你善于发现模式，解决复杂问题，但可能对日常事务缺乏兴趣。",
+            "ENTJ": "指挥官 - 你是一个天生的领导者，果断、自信、有远见。你善于组织和管理，追求效率和成功，但可能显得过于强势。",
+            "ENTP": "辩论家 - 你是一个聪明、好奇的思想家，喜欢挑战和辩论。你善于创新，但可能缺乏耐心完成细节工作。",
+            "INFJ": "提倡者 - 你是一个理想主义者，富有同情心和洞察力。你追求意义和目标，帮助他人成长，但可能过于理想化。",
+            "INFP": "调停者 - 你是一个富有创造力和同理心的人，重视个人价值观。你追求和谐，但可能过于敏感和理想化。",
+            "ENFJ": "主人公 - 你是一个天生的领导者，富有魅力和同理心。你善于激励他人，追求共同目标，但可能过于关注他人需求。",
+            "ENFP": "竞选者 - 你是一个热情、自由、富有创造力的人。你热爱探索新可能，但可能缺乏专注和纪律。",
+            "ISTJ": "物流师 - 你是一个务实、可靠、有条理的人。你重视传统和秩序，善于执行计划，但可能缺乏灵活性。",
+            "ISFJ": "守护者 - 你是一个温暖、负责、细心的人。你关心他人，重视传统，但可能过于保守。",
+            "ESTJ": "总经理 - 你是一个组织者和管理者，务实、果断、有责任感。你善于执行和管理，但可能缺乏情感理解。",
+            "ESFJ": "执政官 - 你是一个热情、负责、社交能力强的人。你关心他人，重视和谐，但可能过于关注他人评价。",
+            "ISTP": "鉴赏家 - 你是一个实用主义者，善于解决问题，喜欢动手操作。你独立、灵活，但可能缺乏长期规划。",
+            "ISFP": "探险家 - 你是一个艺术家，富有创造力和美感。你活在当下，追求自由，但可能缺乏计划性。",
+            "ESTP": "企业家 - 你是一个行动派，勇敢、务实、善于应对危机。你活在当下，但可能缺乏长期规划。",
+            "ESFP": "表演者 - 你是一个自由、热情、充满活力的人。你热爱生活，善于社交，但可能缺乏深度思考。"
+        };
+        
+        let currentQuestion = 0;
+        let answers = {
+            E: 0, I: 0,
+            S: 0, N: 0,
+            T: 0, F: 0,
+            J: 0, P: 0
+        };
+        
+        function initTest() {
+            renderQuestion();
+            updateProgress();
+        }
+        
+        function renderQuestion() {
+            const container = document.getElementById('questions-container');
+            const question = questions[currentQuestion];
+            
+            container.innerHTML = `
+                <div class="question-container active">
+                    <div class="question">${question.q}</div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption('A')" data-option="A">
+                            ${question.a}
+                        </div>
+                        <div class="option" onclick="selectOption('B')" data-option="B">
+                            ${question.b}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 恢复已选择的答案
+            const savedAnswer = localStorage.getItem(`mbti_q${currentQuestion}`);
+            if (savedAnswer) {
+                document.querySelector(`[data-option="${savedAnswer}"]`).classList.add('selected');
+            }
+            
+            updateButtons();
+        }
+        
+        function selectOption(option) {
+            // 移除之前的选择
+            document.querySelectorAll('.option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            // 添加新选择
+            document.querySelector(`[data-option="${option}"]`).classList.add('selected');
+            
+            // 保存答案
+            const question = questions[currentQuestion];
+            const dimension = question.dim;
+            
+            if (option === 'A') {
+                answers[dimension[0]]++;
+            } else {
+                answers[dimension[1]]++;
+            }
+            
+            localStorage.setItem(`mbti_q${currentQuestion}`, option);
+            updateButtons();
+        }
+        
+        function nextQuestion() {
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                renderQuestion();
+                updateProgress();
+            } else {
+                showResult();
+            }
+        }
+        
+        function previousQuestion() {
+            if (currentQuestion > 0) {
+                // 撤销当前问题的答案
+                const question = questions[currentQuestion];
+                const dimension = question.dim;
+                const savedAnswer = localStorage.getItem(`mbti_q${currentQuestion}`);
+                
+                if (savedAnswer === 'A') {
+                    answers[dimension[0]]--;
+                } else if (savedAnswer === 'B') {
+                    answers[dimension[1]]--;
+                }
+                
+                currentQuestion--;
+                renderQuestion();
+                updateProgress();
+            }
+        }
+        
+        function updateProgress() {
+            const progress = ((currentQuestion + 1) / questions.length) * 100;
+            document.getElementById('progress-fill').style.width = progress + '%';
+            document.getElementById('progress-text').textContent = `问题 ${currentQuestion + 1} / ${questions.length}`;
+        }
+        
+        function updateButtons() {
+            const hasSelection = document.querySelector('.option.selected') !== null;
+            document.getElementById('next-btn').disabled = !hasSelection;
+            document.getElementById('prev-btn').disabled = currentQuestion === 0;
+            
+            if (currentQuestion === questions.length - 1 && hasSelection) {
+                document.getElementById('next-btn').textContent = '查看结果';
+            } else {
+                document.getElementById('next-btn').textContent = '下一题';
+            }
+        }
+        
+        function showResult() {
+            // 计算MBTI类型
+            const type = 
+                (answers.E >= answers.I ? 'E' : 'I') +
+                (answers.S >= answers.N ? 'S' : 'N') +
+                (answers.T >= answers.F ? 'T' : 'F') +
+                (answers.J >= answers.P ? 'J' : 'P');
+            
+            document.getElementById('questions-container').style.display = 'none';
+            document.querySelector('.btn-container').style.display = 'none';
+            document.querySelector('.progress-bar').style.display = 'none';
+            document.querySelector('.progress-text').style.display = 'none';
+            
+            document.getElementById('result-type').textContent = type;
+            document.getElementById('result-description').textContent = typeDescriptions[type] || '你的MBTI类型是 ' + type;
+            document.getElementById('result-container').classList.add('show');
+        }
+        
+        function restartTest() {
+            // 清除所有答案
+            answers = {
+                E: 0, I: 0,
+                S: 0, N: 0,
+                T: 0, F: 0,
+                J: 0, P: 0
+            };
+            
+            // 清除localStorage
+            for (let i = 0; i < questions.length; i++) {
+                localStorage.removeItem(`mbti_q${i}`);
+            }
+            
+            currentQuestion = 0;
+            
+            // 重置UI
+            document.getElementById('questions-container').style.display = 'block';
+            document.querySelector('.btn-container').style.display = 'flex';
+            document.querySelector('.progress-bar').style.display = 'block';
+            document.querySelector('.progress-text').style.display = 'block';
+            document.getElementById('result-container').classList.remove('show');
+            
+            renderQuestion();
+            updateProgress();
+        }
+        
+        // 初始化测试
+        initTest();
+    </script>
+</body>
+</html>
+

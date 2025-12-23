@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="免费在线动物塑测试 - 发现你的动物性格，了解真实的自己">
+    <meta name="keywords" content="动物塑测试,性格测试,心理测试,动物性格">
+    <title>动物塑测试 - 免费在线测试</title>
+    
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../../favicon_io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../favicon_io/favicon-16x16.png">
+    <link rel="manifest" href="../../favicon_io/site.webmanifest">
+    <link rel="shortcut icon" href="../../favicon_io/favicon.ico">
+    
+    <!-- 公共样式 -->
+    <link rel="stylesheet" href="../../common/css/common.css">
+    
+    <style>
+        body {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .test-container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2rem;
+            text-align: center;
+        }
+        
+        .test-intro {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 1rem;
+        }
+        
+        .question-container {
+            display: none;
+        }
+        
+        .question-container.active {
+            display: block;
+        }
+        
+        .question {
+            font-size: 1.2rem;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-weight: 500;
+            line-height: 1.6;
+        }
+        
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .option {
+            padding: 18px 24px;
+            border: 2px solid #ecf0f1;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            font-size: 1rem;
+            color: #2c3e50;
+        }
+        
+        .option:hover {
+            border-color: #e74c3c;
+            background: #fef0f0;
+            transform: translateX(5px);
+        }
+        
+        .option.selected {
+            border-color: #e74c3c;
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #ecf0f1;
+            border-radius: 4px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .progress-text {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .btn-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .btn-primary {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #c0392b;
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .result-container {
+            display: none;
+            text-align: center;
+        }
+        
+        .result-container.show {
+            display: block;
+        }
+        
+        .result-animal {
+            font-size: 4rem;
+            margin: 20px 0;
+        }
+        
+        .result-type {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #e74c3c;
+            margin: 20px 0;
+        }
+        
+        .result-title {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        .result-description {
+            color: #7f8c8d;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            text-align: left;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .result-traits {
+            margin-top: 20px;
+            text-align: left;
+        }
+        
+        .result-traits h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .result-traits ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .result-traits li {
+            padding: 8px 0;
+            color: #7f8c8d;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        .result-traits li:last-child {
+            border-bottom: none;
+        }
+        
+        .restart-btn {
+            margin-top: 30px;
+            padding: 12px 28px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .restart-btn:hover {
+            background: #229954;
+        }
+        
+        @media (max-width: 768px) {
+            .test-container {
+                padding: 25px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .question {
+                font-size: 1.1rem;
+            }
+            
+            .result-animal {
+                font-size: 3rem;
+            }
+            
+            .result-type {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="../../index.html" class="back-btn">← 返回主页</a>
+    
+    <div class="test-container">
+        <h1>动物塑测试</h1>
+        <p class="test-intro">通过回答以下问题，发现你的动物性格</p>
+        
+        <div class="progress-text">
+            <span id="progress-text">问题 1 / 20</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        
+        <div id="questions-container">
+            <!-- 问题将通过JavaScript动态生成 -->
+        </div>
+        
+        <div class="btn-container">
+            <button class="btn btn-secondary" id="prev-btn" onclick="previousQuestion()" disabled>上一题</button>
+            <button class="btn btn-primary" id="next-btn" onclick="nextQuestion()">下一题</button>
+        </div>
+        
+        <div class="result-container" id="result-container">
+            <div class="result-animal" id="result-animal"></div>
+            <h2 class="result-title">你的动物性格是</h2>
+            <div class="result-type" id="result-type"></div>
+            <div class="result-description" id="result-description"></div>
+            <div class="result-traits" id="result-traits"></div>
+            <button class="restart-btn" onclick="restartTest()">重新测试</button>
+        </div>
+    </div>
+    
+    <footer>
+        <p>© 2025 个人学习网站 | 仅用于学习交流，请勿用于商业用途</p>
+    </footer>
+    
+    <script>
+        // 动物塑测试题目
+        const questions = [
+            { q: "在社交场合，你更倾向于", a: "主动与他人交流", b: "观察和倾听", dim: "active_observe" },
+            { q: "面对压力时，你更可能", a: "直接面对并解决", b: "需要时间思考", dim: "direct_think" },
+            { q: "你更喜欢", a: "有计划的行动", b: "灵活应变", dim: "plan_flexible" },
+            { q: "在团队中，你更倾向于", a: "领导他人", b: "支持他人", dim: "lead_support" },
+            { q: "你更关注", a: "细节和具体", b: "整体和概念", dim: "detail_whole" },
+            { q: "你更倾向于", a: "表达自己的想法", b: "倾听他人意见", dim: "express_listen" },
+            { q: "你更喜欢", a: "稳定的环境", b: "变化的环境", dim: "stable_change" },
+            { q: "做决定时，你更依赖", a: "逻辑分析", b: "直觉感受", dim: "logic_intuition" },
+            { q: "你更倾向于", a: "独立工作", b: "团队合作", dim: "independent_team" },
+            { q: "你更喜欢", a: "安静的环境", b: "热闹的环境", dim: "quiet_lively" },
+            { q: "你更可能", a: "坚持自己的观点", b: "适应他人", dim: "persist_adapt" },
+            { q: "你更关注", a: "现在和当下", b: "未来和可能", dim: "present_future" },
+            { q: "你更倾向于", a: "快速行动", b: "深思熟虑", dim: "fast_think" },
+            { q: "你更喜欢", a: "明确的规则", b: "自由的空间", dim: "rule_free" },
+            { q: "你更可能", a: "直接表达情绪", b: "控制情绪", dim: "express_control" },
+            { q: "你更倾向于", a: "竞争和挑战", b: "合作和和谐", dim: "compete_cooperate" },
+            { q: "你更喜欢", a: "熟悉的事物", b: "新鲜的事物", dim: "familiar_new" },
+            { q: "你更可能", a: "主动寻求变化", b: "保持现状", dim: "change_stable" },
+            { q: "你更倾向于", a: "关注他人需求", b: "关注自己需求", dim: "others_self" },
+            { q: "你更喜欢", a: "结构化的方式", b: "自由的方式", dim: "structured_free" }
+        ];
+        
+        // 动物类型和描述
+        const animalTypes = {
+            lion: {
+                emoji: "🦁",
+                name: "狮子",
+                description: "你是一个天生的领导者，自信、果断、有强烈的目标感。你善于组织和管理，喜欢掌控局面，追求成功和成就。你直接、坦率，不畏惧挑战，但有时可能显得过于强势。",
+                traits: ["领导力强", "自信果断", "目标导向", "直接坦率", "勇于挑战"]
+            },
+            eagle: {
+                emoji: "🦅",
+                name: "老鹰",
+                description: "你是一个远见卓识的人，独立、自信、追求自由。你善于从高处看问题，有强烈的目标感和执行力。你喜欢挑战和冒险，但有时可能显得过于独立和疏离。",
+                traits: ["远见卓识", "独立自信", "追求自由", "执行力强", "喜欢挑战"]
+            },
+            dolphin: {
+                emoji: "🐬",
+                name: "海豚",
+                description: "你是一个聪明、友好、社交能力强的人。你善于沟通，富有创造力，喜欢与他人合作。你乐观、灵活，适应能力强，但有时可能缺乏专注和深度。",
+                traits: ["聪明友好", "社交能力强", "富有创造力", "乐观灵活", "适应能力强"]
+            },
+            bear: {
+                emoji: "🐻",
+                name: "熊",
+                description: "你是一个稳重、可靠、有耐心的人。你重视稳定和安全，善于保护他人，有强烈的责任感。你温和、包容，但有时可能显得过于保守和缺乏灵活性。",
+                traits: ["稳重可靠", "有耐心", "重视稳定", "保护他人", "责任感强"]
+            },
+            wolf: {
+                emoji: "🐺",
+                name: "狼",
+                description: "你是一个忠诚、合作、有团队精神的人。你重视关系和归属感，善于与他人合作，有强烈的集体意识。你聪明、适应能力强，但有时可能缺乏独立性。",
+                traits: ["忠诚合作", "团队精神", "重视关系", "集体意识", "适应能力强"]
+            },
+            fox: {
+                emoji: "🦊",
+                name: "狐狸",
+                description: "你是一个聪明、灵活、适应能力强的人。你善于观察和分析，能够快速适应环境变化。你机智、有创造力，但有时可能显得过于谨慎和多疑。",
+                traits: ["聪明灵活", "适应能力强", "善于观察", "机智有创造力", "谨慎"]
+            },
+            cat: {
+                emoji: "🐱",
+                name: "猫",
+                description: "你是一个独立、优雅、有自己节奏的人。你享受自由和独处，有自己的想法和原则。你灵活、适应能力强，但有时可能显得过于独立和难以捉摸。",
+                traits: ["独立优雅", "享受自由", "有自己的节奏", "灵活适应", "难以捉摸"]
+            },
+            rabbit: {
+                emoji: "🐰",
+                name: "兔子",
+                description: "你是一个温和、敏感、富有创造力的人。你重视和谐和美感，善于观察细节，有强烈的直觉。你友好、合作，但有时可能显得过于敏感和缺乏自信。",
+                traits: ["温和敏感", "富有创造力", "重视和谐", "善于观察", "友好合作"]
+            }
+        };
+        
+        let currentQuestion = 0;
+        let answers = {
+            active: 0, observe: 0,
+            direct: 0, think: 0,
+            plan: 0, flexible: 0,
+            lead: 0, support: 0,
+            detail: 0, whole: 0,
+            express: 0, listen: 0,
+            stable: 0, change: 0,
+            logic: 0, intuition: 0,
+            independent: 0, team: 0,
+            quiet: 0, lively: 0,
+            persist: 0, adapt: 0,
+            present: 0, future: 0,
+            fast: 0, think_deep: 0,
+            rule: 0, free: 0,
+            express_emo: 0, control: 0,
+            compete: 0, cooperate: 0,
+            familiar: 0, new: 0,
+            change_pref: 0, stable_pref: 0,
+            others: 0, self: 0,
+            structured: 0, free_style: 0
+        };
+        
+        function initTest() {
+            renderQuestion();
+            updateProgress();
+        }
+        
+        function renderQuestion() {
+            const container = document.getElementById('questions-container');
+            const question = questions[currentQuestion];
+            
+            container.innerHTML = `
+                <div class="question-container active">
+                    <div class="question">${question.q}</div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption('A')" data-option="A">
+                            ${question.a}
+                        </div>
+                        <div class="option" onclick="selectOption('B')" data-option="B">
+                            ${question.b}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 恢复已选择的答案
+            const savedAnswer = localStorage.getItem(`animal_q${currentQuestion}`);
+            if (savedAnswer) {
+                document.querySelector(`[data-option="${savedAnswer}"]`).classList.add('selected');
+            }
+            
+            updateButtons();
+        }
+        
+        function selectOption(option) {
+            // 移除之前的选择
+            document.querySelectorAll('.option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            // 添加新选择
+            document.querySelector(`[data-option="${option}"]`).classList.add('selected');
+            
+            // 保存答案
+            const question = questions[currentQuestion];
+            const dimension = question.dim;
+            const [keyA, keyB] = dimension.split('_');
+            
+            if (option === 'A') {
+                answers[keyA]++;
+            } else {
+                answers[keyB]++;
+            }
+            
+            localStorage.setItem(`animal_q${currentQuestion}`, option);
+            updateButtons();
+        }
+        
+        function nextQuestion() {
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                renderQuestion();
+                updateProgress();
+            } else {
+                showResult();
+            }
+        }
+        
+        function previousQuestion() {
+            if (currentQuestion > 0) {
+                // 撤销当前问题的答案
+                const question = questions[currentQuestion];
+                const dimension = question.dim;
+                const [keyA, keyB] = dimension.split('_');
+                const savedAnswer = localStorage.getItem(`animal_q${currentQuestion}`);
+                
+                if (savedAnswer === 'A') {
+                    answers[keyA]--;
+                } else if (savedAnswer === 'B') {
+                    answers[keyB]--;
+                }
+                
+                currentQuestion--;
+                renderQuestion();
+                updateProgress();
+            }
+        }
+        
+        function updateProgress() {
+            const progress = ((currentQuestion + 1) / questions.length) * 100;
+            document.getElementById('progress-fill').style.width = progress + '%';
+            document.getElementById('progress-text').textContent = `问题 ${currentQuestion + 1} / ${questions.length}`;
+        }
+        
+        function updateButtons() {
+            const hasSelection = document.querySelector('.option.selected') !== null;
+            document.getElementById('next-btn').disabled = !hasSelection;
+            document.getElementById('prev-btn').disabled = currentQuestion === 0;
+            
+            if (currentQuestion === questions.length - 1 && hasSelection) {
+                document.getElementById('next-btn').textContent = '查看结果';
+            } else {
+                document.getElementById('next-btn').textContent = '下一题';
+            }
+        }
+        
+        function showResult() {
+            // 计算动物类型
+            let animalType = 'cat'; // 默认值
+            
+            // 根据答案特征判断
+            const isLeader = answers.lead > answers.support;
+            const isIndependent = answers.independent > answers.team;
+            const isActive = answers.active > answers.observe;
+            const isDirect = answers.direct > answers.think;
+            const isFuture = answers.future > answers.present;
+            const isCompetitive = answers.compete > answers.cooperate;
+            const isStructured = answers.structured > answers.free_style;
+            const isLively = answers.lively > answers.quiet;
+            
+            if (isLeader && isCompetitive && isDirect) {
+                animalType = 'lion';
+            } else if (isIndependent && isFuture && isDirect) {
+                animalType = 'eagle';
+            } else if (isActive && isLively && !isIndependent) {
+                animalType = 'dolphin';
+            } else if (!isActive && !isCompetitive && isStructured) {
+                animalType = 'bear';
+            } else if (!isIndependent && !isCompetitive && answers.team > answers.independent) {
+                animalType = 'wolf';
+            } else if (answers.flexible > answers.plan && answers.adapt > answers.persist) {
+                animalType = 'fox';
+            } else if (isIndependent && !isActive) {
+                animalType = 'cat';
+            } else {
+                animalType = 'rabbit';
+            }
+            
+            const result = animalTypes[animalType];
+            
+            document.getElementById('questions-container').style.display = 'none';
+            document.querySelector('.btn-container').style.display = 'none';
+            document.querySelector('.progress-bar').style.display = 'none';
+            document.querySelector('.progress-text').style.display = 'none';
+            
+            document.getElementById('result-animal').textContent = result.emoji;
+            document.getElementById('result-type').textContent = result.name;
+            document.getElementById('result-description').textContent = result.description;
+            
+            // 显示特征
+            const traitsHtml = `
+                <h3>你的特征：</h3>
+                <ul>
+                    ${result.traits.map(trait => `<li>${trait}</li>`).join('')}
+                </ul>
+            `;
+            document.getElementById('result-traits').innerHTML = traitsHtml;
+            
+            document.getElementById('result-container').classList.add('show');
+        }
+        
+        function restartTest() {
+            // 清除所有答案
+            answers = {
+                active: 0, observe: 0,
+                direct: 0, think: 0,
+                plan: 0, flexible: 0,
+                lead: 0, support: 0,
+                detail: 0, whole: 0,
+                express: 0, listen: 0,
+                stable: 0, change: 0,
+                logic: 0, intuition: 0,
+                independent: 0, team: 0,
+                quiet: 0, lively: 0,
+                persist: 0, adapt: 0,
+                present: 0, future: 0,
+                fast: 0, think_deep: 0,
+                rule: 0, free: 0,
+                express_emo: 0, control: 0,
+                compete: 0, cooperate: 0,
+                familiar: 0, new: 0,
+                change_pref: 0, stable_pref: 0,
+                others: 0, self: 0,
+                structured: 0, free_style: 0
+            };
+            
+            // 清除localStorage
+            for (let i = 0; i < questions.length; i++) {
+                localStorage.removeItem(`animal_q${i}`);
+            }
+            
+            currentQuestion = 0;
+            
+            // 重置UI
+            document.getElementById('questions-container').style.display = 'block';
+            document.querySelector('.btn-container').style.display = 'flex';
+            document.querySelector('.progress-bar').style.display = 'block';
+            document.querySelector('.progress-text').style.display = 'block';
+            document.getElementById('result-container').classList.remove('show');
+            
+            renderQuestion();
+            updateProgress();
+        }
+        
+        // 初始化测试
+        initTest();
+    </script>
+</body>
+</html>
+
