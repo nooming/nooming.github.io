@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="在线 Base64 编码解码器 - 支持 Base64 编码和解码，快速转换文本和 Base64 字符串，适用于数据传输和存储场景">
+    <meta name="keywords" content="Base64,编码,解码,Base64转换,在线工具,编码工具">
+    
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../favicon_io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../favicon_io/favicon-16x16.png">
+    <link rel="manifest" href="../favicon_io/site.webmanifest">
+    <link rel="shortcut icon" href="../favicon_io/favicon.ico">
+    
+    <!-- 公共样式 -->
+    <link rel="stylesheet" href="../common/css/common.css">
+    <!-- 本地样式文件 -->
+    <link rel="stylesheet" href="css/base64.css">
+</head>
+<body>
+    <!-- 返回主页按钮 -->
+    <a href="../index.html" class="back-btn">← 返回主页</a>
+    <h1>Base64 编码解码器</h1>
+
+    <div class="converter">
+        <!-- 编码区域 -->
+        <div class="input-group">
+            <label>文本编码（输入文本，转换为 Base64）</label>
+            <textarea id="encodeInput" placeholder="请输入要编码的文本，例如：Hello World"></textarea>
+            <p id="encodeErrorTip" class="error-tip">编码失败，请检查输入！</p>
+        </div>
+
+        <div class="btn-group">
+            <button id="encodeBtn" class="convert-btn">编码</button>
+            <button id="clearEncodeBtn" class="clear-btn">清空</button>
+        </div>
+
+        <div class="result-group">
+            <div class="result-item">
+                <span>Base64 编码结果：</span>
+                <div class="result-content">
+                    <span id="encodeResult">——</span>
+                    <button class="copy-btn" data-target="encodeResult">复制</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分隔线 -->
+        <div class="divider"></div>
+
+        <!-- 解码区域 -->
+        <div class="input-group">
+            <label>Base64 解码（输入 Base64 字符串，转换为文本）</label>
+            <textarea id="decodeInput" placeholder="请输入要解码的 Base64 字符串，例如：SGVsbG8gV29ybGQ="></textarea>
+            <p id="decodeErrorTip" class="error-tip">解码失败，请检查输入格式！</p>
+        </div>
+
+        <div class="btn-group">
+            <button id="decodeBtn" class="convert-btn">解码</button>
+            <button id="clearDecodeBtn" class="clear-btn">清空</button>
+        </div>
+
+        <div class="result-group">
+            <div class="result-item">
+                <span>解码结果：</span>
+                <div class="result-content">
+                    <span id="decodeResult">——</span>
+                    <button class="copy-btn" data-target="decodeResult">复制</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 公共工具函数 -->
+    <script src="../common/js/utils.js"></script>
+    <!-- 本地JS文件 -->
+    <script src="js/base64.js"></script>
+</body>
+</html>
+
