@@ -87,3 +87,82 @@ footer {
     background-color: #3498db;
 }
 
+/* ============================================
+   通用布局与卡片样式（首页 & 工具页共享）
+   ============================================ */
+
+/* 通用内容区块容器 */
+.section {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+/* 通用区块标题 */
+.section-title {
+    color: #2c3e50;
+    margin-bottom: 25px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #ecf0f1;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+/* 通用功能列表布局 */
+.features {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+}
+
+@media (min-width: 768px) {
+    .features {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* 通用功能卡片样式 */
+.feature-card {
+    border: 1px solid #ecf0f1;
+    border-radius: 10px;
+    padding: 28px;
+    transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+.feature-title {
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #3498db;
+}
+
+.feature-card p {
+    font-size: 0.95rem;
+    color: #7f8c8d;
+    line-height: 1.6;
+}
+
+/* 通用工具按钮 */
+.tool-btn {
+    display: inline-block;
+    padding: 11px 22px;
+    border-radius: 8px;
+    font-size: 1rem;
+    text-decoration: none !important;
+    margin-top: 18px;
+    color: white !important;
+    font-weight: 500;
+    background-color: #3498db;
+    transition: background-color 0.2s ease;
+}
+
+.tool-btn:hover {
+    background-color: #2980b9;
+}
+

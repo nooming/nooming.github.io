@@ -5,7 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="心理测试工具合集 - 包含 MBTI 性格测试、动物塑测试等趣味问卷，帮助你更好地认识自己。">
     <meta name="keywords" content="心理测试,MBTI,动物性格测试,性格分析,在线测试">
-    
+    <meta name="author" content="nooming">
+
+    <!-- Open Graph / 社交分享 -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="心理测试工具合集 - MBTI 与动物塑测试">
+    <meta property="og:description" content="MBTI 性格测试与动物塑测试，帮助你以多种方式了解自己的性格特点。">
+
     <!-- Favicon -->
     <link rel="apple-touch-icon" sizes="180x180" href="../../favicon-io/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="../../favicon-io/favicon-32x32.png">
@@ -31,88 +37,31 @@
             display: inline-block;
             margin-bottom: 20px;
         }
-        .section {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-        .section-title {
-            color: #2c3e50;
-            margin-bottom: 25px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #ecf0f1;
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-        .features {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 24px;
-        }
-        @media (min-width: 768px) {
-            .features {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-        .feature-card {
-            border: 1px solid #ecf0f1;
-            border-radius: 10px;
-            padding: 28px;
-            transition: all 0.3s ease;
-        }
-        .feature-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-        }
-        .feature-title {
-            margin-bottom: 15px;
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #3498db;
-        }
-        .feature-card p {
-            font-size: 0.95rem;
-            color: #7f8c8d;
-            line-height: 1.6;
-        }
-        .tool-btn {
-            display: inline-block;
-            padding: 11px 22px;
-            border-radius: 8px;
-            font-size: 1rem;
-            text-decoration: none !important;
-            margin-top: 18px;
-            color: white !important;
-            font-weight: 500;
-            background-color: #3498db;
-        }
-        .tool-btn:hover {
-            background-color: #2980b9;
-        }
     </style>
 </head>
 <body>
     <a href="../../index.html" class="back-btn">← 返回主页</a>
     <h1>心理测试工具合集</h1>
 
-    <section class="section">
-        <div class="features">
-            <div class="feature-card">
-                <h3 class="feature-title">MBTI 性格测试</h3>
-                <p>通过 28 道精心设计的题目，了解你的 MBTI 性格类型，探索性格特征、偏好倾向与可能适合的职业方向。</p>
-                <a href="mbti-test/index.html" class="tool-btn">开始 MBTI 测试</a>
-            </div>
+    <main>
+        <section class="section">
+            <div class="features">
+                <div class="feature-card">
+                    <h3 class="feature-title">MBTI 性格测试</h3>
+                    <p>通过 28 道精心设计的题目，了解你的 MBTI 性格类型，探索性格特征、偏好倾向与可能适合的职业方向。</p>
+                    <a href="mbti-test/index.html" class="tool-btn">开始 MBTI 测试</a>
+                </div>
 
-            <div class="feature-card">
-                <h3 class="feature-title">动物塑测试</h3>
-                <p>通过一组有趣的问题，将你的性格映射到不同的动物形象，帮助你以更形象的方式理解自己的行为风格。</p>
-                <a href="animal-test/index.html" class="tool-btn">开始动物塑测试</a>
+                <div class="feature-card">
+                    <h3 class="feature-title">动物塑测试</h3>
+                    <p>通过一组有趣的问题，将你的性格映射到不同的动物形象，帮助你以更形象的方式理解自己的行为风格。</p>
+                    <a href="animal-test/index.html" class="tool-btn">开始动物塑测试</a>
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
+    </main>
 
-    <script src="../../common/js/utils.js"></script>
+    <script src="../../common/js/utils.js" defer></script>
 </body>
 </html>
 

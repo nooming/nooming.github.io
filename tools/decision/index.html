@@ -5,7 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="选择辅助工具合集 - 包含选择困难症转盘、抛硬币、快速选择等随机决策小工具。">
     <meta name="keywords" content="选择困难症转盘,抛硬币,随机选择,快速选择,在线工具">
-    
+    <meta name="author" content="nooming">
+
+    <!-- Open Graph / 社交分享 -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="选择辅助工具合集 - 转盘、抛硬币与快速选择">
+    <meta property="og:description" content="在线选择辅助工具：选择困难症转盘、抛硬币和快速选择，帮你轻松做决定。">
+
     <!-- Favicon -->
     <link rel="apple-touch-icon" sizes="180x180" href="../../favicon-io/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="../../favicon-io/favicon-32x32.png">
@@ -31,94 +37,37 @@
             display: inline-block;
             margin-bottom: 20px;
         }
-        .section {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-        .section-title {
-            color: #2c3e50;
-            margin-bottom: 25px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #ecf0f1;
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-        .features {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 24px;
-        }
-        @media (min-width: 768px) {
-            .features {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-        .feature-card {
-            border: 1px solid #ecf0f1;
-            border-radius: 10px;
-            padding: 28px;
-            transition: all 0.3s ease;
-        }
-        .feature-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-        }
-        .feature-title {
-            margin-bottom: 15px;
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #3498db;
-        }
-        .feature-card p {
-            font-size: 0.95rem;
-            color: #7f8c8d;
-            line-height: 1.6;
-        }
-        .tool-btn {
-            display: inline-block;
-            padding: 11px 22px;
-            border-radius: 8px;
-            font-size: 1rem;
-            text-decoration: none !important;
-            margin-top: 18px;
-            color: white !important;
-            font-weight: 500;
-            background-color: #3498db;
-        }
-        .tool-btn:hover {
-            background-color: #2980b9;
-        }
     </style>
 </head>
 <body>
     <a href="../../index.html" class="back-btn">← 返回主页</a>
     <h1>选择辅助工具合集</h1>
 
-    <section class="section">
-        <div class="features">
-            <div class="feature-card">
-                <h3 class="feature-title">选择困难症转盘</h3>
-                <p>自定义选项和颜色样式，支持预设管理和历史记录，随机抽取公平结果，专治选择困难症。</p>
-                <a href="wheel/index.html" class="tool-btn">开始转盘</a>
-            </div>
+    <main>
+        <section class="section">
+            <div class="features">
+                <div class="feature-card">
+                    <h3 class="feature-title">选择困难症转盘</h3>
+                    <p>自定义选项和颜色样式，支持预设管理和历史记录，随机抽取公平结果，专治选择困难症。</p>
+                    <a href="wheel/index.html" class="tool-btn">开始转盘</a>
+                </div>
 
-            <div class="feature-card">
-                <h3 class="feature-title">抛硬币</h3>
-                <p>一键在线抛硬币，随机生成正反面结果，适合日常小决定、抽签、游戏等场景。</p>
-                <a href="wheel/coin-flip/index.html" class="tool-btn">开始抛硬币</a>
-            </div>
+                <div class="feature-card">
+                    <h3 class="feature-title">抛硬币</h3>
+                    <p>一键在线抛硬币，随机生成正反面结果，适合日常小决定、抽签、游戏等场景。</p>
+                    <a href="wheel/coin-flip/index.html" class="tool-btn">开始抛硬币</a>
+                </div>
 
-            <div class="feature-card">
-                <h3 class="feature-title">快速选择</h3>
-                <p>输入多个选项，立即随机选择一个，无需复杂设置，适合需要马上做决定的时候。</p>
-                <a href="wheel/quick-choice/index.html" class="tool-btn">快速选择</a>
+                <div class="feature-card">
+                    <h3 class="feature-title">快速选择</h3>
+                    <p>输入多个选项，立即随机选择一个，无需复杂设置，适合需要马上做决定的时候。</p>
+                    <a href="wheel/quick-choice/index.html" class="tool-btn">快速选择</a>
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
+    </main>
 
-    <script src="../../common/js/utils.js"></script>
+    <script src="../../common/js/utils.js" defer></script>
 </body>
 </html>
 

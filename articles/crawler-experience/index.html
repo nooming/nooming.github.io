@@ -5,7 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="浏览器开发者工具实战教程 - 详细讲解如何使用浏览器开发者工具分析并获取网页资源，包含8个步骤的实战操作指南">
     <meta name="keywords" content="浏览器开发者工具,Network面板,资源爬取,前端调试,网页分析">
-    
+    <meta name="author" content="nooming">
+
+    <!-- Open Graph / 社交分享 -->
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="浏览器开发者工具实战：资源爬取心得">
+    <meta property="og:description" content="一步步教你使用浏览器开发者工具分析并获取网页资源，涵盖 Network 面板、Console 调试以及常见技术限制。">
+
     <!-- Favicon -->
     <link rel="apple-touch-icon" sizes="180x180" href="../../favicon-io/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="../../favicon-io/favicon-32x32.png">
@@ -76,14 +82,6 @@
         }
         ul.method-list li {
             margin-bottom: 10px;
-        }
-        footer {
-            text-align: center;
-            margin-top: 60px;
-            padding-top: 20px;
-            color: #95a5a6;
-            border-top: 1px solid #ecf0f1;
-            font-size: 0.9rem;
         }
     </style>
 </head>
@@ -245,6 +243,6 @@ document.querySelector('.content').innerText
     </footer>
 
     <!-- 公共工具函数 -->
-    <script src="../../common/js/utils.js"></script>
+    <script src="../../common/js/utils.js" defer></script>
 </body>
 </html>

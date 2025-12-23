@@ -57,21 +57,9 @@
             color: #2980b9;
             text-decoration: underline;
         }
-        /* 通用区块样式 */
+        /* 通用区块样式（基于公共样式再加间距） */
         .section {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
             margin-bottom: 40px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-        .section-title {
-            color: #2c3e50;
-            margin-bottom: 25px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #ecf0f1;
-            font-size: 1.6rem;
-            font-weight: 600;
         }
         /* 心得与功能卡片布局 */
         .tips-cards, .features {
@@ -136,13 +124,13 @@
             }
         }
         /* 卡片样式 */
-        .tips-card, .feature-card {
+        .tips-card {
             border: 1px solid #ecf0f1;
             border-radius: 10px;
             padding: 28px;
             transition: all 0.3s ease;
         }
-        .tips-card:hover, .feature-card:hover {
+        .tips-card:hover {
             transform: translateY(-6px);
             box-shadow: 0 8px 20px rgba(0,0,0,0.08);
         }
@@ -175,7 +163,7 @@
             color: #3498db;
         }
         /* 按钮样式 */
-        .tips-btn, .tool-btn {
+        .tips-btn {
             display: inline-block;
             padding: 11px 22px;
             border-radius: 8px;
@@ -190,12 +178,6 @@
         }
         .tips-btn:hover {
             background-color: #c0392b;
-        }
-        .tool-btn {
-            background-color: #3498db;
-        }
-        .tool-btn:hover {
-            background-color: #2980b9;
         }
     </style>
 </head>
@@ -245,6 +227,6 @@
     </footer>
 
     <!-- 公共工具函数 -->
-    <script src="common/js/utils.js"></script>
+    <script src="common/js/utils.js" defer></script>
 </body>
 </html>
