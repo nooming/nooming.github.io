@@ -84,6 +84,57 @@
                 grid-template-columns: repeat(2, 1fr);
             }
         }
+        /* 移动端优化 */
+        @media (max-width: 767.98px) {
+            body {
+                padding: 20px 12px;
+            }
+            header {
+                margin-bottom: 30px;
+                padding-bottom: 15px;
+            }
+            h1 {
+                font-size: 1.6rem;
+                margin-bottom: 10px;
+            }
+            .intro {
+                font-size: 0.95rem;
+                margin: 6px 0;
+            }
+            .section {
+                padding: 20px 16px;
+                margin-bottom: 24px;
+            }
+            .section-title {
+                font-size: 1.3rem;
+                margin-bottom: 18px;
+                padding-bottom: 10px;
+            }
+            .tips-cards, .features {
+                gap: 16px;
+            }
+            .tips-card, .feature-card {
+                padding: 18px;
+            }
+            .tips-title, .feature-title {
+                font-size: 1.15rem;
+                margin-bottom: 12px;
+            }
+            .tips-card p, .feature-card p {
+                font-size: 0.9rem;
+                line-height: 1.5;
+            }
+            .tips-btn, .tool-btn {
+                padding: 9px 18px;
+                font-size: 0.9rem;
+                margin-top: 12px;
+            }
+            footer {
+                margin-top: 40px;
+                padding-top: 15px;
+                font-size: 0.85rem;
+            }
+        }
         /* 卡片样式 */
         .tips-card, .feature-card {
             border: 1px solid #ecf0f1;
