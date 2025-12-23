@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="猫抓（Cat Catch）扩展保姆级使用教程，从安装到下载视频/音频，逐步讲解每一步的实际操作。">
+    <meta name="keywords" content="猫抓,Cat Catch,浏览器扩展,视频下载,音频下载,保姆级教程">
+    <meta name="author" content="nooming">
+
+    <!-- Open Graph / 社交分享 -->
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="猫抓扩展保姆级使用教程">
+    <meta property="og:description" content="手把手教你从安装猫抓扩展到实际抓取视频/音频资源，适合零基础用户。">
+
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../../favicon-io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../favicon-io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../favicon-io/favicon-16x16.png">
+    <link rel="manifest" href="../../favicon-io/site.webmanifest">
+    <link rel="shortcut icon" href="../../favicon-io/favicon.ico">
+    
+    <!-- 公共样式 -->
+    <link rel="stylesheet" href="../../common/css/common.css">
+    
+    <title>猫抓扩展保姆级使用教程 - 我的个人主页</title>
+    <style>
+        body {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            line-height: 1.8;
+        }
+        h2 {
+            color: #e67e22;
+            margin-bottom: 25px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #ecf0f1;
+            font-size: 1.6rem;
+            font-weight: 600;
+        }
+        .tips-content h3 {
+            color: #e67e22;
+            margin: 28px 0 16px;
+            font-size: 1.25rem;
+        }
+        .tips-content p {
+            margin-bottom: 14px;
+            font-size: 1.02rem;
+        }
+        .step {
+            background-color: #fdf4e7;
+            border-left: 4px solid #e67e22;
+            padding: 12px 18px;
+            margin: 14px 0;
+            border-radius: 4px;
+        }
+        .step strong {
+            color: #d35400;
+        }
+        ul.guide-list {
+            margin-left: 20px;
+            margin-top: 8px;
+        }
+        ul.guide-list li {
+            margin-bottom: 8px;
+        }
+        .tip-box {
+            background-color: #e8f8f5;
+            border-left: 4px solid #1abc9c;
+            padding: 14px 18px;
+            border-radius: 6px;
+            margin: 18px 0;
+            color: #117864;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 14px 18px;
+            border-radius: 6px;
+            margin: 18px 0;
+            color: #856404;
+        }
+        .code-block {
+            background-color: #f4f4f4;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 10px 14px;
+            margin: 10px 0;
+            font-family: "Courier New", monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+        @media (max-width: 767.98px) {
+            body {
+                padding: 24px 14px;
+            }
+            h2 {
+                font-size: 1.4rem;
+            }
+            .tips-content h3 {
+                font-size: 1.15rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../../index.html" class="back-btn">← 返回主页</a>
+        
+        <h2>🧩 猫抓扩展保姆级使用教程</h2>
+
+        <div class="tips-content">
+            <p>本文主要介绍如何使用<strong>猫抓浏览器扩展</strong>，按照「安装 → 界面 → 抓取 → 下载」这个顺序说明一遍。没有技术基础也可以跟着完成。</p>
+
+            <div class="tip-box">
+                <strong>如果更习惯看视频：</strong>
+                <ul class="guide-list">
+                    <li>可以参考这期 B 站教程：<a href="https://www.bilibili.com/video/BV1TdbzzJE9Q/?spm_id_from=333.337.search-card.all.click&vd_source=5da8a8bad16ae85db7b0391971027487" target="_blank">电脑必备的浏览器插件：猫抓插件使用教程，安装方法</a>。</li>
+                    <li>视频里有安装演示和 m3u8 视频下载示例，与本文内容基本对应。</li>
+                </ul>
+            </div>
+
+            <h3>一、准备工作：确认你的浏览器</h3>
+            <div class="step">
+                <strong>1. 支持的浏览器</strong>
+                <ul class="guide-list">
+                    <li>推荐使用 <strong>Chrome</strong> 或 <strong>Edge</strong> 浏览器。</li>
+                    <li>如果使用的是其他浏览器，建议优先选择 Chrome 或 Edge 安装和使用猫抓。</li>
+                </ul>
+            </div>
+            <div class="step">
+                <strong>2. 打开扩展管理页面</strong>
+                <ul class="guide-list">
+                    <li>Chrome：地址栏输入 <code>chrome://extensions/</code> 后回车。</li>
+                    <li>Edge：地址栏输入 <code>edge://extensions/</code> 后回车。</li>
+                    <li>先大概看一眼这个页面就行，后面本地加载会用到。</li>
+                </ul>
+            </div>
+
+            <h3>二、安装猫抓扩展：扩展商店 & 本地加载</h3>
+            <p>安装猫抓有两种方式：一种是通过<strong>扩展商店</strong>直接安装，另一种是<strong>本地加载源码/压缩包</strong>。</p>
+
+            <div class="step">
+                <strong>方式 A：从扩展商店安装</strong>
+                <ul class="guide-list">
+                    <li>打开 Chrome 网上应用商店或 Edge 附加组件商店，搜索 <strong>「猫抓」或「Cat Catch」</strong>。</li>
+                    <li>点进扩展详情页，点击 <strong>「添加至 Chrome」/「获取」→「添加扩展」</strong>。</li>
+                    <li>等浏览器提示安装完成，在右上角即可看到猫抓图标。</li>
+                    <li>这种方式会自动更新扩展，也不需要手动开启开发者模式。</li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <strong>方式 B：本地加载（用源码安装）</strong>
+                <ul class="guide-list">
+                    <li>先去作者的 GitHub 仓库下载源码 ZIP：<a href="https://github.com/nooming/nooming.github.io" target="_blank">nooming.github.io 仓库</a>，点击绿色的 <strong>Code → Download ZIP</strong>。</li>
+                    <li>解压这个 ZIP，在解压出来的项目里找到 <strong>cat-catch</strong> 这个文件夹（里面能看到 <code>manifest.json</code> 等文件）。</li>
+                    <li>把这个 <strong>cat-catch</strong> 文件夹丢到一个不会乱动的位置（桌面临时目录不太推荐）。</li>
+                    <li>回到刚才的扩展管理页面，右上角打开 <strong>「开发者模式」</strong>。</li>
+                    <li>点击 <strong>「加载已解压的扩展」</strong> → 选中刚才的 <strong>cat-catch</strong> 目录 → 确认。</li>
+                    <li>加载成功后，你会在扩展列表里看到「猫抓」或对应的图标名称，本地版本和商店版用起来是一样的，只是更新需要你自己重新加载。</li>
+                </ul>
+            </div>
+
+            <div class="tip-box">
+                <strong>小提示：</strong>
+                <ul class="guide-list">
+                    <li>第一次本地加载失败，十有八九是目录选错（没有选到包含 <code>manifest.json</code> 的那一层），重新选一次就好了。</li>
+                    <li>如果你后面想「跟着源码一起学」，本地加载会更方便：改一行代码 → 回到扩展页面点一下「重新加载」，马上生效。</li>
+                </ul>
+            </div>
+
+            <h3>三、认识猫抓的基础界面</h3>
+            <p>安装好后，浏览器右上角会出现一个小猫图标。如果没看到，可以点击扩展按钮，把猫抓「固定」到工具栏。</p>
+
+            <div class="step">
+                <strong>常见界面模块</strong>
+                <ul class="guide-list">
+                    <li><strong>主面板</strong>：点击猫抓图标弹出的页面，显示当前网页捕获到的各种媒体资源列表。</li>
+                    <li><strong>媒体列表</strong>：包括视频、音频、m3u8 流等，每一行通常有名称、类型、大小、操作按钮。</li>
+                    <li><strong>操作按钮</strong>：如「下载」「复制链接」「发送到下载器」等。</li>
+                </ul>
+            </div>
+
+            <h3>四、一步一步教你「抓」一个视频</h3>
+            <p>下面用一个典型的视频网页举例，按顺序做即可：</p>
+
+            <div class="step">
+                <strong>步骤 1：打开目标网页</strong>
+                <ul class="guide-list">
+                    <li>在浏览器中打开你想要抓的视频页面。</li>
+                    <li>等网页加载完，最好先点一下播放，让视频真正开始加载。</li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <strong>步骤 2：打开猫抓面板</strong>
+                <ul class="guide-list">
+                    <li>点击浏览器右上角的 <strong>猫抓图标</strong>。</li>
+                    <li>如果页面资源很多，可以稍等几秒，让扩展把捕获结果整理出来。</li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <strong>步骤 3：识别你要的那一条资源</strong>
+                <ul class="guide-list">
+                    <li>优先留意 <strong>类型为「Media / Video / m3u8」</strong> 的条目。</li>
+                    <li>有些站点会有多条清晰度不同的资源（720P / 1080P），可以根据大小/名称大致判断。</li>
+                    <li>看不准时，可以先点「播放」，再回到面板里观察新出现的条目。</li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <strong>步骤 4：选择下载方式</strong>
+                <ul class="guide-list">
+                    <li><strong>直接下载</strong>：点击「下载」按钮，浏览器会直接用默认下载器保存到本地。</li>
+                    <li><strong>复制链接</strong>：点击「复制链接」，把真实地址粘贴到 IDM、Aria2 等专业软件下载。</li>
+                    <li><strong>m3u8 流</strong>：如果是 m3u8，猫抓扩展里通常会有「发送到下载器」或「导出命令」之类的功能，配合脚本/下载器使用。</li>
+                </ul>
+            </div>
+
+            <div class="tip-box">
+                <strong>实用建议：</strong>遇到下载速度慢、浏览器容易卡死时，可以优先选择「复制链接 → 用专业下载器（如 IDM、Aria2、Motrix 等）下载」，更稳定。
+            </div>
+
+            <h3>五、常见问题 & 排查思路</h3>
+
+            <div class="step">
+                <strong>1. 面板里什么都没有？</strong>
+                <ul class="guide-list">
+                    <li>确认页面的视频已经<strong>开始播放</strong>过。</li>
+                    <li>尝试刷新页面后，再打开猫抓面板。</li>
+                    <li>某些站点用了非常规协议或强加密，扩展确实可能抓不到，这种情况就不要强求。</li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <strong>2. 下载的文件播放不了？</strong>
+                <ul class="guide-list">
+                    <li>优先使用 <strong>PotPlayer、VLC</strong> 这类兼容性更好的播放器。</li>
+                    <li>如果是 m3u8 分片单独下来的，需要先<strong>合并/转码</strong>，再播放。</li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <strong>3. 只想保存音频怎么办？</strong>
+                <ul class="guide-list">
+                    <li>有些网站会额外提供音频流，面板里类型会显示为 <code>audio</code> 或类似标识。</li>
+                    <li>也可以先把视频抓下来，再用音频转换工具/转码工具提取音频。</li>
+                </ul>
+            </div>
+
+            <div class="warning">
+                <strong>⚠️ 合法合规使用说明：</strong>
+                <ul class="guide-list">
+                    <li>请仅在<strong>个人学习、备份</strong>等合理场景下使用猫抓扩展。</li>
+                    <li>严禁用于传播盗版、破解付费课程、侵犯版权等用途。</li>
+                    <li>尊重网站的服务条款和版权声明，遵守当地法律法规。</li>
+                </ul>
+            </div>
+
+            <h3>六、和「浏览器开发者工具」配合使用的思路</h3>
+            <p>简单理解：猫抓更像是「帮你整理好的可视化工具」，而浏览器 Network 面板是「底层原始数据」。</p>
+            <ul class="guide-list">
+                <li>当猫抓<strong>已经能识别并列出资源</strong>时，直接用猫抓即可。</li>
+                <li>当遇到猫抓识别不出来的页面，可以配合另一篇「浏览器开发者工具实战」文章，通过 Network 面板手动分析请求。</li>
+            </ul>
+
+            <div class="tip-box">
+                <strong>结语：</strong>熟悉一次完整流程之后，后面再遇到类似的视频/音频网页，你会发现：基本都是「打开网页 → 播放 → 打开猫抓 → 选中资源 → 下载」这几步的组合，只是细节上略有差异而已。
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2025 个人学习网站 | 仅用于学习交流，遵循法律法规</p>
+    </footer>
+
+    <!-- 公共工具函数 -->
+    <script src="../../common/js/utils.js" defer></script>
+</body>
+</html>
+
+
