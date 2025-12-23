@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="浏览器开发者工具实战教程 - 详细讲解如何使用浏览器开发者工具分析并获取网页资源，包含8个步骤的实战操作指南">
+    <meta name="keywords" content="浏览器开发者工具,Network面板,资源爬取,前端调试,网页分析">
+    
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../favicon-io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../favicon-io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../favicon-io/favicon-16x16.png">
+    <link rel="manifest" href="../favicon-io/site.webmanifest">
+    <link rel="shortcut icon" href="../favicon-io/favicon.ico">
+    
+    <!-- 公共样式 -->
+    <link rel="stylesheet" href="../common/css/common.css">
+    
+    <title>爬取资源心得 - 我的个人主页</title>
+    <style>
+        /* 页面特定样式 */
+        body {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            line-height: 1.8;
+        }
+        h2 {
+            color: #e74c3c;
+            margin-bottom: 25px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #ecf0f1;
+            font-size: 1.6rem;
+            font-weight: 600;
+        }
+        .tips-content h3 {
+            color: #e74c3c;
+            margin: 30px 0 18px;
+            font-size: 1.3rem;
+        }
+        .tips-content p {
+            margin-bottom: 15px;
+            font-size: 1.05rem;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px 20px;
+            margin: 25px 0;
+            border-radius: 6px;
+            color: #856404;
+        }
+        .code-block {
+            background-color: #f4f4f4;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+        .step {
+            background-color: #e8f4f8;
+            border-left: 4px solid #3498db;
+            padding: 12px 18px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .step strong {
+            color: #2980b9;
+        }
+        ul.method-list {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+        ul.method-list li {
+            margin-bottom: 10px;
+        }
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 20px;
+            color: #95a5a6;
+            border-top: 1px solid #ecf0f1;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 返回主页面：路径对应上级目录 -->
+        <a href="../index.html" class="back-btn">← 返回主页</a>
+        
+        <h2>📝 资源爬取心得详情</h2>
+        
+        <div class="tips-content">
+            <h3>浏览器开发者工具实战：如何分析并获取资源</h3>
+            <p>浏览器开发者工具是前端开发和调试的必备工具，也是理解网页资源加载机制的最佳途径。以下为实际操作步骤：</p>
+
+            <div class="step">
+                <strong>步骤1：打开开发者工具</strong>
+                <ul class="method-list">
+                    <li><strong>快捷键方式</strong>：按 <code>F12</code> 或 <code>Ctrl+Shift+I</code>（Windows/Linux），<code>Cmd+Option+I</code>（Mac）</li>
+                    <li><strong>右键菜单</strong>：在网页任意位置右键 → 选择"检查"或"检查元素"</li>
+                    <li><strong>菜单栏</strong>：Chrome/Edge → 右上角三点菜单 → 更多工具 → 开发者工具</li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <strong>步骤2：使用Network（网络）面板监控资源请求</strong>
+                <p>Network面板是获取资源的核心工具，可以查看所有网络请求：</p>
+                <ul class="method-list">
+                    <li>打开开发者工具后，点击顶部标签栏的 <strong>"Network"</strong>（网络）标签</li>
+                    <li>刷新页面（<code>F5</code> 或 <code>Ctrl+R</code>），此时会记录所有网络请求</li>
+                    <li>在请求列表中，可以看到所有加载的资源：HTML、CSS、JS、图片、视频、音频、API请求等</li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <strong>步骤3：筛选和查找目标资源</strong>
+                <p>Network面板提供了强大的筛选功能：</p>
+                <ul class="method-list">
+                    <li><strong>按类型筛选</strong>：点击筛选栏的图标（如 <code>JS</code>、<code>Img</code>、<code>Media</code>、<code>XHR</code>、<code>Fetch</code>）</li>
+                    <li><strong>搜索功能</strong>：在筛选框输入关键词（如文件名、URL片段）快速定位</li>
+                    <li><strong>常见资源类型</strong>：
+                        <ul style="margin-left: 20px; margin-top: 5px;">
+                            <li><code>XHR/Fetch</code>：API接口请求，通常包含JSON数据</li>
+                            <li><code>Media</code>：视频、音频文件（mp4、mp3、m3u8等）</li>
+                            <li><code>Img</code>：图片资源</li>
+                            <li><code>Doc</code>：HTML文档</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <strong>步骤4：分析请求详情</strong>
+                <p>点击任意请求，查看详细信息：</p>
+                <ul class="method-list">
+                    <li><strong>Headers（请求头）</strong>：
+                        <ul style="margin-left: 20px; margin-top: 5px;">
+                            <li>查看请求URL（Request URL）</li>
+                            <li>查看请求方法（GET/POST等）</li>
+                            <li>查看请求头信息（Request Headers），包括Cookie、Authorization、Referer等</li>
+                            <li>查看响应头（Response Headers），了解服务器返回的信息</li>
+                        </ul>
+                    </li>
+                    <li><strong>Preview（预览）</strong>：查看格式化后的响应内容（JSON、HTML等）</li>
+                    <li><strong>Response（响应）</strong>：查看原始响应数据</li>
+                    <li><strong>Timing（时间）</strong>：了解请求耗时，判断是否有性能瓶颈</li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <strong>步骤5：获取资源URL和下载</strong>
+                <p>找到目标资源后，有多种方式获取：</p>
+                <ul class="method-list">
+                    <li><strong>直接复制URL</strong>：
+                        <ul style="margin-left: 20px; margin-top: 5px;">
+                            <li>在请求列表中，右键点击目标请求</li>
+                            <li>选择 <code>Copy</code> → <code>Copy link address</code>（复制链接地址）</li>
+                            <li>在新标签页打开该URL，即可直接访问或下载</li>
+                        </ul>
+                    </li>
+                    <li><strong>复制为cURL命令</strong>：
+                        <ul style="margin-left: 20px; margin-top: 5px;">
+                            <li>右键请求 → <code>Copy</code> → <code>Copy as cURL</code></li>
+                            <li>可以在命令行中使用，或转换为Python requests代码</li>
+                        </ul>
+                    </li>
+                    <li><strong>保存响应内容</strong>：
+                        <ul style="margin-left: 20px; margin-top: 5px;">
+                            <li>在Preview或Response标签中，右键内容</li>
+                            <li>选择"另存为"或使用浏览器下载功能</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <strong>步骤6：处理需要认证的请求</strong>
+                <p>某些付费资源需要登录或特殊权限，需要复制完整的请求信息：</p>
+                <ul class="method-list">
+                    <li><strong>复制请求头</strong>：在Headers标签中，找到 <code>Request Headers</code> 部分，复制关键的Header：
+                        <div class="code-block">
+Authorization: Bearer xxxxxx<br>
+Cookie: session_id=xxxxx; token=xxxxx<br>
+Referer: https://example.com<br>
+User-Agent: Mozilla/5.0...
+                        </div>
+                    </li>
+                    <li><strong>使用Postman或Python重现请求</strong>：
+                        <ul style="margin-left: 20px; margin-top: 5px;">
+                            <li>将复制的cURL命令导入Postman，或转换为Python代码</li>
+                            <li>保持相同的请求头、Cookie、参数，模拟浏览器请求</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <strong>步骤7：分析动态加载的资源</strong>
+                <p>很多现代网站使用AJAX动态加载内容，需要特殊处理：</p>
+                <ul class="method-list">
+                    <li><strong>保持Network面板打开</strong>：在页面交互时（点击按钮、滚动加载等），观察新出现的请求</li>
+                    <li><strong>使用过滤器</strong>：筛选 <code>XHR</code> 或 <code>Fetch</code> 类型，这些通常是API请求</li>
+                    <li><strong>查看请求参数</strong>：在Headers的 <code>Query String Parameters</code> 或 <code>Form Data</code> 中查看传递的参数</li>
+                    <li><strong>分析响应数据</strong>：在Preview中查看返回的JSON结构，找到实际资源URL</li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <strong>步骤8：使用Console（控制台）执行JavaScript</strong>
+                <p>Console面板可以执行JavaScript代码，用于提取页面数据：</p>
+                <ul class="method-list">
+                    <li>打开 <strong>Console</strong> 标签</li>
+                    <li>可以执行JavaScript代码，例如：
+                        <div class="code-block">
+// 提取所有图片链接<br>
+Array.from(document.querySelectorAll('img')).map(img => img.src)<br><br>
+// 提取所有视频链接<br>
+Array.from(document.querySelectorAll('video')).map(v => v.src)<br><br>
+// 提取特定元素的内容<br>
+document.querySelector('.content').innerText
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="warning">
+                <strong>⚠️ 技术限制说明：</strong>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>某些网站使用<strong>DRM（数字版权管理）</strong>加密，即使获取到URL也无法直接播放（如Netflix、Disney+等）</li>
+                    <li>某些资源使用<strong>临时签名URL</strong>，URL有时效性，过期后无法访问</li>
+                    <li>某些API需要<strong>动态Token</strong>，每次请求都需要重新获取认证信息</li>
+                    <li>某些网站使用<strong>视频流分片</strong>（如m3u8），需要下载所有分片并合并</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2025 个人学习网站 | 仅用于学习交流，遵循法律法规</p>
+    </footer>
+
+    <!-- 公共工具函数 -->
+    <script src="../common/js/utils.js"></script>
+</body>
+</html>

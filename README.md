@@ -36,21 +36,21 @@
 
 ```
 ├── index.html                  # 主页
-├── audio_converter/           # 音频格式转换器
-├── base_converter/            # 进制转换器
-├── crawler_experience/        # 爬取资源心得
-├── decision_wheel/            # 选择困难工具
+├── audio-converter/           # 音频格式转换器
+├── base-converter/            # 进制转换器
+├── crawler-experience/        # 爬取资源心得
+├── decision-wheel/            # 选择困难工具
 │   └── zh/                    # 中文版本
 │       ├── index.html         # 选择困难症转盘
 │       ├── coin-flip/         # 抛硬币
 │       └── quick-choice/      # 快速选择
-├── psychological_test/        # 心理测试
-│   ├── mbti_test/            # MBTI性格测试
-│   └── animal_test/          # 动物塑测试
+├── psychological-test/        # 心理测试
+│   ├── mbti-test/            # MBTI性格测试
+│   └── animal-test/          # 动物塑测试
 ├── common/                    # 公共资源
 │   ├── css/                   # 公共样式
 │   └── js/                    # 公共脚本
-└── favicon_io/                # 网站图标
+└── favicon-io/                # 网站图标
 ```
 
 ## 使用说明

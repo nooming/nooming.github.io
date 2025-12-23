@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="在线音频格式转换器 - 支持各种音频格式转换为MP3或WAV，操作简单高效">
+    <meta name="keywords" content="音频转换,格式转换,MP3,WAV,音频处理,在线工具">
+    
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../favicon-io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../favicon-io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../favicon-io/favicon-16x16.png">
+    <link rel="manifest" href="../favicon-io/site.webmanifest">
+    <link rel="shortcut icon" href="../favicon-io/favicon.ico">
+    
+    <!-- 公共样式 -->
+    <link rel="stylesheet" href="../common/css/common.css">
+    
+    <title>音频格式转换器 - 我的个人主页</title>
+    <style>
+        /* 页面特定样式 */
+        body {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        h2 {
+            color: #3498db;
+            margin-bottom: 25px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #ecf0f1;
+            font-size: 1.6rem;
+            font-weight: 600;
+        }
+        .tool-content {
+            margin-top: 20px;
+            font-size: 1.05rem;
+        }
+        .file-upload {
+            margin: 20px 0;
+            padding: 25px;
+            border: 2px dashed #ecf0f1;
+            border-radius: 8px;
+            text-align: center;
+            transition: border-color 0.2s;
+        }
+        .file-upload:hover {
+            border-color: #3498db;
+        }
+        .file-upload input {
+            display: none;
+        }
+        .upload-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .format-select {
+            margin: 25px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .format-select select {
+            padding: 10px 15px;
+            border: 1px solid #bdc3c7;
+            border-radius: 6px;
+            font-size: 1rem;
+            min-width: 150px;
+        }
+        .convert-btn {
+            padding: 12px 25px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .convert-btn:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回主页</a>
+        <h2>🔧 音频格式转换器</h2>
+        <div class="tool-content">
+            <p>上传音频文件，选择目标格式（MP3/WAV）进行转换！</p>
+            
+            <div class="file-upload">
+                <label for="audio-file" class="upload-btn">点击选择音频文件</label>
+                <input type="file" id="audio-file" accept="audio/*" onchange="showFileName(this)">
+                <p id="file-name" style="margin-top: 15px; color: #7f8c8d;">未选择文件</p>
+            </div>
+
+            <div class="format-select">
+                <label for="target-format">目标转换格式：</label>
+                <select id="target-format">
+                    <option value="mp3">MP3（通用格式，体积小）</option>
+                    <option value="wav">WAV（无损格式，音质好）</option>
+                </select>
+            </div>
+
+            <button class="convert-btn" onclick="convertAudio()">开始转换</button>
+            <div id="result" style="margin-top: 20px;"></div>
+        </div>
+    </div>
+
+    <!-- LameJS库用于MP3编码 -->
+    <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
+    <!-- 公共工具函数 -->
+    <script src="../common/js/utils.js"></script>
+    <script>
+        // 显示选中的文件名
+        function showFileName(input) {
+            if (input.files.length > 0) {
+                document.getElementById('file-name').textContent = '已选择：' + input.files[0].name;
+            } else {
+                document.getElementById('file-name').textContent = '未选择文件';
+            }
+        }
+
+        // 音频转换主函数
+        async function convertAudio() {
+            const fileInput = document.getElementById('audio-file');
+            const formatSelect = document.getElementById('target-format');
+            const resultDiv = document.getElementById('result');
+            
+            if (!fileInput.files || fileInput.files.length === 0) {
+                resultDiv.innerHTML = '<p style="color: #e74c3c;">请先选择音频文件！</p>';
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const targetFormat = formatSelect.value;
+            resultDiv.innerHTML = '<p style="color: #3498db;">正在转换，请稍候...</p>';
+
+            try {
+                // 读取音频文件
+                const arrayBuffer = await file.arrayBuffer();
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+                let blob, fileName, formatName;
+
+                if (targetFormat === 'wav') {
+                    // 转换为WAV格式
+                    const wavBuffer = audioBufferToWav(audioBuffer);
+                    blob = new Blob([wavBuffer], { type: 'audio/wav' });
+                    fileName = file.name.replace(/\.[^/.]+$/, '') + '.wav';
+                    formatName = 'WAV';
+                } else {
+                    // 转换为MP3格式
+                    const mp3Buffer = await audioBufferToMp3(audioBuffer);
+                    blob = new Blob([mp3Buffer], { type: 'audio/mpeg' });
+                    fileName = file.name.replace(/\.[^/.]+$/, '') + '.mp3';
+                    formatName = 'MP3';
+                }
+
+                const url = URL.createObjectURL(blob);
+
+                // 创建下载链接
+                resultDiv.innerHTML = `
+                    <p style="color: #27ae60;">转换成功！</p>
+                    <a href="${url}" download="${fileName}" style="display: inline-block; padding: 10px 20px; background-color: #27ae60; color: white; border-radius: 6px; text-decoration: none; margin-top: 10px;">下载 ${formatName} 文件</a>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: #e74c3c;">转换失败：${error.message}</p>`;
+            }
+        }
+
+        // 将AudioBuffer转换为MP3格式
+        async function audioBufferToMp3(buffer) {
+            return new Promise((resolve, reject) => {
+                try {
+                    const sampleRate = buffer.sampleRate;
+                    const numberOfChannels = buffer.numberOfChannels;
+                    const samples = buffer.getChannelData(0); // 获取第一个声道
+                    const samplesRight = numberOfChannels > 1 ? buffer.getChannelData(1) : null;
+
+                    // 初始化LAME编码器
+                    const mp3encoder = new lamejs.Mp3Encoder(numberOfChannels, sampleRate, 128);
+                    const sampleBlockSize = 1152;
+                    const mp3Data = [];
+
+                    // 将Float32Array转换为Int16Array
+                    const convertTo16BitPCM = (input) => {
+                        const output = new Int16Array(input.length);
+                        for (let i = 0; i < input.length; i++) {
+                            const s = Math.max(-1, Math.min(1, input[i]));
+                            output[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+                        }
+                        return output;
+                    };
+
+                    const left = convertTo16BitPCM(samples);
+                    const right = samplesRight ? convertTo16BitPCM(samplesRight) : null;
+
+                    // 分块编码
+                    for (let i = 0; i < left.length; i += sampleBlockSize) {
+                        const leftChunk = left.subarray(i, i + sampleBlockSize);
+                        const rightChunk = right ? right.subarray(i, i + sampleBlockSize) : null;
+                        const mp3buf = mp3encoder.encodeBuffer(leftChunk, rightChunk);
+                        if (mp3buf.length > 0) {
+                            mp3Data.push(mp3buf);
+                        }
+                    }
+
+                    // 刷新编码器
+                    const mp3buf = mp3encoder.flush();
+                    if (mp3buf.length > 0) {
+                        mp3Data.push(mp3buf);
+                    }
+
+                    // 合并所有MP3数据块
+                    const result = new Uint8Array(mp3Data.reduce((acc, buf) => acc + buf.length, 0));
+                    let offset = 0;
+                    for (const buf of mp3Data) {
+                        result.set(buf, offset);
+                        offset += buf.length;
+                    }
+
+                    resolve(result.buffer);
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        }
+
+        // 将AudioBuffer转换为WAV格式
+        function audioBufferToWav(buffer) {
+            const length = buffer.length;
+            const numberOfChannels = buffer.numberOfChannels;
+            const sampleRate = buffer.sampleRate;
+            const bytesPerSample = 2;
+            const blockAlign = numberOfChannels * bytesPerSample;
+            const byteRate = sampleRate * blockAlign;
+            const dataSize = length * blockAlign;
+            const bufferSize = 44 + dataSize;
+            const arrayBuffer = new ArrayBuffer(bufferSize);
+            const view = new DataView(arrayBuffer);
+
+            // WAV文件头
+            const writeString = (offset, string) => {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            };
+
+            writeString(0, 'RIFF');
+            view.setUint32(4, bufferSize - 8, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true); // fmt chunk size
+            view.setUint16(20, 1, true); // audio format (1 = PCM)
+            view.setUint16(22, numberOfChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, byteRate, true);
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, 16, true); // bits per sample
+            writeString(36, 'data');
+            view.setUint32(40, dataSize, true);
+
+            // 写入音频数据
+            let offset = 44;
+            for (let i = 0; i < length; i++) {
+                for (let channel = 0; channel < numberOfChannels; channel++) {
+                    const sample = Math.max(-1, Math.min(1, buffer.getChannelData(channel)[i]));
+                    view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+                    offset += 2;
+                }
+            }
+
+            return arrayBuffer;
+        }
+    </script>
+</body>
+</html>
