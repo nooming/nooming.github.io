@@ -676,15 +676,43 @@
                 e.preventDefault();
             }
 
-            // 检查鼠标点击是否在游戏容器内
-            var isMouseEventInContainer = true;
+            // 检查鼠标点击是否在游戏白框（.game-wrapper）内
+            var isMouseEventInGameWrapper = true;
             if (e.type == Runner.events.MOUSEDOWN || e.type == Runner.events.TOUCHSTART) {
                 var target = e.target;
-                isMouseEventInContainer = this.containerEl && 
-                    (this.containerEl.contains(target) || this.containerEl === target);
+                // 通过containerEl向上查找.game-wrapper元素
+                var gameWrapper = null;
+                if (this.containerEl) {
+                    var parent = this.containerEl.parentElement;
+                    while (parent && parent !== document.body) {
+                        if (parent.classList && parent.classList.contains('game-wrapper')) {
+                            gameWrapper = parent;
+                            break;
+                        }
+                        parent = parent.parentElement;
+                    }
+                }
+                // 如果在containerEl上找不到，尝试从target向上查找
+                if (!gameWrapper && target) {
+                    var node = target;
+                    while (node && node !== document.body) {
+                        if (node.classList && node.classList.contains('game-wrapper')) {
+                            gameWrapper = node;
+                            break;
+                        }
+                        node = node.parentElement;
+                    }
+                }
+                
+                if (gameWrapper) {
+                    isMouseEventInGameWrapper = gameWrapper.contains(target) || gameWrapper === target;
+                } else {
+                    // 如果找不到game-wrapper，允许所有点击（保持原有行为）
+                    isMouseEventInGameWrapper = true;
+                }
             }
 
-            if (e.target != this.detailsButton && isMouseEventInContainer) {
+            if (e.target != this.detailsButton && isMouseEventInGameWrapper) {
                 if (!this.crashed && (Runner.keycodes.JUMP[e.keyCode] ||
                     e.type == Runner.events.TOUCHSTART ||
                     e.type == Runner.events.MOUSEDOWN)) {
