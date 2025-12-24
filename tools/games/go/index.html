@@ -166,6 +166,52 @@
             cursor: not-allowed;
         }
 
+        .difficulty-selector {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #ecf0f1;
+        }
+
+        .difficulty-selector.show {
+            display: block;
+        }
+
+        .difficulty-label {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .difficulty-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .difficulty-btn {
+            padding: 6px 14px;
+            border: 2px solid #27ae60;
+            background: white;
+            color: #27ae60;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .difficulty-btn.active {
+            background: #27ae60;
+            color: white;
+        }
+
+        .difficulty-btn:hover {
+            background: #229954;
+            color: white;
+            border-color: #229954;
+        }
+
         .status {
             text-align: center;
             font-size: 18px;
@@ -238,6 +284,14 @@
                     <button class="reset-btn" onclick="resetGame()">重新开始</button>
                 </div>
             </div>
+            <div class="difficulty-selector" id="difficultySelector">
+                <div class="difficulty-label">选择难度：</div>
+                <div class="difficulty-buttons">
+                    <button class="difficulty-btn active" data-difficulty="easy">简单</button>
+                    <button class="difficulty-btn" data-difficulty="medium">中等</button>
+                    <button class="difficulty-btn" data-difficulty="hard">困难</button>
+                </div>
+            </div>
             <div class="status" id="status">黑方先行</div>
             <div class="score">
                 <span>黑方提子: <span id="blackCaptures">0</span></span>
@@ -266,6 +320,7 @@
         let lastMove = null;
         let consecutivePasses = 0;
         let moveHistory = []; // 存储每一步的历史记录
+        let aiDifficulty = 'medium'; // 'easy', 'medium', 'hard'
 
         // 初始化棋盘
         function initBoard() {
@@ -817,6 +872,133 @@
 
         // AI 落子（智能策略）
         function aiMove() {
+            // 简单难度：只做基本防守和进攻
+            if (aiDifficulty === 'easy') {
+                return aiMoveEasy();
+            }
+            // 中等难度：当前逻辑
+            else if (aiDifficulty === 'medium') {
+                return aiMoveMedium();
+            }
+            // 困难难度：更深入的评估
+            else {
+                return aiMoveHard();
+            }
+        }
+
+        // 简单难度AI
+        function aiMoveEasy() {
+            // 1. 优先吃子（但只吃大块）
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (canPlace(r, c, 2)) {
+                        board[r][c] = 2;
+                        const opponent = 1;
+                        for (let [nr, nc] of getNeighbors(r, c)) {
+                            if (board[nr][nc] === opponent) {
+                                const oppGroup = findGroup(nr, nc);
+                                if (oppGroup.liberties.length === 0 && oppGroup.stones.length >= 3) {
+                                    board[r][c] = 0;
+                                    return { row: r, col: c };
+                                }
+                            }
+                        }
+                        board[r][c] = 0;
+                    }
+                }
+            }
+            
+            // 2. 简单防守：只保护大块
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (canPlace(r, c, 1)) {
+                        board[r][c] = 1;
+                        let criticalDefense = false;
+                        for (let [nr, nc] of getNeighbors(r, c)) {
+                            if (board[nr][nc] === 1) {
+                                const group = findGroup(nr, nc);
+                                if (group.liberties.length === 1 && group.stones.length >= 4) {
+                                    criticalDefense = true;
+                                    break;
+                                }
+                            }
+                        }
+                        board[r][c] = 0;
+                        if (criticalDefense && canPlace(r, c, 2)) {
+                            return { row: r, col: c };
+                        }
+                    }
+                }
+            }
+            
+            // 3. 简单评估：只考虑基本价值
+            const candidateMoves = new Set();
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (board[r][c] !== 0) {
+                        for (let dr = -2; dr <= 2; dr++) {
+                            for (let dc = -2; dc <= 2; dc++) {
+                                const nr = r + dr;
+                                const nc = c + dc;
+                                if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE && board[nr][nc] === 0) {
+                                    candidateMoves.add(`${nr},${nc}`);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (candidateMoves.size === 0) {
+                const starPositions = [4, 10, 16];
+                const star = starPositions[Math.floor(Math.random() * starPositions.length)];
+                return { row: star, col: star };
+            }
+            
+            // 简单评估：只考虑吃子和防守价值
+            let bestMove = null;
+            let bestScore = -1;
+            for (let move of candidateMoves) {
+                const [r, c] = move.split(',').map(Number);
+                if (!canPlace(r, c, 2)) continue;
+                
+                let score = 0;
+                // 简化评估：只考虑吃子
+                board[r][c] = 2;
+                const opponent = 1;
+                for (let [nr, nc] of getNeighbors(r, c)) {
+                    if (board[nr][nc] === opponent) {
+                        const oppGroup = findGroup(nr, nc);
+                        if (oppGroup.liberties.length === 0) {
+                            score += oppGroup.stones.length * 50;
+                        }
+                    }
+                }
+                board[r][c] = 0;
+                
+                // 添加一些随机性
+                score += Math.random() * 20;
+                
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = { row: r, col: c };
+                }
+            }
+            
+            if (bestMove) {
+                return bestMove;
+            }
+            
+            const movesArray = Array.from(candidateMoves).map(m => {
+                const [r, c] = m.split(',').map(Number);
+                return { row: r, col: c };
+            });
+            
+            return movesArray[Math.floor(Math.random() * movesArray.length)];
+        }
+
+        // 中等难度AI（原逻辑）
+        function aiMoveMedium() {
             // 1. 优先吃子（最高优先级）
             for (let r = 0; r < BOARD_SIZE; r++) {
                 for (let c = 0; c < BOARD_SIZE; c++) {
@@ -864,7 +1046,6 @@
             let bestMove = null;
             let bestScore = -1;
             
-            // 只考虑有棋子附近的位置（提高效率）
             const candidateMoves = new Set();
             for (let r = 0; r < BOARD_SIZE; r++) {
                 for (let c = 0; c < BOARD_SIZE; c++) {
@@ -882,15 +1063,12 @@
                 }
             }
             
-            // 如果棋盘为空，选择星位附近（围棋开局通常选择星位或小目）
             if (candidateMoves.size === 0) {
                 const starPositions = [4, 10, 16];
-                // 随机选择一个星位附近的位置
                 const star = starPositions[Math.floor(Math.random() * starPositions.length)];
                 return { row: star, col: star };
             }
             
-            // 评估每个候选位置
             for (let move of candidateMoves) {
                 const [r, c] = move.split(',').map(Number);
                 const score = evaluatePosition(r, c, 2);
@@ -900,12 +1078,133 @@
                 }
             }
             
-            // 如果找到了好的位置，返回它
             if (bestMove && bestScore > 0) {
                 return bestMove;
             }
             
-            // 否则随机选择一个候选位置
+            const movesArray = Array.from(candidateMoves).map(m => {
+                const [r, c] = m.split(',').map(Number);
+                return { row: r, col: c };
+            });
+            
+            if (movesArray.length > 0) {
+                return movesArray[Math.floor(Math.random() * movesArray.length)];
+            }
+            
+            return null;
+        }
+
+        // 困难难度AI：更深入的评估
+        function aiMoveHard() {
+            // 1. 优先吃子（最高优先级）
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (canPlace(r, c, 2)) {
+                        board[r][c] = 2;
+                        const opponent = 1;
+                        for (let [nr, nc] of getNeighbors(r, c)) {
+                            if (board[nr][nc] === opponent) {
+                                const oppGroup = findGroup(nr, nc);
+                                if (oppGroup.liberties.length === 0 && oppGroup.stones.length >= 1) {
+                                    board[r][c] = 0;
+                                    return { row: r, col: c };
+                                }
+                            }
+                        }
+                        board[r][c] = 0;
+                    }
+                }
+            }
+            
+            // 2. 阻止对手吃自己的重要棋子
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (canPlace(r, c, 1)) {
+                        board[r][c] = 1;
+                        let criticalDefense = false;
+                        for (let [nr, nc] of getNeighbors(r, c)) {
+                            if (board[nr][nc] === 1) {
+                                const group = findGroup(nr, nc);
+                                if (group.liberties.length === 1 && group.stones.length >= 2) {
+                                    criticalDefense = true;
+                                    break;
+                                }
+                            }
+                        }
+                        board[r][c] = 0;
+                        if (criticalDefense && canPlace(r, c, 2)) {
+                            return { row: r, col: c };
+                        }
+                    }
+                }
+            }
+            
+            // 3. 深度评估：使用更全面的评分系统
+            let bestMove = null;
+            let bestScore = -1;
+            
+            const candidateMoves = new Set();
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (board[r][c] !== 0) {
+                        for (let dr = -3; dr <= 3; dr++) {
+                            for (let dc = -3; dc <= 3; dc++) {
+                                const nr = r + dr;
+                                const nc = c + dc;
+                                if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE && board[nr][nc] === 0) {
+                                    candidateMoves.add(`${nr},${nc}`);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (candidateMoves.size === 0) {
+                const starPositions = [4, 10, 16];
+                const star = starPositions[Math.floor(Math.random() * starPositions.length)];
+                return { row: star, col: star };
+            }
+            
+            // 困难难度：更全面的评估，考虑更多因素
+            for (let move of candidateMoves) {
+                const [r, c] = move.split(',').map(Number);
+                let score = evaluatePosition(r, c, 2);
+                
+                // 额外评估：考虑多步影响和整体局势
+                board[r][c] = 2;
+                const myGroup = findGroup(r, c);
+                score += myGroup.liberties.length * 12; // 更重视气
+                score += myGroup.stones.length * 15; // 更重视连接
+                
+                // 评估对周围区域的控制
+                let controlScore = 0;
+                for (let dr = -2; dr <= 2; dr++) {
+                    for (let dc = -2; dc <= 2; dc++) {
+                        const nr = r + dr;
+                        const nc = c + dc;
+                        if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
+                            if (board[nr][nc] === 2) {
+                                controlScore += 3;
+                            } else if (board[nr][nc] === 0) {
+                                controlScore += 1;
+                            }
+                        }
+                    }
+                }
+                score += controlScore;
+                board[r][c] = 0;
+                
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = { row: r, col: c };
+                }
+            }
+            
+            if (bestMove && bestScore > 0) {
+                return bestMove;
+            }
+            
             const movesArray = Array.from(candidateMoves).map(m => {
                 const [r, c] = m.split(',').map(Number);
                 return { row: r, col: c };
@@ -977,8 +1276,26 @@
                 document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 gameMode = btn.dataset.mode;
+                
+                // 显示/隐藏难度选择器
+                const difficultySelector = document.getElementById('difficultySelector');
+                if (gameMode === 'ai') {
+                    difficultySelector.classList.add('show');
+                } else {
+                    difficultySelector.classList.remove('show');
+                }
+                
                 resetGame();
                 updateUndoButton();
+            });
+        });
+
+        // 难度切换
+        document.querySelectorAll('.difficulty-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                aiDifficulty = btn.dataset.difficulty;
             });
         });
 
@@ -997,6 +1314,14 @@
             document.getElementById('blackCaptures').textContent = '0';
             document.getElementById('whiteCaptures').textContent = '0';
             updateUndoButton();
+            
+            // 初始化时显示/隐藏难度选择器
+            const difficultySelector = document.getElementById('difficultySelector');
+            if (gameMode === 'ai') {
+                difficultySelector.classList.add('show');
+            } else {
+                difficultySelector.classList.remove('show');
+            }
         }
 
         // 初始化
