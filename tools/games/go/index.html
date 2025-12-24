@@ -871,18 +871,53 @@
             return null;
         }
 
+        // 获取点击坐标（处理移动端缩放）
+        function getClickPosition(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            let clientX, clientY;
+            if (e.touches && e.touches.length > 0) {
+                // 触摸事件
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                // 鼠标事件
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            
+            const x = (clientX - rect.left) * scaleX;
+            const y = (clientY - rect.top) * scaleY;
+            
+            const col = Math.round(x / CELL_SIZE) - 1;
+            const row = Math.round(y / CELL_SIZE) - 1;
+            
+            return { row, col };
+        }
+
         // 点击事件
         canvas.addEventListener('click', (e) => {
             if (gameOver || (gameMode === 'ai' && currentPlayer === 2)) {
                 return;
             }
 
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+            const { row, col } = getClickPosition(e);
 
-            const col = Math.round(x / CELL_SIZE) - 1;
-            const row = Math.round(y / CELL_SIZE) - 1;
+            if (row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE) {
+                placeStone(row, col);
+            }
+        });
+
+        // 触摸事件（移动端）
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // 防止页面滚动
+            if (gameOver || (gameMode === 'ai' && currentPlayer === 2)) {
+                return;
+            }
+
+            const { row, col } = getClickPosition(e);
 
             if (row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE) {
                 placeStone(row, col);

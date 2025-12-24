@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="网址导航 - 精选实用网站集合，包含学习、娱乐、游戏、工具等各类网站导航">
+    <meta name="keywords" content="网址导航,网站导航,实用网站,学习网站,游戏网站,工具网站">
+    <meta name="author" content="nooming">
+
+    <!-- Open Graph / 社交分享 -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="网址导航 - 精选实用网站集合">
+    <meta property="og:description" content="精选实用网站导航，包含学习、娱乐、游戏、工具等各类网站">
+
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../../favicon-io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../favicon-io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../favicon-io/favicon-16x16.png">
+    <link rel="manifest" href="../../favicon-io/site.webmanifest">
+    <link rel="shortcut icon" href="../../favicon-io/favicon.ico">
+
+    <!-- 公共样式 -->
+    <link rel="stylesheet" href="../../common/css/common.css">
+
+    <style>
+        body {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        /* 分类标题 */
+        .category-title {
+            color: #2c3e50;
+            margin: 30px 0 12px 0;
+            font-size: 1.3rem;
+            font-weight: 600;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #3498db;
+        }
+        .category-title:first-of-type {
+            margin-top: 15px;
+        }
+        /* 网站卡片网格 - 更紧凑 */
+        .sites-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        @media (min-width: 768px) {
+            .sites-grid {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                gap: 14px;
+            }
+        }
+        @media (min-width: 1024px) {
+            .sites-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 12px;
+            }
+        }
+        /* 网站卡片 - 紧凑样式 */
+        .site-card {
+            background: white;
+            border: 1px solid #ecf0f1;
+            border-radius: 8px;
+            padding: 12px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        .site-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: #3498db;
+        }
+        .site-card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .site-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            margin-right: 10px;
+            flex-shrink: 0;
+            object-fit: contain;
+        }
+        .site-name {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            line-height: 1.3;
+        }
+        .site-url {
+            font-size: 0.75rem;
+            color: #7f8c8d;
+            margin: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            line-height: 1.2;
+        }
+        /* 移动端优化 */
+        @media (max-width: 767.98px) {
+            body {
+                padding: 20px 12px;
+            }
+            h1 {
+                font-size: 1.6rem;
+            }
+            .category-title {
+                font-size: 1.15rem;
+                margin: 25px 0 10px 0;
+            }
+            .sites-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 10px;
+            }
+            .site-card {
+                padding: 10px;
+            }
+            .site-icon {
+                width: 20px;
+                height: 20px;
+                margin-right: 8px;
+            }
+            .site-name {
+                font-size: 0.9rem;
+            }
+            .site-url {
+                font-size: 0.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="../../index.html" class="back-btn">← 返回主页</a>
+    <h1>网址导航</h1>
+
+    <main>
+        <!-- 学习/教育 -->
+        <h2 class="category-title">学习/教育</h2>
+        <div class="sites-grid">
+            <a href="https://www.wolframalpha.com/" target="_blank" class="site-card">
+                <div class="site-card-header">
+                    <img src="https://www.wolframalpha.com/favicon.ico" alt="Wolfram|Alpha" class="site-icon" onerror="this.style.display='none'">
+                    <h3 class="site-name">Wolfram|Alpha: 计算型智能</h3>
+                </div>
+                <p class="site-url">www.wolframalpha.com</p>
+            </a>
+            <a href="https://1.tongji.edu.cn/" target="_blank" class="site-card">
+                <div class="site-card-header">
+                    <img src="https://1.tongji.edu.cn/favicon.ico" alt="同济大学" class="site-icon" onerror="this.style.display='none'">
+                    <h3 class="site-name">同济大学</h3>
+                </div>
+                <p class="site-url">1.tongji.edu.cn</p>
+            </a>
+        </div>
+
+        <!-- 视频/娱乐 -->
+        <h2 class="category-title">视频/娱乐</h2>
+        <div class="sites-grid">
+            <a href="https://www.bilibili.com/" target="_blank" class="site-card">
+                <div class="site-card-header">
+                    <img src="https://www.bilibili.com/favicon.ico" alt="哔哩哔哩" class="site-icon" onerror="this.style.display='none'">
+                    <h3 class="site-name">哔哩哔哩 (゜-゜)つロ 干杯~-bilibili</h3>
+                </div>
+                <p class="site-url">www.bilibili.com</p>
+            </a>
+            <a href="https://www.cupfox7.com/" target="_blank" class="site-card">
+                <div class="site-card-header">
+                    <img src="https://www.cupfox7.com/favicon.ico" alt="茶杯狐" class="site-icon" onerror="this.style.display='none'">
+                    <h3 class="site-name">茶杯狐 Cupfox - 努力让找电影变得简单</h3>
+                </div>
+                <p class="site-url">www.cupfox7.com</p>
+            </a>
+        </div>
+
+        <!-- 游戏相关 -->
+        <h2 class="category-title">游戏相关</h2>
+        <div class="sites-grid">
+            <a href="https://ark.yituliu.cn/" target="_blank" class="site-card">
+                <div class="site-card-header">
+                    <img src="https://ark.yituliu.cn/favicon.ico" alt="明日方舟一图流" class="site-icon" onerror="this.style.display='none'">
+                    <h3 class="site-name">明日方舟一图流</h3>
+                </div>
+                <p class="site-url">ark.yituliu.cn</p>
+            </a>
+            <a href="https://zmdmap.com/" target="_blank" class="site-card">
+                <div class="site-card-header">
+                    <img src="https://zmdmap.com/favicon.ico" alt="终末地地图资源查询" class="site-icon" onerror="this.style.display='none'">
+                    <h3 class="site-name">终末地地图资源查询</h3>
+                </div>
+                <p class="site-url">zmdmap.com</p>
+            </a>
+            <a href="https://prts.wiki/w/%E9%A6%96%E9%A1%B5" target="_blank" class="site-card">
+                <div class="site-card-header">
+                    <img src="https://prts.wiki/favicon.ico" alt="PRTS" class="site-icon" onerror="this.style.display='none'">
+                    <h3 class="site-name">首页 - PRTS - 玩家共同构筑的明日方舟中文Wiki</h3>
+                </div>
+                <p class="site-url">prts.wiki</p>
+            </a>
+            <a href="https://ak-endfield-puzzle.sihenzhang.com/" target="_blank" class="site-card">
+                <div class="site-card-header">
+                    <img src="https://ak-endfield-puzzle.sihenzhang.com/favicon.ico" alt="终末地拼图解谜工具" class="site-icon" onerror="this.style.display='none'">
+                    <h3 class="site-name">终末地拼图解谜工具</h3>
+                </div>
+                <p class="site-url">ak-endfield-puzzle.sihenzhang.com</p>
+            </a>
+            <a href="https://docs.qq.com/aio/DYWpwemFBSm9acGVG?p=0uOiniFUm" target="_blank" class="site-card">
+                <div class="site-card-header">
+                    <img src="https://docs.qq.com/favicon.ico" alt="寄子游戏分享导航页" class="site-icon" onerror="this.style.display='none'">
+                    <h3 class="site-name">寄子游戏分享导航页(主页)</h3>
+                </div>
+                <p class="site-url">docs.qq.com</p>
+            </a>
+        </div>
+
+        <!-- 工具/实用 -->
+        <h2 class="category-title">工具/实用</h2>
+        <div class="sites-grid">
+            <a href="https://graph.baidu.com/pcpage/index?tpl_from=pc" target="_blank" class="site-card">
+                <div class="site-card-header">
+                    <img src="https://graph.baidu.com/favicon.ico" alt="百度识图" class="site-icon" onerror="this.style.display='none'">
+                    <h3 class="site-name">百度识图搜索结果</h3>
+                </div>
+                <p class="site-url">graph.baidu.com</p>
+            </a>
+            <a href="https://123apps.com/cn/" target="_blank" class="site-card">
+                <div class="site-card-header">
+                    <img src="https://123apps.com/favicon.ico" alt="123apps" class="site-icon" onerror="this.style.display='none'">
+                    <h3 class="site-name">Web Apps by 123apps - 编辑、转换、创建</h3>
+                </div>
+                <p class="site-url">123apps.com</p>
+            </a>
+            <a href="https://doc2x.noedgeai.com/" target="_blank" class="site-card">
+                <div class="site-card-header">
+                    <img src="https://doc2x.noedgeai.com/favicon.ico" alt="Doc2X" class="site-icon" onerror="this.style.display='none'">
+                    <h3 class="site-name">Doc2X</h3>
+                </div>
+                <p class="site-url">doc2x.noedgeai.com</p>
+            </a>
+            <a href="https://emojipedia.org/zh" target="_blank" class="site-card">
+                <div class="site-card-header">
+                    <img src="https://emojipedia.org/favicon.ico" alt="表情图标百科" class="site-icon" onerror="this.style.display='none'">
+                    <h3 class="site-name">表情图标百科——表情符号含义主页</h3>
+                </div>
+                <p class="site-url">emojipedia.org</p>
+            </a>
+        </div>
+
+        <!-- 导航/其他 -->
+        <h2 class="category-title">导航/其他</h2>
+        <div class="sites-grid">
+            <a href="https://www.tongji.icu/" target="_blank" class="site-card">
+                <div class="site-card-header">
+                    <img src="https://www.tongji.icu/favicon.ico" alt="济你太美网址导航" class="site-icon" onerror="this.style.display='none'">
+                    <h3 class="site-name">济你太美网址导航</h3>
+                </div>
+                <p class="site-url">www.tongji.icu</p>
+            </a>
+            <a href="https://noomings.com/" target="_blank" class="site-card">
+                <div class="site-card-header">
+                    <img src="https://noomings.com/favicon.ico" alt="我的GitHub个人主页" class="site-icon" onerror="this.style.display='none'">
+                    <h3 class="site-name">我的GitHub个人主页</h3>
+                </div>
+                <p class="site-url">noomings.com</p>
+            </a>
+        </div>
+    </main>
+
+    <script src="../../common/js/utils.js" defer></script>
+</body>
+</html>
+
