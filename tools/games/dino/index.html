@@ -24,49 +24,76 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 25px 20px;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
             min-height: 100vh;
+            position: relative;
+        }
+
+        /* 游戏主题头部区域 */
+        .game-header {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 10;
         }
 
         h1 {
-            color: #2c3e50;
-            margin-bottom: 20px;
-            font-size: 2.3rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            margin: 0 0 10px 0;
+            font-size: 2.8rem;
+            font-weight: 800;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+            letter-spacing: -0.5px;
+            display: inline-block;
+            background: linear-gradient(135deg, #fff 0%, #ffeaa7 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            letter-spacing: -0.5px;
         }
 
         .back-btn {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             margin-bottom: 20px;
-            padding: 9px 18px;
-            background-color: #34495e;
-            color: white !important;
-            border-radius: 8px;
+            padding: 10px 20px;
+            background-color: rgba(255, 255, 255, 0.95);
+            color: #2c3e50 !important;
+            border-radius: 25px;
             text-decoration: none !important;
-            font-weight: 500;
+            font-weight: 600;
             transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            border: 2px solid transparent;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            position: relative;
+            z-index: 100;
         }
 
         .back-btn:hover {
-            background-color: #2c3e50;
+            background-color: #fff;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+            border-color: rgba(102, 126, 234, 0.3);
         }
 
+        .back-btn:active {
+            transform: translateY(0);
+        }
+
+        /* 游戏容器 */
         .game-wrapper {
-            background: white;
-            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
             padding: 30px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
             display: flex;
             flex-direction: column;
             align-items: center;
+            position: relative;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
         #offline-resources {
@@ -74,36 +101,76 @@
         }
 
         .instructions {
-            margin-top: 20px;
+            margin-top: 25px;
             text-align: center;
-            color: #7f8c8d;
-            font-size: 0.95rem;
+            color: #555;
+            font-size: 1rem;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            max-width: 500px;
+            line-height: 1.6;
+        }
+
+        .instructions p {
+            margin: 0;
+            font-weight: 500;
         }
 
         /* 移动端优化 */
         @media (max-width: 767.98px) {
             body {
-                padding: 15px 12px;
+                padding: 12px 10px;
             }
+
+            .game-header {
+                margin-bottom: 20px;
+            }
+
             h1 {
-                font-size: 1.8rem;
+                font-size: 2rem;
                 margin-bottom: 15px;
             }
+
             .back-btn {
                 margin-bottom: 15px;
-                padding: 8px 16px;
+                padding: 12px 20px;
+                font-size: 1rem;
+                min-height: 44px; /* 移动端最小触摸区域 */
+                touch-action: manipulation; /* 优化触摸响应 */
+                -webkit-tap-highlight-color: rgba(102, 126, 234, 0.2);
+            }
+
+            .game-wrapper {
+                padding: 20px 15px;
+                border-radius: 16px;
+            }
+
+            .instructions {
+                margin-top: 20px;
+                padding: 12px 16px;
                 font-size: 0.9rem;
             }
+        }
+
+        /* 小屏幕优化 */
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.6rem;
+            }
+
             .game-wrapper {
-                padding: 20px;
-                border-radius: 12px;
+                padding: 15px 10px;
             }
         }
     </style>
 </head>
 <body class="offline">
-    <a href="../index.html" class="back-btn">← 返回游戏列表</a>
-    <h1>🦖 谷歌小恐龙游戏</h1>
+    <div class="game-header">
+        <a href="#" class="back-btn" id="backBtn">← 返回游戏列表</a>
+        <h1>🦖 谷歌小恐龙游戏</h1>
+    </div>
 
     <div class="game-wrapper">
         <div id="main-frame-error" class="interstitial-wrapper">
@@ -125,6 +192,37 @@
     </div>
 
     <script src="index.js"></script>
+
+    <script>
+        // 返回按钮处理 - 支持移动端
+        (function() {
+            var backBtn = document.getElementById('backBtn');
+            if (backBtn) {
+                // 阻止默认行为
+                backBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // 尝试使用history.back()，如果有历史记录
+                    if (window.history.length > 1) {
+                        window.history.back();
+                    } else {
+                        // 如果没有历史记录，使用href跳转
+                        window.location.href = '../index.html';
+                    }
+                }, false);
+                
+                // 移动端触摸反馈优化
+                backBtn.addEventListener('touchstart', function() {
+                    this.style.transform = 'scale(0.95)';
+                }, { passive: true });
+                
+                backBtn.addEventListener('touchend', function() {
+                    this.style.transform = '';
+                }, { passive: true });
+            }
+        })();
+
+    </script>
 
     <script src="../../../common/js/utils.js" defer></script>
 </body>

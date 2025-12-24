@@ -676,7 +676,15 @@
                 e.preventDefault();
             }
 
-            if (e.target != this.detailsButton) {
+            // 检查鼠标点击是否在游戏容器内
+            var isMouseEventInContainer = true;
+            if (e.type == Runner.events.MOUSEDOWN || e.type == Runner.events.TOUCHSTART) {
+                var target = e.target;
+                isMouseEventInContainer = this.containerEl && 
+                    (this.containerEl.contains(target) || this.containerEl === target);
+            }
+
+            if (e.target != this.detailsButton && isMouseEventInContainer) {
                 if (!this.crashed && (Runner.keycodes.JUMP[e.keyCode] ||
                     e.type == Runner.events.TOUCHSTART ||
                     e.type == Runner.events.MOUSEDOWN)) {
