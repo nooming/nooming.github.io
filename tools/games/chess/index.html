@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="中国象棋游戏 - 支持双人对战模式">
+    <meta name="keywords" content="中国象棋,象棋,在线游戏,双人对战">
+    <meta name="author" content="nooming">
+
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../../../favicon-io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../../favicon-io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../../favicon-io/favicon-16x16.png">
+    <link rel="manifest" href="../../../favicon-io/site.webmanifest">
+    <link rel="shortcut icon" href="../../../favicon-io/favicon.ico">
+
+    <!-- 公共样式 -->
+    <link rel="stylesheet" href="../../../common/css/common.css">
+    
+    <!-- 游戏样式 -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <a href="../index.html" class="back-btn">← 返回小游戏</a>
+
+    <div class="game-container">
+        <div class="game-info">
+            <div class="game-controls">
+                <div class="mode-selector">
+                    <button class="mode-btn active" data-mode="two">双人对战</button>
+                    <button class="mode-btn" data-mode="ai">单人模式</button>
+                </div>
+                <div>
+                    <button class="undo-btn" id="undoBtn" onclick="undoMove()" disabled>悔棋</button>
+                    <button class="reset-btn" onclick="resetGame()">重新开始</button>
+                </div>
+            </div>
+            <div class="difficulty-selector" id="difficultySelector">
+                <div class="difficulty-label">选择难度：</div>
+                <div class="difficulty-buttons">
+                    <button class="difficulty-btn active" data-difficulty="easy">简单</button>
+                    <button class="difficulty-btn" data-difficulty="medium">中等</button>
+                    <button class="difficulty-btn" data-difficulty="hard">困难</button>
+                </div>
+            </div>
+            <div class="status" id="status">红方先行</div>
+        </div>
+
+        <div class="board-container">
+            <canvas id="board" width="450" height="500"></canvas>
+        </div>
+    </div>
+
+    <!-- xiangqi.js 游戏逻辑库 -->
+    <script src="lib/xiangqi.min.js"></script>
+    <!-- 游戏逻辑 -->
+    <script src="js/game.js"></script>
+    <script src="../../../common/js/utils.js" defer></script>
+</body>
+</html>
+
