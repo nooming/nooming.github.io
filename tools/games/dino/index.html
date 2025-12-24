@@ -23,7 +23,7 @@
         body {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 25px 20px;
+            padding: 25px 0;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
             min-height: 100vh;
             position: relative;
@@ -33,6 +33,7 @@
         .game-header {
             text-align: center;
             margin-bottom: 30px;
+            padding: 0 20px;
             position: relative;
             z-index: 10;
         }
@@ -85,7 +86,7 @@
         /* 游戏容器 */
         .game-wrapper {
             background: rgba(255, 255, 255, 0.98);
-            border-radius: 20px;
+            border-radius: 0;
             padding: 30px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.15);
             display: flex;
@@ -94,6 +95,7 @@
             position: relative;
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
+            width: 100%;
         }
 
         #offline-resources {
@@ -121,7 +123,7 @@
         /* 移动端优化 */
         @media (max-width: 767.98px) {
             body {
-                padding: 12px 10px;
+                padding: 12px 0;
             }
 
             .game-header {
