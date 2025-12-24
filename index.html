@@ -25,249 +25,460 @@
     <style>
         /* 主页特定样式 */
         body {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 40px 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
         }
-        /* 头部样式 */
+        
+        /* 头部样式 - 更现代的设计 */
         header {
             text-align: center;
             margin-bottom: 60px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #3498db;
+            padding: 40px 30px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
         }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        }
+        
         h1 {
             color: #2c3e50;
-            margin-bottom: 15px;
-            font-size: 2.2rem;
-            font-weight: 600;
+            margin-bottom: 20px;
+            font-size: 2.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
         }
+        
         .intro {
-            font-size: 1.1rem;
-            color: #7f8c8d;
-            margin: 8px 0;
+            font-size: 1.15rem;
+            color: #5a6c7d;
+            margin: 12px 0;
+            line-height: 1.8;
         }
+        
         .github-link {
-            color: #3498db;
+            color: #667eea;
             text-decoration: none;
-            font-weight: 500;
-            transition: color 0.2s;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            padding: 4px 8px;
+            border-radius: 6px;
+            display: inline-block;
         }
+        
         .github-link:hover {
-            color: #2980b9;
-            text-decoration: underline;
+            color: #764ba2;
+            background-color: #f0f4ff;
+            transform: translateY(-2px);
         }
-        /* 通用区块样式（基于公共样式再加间距） */
+        
+        /* 通用区块样式 */
         .section {
             margin-bottom: 40px;
         }
+        
+        /* 区块标题样式 */
+        .section-header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+        
+        .section-header h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .section-header h2::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 2px;
+        }
+        
+        .section-header p {
+            color: #7f8c8d;
+            font-size: 1.05rem;
+            margin-top: 15px;
+        }
+        
         /* 心得与功能卡片布局 */
         .tips-cards, .features {
             display: grid;
             grid-template-columns: 1fr;
             gap: 25px;
         }
+        
         @media (min-width: 768px) {
             .features {
                 grid-template-columns: repeat(2, 1fr);
             }
+            .tips-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
+        
+        /* 卡片样式 - 更现代的设计 */
+        .tips-card, .feature-card {
+            border: none;
+            border-radius: 16px;
+            padding: 32px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .tips-card::before, .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+        
+        .tips-card:hover::before, .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .tips-card:hover, .feature-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+        
+        /* 卡片图标 */
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+        
+        /* 卡片标题与标签 */
+        .tips-title, .feature-title {
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+        
+        .tips-title {
+            color: #e74c3c;
+        }
+        
+        .feature-title {
+            color: #3498db;
+        }
+        
+        .tips-card p, .feature-card p {
+            color: #5a6c7d;
+            line-height: 1.7;
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+        
+        .tips-tag, .feature-tag {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .tips-tag {
+            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+            color: #d63031;
+        }
+        
+        .feature-tag {
+            background: linear-gradient(135deg, #a8e6cf 0%, #88d8a3 100%);
+            color: #00b894;
+        }
+        
+        /* 按钮样式 - 更吸引人 */
+        .tips-btn, .tool-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 1rem;
+            text-decoration: none !important;
+            margin-top: 20px;
+            color: white !important;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .tips-btn::after, .tool-btn::after {
+            content: '→';
+            transition: transform 0.3s ease;
+        }
+        
+        .tips-btn:hover::after, .tool-btn:hover::after {
+            transform: translateX(4px);
+        }
+        
+        .tips-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+        
+        .tips-btn:hover {
+            background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+        }
+        
+        .tool-btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        }
+        
+        .tool-btn:hover {
+            background: linear-gradient(135deg, #2980b9 0%, #21618c 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+        
+        /* 网址导航区域 - 更醒目的设计 */
+        .navigation-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            border-radius: 20px;
+            padding: 50px 40px;
+            margin-bottom: 60px;
+            text-align: center;
+            box-shadow: 0 15px 50px rgba(102, 126, 234, 0.4);
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .navigation-banner::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 3s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+        
+        .navigation-banner:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.5);
+        }
+        
+        .navigation-title {
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 18px;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .navigation-desc {
+            color: rgba(255, 255, 255, 0.98);
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            line-height: 1.6;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .navigation-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 18px 45px;
+            background-color: white;
+            color: #667eea !important;
+            border-radius: 50px;
+            font-size: 1.15rem;
+            font-weight: 700;
+            text-decoration: none !important;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 25px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .navigation-btn::after {
+            content: '→';
+            font-size: 1.3rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .navigation-btn:hover {
+            transform: scale(1.08) translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+            background-color: #f8f9fa;
+        }
+        
+        .navigation-btn:hover::after {
+            transform: translateX(6px);
+        }
+        
         /* 移动端优化 */
         @media (max-width: 767.98px) {
             body {
                 padding: 20px 12px;
+                background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             }
+            
             header {
-                margin-bottom: 30px;
-                padding-bottom: 15px;
-            }
-            h1 {
-                font-size: 1.6rem;
-                margin-bottom: 10px;
-            }
-            .intro {
-                font-size: 0.95rem;
-                margin: 6px 0;
-            }
-            .section {
-                padding: 20px 16px;
-                margin-bottom: 24px;
-            }
-            .section-title {
-                font-size: 1.3rem;
-                margin-bottom: 18px;
-                padding-bottom: 10px;
-            }
-            .tips-cards, .features {
-                gap: 16px;
-            }
-            .tips-card, .feature-card {
-                padding: 18px;
-            }
-            .tips-title, .feature-title {
-                font-size: 1.15rem;
-                margin-bottom: 12px;
-            }
-            .tips-card p, .feature-card p {
-                font-size: 0.9rem;
-                line-height: 1.5;
-            }
-            .tips-btn, .tool-btn {
-                padding: 9px 18px;
-                font-size: 0.9rem;
-                margin-top: 12px;
-            }
-            footer {
-                margin-top: 40px;
-                padding-top: 15px;
-                font-size: 0.85rem;
-            }
-        }
-        /* 卡片样式 */
-        .tips-card {
-            border: 1px solid #ecf0f1;
-            border-radius: 10px;
-            padding: 28px;
-            transition: all 0.3s ease;
-        }
-        .tips-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-        }
-        /* 卡片标题与标签 */
-        .tips-title, .feature-title {
-            margin-bottom: 15px;
-            font-size: 1.3rem;
-            font-weight: 600;
-        }
-        .tips-title {
-            color: #e74c3c;
-        }
-        .feature-title {
-            color: #3498db;
-        }
-        .tips-tag, .feature-tag {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            margin-bottom: 12px;
-            font-weight: 500;
-        }
-        .tips-tag {
-            background-color: #fef0f0;
-            color: #e74c3c;
-        }
-        .feature-tag {
-            background-color: #e8f4fd;
-            color: #3498db;
-        }
-        /* 按钮样式 */
-        .tips-btn {
-            display: inline-block;
-            padding: 11px 22px;
-            border-radius: 8px;
-            font-size: 1rem;
-            text-decoration: none !important;
-            margin-top: 18px;
-            color: white !important;
-            font-weight: 500;
-        }
-        .tips-btn {
-            background-color: #e74c3c;
-        }
-        .tips-btn:hover {
-            background-color: #c0392b;
-        }
-        /* 网址导航区域 - 醒目样式 */
-        .navigation-banner {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 15px;
-            padding: 40px 30px;
-            margin-bottom: 50px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .navigation-banner:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
-        }
-        .navigation-title {
-            color: white;
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 15px;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        }
-        .navigation-desc {
-            color: rgba(255, 255, 255, 0.95);
-            font-size: 1.1rem;
-            margin-bottom: 25px;
-        }
-        .navigation-btn {
-            display: inline-block;
-            padding: 16px 40px;
-            background-color: white;
-            color: #667eea !important;
-            border-radius: 50px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            text-decoration: none !important;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-        .navigation-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-            background-color: #f8f9fa;
-        }
-        /* 移动端优化 */
-        @media (max-width: 767.98px) {
-            .navigation-banner {
                 padding: 30px 20px;
                 margin-bottom: 30px;
+                border-radius: 16px;
             }
-            .navigation-title {
-                font-size: 1.5rem;
+            
+            h1 {
+                font-size: 2rem;
+                margin-bottom: 15px;
+            }
+            
+            .intro {
+                font-size: 1rem;
+                margin: 10px 0;
+            }
+            
+            .section {
+                padding: 25px 18px;
+                margin-bottom: 24px;
+            }
+            
+            .section-header h2 {
+                font-size: 1.6rem;
+            }
+            
+            .tips-cards, .features {
+                gap: 18px;
+            }
+            
+            .tips-card, .feature-card {
+                padding: 24px;
+                border-radius: 14px;
+            }
+            
+            .card-icon {
+                font-size: 2rem;
+            }
+            
+            .tips-title, .feature-title {
+                font-size: 1.25rem;
                 margin-bottom: 12px;
             }
-            .navigation-desc {
+            
+            .tips-card p, .feature-card p {
                 font-size: 0.95rem;
-                margin-bottom: 20px;
+                line-height: 1.6;
             }
-            .navigation-btn {
-                padding: 14px 32px;
+            
+            .tips-btn, .tool-btn {
+                padding: 12px 24px;
+                font-size: 0.95rem;
+                margin-top: 16px;
+            }
+            
+            .navigation-banner {
+                padding: 35px 25px;
+                margin-bottom: 35px;
+                border-radius: 16px;
+            }
+            
+            .navigation-title {
+                font-size: 1.8rem;
+                margin-bottom: 15px;
+            }
+            
+            .navigation-desc {
                 font-size: 1rem;
+                margin-bottom: 25px;
+            }
+            
+            .navigation-btn {
+                padding: 16px 35px;
+                font-size: 1.05rem;
+            }
+            
+            footer {
+                margin-top: 40px;
+                padding-top: 20px;
+                font-size: 0.85rem;
             }
         }
     </style>
 </head>
 <body>
     <header>
-        <h1>欢迎来到我的个人主页</h1>
+        <h1>✨ 欢迎来到我的个人主页</h1>
         <p class="intro">
-            GitHub Pages搭建 | 我的GitHub：<a href="https://github.com/nooming" target="_blank" class="github-link">点击访问</a>
+            🚀 GitHub Pages搭建 | 我的GitHub：<a href="https://github.com/nooming" target="_blank" class="github-link">点击访问</a>
         </p>
-        <p class="intro">个人学习记录 · 实用工具集合 · 技术心得分享</p>
+        <p class="intro">📚 个人学习记录 · 🛠️ 实用工具集合 · 💡 技术心得分享</p>
     </header>
 
     <!-- 网址导航 - 醒目区域 -->
     <div class="navigation-banner">
         <h2 class="navigation-title">🌐 网址导航</h2>
-        <p class="navigation-desc">精选实用网站集合，包含学习、娱乐、游戏、工具等各类网站导航</p>
-        <a href="tools/navigation/index.html" class="navigation-btn">进入网址导航 →</a>
+        <p class="navigation-desc">精选实用网站集合，包含学习、娱乐、游戏、工具等各类网站导航，一站式解决你的需求</p>
+        <a href="tools/navigation/index.html" class="navigation-btn">立即探索</a>
     </div>
 
     <!-- 心得区块：多个实战教程 -->
     <section class="section">
+        <div class="section-header">
+            <h2>📖 技术教程</h2>
+            <p>实用的技术教程和实战经验分享，助你快速掌握技能</p>
+        </div>
         <div class="tips-cards">
             <div class="tips-card">
+                <span class="card-icon">🔧</span>
                 <h3 class="tips-title">浏览器开发者工具实战</h3>
                 <p>详细讲解如何使用浏览器自带的开发者工具（Network面板、Console等）分析并获取网页资源，包含8个步骤的实战操作指南和技术限制说明。</p>
                 <a href="articles/crawler-experience/index.html" class="tips-btn">查看教程详情</a>
             </div>
             <div class="tips-card">
+                <span class="card-icon">🐱</span>
                 <h3 class="tips-title">猫抓扩展保姆级教学</h3>
                 <p>从安装到实际抓取视频/音频资源，手把手演示如何使用猫抓（Cat Catch）浏览器扩展，适合零基础用户快速上手。</p>
                 <a href="articles/cat-catch-tutorial/index.html" class="tips-btn">查看教程详情</a>
@@ -277,32 +488,47 @@
 
     <!-- 工具区块：多个功能卡片，桌面端两列布局 -->
     <section class="section">
+        <div class="section-header">
+            <h2>🛠️ 实用工具</h2>
+            <p>丰富的在线工具集合，提升你的工作效率和生活品质</p>
+        </div>
         <div class="features">
             <div class="feature-card">
+                <span class="card-icon">🎯</span>
                 <h3 class="feature-title">选择辅助工具</h3>
                 <p>包含：选择困难症转盘 · 抛硬币 · 快速选择</p>
-                <a href="tools/decision/index.html" class="tool-btn">查看详情</a>
+                <p style="color: #95a5a6; font-size: 0.9rem; margin-top: 8px;">帮你快速做出决定，告别选择困难</p>
+                <a href="tools/decision/index.html" class="tool-btn">立即使用</a>
             </div>
             <div class="feature-card">
+                <span class="card-icon">🧠</span>
                 <h3 class="feature-title">心理测试工具</h3>
                 <p>包含：MBTI 性格测试 · 动物塑测试</p>
-                <a href="tools/psychological/index.html" class="tool-btn">查看详情</a>
+                <p style="color: #95a5a6; font-size: 0.9rem; margin-top: 8px;">探索你的性格特点，了解真实的自己</p>
+                <a href="tools/psychological/index.html" class="tool-btn">开始测试</a>
             </div>
             <div class="feature-card">
+                <span class="card-icon">⚙️</span>
                 <h3 class="feature-title">实用工具</h3>
                 <p>包含：音频转换 · 进制转换 · Base64 编解码 · 二维码生成与识别</p>
-                <a href="tools/practical/index.html" class="tool-btn">查看详情</a>
+                <p style="color: #95a5a6; font-size: 0.9rem; margin-top: 8px;">日常开发和学习必备的实用工具</p>
+                <a href="tools/practical/index.html" class="tool-btn">查看工具</a>
             </div>
             <div class="feature-card">
+                <span class="card-icon">🎮</span>
                 <h3 class="feature-title">小游戏</h3>
                 <p>包含：五子棋 · 围棋</p>
-                <a href="tools/games/index.html" class="tool-btn">查看详情</a>
+                <p style="color: #95a5a6; font-size: 0.9rem; margin-top: 8px;">经典棋类游戏，支持单人或双人对战</p>
+                <a href="tools/games/index.html" class="tool-btn">开始游戏</a>
             </div>
         </div>
     </section>
 
-    <footer>
-        <p>© 2025 个人学习网站 | 仅用于学习交流，请勿用于商业用途</p>
+    <footer style="text-align: center; margin-top: 60px; padding: 30px 20px; color: #7f8c8d; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+        <p style="margin: 0; font-size: 0.95rem; line-height: 1.8;">
+            <span style="font-weight: 600; color: #2c3e50;">© 2025 个人学习网站</span><br>
+            <span style="font-size: 0.9rem;">仅用于学习交流，请勿用于商业用途</span>
+        </p>
     </footer>
 
     <!-- 公共工具函数 -->
