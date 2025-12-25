@@ -392,11 +392,17 @@ footer {
     
     .page-header {
         margin-bottom: 20px;
+        align-items: center;
     }
     
     .page-header .back-btn {
         font-size: 0.85rem;
         padding: 7px 14px;
+    }
+    
+    .page-header h1,
+    .page-header h2 {
+        text-align: center;
     }
     
     .back-to-top {
