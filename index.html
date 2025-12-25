@@ -188,19 +188,29 @@
             box-shadow: 0 12px 40px rgba(0,0,0,0.15);
         }
         
+        /* 卡片图标和标题容器 */
+        .card-icon-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
         /* 卡片图标 */
         .card-icon {
             font-size: 2rem;
-            margin-bottom: 10px;
-            display: block;
+            display: inline-block;
+            line-height: 1;
+            flex-shrink: 0;
         }
         
         /* 卡片标题与标签 */
         .tips-title, .feature-title {
-            margin-bottom: 10px;
+            margin: 0;
             font-size: 1.25rem;
             font-weight: 700;
             line-height: 1.3;
+            display: inline-block;
         }
         
         .tips-title {
@@ -422,12 +432,15 @@
             
             .card-icon {
                 font-size: 1.8rem;
+            }
+            
+            .card-icon-title {
+                gap: 8px;
                 margin-bottom: 8px;
             }
             
             .tips-title, .feature-title {
                 font-size: 1.15rem;
-                margin-bottom: 8px;
             }
             
             .tips-card p, .feature-card p {
@@ -516,14 +529,18 @@
         </div>
         <div class="tips-cards">
             <div class="tips-card">
-                <span class="card-icon">🔧</span>
-                <h3 class="tips-title">浏览器开发者工具实战</h3>
+                <div class="card-icon-title">
+                    <span class="card-icon">🔧</span>
+                    <h3 class="tips-title">浏览器开发者工具实战</h3>
+                </div>
                 <p>详细讲解如何使用浏览器自带的开发者工具（Network面板、Console等）分析并获取网页资源，包含8个步骤的实战操作指南和技术限制说明。</p>
                 <a href="articles/crawler-experience/index.html" class="tips-btn">查看教程详情</a>
             </div>
             <div class="tips-card">
-                <span class="card-icon">🐱</span>
-                <h3 class="tips-title">猫抓扩展保姆级教学</h3>
+                <div class="card-icon-title">
+                    <span class="card-icon">🐱</span>
+                    <h3 class="tips-title">猫抓扩展保姆级教学</h3>
+                </div>
                 <p>从安装到实际抓取视频/音频资源，手把手演示如何使用猫抓（Cat Catch）浏览器扩展，适合零基础用户快速上手。</p>
                 <a href="articles/cat-catch-tutorial/index.html" class="tips-btn">查看教程详情</a>
             </div>
@@ -538,29 +555,37 @@
         </div>
         <div class="features">
             <div class="feature-card">
-                <span class="card-icon">🎯</span>
-                <h3 class="feature-title">选择辅助工具</h3>
+                <div class="card-icon-title">
+                    <span class="card-icon">🎯</span>
+                    <h3 class="feature-title">选择辅助工具</h3>
+                </div>
                 <p>包含：选择困难症转盘 · 抛硬币 · 快速选择</p>
                 <p style="color: #95a5a6; font-size: 0.9rem; margin-top: 8px;">帮你快速做出决定，告别选择困难</p>
                 <a href="tools/decision/index.html" class="tool-btn">立即使用</a>
             </div>
             <div class="feature-card">
-                <span class="card-icon">🧠</span>
-                <h3 class="feature-title">心理测试工具</h3>
+                <div class="card-icon-title">
+                    <span class="card-icon">🧠</span>
+                    <h3 class="feature-title">心理测试工具</h3>
+                </div>
                 <p>包含：MBTI 性格测试 · 动物塑测试</p>
                 <p style="color: #95a5a6; font-size: 0.9rem; margin-top: 8px;">探索你的性格特点，了解真实的自己</p>
                 <a href="tools/psychological/index.html" class="tool-btn">开始测试</a>
             </div>
             <div class="feature-card">
-                <span class="card-icon">⚙️</span>
-                <h3 class="feature-title">实用工具</h3>
+                <div class="card-icon-title">
+                    <span class="card-icon">⚙️</span>
+                    <h3 class="feature-title">实用工具</h3>
+                </div>
                 <p>包含：音频转换 · 进制转换 · Base64 编解码 · 二维码生成与识别</p>
                 <p style="color: #95a5a6; font-size: 0.9rem; margin-top: 8px;">日常开发和学习必备的实用工具</p>
                 <a href="tools/practical/index.html" class="tool-btn">查看工具</a>
             </div>
             <div class="feature-card">
-                <span class="card-icon">🎮</span>
-                <h3 class="feature-title">小游戏</h3>
+                <div class="card-icon-title">
+                    <span class="card-icon">🎮</span>
+                    <h3 class="feature-title">小游戏</h3>
+                </div>
                 <p>包含：五子棋 · 围棋 · 中国象棋 · 谷歌小恐龙</p>
                 <p style="color: #95a5a6; font-size: 0.9rem; margin-top: 8px;">经典棋类游戏和休闲小游戏，支持单人对战 AI 或双人对战，多种难度选择</p>
                 <a href="tools/games/index.html" class="tool-btn">开始游戏</a>

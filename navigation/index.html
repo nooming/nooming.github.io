@@ -28,14 +28,27 @@
         }
         
         h1 {
-            font-size: 2.5rem;
-            margin-bottom: 20px;
+            font-size: 2.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+        }
+        
+        /* 页面头部布局 */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            position: relative;
         }
         
         .back-btn {
             display: inline-flex;
             align-items: center;
-            margin-bottom: 24px;
             padding: 10px 20px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white !important;
@@ -44,11 +57,21 @@
             font-weight: 500;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            flex-shrink: 0;
         }
         
         .back-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+        
+        .page-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            margin: 0;
         }
         
         /* 分类标题 */
@@ -195,13 +218,18 @@
         
         /* 移动端优化 */
         @media (max-width: 767.98px) {
+            .page-header {
+                margin-bottom: 20px;
+            }
+            
             h1 {
-                font-size: 2rem;
-                margin-bottom: 16px;
+                font-size: 1.5rem;
+                white-space: normal;
+                max-width: 60%;
+                text-align: center;
             }
             
             .back-btn {
-                margin-bottom: 20px;
                 padding: 9px 18px;
                 font-size: 0.9rem;
             }
@@ -243,8 +271,12 @@
     </style>
 </head>
 <body class="page-container">
-    <a href="../index.html" class="back-btn">← 返回主页</a>
-    <h1 class="page-title">网址导航</h1>
+    <!-- 页面头部 -->
+    <div class="page-header">
+        <a href="../index.html" class="back-btn">← 返回主页</a>
+        <h1 class="page-title">网址导航</h1>
+        <div style="width: 1px; visibility: hidden;"><!-- 占位元素，用于平衡布局 --></div>
+    </div>
 
     <main>
         <!-- 学习/教育 -->

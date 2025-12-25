@@ -23,31 +23,164 @@
     <link rel="stylesheet" href="../../common/css/common.css">
 
     <style>
-        /* 页面特定样式 */
+        /* 页面特定样式 - 与首页风格一致 */
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        
+        .section {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        
+        /* 页面头部布局 */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        .back-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            flex-shrink: 0;
+        }
+        
+        .back-btn:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .page-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
+        
+        /* 卡片图标 */
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+        
+        .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        /* 卡片图标和标题容器 */
+        .card-icon-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        
+        .card-icon {
+            font-size: 2.5rem;
+            display: inline-block;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        
+        .feature-title {
+            margin: 0;
+            display: inline-block;
+        }
+        
+        /* 特色标签 */
+        .feature-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-bottom: 12px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #a8e6cf 0%, #88d8a3 100%);
+            color: #00b894;
+        }
+        
+        /* 移动端优化 */
+        @media (max-width: 767.98px) {
+            .page-header {
+                margin-bottom: 20px;
+            }
+            .page-title {
+                font-size: 1.5rem;
+                white-space: normal;
+                max-width: 60%;
+                text-align: center;
+            }
+            .section {
+                padding: 20px 18px;
+                border-radius: 14px;
+            }
+            
+            .card-icon {
+                font-size: 2rem;
+            }
+            
+            .card-icon-title {
+                gap: 8px;
+            }
+            
+            .feature-title {
+                font-size: 1.1rem;
+            }
+        }
     </style>
 </head>
 <body class="page-container">
-    <a href="../../index.html" class="back-btn">← 返回主页</a>
-    <h1 class="page-title">选择辅助工具合集</h1>
+    <!-- 页面头部 -->
+    <div class="page-header">
+        <a href="../../index.html" class="back-btn">← 返回主页</a>
+        <h1 class="page-title">选择辅助工具合集</h1>
+        <div style="width: 1px; visibility: hidden;"><!-- 占位元素，用于平衡布局 --></div>
+    </div>
 
     <main>
         <section class="section">
             <div class="features">
                 <div class="feature-card">
-                    <h3 class="feature-title">选择困难症转盘</h3>
-                    <p>自定义选项和颜色样式，支持预设管理和历史记录，随机抽取公平结果，专治选择困难症。</p>
+                    <div class="card-icon-title">
+                        <span class="card-icon">🎡</span>
+                        <h3 class="feature-title">选择困难症转盘</h3>
+                    </div>
+                    <span class="feature-tag">功能丰富</span>
+                    <p>自定义选项和颜色样式，支持预设管理和历史记录，随机抽取公平结果。无论是选择午餐、周末活动还是重要决策，都能帮你轻松搞定！</p>
                     <a href="wheel/index.html" class="tool-btn">开始转盘</a>
                 </div>
 
                 <div class="feature-card">
-                    <h3 class="feature-title">抛硬币</h3>
-                    <p>一键在线抛硬币，随机生成正反面结果，适合日常小决定、抽签、游戏等场景。</p>
+                    <div class="card-icon-title">
+                        <span class="card-icon">🪙</span>
+                        <h3 class="feature-title">抛硬币</h3>
+                    </div>
+                    <span class="feature-tag">简单快速</span>
+                    <p>一键在线抛硬币，随机生成正反面结果。适合日常小决定、抽签、游戏等场景，简单直接，瞬间解决你的选择难题！</p>
                     <a href="coin-flip/index.html" class="tool-btn">开始抛硬币</a>
                 </div>
 
                 <div class="feature-card">
-                    <h3 class="feature-title">快速选择</h3>
-                    <p>输入多个选项，立即随机选择一个，无需复杂设置，适合需要马上做决定的时候。</p>
+                    <div class="card-icon-title">
+                        <span class="card-icon">⚡</span>
+                        <h3 class="feature-title">快速选择</h3>
+                    </div>
+                    <span class="feature-tag">极速决策</span>
+                    <p>输入多个选项，立即随机选择一个，无需复杂设置。当你需要马上做决定的时候，这就是你的最佳选择！</p>
                     <a href="quick-choice/index.html" class="tool-btn">快速选择</a>
                 </div>
             </div>

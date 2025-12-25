@@ -23,18 +23,32 @@
             min-height: 100vh;
         }
         
-        /* 精简UI样式 */
+        main {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        /* 页面头部布局 */
         header {
             padding: 10px 20px !important;
-            margin-bottom: 20px !important;
+            margin-bottom: 15px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            position: relative !important;
         }
+        
         /* 移除椭圆/圆形背景，使用现代扁平设计 */
         .header-left-box {
             background-color: transparent !important;
             border-radius: 0 !important;
             height: auto !important;
+            flex-shrink: 0 !important;
         }
         .header-center-box {
+            position: absolute !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -42,12 +56,24 @@
             border-radius: 0 !important;
             width: auto !important;
             height: auto !important;
-            margin: 0 15px !important;
+            margin: 0 !important;
+        }
+        
+        .header-center-box h1 {
+            font-size: 2.3rem !important;
+            font-weight: 700 !important;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            background-clip: text !important;
+            letter-spacing: -0.5px !important;
+            white-space: nowrap !important;
         }
         .header-right-box {
             background-color: transparent !important;
             border-radius: 0 !important;
             height: auto !important;
+            flex-shrink: 0 !important;
         }
         .nav-links a {
             border-radius: 0 !important;
@@ -62,19 +88,24 @@
             color: #3498db !important;
         }
         .header-left-content-box a {
-            padding: 8px 16px !important;
-            border-radius: 0 !important;
-            position: relative !important;
-            border-bottom: 2px solid transparent !important;
+            padding: 9px 18px !important;
+            border-radius: 10px !important;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            color: white !important;
+            text-decoration: none !important;
+            font-weight: 500 !important;
             transition: all 0.3s ease !important;
             display: inline-block !important;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
         }
         .header-left-content-box a:hover {
-            border-bottom-color: #3498db !important;
-            color: #3498db !important;
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
+            border-bottom: none !important;
         }
         .wheel-box {
-            margin: 20px 0 !important;
+            margin: 0 !important;
         }
         footer {
             text-align: center !important;
@@ -134,13 +165,19 @@
                 margin-right: 8px !important;
             }
             .header-center-box {
-                flex: 1 1 auto !important;
+                position: absolute !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                flex: none !important;
                 min-width: 0 !important;
-                margin: 0 8px !important;
+                margin: 0 !important;
                 width: auto !important;
             }
             .header-center-box h1 {
-                font-size: 1.2rem !important;
+                font-size: 1.5rem !important;
+                white-space: normal !important;
+                max-width: 60% !important;
+                text-align: center !important;
             }
             .header-right-box {
                 flex: 0 0 auto !important;

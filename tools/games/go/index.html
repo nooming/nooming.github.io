@@ -18,6 +18,10 @@
     <link rel="stylesheet" href="../../../common/css/common.css">
 
     <style>
+        /* 页面特定样式 - 与首页风格一致 */
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
 
         .game-container {
             display: flex;
@@ -35,8 +39,55 @@
             max-width: 600px;
         }
         
+        /* 页面头部布局 */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        .back-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            flex-shrink: 0;
+        }
+        
+        .back-btn:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin: 0;
+            font-size: 2.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
+        
         /* 移动端优化 */
         @media (max-width: 767.98px) {
+            .page-header {
+                margin-bottom: 20px;
+            }
+            h1 {
+                font-size: 1.5rem;
+                white-space: normal;
+                max-width: 60%;
+                text-align: center;
+            }
             .game-info {
                 padding: 20px;
                 border-radius: 12px;
@@ -219,8 +270,12 @@
     </style>
 </head>
 <body class="page-container">
-    <a href="../index.html" class="back-btn">← 返回小游戏</a>
-    <h1 class="page-title">围棋</h1>
+    <!-- 页面头部 -->
+    <div class="page-header">
+        <a href="../index.html" class="back-btn">← 返回小游戏</a>
+        <h1 class="page-title">围棋</h1>
+        <div style="width: 1px; visibility: hidden;"><!-- 占位元素，用于平衡布局 --></div>
+    </div>
 
     <div class="game-container">
         <div class="game-info">

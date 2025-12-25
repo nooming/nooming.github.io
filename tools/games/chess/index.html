@@ -19,9 +19,68 @@
     
     <!-- 游戏样式 -->
     <link rel="stylesheet" href="css/style.css">
+    
+    <style>
+        /* 页面特定样式 - 与首页风格一致 */
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        
+        /* 页面头部布局 */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        .back-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            flex-shrink: 0;
+        }
+        
+        .back-btn:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .game-info {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        
+        /* 页面头部布局 */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        @media (max-width: 767.98px) {
+            .page-header {
+                margin-bottom: 20px;
+            }
+            .game-info {
+                padding: 20px 18px;
+                border-radius: 14px;
+            }
+        }
+    </style>
 </head>
-<body>
-    <a href="../index.html" class="back-btn">← 返回小游戏</a>
+<body class="page-container">
+    <!-- 页面头部 -->
+    <div class="page-header">
+        <a href="../index.html" class="back-btn">← 返回小游戏</a>
+        <div style="width: 1px; visibility: hidden;"><!-- 占位元素，用于平衡布局 --></div>
+    </div>
 
     <div class="game-container">
         <div class="game-info">

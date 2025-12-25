@@ -29,13 +29,44 @@
             line-height: 1.8;
         }
         
+        /* 页面头部布局 */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        .back-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            flex-shrink: 0;
+        }
+        
+        .back-btn:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
         h2 {
             color: #e67e22;
-            margin-bottom: 25px;
+            margin: 0;
             padding-bottom: 12px;
             border-bottom: 1px solid #ecf0f1;
-            font-size: 1.6rem;
-            font-weight: 600;
+            font-size: 2.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
         }
         .tips-content h3 {
             color: #e67e22;
@@ -93,8 +124,14 @@
             body {
                 padding: 24px 14px;
             }
+            .page-header {
+                margin-bottom: 20px;
+            }
             h2 {
-                font-size: 1.4rem;
+                font-size: 1.5rem;
+                white-space: normal;
+                max-width: 60%;
+                text-align: center;
             }
             .tips-content h3 {
                 font-size: 1.15rem;
@@ -102,11 +139,14 @@
         }
     </style>
 </head>
-<body>
+<body class="page-container">
     <div class="container">
-        <a href="../../index.html" class="back-btn">← 返回主页</a>
-        
-        <h2>🧩 猫抓扩展保姆级使用教程</h2>
+        <!-- 页面头部 -->
+        <div class="page-header">
+            <a href="../../index.html" class="back-btn">← 返回主页</a>
+            <h2>猫抓扩展保姆级使用教程</h2>
+            <div style="width: 1px; visibility: hidden;"><!-- 占位元素，用于平衡布局 --></div>
+        </div>
 
         <div class="tips-content">
             <p>本文主要介绍如何使用<strong>猫抓浏览器扩展</strong>，按照「安装 → 界面 → 抓取 → 下载」这个顺序说明一遍。没有技术基础也可以跟着完成。</p>

@@ -27,9 +27,31 @@
             min-height: 100vh;
         }
         
+        /* 页面头部布局 */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        .back-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            flex-shrink: 0;
+        }
+        
+        .back-btn:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
         h1 {
             color: #2c3e50;
-            margin-bottom: 20px;
+            margin: 0;
             font-size: 2.3rem;
             font-weight: 700;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -37,6 +59,10 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
             letter-spacing: -0.5px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
         }
         
         h2 {
@@ -114,10 +140,14 @@
         }
     </style>
 </head>
-<body>
-    <div class="container">
+<body class="page-container">
+    <!-- 页面头部 -->
+    <div class="page-header">
         <a href="../index.html" class="back-btn">← 返回实用工具合集</a>
-        <h2>🔧 音频格式转换器</h2>
+        <h2 style="margin: 0; position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 2.3rem; font-weight: 700; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -0.5px;">音频格式转换器</h2>
+        <div style="width: 1px; visibility: hidden;"><!-- 占位元素，用于平衡布局 --></div>
+    </div>
+    <div class="container">
         <div class="tool-content">
             <p>上传音频文件，选择目标格式（MP3/WAV）进行转换！</p>
             

@@ -33,25 +33,56 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
         
+        /* 页面头部布局 */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        .back-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            flex-shrink: 0;
+        }
+        
+        .back-btn:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
         h1 {
             color: #2c3e50;
-            margin-bottom: 10px;
+            margin: 0;
             font-size: 2.3rem;
             font-weight: 700;
-            text-align: center;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
             letter-spacing: -0.5px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
         }
         
         @media (max-width: 767.98px) {
             body {
                 padding: 15px 12px;
             }
+            .page-header {
+                margin-bottom: 20px;
+            }
             h1 {
-                font-size: 1.8rem;
+                font-size: 1.5rem;
+                white-space: normal;
+                max-width: 60%;
+                text-align: center;
             }
             .test-container {
                 padding: 20px;
@@ -275,11 +306,15 @@
         }
     </style>
 </head>
-<body>
-    <a href="../index.html" class="back-btn">← 返回心理测试工具合集</a>
+<body class="page-container">
+    <!-- 页面头部 -->
+    <div class="page-header">
+        <a href="../index.html" class="back-btn">← 返回心理测试工具合集</a>
+        <h1>动物塑测试</h1>
+        <div style="width: 1px; visibility: hidden;"><!-- 占位元素，用于平衡布局 --></div>
+    </div>
     
     <div class="test-container">
-        <h1>动物塑测试</h1>
         <p class="test-intro">通过回答以下问题，发现你的动物性格</p>
         
         <div class="progress-text">

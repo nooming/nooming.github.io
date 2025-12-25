@@ -23,37 +23,174 @@
     <link rel="stylesheet" href="../../common/css/common.css">
 
     <style>
-        /* 页面特定样式 */
+        /* 页面特定样式 - 与首页风格一致 */
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        
+        .section {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        
+        /* 页面头部布局 */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        .back-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            flex-shrink: 0;
+        }
+        
+        .back-btn:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .page-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
+        
+        /* 卡片图标 */
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+        
+        .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        /* 卡片图标和标题容器 */
+        .card-icon-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        
+        .card-icon {
+            font-size: 2.5rem;
+            display: inline-block;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        
+        .feature-title {
+            margin: 0;
+            display: inline-block;
+        }
+        
+        /* 特色标签 */
+        .feature-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-bottom: 12px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #a8e6cf 0%, #88d8a3 100%);
+            color: #00b894;
+        }
+        
+        /* 移动端优化 */
+        @media (max-width: 767.98px) {
+            .page-header {
+                margin-bottom: 20px;
+            }
+            .page-title {
+                font-size: 1.5rem;
+                white-space: normal;
+                max-width: 60%;
+                text-align: center;
+            }
+            .section {
+                padding: 20px 18px;
+                border-radius: 14px;
+            }
+            
+            .card-icon {
+                font-size: 2rem;
+            }
+            
+            .card-icon-title {
+                gap: 8px;
+            }
+            
+            .feature-title {
+                font-size: 1.1rem;
+            }
+        }
     </style>
 </head>
 <body class="page-container">
-    <a href="../../index.html" class="back-btn">← 返回主页</a>
-    <h1 class="page-title">实用工具合集</h1>
+    <!-- 页面头部 -->
+    <div class="page-header">
+        <a href="../../index.html" class="back-btn">← 返回主页</a>
+        <h1 class="page-title">实用工具合集</h1>
+        <div style="width: 1px; visibility: hidden;"><!-- 占位元素，用于平衡布局 --></div>
+    </div>
 
     <main>
         <section class="section">
             <div class="features">
                 <div class="feature-card">
-                    <h3 class="feature-title">音频格式转换器</h3>
-                    <p>支持多种音频格式转换为 MP3 或 WAV，MP3 适合压缩体积，WAV 保持无损音质，适合批量转换与格式统一。</p>
+                    <div class="card-icon-title">
+                        <span class="card-icon">🎵</span>
+                        <h3 class="feature-title">音频格式转换器</h3>
+                    </div>
+                    <span class="feature-tag">格式转换</span>
+                    <p>支持多种音频格式转换为 MP3 或 WAV，MP3 适合压缩体积，WAV 保持无损音质。支持批量转换，快速统一音频格式，满足各种需求！</p>
                     <a href="audio-converter/index.html" class="tool-btn">使用音频转换器</a>
                 </div>
 
                 <div class="feature-card">
-                    <h3 class="feature-title">进制转换器</h3>
-                    <p>支持二进制、八进制、十进制、十六进制互转，附带格式校验，适合学习和日常编程时的进制换算。</p>
+                    <div class="card-icon-title">
+                        <span class="card-icon">🔢</span>
+                        <h3 class="feature-title">进制转换器</h3>
+                    </div>
+                    <span class="feature-tag">编程必备</span>
+                    <p>支持二进制、八进制、十进制、十六进制互转，附带格式校验。适合学习和日常编程时的进制换算，让进制转换变得简单！</p>
                     <a href="base-converter/index.html" class="tool-btn">进入进制转换</a>
                 </div>
 
                 <div class="feature-card">
-                    <h3 class="feature-title">Base64 编码解码</h3>
-                    <p>支持 Base64 编码和解码，快速在文本与 Base64 字符串之间转换，便于数据传输与调试。</p>
+                    <div class="card-icon-title">
+                        <span class="card-icon">🔐</span>
+                        <h3 class="feature-title">Base64 编码解码</h3>
+                    </div>
+                    <span class="feature-tag">编码解码</span>
+                    <p>支持 Base64 编码和解码，快速在文本与 Base64 字符串之间转换。便于数据传输与调试，是开发者的得力助手！</p>
                     <a href="base64-converter/index.html" class="tool-btn">进入 Base64 工具</a>
                 </div>
 
                 <div class="feature-card">
-                    <h3 class="feature-title">二维码生成与识别</h3>
-                    <p>支持生成和识别二维码，自定义尺寸与颜色生成二维码，也可上传图片识别二维码内容，并一键复制识别结果。</p>
+                    <div class="card-icon-title">
+                        <span class="card-icon">📱</span>
+                        <h3 class="feature-title">二维码生成与识别</h3>
+                    </div>
+                    <span class="feature-tag">多功能</span>
+                    <p>支持生成和识别二维码，自定义尺寸与颜色生成二维码，也可上传图片识别二维码内容，并一键复制识别结果。功能强大，使用便捷！</p>
                     <a href="qr-code-generator/index.html" class="tool-btn">进入二维码工具</a>
                 </div>
 
