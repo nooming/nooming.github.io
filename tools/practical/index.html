@@ -38,10 +38,14 @@
         /* 页面头部布局 */
         .page-header {
             display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+        }
+        
+        .header-top {
+            display: flex;
             align-items: center;
-            justify-content: space-between;
-            margin-bottom: 25px;
-            position: relative;
+            margin-bottom: 0;
         }
         
         .back-btn {
@@ -49,6 +53,7 @@
             color: white !important;
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
             flex-shrink: 0;
+            margin-bottom: 0 !important;
         }
         
         .back-btn:hover {
@@ -58,10 +63,7 @@
         }
         
         .page-title {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            white-space: nowrap;
+            text-align: center;
         }
         
         /* 卡片图标 */
@@ -146,9 +148,10 @@
 <body class="page-container">
     <!-- 页面头部 -->
     <div class="page-header">
-        <a href="../../index.html" class="back-btn">← 返回主页</a>
+        <div class="header-top">
+            <a href="../../index.html" class="back-btn">返回上一级</a>
+        </div>
         <h1 class="page-title">实用工具合集</h1>
-        <div style="width: 1px; visibility: hidden;"><!-- 占位元素，用于平衡布局 --></div>
     </div>
 
     <main>

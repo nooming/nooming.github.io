@@ -29,10 +29,14 @@
         /* 页面头部布局 */
         .page-header {
             display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+        }
+        
+        .header-top {
+            display: flex;
             align-items: center;
-            justify-content: space-between;
-            margin-bottom: 25px;
-            position: relative;
+            margin-bottom: 0;
         }
         
         .back-btn {
@@ -42,6 +46,7 @@
             flex-shrink: 0;
             font-size: 0.95rem;
             padding: 9px 18px;
+            margin-bottom: 0 !important;
         }
         
         .back-btn:hover {
@@ -57,18 +62,28 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
         
-        /* 页面头部布局 */
-        .page-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 25px;
-            position: relative;
+        h1 {
+            color: #2c3e50;
+            margin: 0 0 20px 0;
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+            text-align: center;
         }
         
         @media (max-width: 767.98px) {
             .page-header {
-                margin-bottom: 20px;
+                margin-bottom: 15px;
+            }
+            .header-top {
+                margin-bottom: 0;
+            }
+            h1 {
+                font-size: 1.5rem;
             }
             .back-btn {
                 font-size: 0.85rem;
@@ -84,8 +99,10 @@
 <body class="page-container">
     <!-- 页面头部 -->
     <div class="page-header">
-        <a href="../index.html" class="back-btn">← 返回小游戏</a>
-        <div style="width: 1px; visibility: hidden;"><!-- 占位元素，用于平衡布局 --></div>
+        <div class="header-top">
+            <a href="../index.html" class="back-btn">返回上一级</a>
+        </div>
+        <h1>中国象棋</h1>
     </div>
 
     <div class="game-container">

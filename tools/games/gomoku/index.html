@@ -28,6 +28,7 @@
             flex-direction: column;
             align-items: center;
             gap: 20px;
+            margin-top: 0;
         }
 
         .game-info {
@@ -42,10 +43,14 @@
         /* 页面头部布局 */
         .page-header {
             display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+        }
+        
+        .header-top {
+            display: flex;
             align-items: center;
-            justify-content: space-between;
-            margin-bottom: 25px;
-            position: relative;
+            margin-bottom: 0;
         }
         
         .back-btn {
@@ -55,6 +60,7 @@
             flex-shrink: 0;
             font-size: 0.95rem;
             padding: 9px 18px;
+            margin-bottom: 0 !important;
         }
         
         .back-btn:hover {
@@ -65,7 +71,7 @@
         
         h1 {
             color: #2c3e50;
-            margin: 0;
+            margin: 0 0 3px 0;
             font-size: 2rem;
             font-weight: 700;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -73,10 +79,7 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
             letter-spacing: -0.5px;
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            white-space: nowrap;
+            text-align: center;
         }
         
         /* 移动端优化 */
@@ -84,11 +87,11 @@
             .page-header {
                 margin-bottom: 20px;
             }
+            .header-top {
+                margin-bottom: 0;
+            }
             h1 {
                 font-size: 1.5rem;
-                white-space: normal;
-                max-width: 60%;
-                text-align: center;
             }
             .back-btn {
                 font-size: 0.85rem;
@@ -262,9 +265,10 @@
 <body class="page-container">
     <!-- 页面头部 -->
     <div class="page-header">
-        <a href="../index.html" class="back-btn">← 返回小游戏</a>
+        <div class="header-top">
+            <a href="../index.html" class="back-btn">返回上一级</a>
+        </div>
         <h1 class="page-title">五子棋</h1>
-        <div style="width: 1px; visibility: hidden;"><!-- 占位元素，用于平衡布局 --></div>
     </div>
 
     <div class="game-container">

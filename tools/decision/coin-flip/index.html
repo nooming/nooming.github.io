@@ -6,9 +6,11 @@
     <title>在线抛硬币 - 快速随机选择工具</title>
     <meta name="description" content="一键在线抛硬币，随机生成正反面结果，帮助你快速做决定、抽签、玩游戏或处理生活中的小选择问题。">
 
-    <link rel="apple-touch-icon" sizes="180x180" href="../../../../favicon-io/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="../../../../favicon-io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../../../../favicon-io/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../../../favicon-io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../../favicon-io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../../favicon-io/favicon-16x16.png">
+    <link rel="manifest" href="../../../favicon-io/site.webmanifest">
+    <link rel="shortcut icon" href="../../../favicon-io/favicon.ico">
 
     <link as="style" href="../assets/css/style.min.css" rel="preload">
     <link href="../assets/css/style.min.css" rel="stylesheet">
@@ -31,7 +33,7 @@
         /* 页面头部布局 */
         header {
             padding: 10px 20px !important;
-            margin-bottom: 15px !important;
+            margin-bottom: 0 !important;
             display: flex !important;
             align-items: center !important;
             justify-content: space-between !important;
@@ -74,6 +76,7 @@
             background-clip: text !important;
             letter-spacing: -0.5px !important;
             white-space: nowrap !important;
+            margin: 0 0 3px 0 !important;
         }
         .nav-links a {
             border-radius: 0 !important;
@@ -106,7 +109,20 @@
         }
         .coin-box {
             margin: 0 !important;
+            padding: 0 !important;
+            background-color: transparent !important;
+            border-radius: 0 !important;
+            width: auto !important;
+            height: auto !important;
         }
+        
+        .coin-scope-box {
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+        
         footer {
             text-align: center !important;
             margin-top: 30px !important;
@@ -225,12 +241,12 @@
     <div class="header-left-box">
         <div class="header-left-content-box">
             <a href="../index.html" style="text-decoration: none; color: #2c3e50; font-weight: 500; font-size: 0.85rem;">
-                返回选择辅助工具合集
+                返回上一级
             </a>
         </div>
     </div>
     <div class="header-center-box">
-        <h1 style="margin: 0; font-size: 1.4rem; font-weight: 600; color: #2c3e50; white-space: nowrap;">在线抛硬币</h1>
+        <h1 style="margin: 0 0 3px 0; font-size: 1.4rem; font-weight: 600; color: #2c3e50; white-space: nowrap;">在线抛硬币</h1>
     </div>
     <div class="header-right-box">
         <div class="header-right-content-box">
