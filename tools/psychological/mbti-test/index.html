@@ -47,20 +47,9 @@
             margin-bottom: 0;
         }
         
+        /* 返回按钮样式使用公共样式，添加 gradient 类即可 */
         .back-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white !important;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
             flex-shrink: 0;
-            font-size: 0.95rem;
-            padding: 9px 18px;
-            margin-bottom: 0 !important;
-        }
-        
-        .back-btn:hover {
-            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         }
         
         h1 {
@@ -262,7 +251,7 @@
             background: #229954;
         }
         
-        @media (max-width: 768px) {
+        @media (max-width: 767.98px) {
             .test-container {
                 padding: 25px;
             }
@@ -285,7 +274,7 @@
     <!-- 页面头部 -->
     <div class="page-header">
         <div class="header-top">
-            <a href="../index.html" class="back-btn">返回上一级</a>
+            <a href="../index.html" class="back-btn gradient">返回上一级</a>
         </div>
         <h1>MBTI性格测试</h1>
     </div>

@@ -228,6 +228,13 @@
             margin-bottom: 6px;
         }
         
+        /* 卡片描述文字样式 */
+        .feature-card p.feature-desc {
+            color: #95a5a6;
+            font-size: 0.9rem;
+            margin-top: 8px;
+        }
+        
         .tips-tag, .feature-tag {
             display: inline-block;
             padding: 6px 14px;
@@ -380,6 +387,8 @@
             transform: translateX(6px);
         }
         
+        /* 返回顶部按钮样式已在 common.css 中定义 */
+        
         /* 移动端优化 */
         @media (max-width: 767.98px) {
             body {
@@ -481,6 +490,7 @@
                 padding: 16px;
                 font-size: 0.85rem;
             }
+            
         }
     </style>
     
@@ -560,7 +570,7 @@
                     <h3 class="feature-title">选择辅助工具</h3>
                 </div>
                 <p>包含：选择困难症转盘 · 抛硬币 · 快速选择</p>
-                <p style="color: #95a5a6; font-size: 0.9rem; margin-top: 8px;">帮你快速做出决定，告别选择困难</p>
+                <p class="feature-desc">帮你快速做出决定，告别选择困难</p>
                 <a href="tools/decision/index.html" class="tool-btn">立即使用</a>
             </div>
             <div class="feature-card">
@@ -569,7 +579,7 @@
                     <h3 class="feature-title">心理测试工具</h3>
                 </div>
                 <p>包含：MBTI 性格测试 · 动物塑测试</p>
-                <p style="color: #95a5a6; font-size: 0.9rem; margin-top: 8px;">探索你的性格特点，了解真实的自己</p>
+                <p class="feature-desc">探索你的性格特点，了解真实的自己</p>
                 <a href="tools/psychological/index.html" class="tool-btn">开始测试</a>
             </div>
             <div class="feature-card">
@@ -578,7 +588,7 @@
                     <h3 class="feature-title">实用工具</h3>
                 </div>
                 <p>包含：音频转换 · 进制转换 · Base64 编解码 · 二维码生成与识别</p>
-                <p style="color: #95a5a6; font-size: 0.9rem; margin-top: 8px;">日常开发和学习必备的实用工具</p>
+                <p class="feature-desc">日常开发和学习必备的实用工具</p>
                 <a href="tools/practical/index.html" class="tool-btn">查看工具</a>
             </div>
             <div class="feature-card">
@@ -587,20 +597,25 @@
                     <h3 class="feature-title">小游戏</h3>
                 </div>
                 <p>包含：五子棋 · 围棋 · 中国象棋 · 谷歌小恐龙</p>
-                <p style="color: #95a5a6; font-size: 0.9rem; margin-top: 8px;">经典棋类游戏和休闲小游戏，支持单人对战 AI 或双人对战，多种难度选择</p>
+                <p class="feature-desc">经典棋类游戏和休闲小游戏，支持单人对战 AI 或双人对战，多种难度选择</p>
                 <a href="tools/games/index.html" class="tool-btn">开始游戏</a>
             </div>
         </div>
     </section>
 
-    <footer style="text-align: center; margin-top: 40px; padding: 20px; color: #7f8c8d; background: white; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
-        <p style="margin: 0; font-size: 0.9rem; line-height: 1.6;">
-            <span style="font-weight: 600; color: #2c3e50;">© 2025 个人学习网站</span><br>
-            <span style="font-size: 0.85rem;">仅用于学习交流，请勿用于商业用途</span>
+    <footer>
+        <p>
+            <span>© 2025 个人学习网站</span><br>
+            <span>仅用于学习交流，请勿用于商业用途</span>
         </p>
     </footer>
 
+    <!-- 返回顶部按钮 -->
+    <button class="back-to-top" id="backToTop" aria-label="返回顶部">↑</button>
+
     <!-- 公共工具函数 -->
     <script src="common/js/utils.js" defer></script>
+    
+    <!-- 返回顶部功能已在 common/js/utils.js 中自动初始化 -->
 </body>
 </html>

@@ -354,12 +354,12 @@
 
         <div class="preset-section">
             <div class="preset-buttons">
-                <button class="preset-btn" onclick="loadPreset('ABCD')">选ABCD</button>
+                <button class="preset-btn" id="preset-abcd-btn">选ABCD</button>
             </div>
         </div>
 
         <div class="button-section">
-            <button class="choice-btn" onclick="makeChoice()">开始选择</button>
+            <button class="choice-btn" id="choice-btn">开始选择</button>
         </div>
 
         <div class="result-section" id="result-section">
@@ -382,7 +382,11 @@
         const inputValue = input.value.trim();
         
         if (!inputValue) {
-            alert('请输入至少一个选项！');
+            if (typeof showToast === 'function') {
+                showToast('请输入至少一个选项！', 'error');
+            } else {
+                alert('请输入至少一个选项！');
+            }
             return;
         }
         
@@ -392,7 +396,11 @@
             .filter(opt => opt.length > 0);
         
         if (options.length === 0) {
-            alert('请输入至少一个选项！');
+            if (typeof showToast === 'function') {
+                showToast('请输入至少一个选项！', 'error');
+            } else {
+                alert('请输入至少一个选项！');
+            }
             return;
         }
         
@@ -439,13 +447,35 @@
         input.focus();
     }
     
-    // 支持回车键快速选择（Ctrl+Enter）
-    document.getElementById('options-input').addEventListener('keydown', function(e) {
-        if (e.ctrlKey && e.key === 'Enter') {
-            makeChoice();
+    // 绑定事件
+    document.addEventListener('DOMContentLoaded', function() {
+        const choiceBtn = document.getElementById('choice-btn');
+        const presetBtn = document.getElementById('preset-abcd-btn');
+        const input = document.getElementById('options-input');
+        
+        if (choiceBtn) {
+            choiceBtn.addEventListener('click', makeChoice);
+        }
+        
+        if (presetBtn) {
+            presetBtn.addEventListener('click', function() {
+                loadPreset('ABCD');
+            });
+        }
+        
+        // 支持回车键快速选择（Ctrl+Enter）
+        if (input) {
+            input.addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === 'Enter') {
+                    makeChoice();
+                }
+            });
         }
     });
-</script>
+    </script>
+    
+    <!-- 公共工具函数 -->
+    <script src="../../../common/js/utils.js" defer></script>
 </body>
 </html>
 

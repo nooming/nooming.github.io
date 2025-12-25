@@ -19,80 +19,7 @@
     <link rel="stylesheet" href="css/converter.css">
     
     <style>
-        /* 页面特定样式 - 与首页风格一致 */
-        body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        }
-        
-        /* 页面头部布局 */
-        .page-header {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 15px;
-        }
-        
-        .header-top {
-            display: flex;
-            align-items: center;
-            margin-bottom: 0;
-        }
-        
-        .back-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white !important;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-            flex-shrink: 0;
-            font-size: 0.95rem;
-            padding: 9px 18px;
-            margin-bottom: 0 !important;
-        }
-        
-        .back-btn:hover {
-            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-        }
-        
-        h1 {
-            color: #2c3e50;
-            margin: 0 0 3px 0;
-            font-size: 2rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: -0.5px;
-            text-align: center;
-        }
-        
-        .converter {
-            background: white;
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            margin-top: 0;
-        }
-        
-        @media (max-width: 767.98px) {
-            .page-header {
-                margin-bottom: 20px;
-            }
-            .header-top {
-                margin-bottom: 0;
-            }
-            h1 {
-                font-size: 1.5rem;
-            }
-            .back-btn {
-                font-size: 0.85rem;
-                padding: 7px 14px;
-            }
-            .converter {
-                padding: 20px 18px;
-                border-radius: 14px;
-            }
-        }
+        /* 页面特定样式 - 已提取通用样式到 common.css */
     </style>
 </head>
 <body class="page-container">
@@ -160,9 +87,9 @@
     </div>
 
     <!-- 公共工具函数 -->
-    <script src="../../../common/js/utils.js"></script>
+    <script src="../../../common/js/utils.js" defer></script>
     <!-- 本地JS文件 -->
-    <script src="js/converter.js"></script>
+    <script src="js/converter.js" defer></script>
 </body>
 </html>
 

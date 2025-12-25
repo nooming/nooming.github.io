@@ -122,6 +122,8 @@
             font-size: 0.9rem;
             overflow-x: auto;
         }
+        /* 返回顶部按钮样式已在 common.css 中定义 */
+        
         @media (max-width: 767.98px) {
             body {
                 padding: 24px 14px;
@@ -141,6 +143,14 @@
             }
             .tips-content h3 {
                 font-size: 1.15rem;
+            }
+            
+            .back-to-top {
+                width: 45px;
+                height: 45px;
+                bottom: 20px;
+                right: 70px;
+                font-size: 20px;
             }
         }
     </style>
@@ -322,8 +332,13 @@
         <p>© 2025 个人学习网站 | 仅用于学习交流，遵循法律法规</p>
     </footer>
 
+    <!-- 返回顶部按钮 -->
+    <button class="back-to-top" id="backToTop" aria-label="返回顶部">↑</button>
+
     <!-- 公共工具函数 -->
     <script src="../../common/js/utils.js" defer></script>
+    
+    <!-- 返回顶部功能已在 common/js/utils.js 中自动初始化 -->
 </body>
 </html>
 

@@ -235,6 +235,141 @@ footer {
     letter-spacing: -0.5px;
 }
 
+/* ============================================
+   页面头部布局样式
+   ============================================ */
+
+/* 页面头部布局 */
+.page-header {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
+
+.header-top {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0;
+}
+
+/* 增强版返回按钮样式（支持渐变背景） */
+.back-btn.gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    margin-bottom: 0 !important;
+}
+
+.back-btn.gradient:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* 通用渐变返回按钮样式（用于工具页面） */
+.page-header .back-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    flex-shrink: 0;
+    font-size: 0.95rem;
+    padding: 9px 18px;
+    margin-bottom: 0 !important;
+}
+
+.page-header .back-btn:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* 通用页面标题居中样式 */
+.page-title {
+    text-align: center;
+}
+
+/* 通用白色卡片容器（用于工具页面） */
+.page-container .converter,
+.page-container .generator {
+    background: white;
+    border-radius: 16px;
+    padding: 25px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    margin-top: 0;
+}
+
+/* ============================================
+   返回顶部按钮样式
+   ============================================ */
+
+.back-to-top {
+    position: fixed;
+    bottom: 30px;
+    right: 70px;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+    transition: all 0.3s ease;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    pointer-events: none;
+}
+
+.back-to-top.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.back-to-top:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: translateY(-5px);
+    box-shadow: 0 6px 30px rgba(102, 126, 234, 0.6);
+}
+
+.back-to-top:active {
+    transform: translateY(-2px);
+}
+
+/* 通用页脚样式（用于首页） */
+.page-container footer {
+    text-align: center;
+    margin-top: 40px;
+    padding: 20px;
+    color: #7f8c8d;
+    background: white;
+    border-radius: 14px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.page-container footer p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.page-container footer p span {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.page-container footer p span:last-child {
+    font-size: 0.85rem;
+    font-weight: normal;
+    color: #7f8c8d;
+}
+
 /* 移动端优化 */
 @media (max-width: 767.98px) {
     .page-container {
@@ -244,12 +379,37 @@ footer {
     .page-title {
         font-size: 1.5rem;
         margin-bottom: 3px;
+        white-space: normal;
+        max-width: 60%;
     }
     
     .back-btn {
         margin-bottom: 15px;
         padding: 7px 14px;
         font-size: 0.85rem;
+    }
+    
+    .page-header {
+        margin-bottom: 20px;
+    }
+    
+    .page-header .back-btn {
+        font-size: 0.85rem;
+        padding: 7px 14px;
+    }
+    
+    .back-to-top {
+        width: 45px;
+        height: 45px;
+        bottom: 20px;
+        right: 70px;
+        font-size: 20px;
+    }
+    
+    .page-container .converter,
+    .page-container .generator {
+        padding: 20px 18px;
+        border-radius: 14px;
     }
 }
 

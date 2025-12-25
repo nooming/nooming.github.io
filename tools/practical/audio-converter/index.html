@@ -207,7 +207,7 @@
                 </select>
             </div>
 
-            <button class="convert-btn" onclick="convertAudio()">开始转换</button>
+            <button class="convert-btn" id="convert-btn">开始转换</button>
             <div id="result" style="margin-top: 20px;"></div>
         </div>
     </div>
@@ -274,6 +274,14 @@
                 resultDiv.innerHTML = `<p style="color: #e74c3c;">转换失败：${error.message}</p>`;
             }
         }
+        
+        // 绑定事件
+        document.addEventListener('DOMContentLoaded', function() {
+            const convertBtn = document.getElementById('convert-btn');
+            if (convertBtn) {
+                convertBtn.addEventListener('click', convertAudio);
+            }
+        });
 
         // 将AudioBuffer转换为MP3格式
         async function audioBufferToMp3(buffer) {

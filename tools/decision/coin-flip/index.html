@@ -5,6 +5,13 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>在线抛硬币 - 快速随机选择工具</title>
     <meta name="description" content="一键在线抛硬币，随机生成正反面结果，帮助你快速做决定、抽签、玩游戏或处理生活中的小选择问题。">
+    <meta name="keywords" content="抛硬币,在线抛硬币,随机选择,正反面,决策工具">
+    <meta name="author" content="nooming">
+
+    <!-- Open Graph / 社交分享 -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="在线抛硬币 - 快速随机选择工具">
+    <meta property="og:description" content="一键在线抛硬币，随机生成正反面结果，帮助你快速做决定、抽签、玩游戏或处理生活中的小选择问题。">
 
     <link rel="apple-touch-icon" sizes="180x180" href="../../../favicon-io/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="../../../favicon-io/favicon-32x32.png">
@@ -12,241 +19,274 @@
     <link rel="manifest" href="../../../favicon-io/site.webmanifest">
     <link rel="shortcut icon" href="../../../favicon-io/favicon.ico">
 
+    <!-- 公共样式 -->
+    <link rel="stylesheet" href="../../../common/css/common.css">
+
     <link as="style" href="../assets/css/style.min.css" rel="preload">
     <link href="../assets/css/style.min.css" rel="stylesheet">
     <style>
+        /* 
+         * 注意：此页面使用大量 !important 是为了覆盖第三方库（coin.min.css）的样式
+         * 这是必要的，因为需要保持与网站整体风格一致
+         * 通过使用更具体的选择器可以减少部分 !important 的使用
+         */
+        
         /* 统一背景样式 */
-        body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%) !important;
+        body.coin-flip-page {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             min-height: 100vh;
         }
         
-        main {
-            margin: 0 !important;
-            padding: 0 !important;
+        body.coin-flip-page main {
+            margin: 0;
+            padding: 0;
         }
         
-        section {
-            margin: 0 !important;
+        body.coin-flip-page section {
+            margin: 0;
         }
         
-        /* 页面头部布局 */
-        header {
-            padding: 10px 20px !important;
-            margin-bottom: 0 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            position: relative !important;
+        /* 页面头部布局 - 使用更具体的选择器提高优先级 */
+        body.coin-flip-page header {
+            padding: 10px 20px;
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
         }
         
         /* 移除椭圆/圆形背景，使用现代扁平设计 */
-        .header-left-box {
-            background-color: transparent !important;
-            border-radius: 0 !important;
-            height: auto !important;
-            flex-shrink: 0 !important;
-        }
-        .header-center-box {
-            position: absolute !important;
-            left: 50% !important;
-            transform: translateX(-50%) !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            background: transparent !important;
-            border-radius: 0 !important;
-            width: auto !important;
-            height: auto !important;
-            margin: 0 !important;
-        }
-        .header-right-box {
-            background-color: transparent !important;
-            border-radius: 0 !important;
-            height: auto !important;
-            flex-shrink: 0 !important;
+        body.coin-flip-page .header-left-box {
+            background-color: transparent;
+            border-radius: 0;
+            height: auto;
+            flex-shrink: 0;
         }
         
-        .header-center-box h1 {
-            font-size: 1.4rem !important;
-            font-weight: 700 !important;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-            -webkit-background-clip: text !important;
-            -webkit-text-fill-color: transparent !important;
-            background-clip: text !important;
-            letter-spacing: -0.5px !important;
-            white-space: nowrap !important;
-            margin: 0 0 3px 0 !important;
-        }
-        .nav-links a {
-            border-radius: 0 !important;
-            background-color: transparent !important;
-            position: relative !important;
-            border-bottom: 2px solid transparent !important;
-            transition: all 0.3s ease !important;
-        }
-        .nav-links a:hover {
-            background-color: transparent !important;
-            border-bottom-color: #3498db !important;
-            color: #3498db !important;
-        }
-        .header-left-content-box a {
-            padding: 9px 18px !important;
-            border-radius: 10px !important;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-            color: white !important;
-            text-decoration: none !important;
-            font-weight: 500 !important;
-            transition: all 0.3s ease !important;
-            display: inline-block !important;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
-        }
-        .header-left-content-box a:hover {
-            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%) !important;
-            transform: translateY(-2px) !important;
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
-            border-bottom: none !important;
-        }
-        .coin-box {
-            margin: 0 !important;
-            padding: 0 !important;
-            background-color: transparent !important;
-            border-radius: 0 !important;
-            width: auto !important;
-            height: auto !important;
+        body.coin-flip-page .header-center-box {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border-radius: 0;
+            width: auto;
+            height: auto;
+            margin: 0;
         }
         
-        .coin-scope-box {
-            margin-left: 0 !important;
-            margin-right: 0 !important;
-            padding-left: 0 !important;
-            padding-right: 0 !important;
+        body.coin-flip-page .header-right-box {
+            background-color: transparent;
+            border-radius: 0;
+            height: auto;
+            flex-shrink: 0;
         }
         
-        footer {
-            text-align: center !important;
-            margin-top: 30px !important;
-            padding-top: 15px !important;
-            color: #95a5a6 !important;
-            border-top: 1px solid #ecf0f1 !important;
-            font-size: 0.85rem !important;
-            width: 100% !important;
+        body.coin-flip-page .header-center-box h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+            white-space: nowrap;
+            margin: 0 0 3px 0;
         }
-        footer p {
-            text-align: center !important;
-            margin: 0 auto !important;
+        
+        body.coin-flip-page .nav-links a {
+            border-radius: 0;
+            background-color: transparent;
+            position: relative;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
         }
+        
+        body.coin-flip-page .nav-links a:hover {
+            background-color: transparent;
+            border-bottom-color: #3498db;
+            color: #3498db;
+        }
+        
+        body.coin-flip-page .header-left-content-box a {
+            padding: 9px 18px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+            display: inline-block;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        body.coin-flip-page .header-left-content-box a:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            border-bottom: none;
+        }
+        
+        body.coin-flip-page .coin-box {
+            margin: 0;
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+            width: auto;
+            height: auto;
+        }
+        
+        body.coin-flip-page .coin-scope-box {
+            margin-left: 0;
+            margin-right: 0;
+            padding-left: 0;
+            padding-right: 0;
+        }
+        
+        body.coin-flip-page footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 15px;
+            color: #95a5a6;
+            border-top: 1px solid #ecf0f1;
+            font-size: 0.85rem;
+            width: 100%;
+        }
+        
+        body.coin-flip-page footer p {
+            text-align: center;
+            margin: 0 auto;
+        }
+        
         /* 精简导航 */
-        .nav-links {
-            gap: 15px !important;
+        body.coin-flip-page .nav-links {
+            gap: 15px;
         }
-        .nav-links a {
-            font-size: 0.9rem !important;
-            padding: 5px 10px !important;
+        
+        body.coin-flip-page .nav-links a {
+            font-size: 0.9rem;
+            padding: 5px 10px;
         }
+        
         /* 隐藏语言选择器 */
-        .language-selector {
-            display: none !important;
+        body.coin-flip-page .language-selector {
+            display: none;
         }
+        
         /* 重置按钮一直显示 */
-        .coin-reset-box {
-            display: flex !important;
+        body.coin-flip-page .coin-reset-box {
+            display: flex;
         }
-        /* 移动端适配 */
+        /* 移动端适配 - 使用更具体的选择器减少!important */
         @media (max-width: 767.98px) {
-            header {
-                padding: 10px 12px !important;
-                height: auto !important;
-                min-height: 64px !important;
-                flex-wrap: wrap !important;
+            body.coin-flip-page header {
+                padding: 10px 12px;
+                height: auto;
+                min-height: 64px;
+                flex-wrap: wrap;
             }
-            .header-left-box {
-                flex: 0 0 auto !important;
-                min-width: auto !important;
-                width: auto !important;
+            
+            body.coin-flip-page .header-left-box {
+                flex: 0 0 auto;
+                min-width: auto;
+                width: auto;
             }
-            .header-left-content-box {
-                width: auto !important;
-                margin-right: 8px !important;
+            
+            body.coin-flip-page .header-left-content-box {
+                width: auto;
+                margin-right: 8px;
             }
-            .header-center-box {
-                position: absolute !important;
-                left: 50% !important;
-                transform: translateX(-50%) !important;
-                flex: none !important;
-                min-width: 0 !important;
-                margin: 0 !important;
-                width: auto !important;
+            
+            body.coin-flip-page .header-center-box {
+                position: absolute;
+                left: 50%;
+                transform: translateX(-50%);
+                flex: none;
+                min-width: 0;
+                margin: 0;
+                width: auto;
             }
-            .header-center-box h1 {
-                font-size: 1.5rem !important;
-                white-space: normal !important;
-                max-width: 60% !important;
-                text-align: center !important;
+            
+            body.coin-flip-page .header-center-box h1 {
+                font-size: 1.5rem;
+                white-space: normal;
+                max-width: 60%;
+                text-align: center;
             }
-            .header-right-box {
-                flex: 0 0 auto !important;
-                min-width: 0 !important;
-                width: auto !important;
-                margin-left: 0 !important;
+            
+            body.coin-flip-page .header-right-box {
+                flex: 0 0 auto;
+                min-width: 0;
+                width: auto;
+                margin-left: 0;
             }
-            .header-right-content-box {
-                width: auto !important;
-                margin-left: 0 !important;
+            
+            body.coin-flip-page .header-right-content-box {
+                width: auto;
+                margin-left: 0;
             }
-            .nav-links {
-                display: flex !important;
-                gap: 8px !important;
-                flex-wrap: wrap !important;
+            
+            body.coin-flip-page .nav-links {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
             }
-            .nav-links a {
-                display: flex !important;
-                font-size: 0.8rem !important;
-                padding: 6px 12px !important;
-                white-space: nowrap !important;
+            
+            body.coin-flip-page .nav-links a {
+                display: flex;
+                font-size: 0.8rem;
+                padding: 6px 12px;
+                white-space: nowrap;
             }
-            .header-left-content-box a {
-                padding: 6px 12px !important;
+            
+            body.coin-flip-page .header-left-content-box a {
+                padding: 6px 12px;
             }
         }
+        
         @media (max-width: 480px) {
-            .header-center-box h1 {
-                font-size: 1rem !important;
+            body.coin-flip-page .header-center-box h1 {
+                font-size: 1rem;
             }
-            .nav-links {
-                gap: 6px !important;
+            
+            body.coin-flip-page .nav-links {
+                gap: 6px;
             }
-            .nav-links a {
-                font-size: 0.75rem !important;
-                padding: 5px 10px !important;
+            
+            body.coin-flip-page .nav-links a {
+                font-size: 0.75rem;
+                padding: 5px 10px;
             }
-            .header-left-content-box a {
-                padding: 5px 10px !important;
+            
+            body.coin-flip-page .header-left-content-box a {
+                padding: 5px 10px;
             }
         }
     </style>
 
-    <link as="script" href="../assets/js/script.min.js" rel="preload">
-
+    <!-- 第三方库样式 -->
     <link rel="preload" href="../assets/css/coin.min.css" as="style">
     <link href="../assets/css/coin.min.css" rel="stylesheet">
 
+    <!-- 第三方库脚本 -->
+    <link rel="preload" href="../assets/js/script.min.js" as="script">
     <link rel="preload" href="../assets/js/jscolor.min.js" as="script">
-
     <link rel="preload" href="../assets/js/coin.min.js" as="script">
 
 </head>
-<body>
+<body class="coin-flip-page">
 <header>
     <div class="header-left-box">
         <div class="header-left-content-box">
-            <a href="../index.html" style="text-decoration: none; color: #2c3e50; font-weight: 500; font-size: 0.85rem;">
-                返回上一级
-            </a>
+            <a href="../index.html">返回上一级</a>
         </div>
     </div>
     <div class="header-center-box">
-        <h1 style="margin: 0 0 3px 0; font-size: 1.4rem; font-weight: 600; color: #2c3e50; white-space: nowrap;">在线抛硬币</h1>
+        <h1>在线抛硬币</h1>
     </div>
     <div class="header-right-box">
         <div class="header-right-content-box">
@@ -303,10 +343,12 @@
     <p>© 2025 个人学习网站 | 仅用于学习交流，请勿用于商业用途</p>
 </footer>
 
+<!-- 第三方库脚本 -->
 <script defer src="../assets/js/script.min.js"></script>
-
 <script defer src="../assets/js/jscolor.min.js"></script>
-
 <script defer src="../assets/js/coin.min.js"></script>
+
+<!-- 公共工具函数 -->
+<script src="../../../common/js/utils.js" defer></script>
 </body>
 </html>
