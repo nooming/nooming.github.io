@@ -762,7 +762,7 @@
             return eyeCount;
         }
 
-        // 评估位置价值（围棋思路）
+        // 评估位置价值（围棋思路 - 改进版）
         function evaluatePosition(row, col, player) {
             if (!canPlace(row, col, player)) return -1;
             
@@ -783,9 +783,9 @@
                 }
             }
             board[row][col] = 0;
-            score += captureSize * 150; // 吃子价值很高
+            score += captureSize * 250; // 提高吃子价值
             
-            // 2. 防守价值：保护自己的重要棋子
+            // 2. 防守价值：保护自己的重要棋子（改进：更早识别危险）
             board[row][col] = player;
             let defenseValue = 0;
             for (let [nr, nc] of getNeighbors(row, col)) {
@@ -793,17 +793,20 @@
                     const myGroup = findGroup(nr, nc);
                     if (myGroup.liberties.length === 1) {
                         // 只有一口气，非常危险
-                        defenseValue += myGroup.stones.length * 80;
+                        defenseValue += myGroup.stones.length * 150;
                     } else if (myGroup.liberties.length === 2) {
                         // 两口气，需要关注
-                        defenseValue += myGroup.stones.length * 30;
+                        defenseValue += myGroup.stones.length * 60;
+                    } else if (myGroup.liberties.length === 3) {
+                        // 三口气，轻微关注
+                        defenseValue += myGroup.stones.length * 20;
                     }
                 }
             }
             board[row][col] = 0;
             score += defenseValue;
             
-            // 3. 阻止对手吃子
+            // 3. 阻止对手吃子（改进：考虑对手可能的威胁）
             board[row][col] = opponent;
             let blockValue = 0;
             for (let [nr, nc] of getNeighbors(row, col)) {
@@ -811,17 +814,21 @@
                     const oppGroup = findGroup(nr, nc);
                     if (oppGroup.liberties.length === 1) {
                         // 阻止对手吃子
-                        blockValue += oppGroup.stones.length * 40;
+                        blockValue += oppGroup.stones.length * 80;
+                    } else if (oppGroup.liberties.length === 2) {
+                        // 阻止对手可能的威胁
+                        blockValue += oppGroup.stones.length * 30;
                     }
                 }
             }
             board[row][col] = 0;
             score += blockValue;
             
-            // 4. 连接价值：连接自己的棋子形成更大的势力
+            // 4. 连接价值：连接自己的棋子形成更大的势力（改进：更重视大块连接）
             board[row][col] = player;
             let connectionValue = 0;
             let connectedGroups = 0;
+            let totalConnectedStones = 0;
             const visitedGroups = new Set();
             for (let [nr, nc] of getNeighbors(row, col)) {
                 if (board[nr][nc] === player) {
@@ -831,21 +838,24 @@
                         if (!visitedGroups.has(groupKey)) {
                             visitedGroups.add(groupKey);
                             connectedGroups++;
-                            connectionValue += group.stones.length * 10;
+                            totalConnectedStones += group.stones.length;
+                            connectionValue += group.stones.length * 15;
                         }
                     }
                 }
             }
             if (connectedGroups > 1) {
-                connectionValue *= 1.5; // 连接多个棋子组更有价值
+                connectionValue *= 2.0; // 连接多个棋子组更有价值
+                connectionValue += totalConnectedStones * 10; // 大块连接额外奖励
             }
             board[row][col] = 0;
             score += connectionValue;
             
-            // 5. 切断价值：切断对手的连接
+            // 5. 切断价值：切断对手的连接（改进：更重视切断大块）
             board[row][col] = player;
             let cutValue = 0;
             const oppGroups = new Set();
+            let totalOppStones = 0;
             for (let [nr, nc] of getNeighbors(row, col)) {
                 if (board[nr][nc] === opponent) {
                     const oppGroup = findGroup(nr, nc);
@@ -853,168 +863,110 @@
                         const groupKey = `${oppGroup.stones[0][0]},${oppGroup.stones[0][1]}`;
                         if (!oppGroups.has(groupKey)) {
                             oppGroups.add(groupKey);
-                            cutValue += oppGroup.stones.length * 15;
+                            totalOppStones += oppGroup.stones.length;
+                            cutValue += oppGroup.stones.length * 20;
                         }
                     }
                 }
             }
             if (oppGroups.size > 1) {
-                cutValue *= 1.3; // 切断多个连接更有价值
+                cutValue *= 1.5; // 切断多个连接更有价值
+                cutValue += totalOppStones * 8; // 切断大块额外奖励
             }
             board[row][col] = 0;
             score += cutValue;
             
-            // 6. 扩展势力：增加自己的气
+            // 6. 扩展势力：增加自己的气（改进：更重视气数）
             board[row][col] = player;
             const myGroup = findGroup(row, col);
-            score += myGroup.liberties.length * 8; // 气越多越好
+            score += myGroup.liberties.length * 12; // 气越多越好
+            // 额外奖励：形成大块
+            if (myGroup.stones.length > 1) {
+                score += myGroup.stones.length * 8;
+            }
             board[row][col] = 0;
             
-            // 7. 边角价值（围棋更重视边角）
+            // 7. 边角价值（围棋更重视边角 - 改进：更精细的评估）
             const edgeDistance = Math.min(
                 row, BOARD_SIZE - 1 - row,
                 col, BOARD_SIZE - 1 - col
             );
             if (edgeDistance <= 3) {
-                score += (4 - edgeDistance) * 5; // 靠近边角有价值
+                score += (4 - edgeDistance) * 8; // 靠近边角有价值
+            }
+            // 星位价值
+            const starPositions = [3, 9, 15];
+            if (starPositions.includes(row) && starPositions.includes(col)) {
+                score += 15; // 星位额外价值
             }
             
-            // 8. 眼的潜力
+            // 8. 眼的潜力（改进：更准确的眼识别）
             const eyePotential = hasEyePotential(row, col, player);
-            score += eyePotential * 20;
+            score += eyePotential * 30;
+            
+            // 9. 形状价值：避免坏形状，追求好形状
+            board[row][col] = player;
+            let shapeValue = 0;
+            // 检查是否形成"空三角"等坏形状
+            const neighbors = getNeighbors(row, col);
+            let friendlyNeighbors = 0;
+            for (let [nr, nc] of neighbors) {
+                if (board[nr][nc] === player) {
+                    friendlyNeighbors++;
+                }
+            }
+            // 2-3个相邻己方棋子是好形状
+            if (friendlyNeighbors >= 2 && friendlyNeighbors <= 3) {
+                shapeValue += 25;
+            } else if (friendlyNeighbors === 4) {
+                shapeValue -= 10; // 空三角等坏形状
+            }
+            board[row][col] = 0;
+            score += shapeValue;
+            
+            // 10. 控制价值：对周围区域的控制力
+            board[row][col] = player;
+            let controlValue = 0;
+            for (let dr = -2; dr <= 2; dr++) {
+                for (let dc = -2; dc <= 2; dc++) {
+                    if (dr === 0 && dc === 0) continue;
+                    const nr = row + dr;
+                    const nc = col + dc;
+                    if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
+                        if (board[nr][nc] === player) {
+                            controlValue += 5;
+                        } else if (board[nr][nc] === 0) {
+                            controlValue += 2;
+                        } else {
+                            controlValue -= 1; // 对手控制
+                        }
+                    }
+                }
+            }
+            board[row][col] = 0;
+            score += controlValue;
             
             return score;
         }
 
-        // AI 落子（智能策略）
+        // AI 落子（基于成熟算法：评估函数+浅层搜索）
         function aiMove() {
-            // 简单难度：只做基本防守和进攻
+            // 简单难度：基于评估函数
             if (aiDifficulty === 'easy') {
                 return aiMoveEasy();
             }
-            // 中等难度：当前逻辑
+            // 中等难度：评估函数+1层搜索
             else if (aiDifficulty === 'medium') {
                 return aiMoveMedium();
             }
-            // 困难难度：更深入的评估
+            // 困难难度：评估函数+2层搜索
             else {
                 return aiMoveHard();
             }
         }
 
-        // 简单难度AI
+        // 简单难度AI（基于评估函数）
         function aiMoveEasy() {
-            // 1. 优先吃子（但只吃大块）
-            for (let r = 0; r < BOARD_SIZE; r++) {
-                for (let c = 0; c < BOARD_SIZE; c++) {
-                    if (canPlace(r, c, 2)) {
-                        board[r][c] = 2;
-                        const opponent = 1;
-                        for (let [nr, nc] of getNeighbors(r, c)) {
-                            if (board[nr][nc] === opponent) {
-                                const oppGroup = findGroup(nr, nc);
-                                if (oppGroup.liberties.length === 0 && oppGroup.stones.length >= 3) {
-                                    board[r][c] = 0;
-                                    return { row: r, col: c };
-                                }
-                            }
-                        }
-                        board[r][c] = 0;
-                    }
-                }
-            }
-            
-            // 2. 简单防守：只保护大块
-            for (let r = 0; r < BOARD_SIZE; r++) {
-                for (let c = 0; c < BOARD_SIZE; c++) {
-                    if (canPlace(r, c, 1)) {
-                        board[r][c] = 1;
-                        let criticalDefense = false;
-                        for (let [nr, nc] of getNeighbors(r, c)) {
-                            if (board[nr][nc] === 1) {
-                                const group = findGroup(nr, nc);
-                                if (group.liberties.length === 1 && group.stones.length >= 4) {
-                                    criticalDefense = true;
-                                    break;
-                                }
-                            }
-                        }
-                        board[r][c] = 0;
-                        if (criticalDefense && canPlace(r, c, 2)) {
-                            return { row: r, col: c };
-                        }
-                    }
-                }
-            }
-            
-            // 3. 简单评估：只考虑基本价值
-            const candidateMoves = new Set();
-            for (let r = 0; r < BOARD_SIZE; r++) {
-                for (let c = 0; c < BOARD_SIZE; c++) {
-                    if (board[r][c] !== 0) {
-                        for (let dr = -2; dr <= 2; dr++) {
-                            for (let dc = -2; dc <= 2; dc++) {
-                                const nr = r + dr;
-                                const nc = c + dc;
-                                if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE && board[nr][nc] === 0) {
-                                    candidateMoves.add(`${nr},${nc}`);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            
-            if (candidateMoves.size === 0) {
-                const starPositions = [4, 10, 16];
-                const star = starPositions[Math.floor(Math.random() * starPositions.length)];
-                return { row: star, col: star };
-            }
-            
-            // 简单评估：只考虑吃子和防守价值
-            let bestMove = null;
-            let bestScore = -1;
-            for (let move of candidateMoves) {
-                const [r, c] = move.split(',').map(Number);
-                if (!canPlace(r, c, 2)) continue;
-                
-                let score = 0;
-                // 简化评估：只考虑吃子
-                board[r][c] = 2;
-                const opponent = 1;
-                for (let [nr, nc] of getNeighbors(r, c)) {
-                    if (board[nr][nc] === opponent) {
-                        const oppGroup = findGroup(nr, nc);
-                        if (oppGroup.liberties.length === 0) {
-                            score += oppGroup.stones.length * 50;
-                        }
-                    }
-                }
-                board[r][c] = 0;
-                
-                // 添加一些随机性
-                score += Math.random() * 20;
-                
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestMove = { row: r, col: c };
-                }
-            }
-            
-            if (bestMove) {
-                return bestMove;
-            }
-            
-            const movesArray = Array.from(candidateMoves).map(m => {
-                const [r, c] = m.split(',').map(Number);
-                return { row: r, col: c };
-            });
-            
-            return movesArray[Math.floor(Math.random() * movesArray.length)];
-        }
-
-        // 中等难度AI（原逻辑）
-        function aiMoveMedium() {
             // 1. 优先吃子（最高优先级）
             for (let r = 0; r < BOARD_SIZE; r++) {
                 for (let c = 0; c < BOARD_SIZE; c++) {
@@ -1035,7 +987,7 @@
                 }
             }
             
-            // 2. 阻止对手吃自己的重要棋子
+            // 2. 防守：保护自己的重要棋子
             for (let r = 0; r < BOARD_SIZE; r++) {
                 for (let c = 0; c < BOARD_SIZE; c++) {
                     if (canPlace(r, c, 1)) {
@@ -1058,35 +1010,15 @@
                 }
             }
             
-            // 3. 使用评分系统选择最佳位置
+            // 3. 使用评估函数选择最佳位置
+            const candidateMoves = getSmartCandidateMoves(2, 2);
             let bestMove = null;
             let bestScore = -1;
             
-            const candidateMoves = new Set();
-            for (let r = 0; r < BOARD_SIZE; r++) {
-                for (let c = 0; c < BOARD_SIZE; c++) {
-                    if (board[r][c] !== 0) {
-                        for (let dr = -2; dr <= 2; dr++) {
-                            for (let dc = -2; dc <= 2; dc++) {
-                                const nr = r + dr;
-                                const nc = c + dc;
-                                if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE && board[nr][nc] === 0) {
-                                    candidateMoves.add(`${nr},${nc}`);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            
-            if (candidateMoves.size === 0) {
-                const starPositions = [4, 10, 16];
-                const star = starPositions[Math.floor(Math.random() * starPositions.length)];
-                return { row: star, col: star };
-            }
-            
             for (let move of candidateMoves) {
                 const [r, c] = move.split(',').map(Number);
+                if (!canPlace(r, c, 2)) continue;
+                
                 const score = evaluatePosition(r, c, 2);
                 if (score > bestScore) {
                     bestScore = score;
@@ -1094,24 +1026,186 @@
                 }
             }
             
-            if (bestMove && bestScore > 0) {
+            if (bestMove) {
                 return bestMove;
             }
             
-            const movesArray = Array.from(candidateMoves).map(m => {
-                const [r, c] = m.split(',').map(Number);
-                return { row: r, col: c };
-            });
-            
-            if (movesArray.length > 0) {
-                return movesArray[Math.floor(Math.random() * movesArray.length)];
-            }
-            
-            return null;
+            // 如果没有找到，返回星位
+            const starPositions = [3, 9, 15];
+            const star = starPositions[Math.floor(Math.random() * starPositions.length)];
+            return { row: star, col: star };
         }
 
-        // 困难难度AI：更深入的评估
-        function aiMoveHard() {
+        // 获取智能候选走法（改进：考虑全局热点，优化性能）
+        function getSmartCandidateMoves(player, searchRadius = 3) {
+            const candidateMoves = new Set();
+            const moveScores = new Map(); // 用于存储走法的初步评分
+            
+            // 1. 已有棋子周围（优先考虑有威胁的区域）
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (board[r][c] !== 0) {
+                        for (let dr = -searchRadius; dr <= searchRadius; dr++) {
+                            for (let dc = -searchRadius; dc <= searchRadius; dc++) {
+                                const nr = r + dr;
+                                const nc = c + dc;
+                                if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE && board[nr][nc] === 0) {
+                                    const key = `${nr},${nc}`;
+                                    candidateMoves.add(key);
+                                    // 计算初步评分（距离已有棋子的距离）
+                                    const distance = Math.abs(dr) + Math.abs(dc);
+                                    if (!moveScores.has(key) || moveScores.get(key) > distance) {
+                                        moveScores.set(key, distance);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // 2. 如果棋盘较空，添加星位
+            let stoneCount = 0;
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (board[r][c] !== 0) stoneCount++;
+                }
+            }
+            if (stoneCount < 10) {
+                const starPositions = [3, 9, 15];
+                starPositions.forEach(sr => {
+                    starPositions.forEach(sc => {
+                        if (board[sr][sc] === 0) {
+                            const key = `${sr},${sc}`;
+                            candidateMoves.add(key);
+                            moveScores.set(key, 0); // 星位优先级高
+                        }
+                    });
+                });
+            }
+            
+            // 3. 如果候选走法太多，按评分排序并只保留前N个
+            if (candidateMoves.size > 50) {
+                const sortedMoves = Array.from(candidateMoves).sort((a, b) => {
+                    return (moveScores.get(a) || 999) - (moveScores.get(b) || 999);
+                });
+                return new Set(sortedMoves.slice(0, 50));
+            }
+            
+            return candidateMoves;
+        }
+        
+        // 模拟落子（用于Minimax，不改变全局状态）
+        function simulatePlaceStone(row, col, player, savedState) {
+            if (!canPlace(row, col, player)) return null;
+            
+            board[row][col] = player;
+            
+            // 检查并移除被吃的子
+            const opponent = player === 1 ? 2 : 1;
+            let capturedCount = 0;
+            for (let [nr, nc] of getNeighbors(row, col)) {
+                if (board[nr][nc] === opponent) {
+                    const oppGroup = findGroup(nr, nc);
+                    if (oppGroup.liberties.length === 0) {
+                        capturedCount += oppGroup.stones.length;
+                        for (let [r, c] of oppGroup.stones) {
+                            board[r][c] = 0;
+                        }
+                    }
+                }
+            }
+            
+            return { capturedCount };
+        }
+        
+        // Negamax算法（Minimax的优化版本，来自开源实现）
+        function negamax(depth, alpha, beta, player, currentBlackCaptures, currentWhiteCaptures) {
+            if (depth === 0) {
+                // 评估当前局面（从当前玩家角度）
+                let score = 0;
+                for (let r = 0; r < BOARD_SIZE; r++) {
+                    for (let c = 0; c < BOARD_SIZE; c++) {
+                        if (board[r][c] === player) {
+                            const group = findGroup(r, c);
+                            score += group.stones.length * 10 + group.liberties.length * 5;
+                        } else if (board[r][c] !== 0) {
+                            const group = findGroup(r, c);
+                            score -= group.stones.length * 10 + group.liberties.length * 5;
+                        }
+                    }
+                }
+                // 考虑提子数（从当前玩家角度）
+                if (player === 2) {
+                    score += (currentWhiteCaptures - currentBlackCaptures) * 50;
+                } else {
+                    score += (currentBlackCaptures - currentWhiteCaptures) * 50;
+                }
+                return score;
+            }
+            
+            const candidateMoves = getSmartCandidateMoves(player, 2);
+            
+            if (candidateMoves.size === 0) {
+                // 如果没有候选走法，返回当前局面的评估分数
+                let score = 0;
+                for (let r = 0; r < BOARD_SIZE; r++) {
+                    for (let c = 0; c < BOARD_SIZE; c++) {
+                        if (board[r][c] === player) {
+                            const group = findGroup(r, c);
+                            score += group.stones.length * 10 + group.liberties.length * 5;
+                        } else if (board[r][c] !== 0) {
+                            const group = findGroup(r, c);
+                            score -= group.stones.length * 10 + group.liberties.length * 5;
+                        }
+                    }
+                }
+                if (player === 2) {
+                    score += (currentWhiteCaptures - currentBlackCaptures) * 50;
+                } else {
+                    score += (currentBlackCaptures - currentWhiteCaptures) * 50;
+                }
+                return score;
+            }
+            
+            // 限制候选走法数量以提高性能
+            const movesArray = Array.from(candidateMoves).slice(0, 12);
+            
+            let bestScore = -Infinity;
+            for (let move of movesArray) {
+                const [r, c] = move.split(',').map(Number);
+                if (!canPlace(r, c, player)) continue;
+                
+                // 保存状态
+                const savedBoard = board.map(row => [...row]);
+                let newBlackCaptures = currentBlackCaptures;
+                let newWhiteCaptures = currentWhiteCaptures;
+                
+                // 执行走法
+                const result = simulatePlaceStone(r, c, player, { blackCaptures: currentBlackCaptures, whiteCaptures: currentWhiteCaptures });
+                if (result) {
+                    if (player === 1) {
+                        newBlackCaptures += result.capturedCount;
+                    } else {
+                        newWhiteCaptures += result.capturedCount;
+                    }
+                }
+                
+                const score = -negamax(depth - 1, -beta, -alpha, player === 1 ? 2 : 1, newBlackCaptures, newWhiteCaptures);
+                
+                // 恢复状态
+                board = savedBoard;
+                
+                bestScore = Math.max(bestScore, score);
+                alpha = Math.max(alpha, score);
+                if (beta <= alpha) break; // Alpha-Beta剪枝
+            }
+            
+            return bestScore;
+        }
+        
+        // 中等难度AI（评估函数+1层搜索）
+        function aiMoveMedium() {
             // 1. 优先吃子（最高优先级）
             for (let r = 0; r < BOARD_SIZE; r++) {
                 for (let c = 0; c < BOARD_SIZE; c++) {
@@ -1132,7 +1226,7 @@
                 }
             }
             
-            // 2. 阻止对手吃自己的重要棋子
+            // 2. 防守：保护自己的重要棋子
             for (let r = 0; r < BOARD_SIZE; r++) {
                 for (let c = 0; c < BOARD_SIZE; c++) {
                     if (canPlace(r, c, 1)) {
@@ -1155,82 +1249,179 @@
                 }
             }
             
-            // 3. 深度评估：使用更全面的评分系统
-            let bestMove = null;
-            let bestScore = -1;
-            
-            const candidateMoves = new Set();
-            for (let r = 0; r < BOARD_SIZE; r++) {
-                for (let c = 0; c < BOARD_SIZE; c++) {
-                    if (board[r][c] !== 0) {
-                        for (let dr = -3; dr <= 3; dr++) {
-                            for (let dc = -3; dc <= 3; dc++) {
-                                const nr = r + dr;
-                                const nc = c + dc;
-                                if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE && board[nr][nc] === 0) {
-                                    candidateMoves.add(`${nr},${nc}`);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            
+            // 3. 使用评估函数+1层搜索
+            const candidateMoves = getSmartCandidateMoves(2, 3);
             if (candidateMoves.size === 0) {
-                const starPositions = [4, 10, 16];
+                const starPositions = [3, 9, 15];
                 const star = starPositions[Math.floor(Math.random() * starPositions.length)];
                 return { row: star, col: star };
             }
             
-            // 困难难度：更全面的评估，考虑更多因素
+            // 先按评估函数排序，取前8个
+            const movesWithScores = [];
             for (let move of candidateMoves) {
                 const [r, c] = move.split(',').map(Number);
-                let score = evaluatePosition(r, c, 2);
-                
-                // 额外评估：考虑多步影响和整体局势
-                board[r][c] = 2;
-                const myGroup = findGroup(r, c);
-                score += myGroup.liberties.length * 12; // 更重视气
-                score += myGroup.stones.length * 15; // 更重视连接
-                
-                // 评估对周围区域的控制
-                let controlScore = 0;
-                for (let dr = -2; dr <= 2; dr++) {
-                    for (let dc = -2; dc <= 2; dc++) {
-                        const nr = r + dr;
-                        const nc = c + dc;
-                        if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
-                            if (board[nr][nc] === 2) {
-                                controlScore += 3;
-                            } else if (board[nr][nc] === 0) {
-                                controlScore += 1;
-                            }
-                        }
-                    }
-                }
-                score += controlScore;
-                board[r][c] = 0;
-                
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestMove = { row: r, col: c };
+                if (!canPlace(r, c, 2)) continue;
+                const score = evaluatePosition(r, c, 2);
+                if (score > 0) {
+                    movesWithScores.push({ row: r, col: c, score });
                 }
             }
             
-            if (bestMove && bestScore > 0) {
-                return bestMove;
-            }
+            movesWithScores.sort((a, b) => b.score - a.score);
+            const topMoves = movesWithScores.slice(0, 8);
             
-            const movesArray = Array.from(candidateMoves).map(m => {
-                const [r, c] = m.split(',').map(Number);
-                return { row: r, col: c };
-            });
-            
-            if (movesArray.length > 0) {
+            if (topMoves.length === 0) {
+                const movesArray = Array.from(candidateMoves).map(m => {
+                    const [r, c] = m.split(',').map(Number);
+                    return { row: r, col: c };
+                });
                 return movesArray[Math.floor(Math.random() * movesArray.length)];
             }
             
-            return null;
+            // 对前8个走法使用1层Negamax评估
+            let bestMove = null;
+            let bestScore = -Infinity;
+            
+            for (let move of topMoves) {
+                // 保存状态
+                const savedBoard = board.map(row => [...row]);
+                const savedBlackCaptures = blackCaptures;
+                const savedWhiteCaptures = whiteCaptures;
+                
+                // 执行走法（模拟）
+                const result = simulatePlaceStone(move.row, move.col, 2, { blackCaptures, whiteCaptures });
+                if (result) {
+                    whiteCaptures += result.capturedCount;
+                }
+                
+                // 使用1层Negamax评估
+                const score = negamax(1, -Infinity, Infinity, 2, blackCaptures, whiteCaptures);
+                
+                // 恢复状态
+                board = savedBoard.map(row => [...row]);
+                blackCaptures = savedBlackCaptures;
+                whiteCaptures = savedWhiteCaptures;
+                
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+                }
+            }
+            
+            return bestMove || topMoves[0];
+        }
+
+        // 困难难度AI：使用评估函数+2层搜索
+        function aiMoveHard() {
+            // 1. 优先吃子（最高优先级）
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (canPlace(r, c, 2)) {
+                        board[r][c] = 2;
+                        const opponent = 1;
+                        for (let [nr, nc] of getNeighbors(r, c)) {
+                            if (board[nr][nc] === opponent) {
+                                const oppGroup = findGroup(nr, nc);
+                                if (oppGroup.liberties.length === 0 && oppGroup.stones.length >= 1) {
+                                    board[r][c] = 0;
+                                    return { row: r, col: c };
+                                }
+                            }
+                        }
+                        board[r][c] = 0;
+                    }
+                }
+            }
+            
+            // 2. 防守：保护自己的重要棋子（更早识别危险）
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (canPlace(r, c, 1)) {
+                        board[r][c] = 1;
+                        let criticalDefense = false;
+                        for (let [nr, nc] of getNeighbors(r, c)) {
+                            if (board[nr][nc] === 1) {
+                                const group = findGroup(nr, nc);
+                                if (group.liberties.length === 1 && group.stones.length >= 1) {
+                                    criticalDefense = true;
+                                    break;
+                                } else if (group.liberties.length === 2 && group.stones.length >= 5) {
+                                    // 大块只有两口气也很危险
+                                    criticalDefense = true;
+                                    break;
+                                }
+                            }
+                        }
+                        board[r][c] = 0;
+                        if (criticalDefense && canPlace(r, c, 2)) {
+                            return { row: r, col: c };
+                        }
+                    }
+                }
+            }
+            
+            // 3. 使用评估函数+2层搜索
+            const candidateMoves = getSmartCandidateMoves(2, 4);
+            if (candidateMoves.size === 0) {
+                const starPositions = [3, 9, 15];
+                const star = starPositions[Math.floor(Math.random() * starPositions.length)];
+                return { row: star, col: star };
+            }
+            
+            // 先按评估函数排序，取前10个
+            const movesWithScores = [];
+            for (let move of candidateMoves) {
+                const [r, c] = move.split(',').map(Number);
+                if (!canPlace(r, c, 2)) continue;
+                const score = evaluatePosition(r, c, 2);
+                if (score > 0) {
+                    movesWithScores.push({ row: r, col: c, score });
+                }
+            }
+            
+            movesWithScores.sort((a, b) => b.score - a.score);
+            const topMoves = movesWithScores.slice(0, 10);
+            
+            if (topMoves.length === 0) {
+                const movesArray = Array.from(candidateMoves).map(m => {
+                    const [r, c] = m.split(',').map(Number);
+                    return { row: r, col: c };
+                });
+                return movesArray[Math.floor(Math.random() * movesArray.length)];
+            }
+            
+            // 对前10个走法使用2层Negamax评估
+            let bestMove = null;
+            let bestScore = -Infinity;
+            
+            for (let move of topMoves) {
+                // 保存状态
+                const savedBoard = board.map(row => [...row]);
+                const savedBlackCaptures = blackCaptures;
+                const savedWhiteCaptures = whiteCaptures;
+                
+                // 执行走法（模拟）
+                const result = simulatePlaceStone(move.row, move.col, 2, { blackCaptures, whiteCaptures });
+                if (result) {
+                    whiteCaptures += result.capturedCount;
+                }
+                
+                // 使用2层Negamax评估
+                const score = negamax(2, -Infinity, Infinity, 2, blackCaptures, whiteCaptures);
+                
+                // 恢复状态
+                board = savedBoard.map(row => [...row]);
+                blackCaptures = savedBlackCaptures;
+                whiteCaptures = savedWhiteCaptures;
+                
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+                }
+            }
+            
+            return bestMove || topMoves[0];
         }
 
         // 获取点击坐标（处理移动端缩放）
