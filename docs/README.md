@@ -51,7 +51,7 @@
 ├── index.html                  # 主页
 ├── docs/                       # 文档目录
 │   ├── README.md              # 项目说明文档
-│   └── CHANGELOG_v1.3.md      # 更新日志
+│   └── CHANGELOG.md           # 更新日志
 ├── articles/                   # 技术教程文章
 │   ├── cat-catch-tutorial/    # 猫抓扩展教程
 │   │   └── cat-catch.zip      # 猫抓扩展源码压缩包
@@ -59,10 +59,14 @@
 ├── navigation/                 # 网址导航
 ├── tools/                      # 工具集合
 │   ├── decision/               # 选择辅助工具
-│   │   └── wheel/              # 转盘工具集合
-│   │       ├── index.html      # 选择困难症转盘
-│   │       ├── coin-flip/      # 抛硬币
-│   │       └── quick-choice/   # 快速选择
+│   │   ├── index.html          # 选择辅助工具合集首页
+│   │   ├── assets/             # 共享资源（CSS、JS）
+│   │   ├── wheel/              # 转盘工具
+│   │   │   └── index.html
+│   │   ├── coin-flip/          # 抛硬币
+│   │   │   └── index.html
+│   │   └── quick-choice/       # 快速选择
+│   │       └── index.html
 │   ├── psychological/          # 心理测试
 │   │   ├── mbti-test/         # MBTI性格测试
 │   │   └── animal-test/       # 动物塑测试
