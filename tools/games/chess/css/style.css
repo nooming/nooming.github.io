@@ -9,7 +9,7 @@ body {
 h1 {
     color: #2c3e50;
     margin-bottom: 20px;
-    font-size: 2.3rem;
+    font-size: 2rem;
     font-weight: 700;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     -webkit-background-clip: text;
@@ -27,6 +27,7 @@ h1 {
     border-radius: 8px;
     text-decoration: none !important;
     font-weight: 500;
+    font-size: 0.95rem;
     transition: all 0.3s ease;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
@@ -194,8 +195,8 @@ h1 {
     
     .back-btn {
         margin-bottom: 15px;
-        padding: 8px 16px;
-        font-size: 0.9rem;
+        padding: 7px 14px;
+        font-size: 0.85rem;
     }
     
     .game-info {
