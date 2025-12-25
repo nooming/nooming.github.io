@@ -1,0 +1,12 @@
+# robots.txt for nooming.github.io
+
+User-agent: *
+Allow: /
+
+# 禁止爬取的文件和目录
+Disallow: /docs/
+Disallow: /*.zip$
+
+# Sitemap
+Sitemap: https://nooming.github.io/sitemap.xml
+

@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <!-- 主页 -->
+    <url>
+        <loc>https://nooming.github.io/</loc>
+        <lastmod>2025-01-27</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>1.0</priority>
+    </url>
+    
+    <!-- 网址导航 -->
+    <url>
+        <loc>https://nooming.github.io/tools/navigation/index.html</loc>
+        <lastmod>2025-01-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    
+    <!-- 技术教程 -->
+    <url>
+        <loc>https://nooming.github.io/articles/crawler-experience/index.html</loc>
+        <lastmod>2025-01-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://nooming.github.io/articles/cat-catch-tutorial/index.html</loc>
+        <lastmod>2025-01-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    
+    <!-- 选择辅助工具 -->
+    <url>
+        <loc>https://nooming.github.io/tools/decision/index.html</loc>
+        <lastmod>2025-01-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://nooming.github.io/tools/decision/wheel/index.html</loc>
+        <lastmod>2025-01-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://nooming.github.io/tools/decision/wheel/coin-flip/index.html</loc>
+        <lastmod>2025-01-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://nooming.github.io/tools/decision/wheel/quick-choice/index.html</loc>
+        <lastmod>2025-01-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    
+    <!-- 心理测试 -->
+    <url>
+        <loc>https://nooming.github.io/tools/psychological/index.html</loc>
+        <lastmod>2025-01-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://nooming.github.io/tools/psychological/mbti-test/index.html</loc>
+        <lastmod>2025-01-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://nooming.github.io/tools/psychological/animal-test/index.html</loc>
+        <lastmod>2025-01-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    
+    <!-- 实用工具 -->
+    <url>
+        <loc>https://nooming.github.io/tools/practical/index.html</loc>
+        <lastmod>2025-01-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://nooming.github.io/tools/practical/audio-converter/index.html</loc>
+        <lastmod>2025-01-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://nooming.github.io/tools/practical/base-converter/index.html</loc>
+        <lastmod>2025-01-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://nooming.github.io/tools/practical/base64-converter/index.html</loc>
+        <lastmod>2025-01-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://nooming.github.io/tools/practical/qr-code-generator/index.html</loc>
+        <lastmod>2025-01-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    
+    <!-- 小游戏 -->
+    <url>
+        <loc>https://nooming.github.io/tools/games/index.html</loc>
+        <lastmod>2025-01-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://nooming.github.io/tools/games/gomoku/index.html</loc>
+        <lastmod>2025-01-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://nooming.github.io/tools/games/go/index.html</loc>
+        <lastmod>2025-01-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://nooming.github.io/tools/games/chess/index.html</loc>
+        <lastmod>2025-01-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://nooming.github.io/tools/games/dino/index.html</loc>
+        <lastmod>2025-01-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+</urlset>
+

@@ -11,6 +11,18 @@
     <meta property="og:type" content="website">
     <meta property="og:title" content="我的个人主页 - 学习与工具集合">
     <meta property="og:description" content="个人学习网站 - 提供实用工具集合、技术心得分享">
+    <meta property="og:url" content="https://nooming.github.io/">
+    <meta property="og:image" content="https://nooming.github.io/favicon-io/android-chrome-512x512.png">
+    <meta property="og:site_name" content="nooming的个人学习网站">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="我的个人主页 - 学习与工具集合">
+    <meta name="twitter:description" content="个人学习网站 - 提供实用工具集合、技术心得分享">
+    <meta name="twitter:image" content="https://nooming.github.io/favicon-io/android-chrome-512x512.png">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://nooming.github.io/">
     
     <!-- Favicon -->
     <link rel="apple-touch-icon" sizes="180x180" href="favicon-io/apple-touch-icon.png">
@@ -458,12 +470,33 @@
             }
         }
     </style>
+    
+    <!-- 结构化数据 (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "nooming的个人学习网站",
+        "url": "https://nooming.github.io/",
+        "description": "个人学习网站 - 提供实用工具集合、技术心得分享，包括进制转换器、音频格式转换器、选择困难症转盘等在线工具",
+        "author": {
+            "@type": "Person",
+            "name": "nooming",
+            "url": "https://github.com/nooming"
+        },
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://nooming.github.io/?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+        }
+    }
+    </script>
 </head>
 <body>
     <header>
         <h1>✨ 欢迎来到我的个人主页</h1>
         <p class="intro">
-            🚀 GitHub Pages搭建 | 我的GitHub：<a href="https://github.com/nooming" target="_blank" class="github-link">点击访问</a>
+            🚀 GitHub Pages搭建 | 我的GitHub：<a href="https://github.com/nooming" target="_blank" rel="noopener noreferrer" class="github-link">点击访问</a>
         </p>
         <p class="intro">📚 个人学习记录 · 🛠️ 实用工具集合 · 💡 技术心得分享</p>
     </header>
