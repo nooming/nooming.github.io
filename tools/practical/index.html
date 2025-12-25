@@ -23,65 +23,12 @@
     <link rel="stylesheet" href="../../common/css/common.css">
 
     <style>
-        body {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 25px 20px;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-        }
-        
-        h1 {
-            color: #2c3e50;
-            margin-bottom: 12px;
-            font-size: 2.3rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: -0.5px;
-        }
-        
-        .back-btn {
-            display: inline-block;
-            margin-bottom: 20px;
-            padding: 9px 18px;
-            background-color: #34495e;
-            color: white !important;
-            border-radius: 8px;
-            text-decoration: none !important;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        
-        .back-btn:hover {
-            background-color: #2c3e50;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        
-        /* 移动端优化 */
-        @media (max-width: 767.98px) {
-            body {
-                padding: 15px 12px;
-            }
-            h1 {
-                font-size: 1.8rem;
-                margin-bottom: 10px;
-            }
-            .back-btn {
-                margin-bottom: 15px;
-                padding: 8px 16px;
-                font-size: 0.9rem;
-            }
-        }
+        /* 页面特定样式 */
     </style>
 </head>
-<body>
+<body class="page-container">
     <a href="../../index.html" class="back-btn">← 返回主页</a>
-    <h1>实用工具合集</h1>
+    <h1 class="page-title">实用工具合集</h1>
 
     <main>
         <section class="section">
