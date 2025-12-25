@@ -381,6 +381,7 @@ footer {
         margin-bottom: 3px;
         white-space: normal;
         max-width: 60%;
+        text-align: center;
     }
     
     .back-btn {
