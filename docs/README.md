@@ -56,8 +56,8 @@
 │   ├── cat-catch-tutorial/    # 猫抓扩展教程
 │   │   └── cat-catch.zip      # 猫抓扩展源码压缩包
 │   └── crawler-experience/     # 浏览器开发者工具实战
+├── navigation/                 # 网址导航
 ├── tools/                      # 工具集合
-│   ├── navigation/             # 网址导航
 │   ├── decision/               # 选择辅助工具
 │   │   └── wheel/              # 转盘工具集合
 │   │       ├── index.html      # 选择困难症转盘
