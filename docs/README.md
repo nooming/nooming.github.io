@@ -49,8 +49,12 @@
 
 ```
 ├── index.html                  # 主页
+├── docs/                       # 文档目录
+│   ├── README.md              # 项目说明文档
+│   └── CHANGELOG_v1.3.md      # 更新日志
 ├── articles/                   # 技术教程文章
 │   ├── cat-catch-tutorial/    # 猫抓扩展教程
+│   │   └── cat-catch.zip      # 猫抓扩展源码压缩包
 │   └── crawler-experience/     # 浏览器开发者工具实战
 ├── tools/                      # 工具集合
 │   ├── navigation/             # 网址导航
