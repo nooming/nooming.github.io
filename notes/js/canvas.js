@@ -89,7 +89,10 @@ function initCanvas() {
     // 鼠标事件
     canvas.addEventListener('mousedown', startDraw);
     canvas.addEventListener('mousemove', (e) => {
-        updateCrosshair(e);
+        // 只有在按下时才更新准心（删除模式下）
+        if (isDrawing && currentMode === 'eraser') {
+            updateCrosshair(e);
+        }
         draw(e);
     });
     canvas.addEventListener('mouseup', stopDraw);
@@ -101,7 +104,7 @@ function initCanvas() {
     // 触摸事件
     canvas.addEventListener('touchstart', handleTouch);
     canvas.addEventListener('touchmove', handleTouch);
-    canvas.addEventListener('touchend', stopDraw);
+    canvas.addEventListener('touchend', handleTouch);
 }
 
 // 获取画布坐标（考虑偏移量）
@@ -182,6 +185,8 @@ function startDraw(e) {
         // 删除笔画模式：允许滑动删除
         isDrawing = true;
         lastEraserPos = pos;
+        // 显示准心（按下时）
+        updateCrosshair(e);
         // 检测起始位置的笔画
         deleteStrokeAt(pos.x, pos.y);
         return;
@@ -252,6 +257,7 @@ function stopDraw(e) {
         isDrawing = false;
         if (currentMode === 'eraser') {
             lastEraserPos = null;
+            hideCrosshair(); // 松开时隐藏准心
         } else {
             currentStroke = null;
         }
@@ -263,13 +269,17 @@ function stopDraw(e) {
 function handleTouch(e) {
     e.preventDefault();
     if (e.type === 'touchstart') {
-        updateCrosshair(e);
         startDraw(e);
+        // startDraw 中会处理准心的显示
     } else if (e.type === 'touchmove') {
-        updateCrosshair(e);
+        // 只有在按下时才更新准心（删除模式下）
+        if (isDrawing && currentMode === 'eraser') {
+            updateCrosshair(e);
+        }
         draw(e);
     } else if (e.type === 'touchend') {
         hideCrosshair();
+        stopDraw(e);
     }
 }
 
@@ -362,7 +372,8 @@ function setMode(mode) {
         if (canvas) {
             canvas.style.cursor = 'default';
         }
-        // 准心会在鼠标移动时显示
+        // 准心会在按下时显示
+        hideCrosshair();
     } else {
         if (canvas) {
             canvas.style.cursor = 'crosshair';
@@ -373,8 +384,8 @@ function setMode(mode) {
 
 // 更新准心位置
 function updateCrosshair(e) {
-    // 只有在删除模式下才显示准心
-    if (currentMode !== 'eraser' || !canvas) {
+    // 只有在删除模式下且正在绘制时才显示准心
+    if (currentMode !== 'eraser' || !canvas || !isDrawing) {
         hideCrosshair();
         return;
     }
