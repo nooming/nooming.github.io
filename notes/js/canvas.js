@@ -215,15 +215,48 @@ function performDrawBatch() {
     ctx.strokeStyle = currentColor;
     
     // 批量处理所有待绘制的点
-    for (const pos of pendingPoints) {
-        // 添加点到当前笔画
+    // 优化：使用 beginPath 和一次性绘制所有线段，提高性能
+    ctx.beginPath();
+    
+    // 找到当前笔画的最后一个点作为起点
+    const lastPoint = currentStroke.points.length > 0 
+        ? currentStroke.points[currentStroke.points.length - 1]
+        : null;
+    
+    if (lastPoint) {
+        ctx.moveTo(lastPoint.x, lastPoint.y);
+    } else if (pendingPoints.length > 0) {
+        ctx.moveTo(pendingPoints[0].x, pendingPoints[0].y);
+        currentStroke.points.push({ x: pendingPoints[0].x, y: pendingPoints[0].y });
+    }
+    
+    // 添加所有待绘制的点
+    // 优化：限制一次处理的最大点数，避免单次绘制时间过长
+    const maxPointsPerBatch = 50; // 每次最多处理50个点
+    const pointsToProcess = pendingPoints.slice(0, maxPointsPerBatch);
+    const remainingPoints = pendingPoints.slice(maxPointsPerBatch);
+    
+    for (let i = lastPoint ? 0 : 1; i < pointsToProcess.length; i++) {
+        const pos = pointsToProcess[i];
         currentStroke.points.push({ x: pos.x, y: pos.y });
-        
         ctx.lineTo(pos.x, pos.y);
     }
     
     ctx.stroke();
-    pendingPoints = [];
+    
+    // 如果还有剩余点，保留它们供下次绘制
+    pendingPoints = remainingPoints;
+    
+    // 如果还有待处理的点，继续安排下一个 RAF
+    if (pendingPoints.length > 0 && isDrawing) {
+        if (rafId) {
+            cancelAnimationFrame(rafId);
+        }
+        rafId = requestAnimationFrame(() => {
+            performDrawBatch();
+            rafId = null;
+        });
+    }
 }
 
 // 绘制（优化版本，使用 requestAnimationFrame）
@@ -263,13 +296,17 @@ function draw(e) {
         // 将点添加到队列中
         pendingPoints.push({ x: pos.x, y: pos.y });
         
-        // 如果还没有安排 RAF，则安排一个
-        if (!rafId) {
-            rafId = requestAnimationFrame(() => {
-                performDrawBatch();
-                rafId = null;
-            });
+        // 每次 touchmove 都安排一个新的 RAF，确保及时绘制
+        // 如果已有 RAF，取消它并创建新的，这样可以保证最新的点被绘制
+        // 这样可以确保绘制尽可能及时，接近拖拽的流畅度
+        if (rafId) {
+            cancelAnimationFrame(rafId);
         }
+        
+        rafId = requestAnimationFrame(() => {
+            performDrawBatch();
+            rafId = null;
+        });
     } else {
         // 桌面端：直接绘制（鼠标事件频率较低）
         // 添加点到当前笔画
