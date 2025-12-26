@@ -230,9 +230,8 @@ function performDrawBatch() {
         currentStroke.points.push({ x: pendingPoints[0].x, y: pendingPoints[0].y });
     }
     
-    // 添加所有待绘制的点
-    // 优化：限制一次处理的最大点数，避免单次绘制时间过长
-    const maxPointsPerBatch = 50; // 每次最多处理50个点
+    // 每次只处理少量点，但更频繁地绘制，让画面更新更实时
+    const maxPointsPerBatch = 2; // 每次只处理2个点，减少单次绘制时间，增加绘制频率
     const pointsToProcess = pendingPoints.slice(0, maxPointsPerBatch);
     const remainingPoints = pendingPoints.slice(maxPointsPerBatch);
     
@@ -247,11 +246,8 @@ function performDrawBatch() {
     // 如果还有剩余点，保留它们供下次绘制
     pendingPoints = remainingPoints;
     
-    // 如果还有待处理的点，继续安排下一个 RAF
+    // 如果还有待处理的点，立即安排下一个 RAF，实现多次快速绘制
     if (pendingPoints.length > 0 && isDrawing) {
-        if (rafId) {
-            cancelAnimationFrame(rafId);
-        }
         rafId = requestAnimationFrame(() => {
             performDrawBatch();
             rafId = null;
