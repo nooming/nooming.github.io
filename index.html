@@ -387,6 +387,87 @@
             transform: translateX(6px);
         }
         
+        /* 笔记功能区域 - 醒目的设计 */
+        .notes-banner {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #4facfe 100%);
+            border-radius: 16px;
+            padding: 28px 25px;
+            margin-bottom: 35px;
+            text-align: center;
+            box-shadow: 0 15px 50px rgba(245, 87, 108, 0.4);
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .notes-banner::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 3s ease-in-out infinite;
+        }
+        
+        .notes-banner:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 0 20px 60px rgba(245, 87, 108, 0.5);
+        }
+        
+        .notes-title {
+            color: white;
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .notes-desc {
+            color: rgba(255, 255, 255, 0.98);
+            font-size: 1.05rem;
+            margin-bottom: 20px;
+            line-height: 1.5;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .notes-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 35px;
+            background-color: white;
+            color: #f5576c !important;
+            border-radius: 50px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            text-decoration: none !important;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 25px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .notes-btn::after {
+            content: '→';
+            font-size: 1.3rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .notes-btn:hover {
+            transform: scale(1.08) translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+            background-color: #f8f9fa;
+        }
+        
+        .notes-btn:hover::after {
+            transform: translateX(6px);
+        }
+        
         /* 返回顶部按钮样式已在 common.css 中定义 */
         
         /* 移动端优化 */
@@ -485,6 +566,27 @@
                 font-size: 0.95rem;
             }
             
+            .notes-banner {
+                padding: 22px 18px;
+                margin-bottom: 25px;
+                border-radius: 14px;
+            }
+            
+            .notes-title {
+                font-size: 1.4rem;
+                margin-bottom: 10px;
+            }
+            
+            .notes-desc {
+                font-size: 0.95rem;
+                margin-bottom: 18px;
+            }
+            
+            .notes-btn {
+                padding: 12px 28px;
+                font-size: 0.95rem;
+            }
+            
             footer {
                 margin-top: 30px;
                 padding: 16px;
@@ -529,6 +631,13 @@
         <h2 class="navigation-title">🌐 网址导航</h2>
         <p class="navigation-desc">精选实用网站集合，包含学习、娱乐、游戏、工具等各类网站导航，一站式解决你的需求</p>
         <a href="navigation/index.html" class="navigation-btn">立即探索</a>
+    </div>
+
+    <!-- 笔记功能 - 醒目区域 -->
+    <div class="notes-banner">
+        <h2 class="notes-title">📝 手写笔记</h2>
+        <p class="notes-desc">支持手写绘图和文本编辑的在线笔记工具，随时记录想法，支持多页面管理，数据自动保存到本地</p>
+        <a href="notes/index.html" class="notes-btn">开始记录</a>
     </div>
 
     <!-- 心得区块：多个实战教程 -->

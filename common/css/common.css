@@ -370,6 +370,38 @@ footer {
     color: #7f8c8d;
 }
 
+/* ============================================
+   卡片图标和标题样式（工具页面通用）
+   ============================================ */
+
+/* 卡片图标和标题容器 */
+.card-icon-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+/* 卡片图标 */
+.card-icon {
+    font-size: 2.5rem;
+    display: inline-block;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+/* 特色标签 */
+.feature-tag {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    margin-bottom: 12px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #a8e6cf 0%, #88d8a3 100%);
+    color: #00b894;
+}
+
 /* 移动端优化 */
 @media (max-width: 767.98px) {
     .page-container {
@@ -417,6 +449,18 @@ footer {
     .page-container .generator {
         padding: 20px 18px;
         border-radius: 14px;
+    }
+    
+    .card-icon {
+        font-size: 2rem;
+    }
+    
+    .card-icon-title {
+        gap: 8px;
+    }
+    
+    .feature-title {
+        font-size: 1.1rem;
     }
 }
 
