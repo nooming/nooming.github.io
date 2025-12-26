@@ -101,10 +101,10 @@ function initCanvas() {
         stopDraw(e);
     });
 
-    // 触摸事件
-    canvas.addEventListener('touchstart', handleTouch);
-    canvas.addEventListener('touchmove', handleTouch);
-    canvas.addEventListener('touchend', handleTouch);
+    // 触摸事件（使用 passive: false 以便调用 preventDefault）
+    canvas.addEventListener('touchstart', handleTouch, { passive: false });
+    canvas.addEventListener('touchmove', handleTouch, { passive: false });
+    canvas.addEventListener('touchend', handleTouch, { passive: false });
 }
 
 // 获取画布坐标（考虑偏移量）
@@ -206,7 +206,27 @@ function startDraw(e) {
     ctx.moveTo(pos.x, pos.y);
 }
 
-// 绘制
+// 执行实际绘制（在 requestAnimationFrame 中批量处理）
+function performDrawBatch() {
+    if (!isDrawing || !currentStroke || pendingPoints.length === 0) return;
+    
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.lineWidth = currentSize;
+    ctx.strokeStyle = currentColor;
+    
+    // 批量处理所有待绘制的点
+    for (const pos of pendingPoints) {
+        // 添加点到当前笔画
+        currentStroke.points.push({ x: pos.x, y: pos.y });
+        
+        ctx.lineTo(pos.x, pos.y);
+    }
+    
+    ctx.stroke();
+    pendingPoints = [];
+}
+
+// 绘制（优化版本，使用 requestAnimationFrame）
 function draw(e) {
     e.preventDefault();
     
@@ -221,6 +241,7 @@ function draw(e) {
     
     if (currentMode === 'eraser') {
         // 删除笔画模式：检测滑动路径上的笔画
+        // 对于删除模式，需要立即执行，不能延迟
         if (lastEraserPos) {
             // 检测从上一个位置到当前位置的线段是否与笔画相交
             deleteStrokesAlongPath(lastEraserPos.x, lastEraserPos.y, pos.x, pos.y);
@@ -234,15 +255,33 @@ function draw(e) {
     
     if (!currentStroke) return;
     
-    // 添加点到当前笔画
-    currentStroke.points.push({ x: pos.x, y: pos.y });
+    // 检测是否为触摸事件（移动端）
+    const isTouch = e.touches && e.touches.length > 0;
     
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.lineWidth = currentSize;
-    ctx.strokeStyle = currentColor;
-    
-    ctx.lineTo(pos.x, pos.y);
-    ctx.stroke();
+    if (isTouch) {
+        // 移动端：使用 requestAnimationFrame 优化性能
+        // 将点添加到队列中
+        pendingPoints.push({ x: pos.x, y: pos.y });
+        
+        // 如果还没有安排 RAF，则安排一个
+        if (!rafId) {
+            rafId = requestAnimationFrame(() => {
+                performDrawBatch();
+                rafId = null;
+            });
+        }
+    } else {
+        // 桌面端：直接绘制（鼠标事件频率较低）
+        // 添加点到当前笔画
+        currentStroke.points.push({ x: pos.x, y: pos.y });
+        
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.lineWidth = currentSize;
+        ctx.strokeStyle = currentColor;
+        
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+    }
 }
 
 // 停止绘制
@@ -255,6 +294,44 @@ function stopDraw(e) {
     
     if (isDrawing) {
         isDrawing = false;
+        
+        // 确保所有待处理的绘制都完成（移动端）
+        if (pendingPoints.length > 0) {
+            // 如果有待处理的点，立即执行最后一次绘制
+            if (rafId) {
+                cancelAnimationFrame(rafId);
+            }
+            performDrawBatch();
+        }
+        
+        // 如果是触摸结束，添加最后一个点
+        if (e && e.changedTouches && e.changedTouches.length > 0 && currentStroke) {
+            // 从 changedTouches 获取最后一个触摸点
+            const touch = e.changedTouches[0];
+            const rect = canvas.getBoundingClientRect();
+            const finalPos = {
+                x: touch.clientX - rect.left,
+                y: touch.clientY - rect.top
+            };
+            
+            // 如果队列中还有待处理的点，先绘制它们
+            if (pendingPoints.length > 0) {
+                performDrawBatch();
+            }
+            
+            // 添加最后一个点并绘制
+            currentStroke.points.push({ x: finalPos.x, y: finalPos.y });
+            
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.lineWidth = currentSize;
+            ctx.strokeStyle = currentColor;
+            ctx.lineTo(finalPos.x, finalPos.y);
+            ctx.stroke();
+        }
+        
+        pendingPoints = [];
+        rafId = null;
+        
         if (currentMode === 'eraser') {
             lastEraserPos = null;
             hideCrosshair(); // 松开时隐藏准心

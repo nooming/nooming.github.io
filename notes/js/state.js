@@ -57,6 +57,8 @@ const presetColors = [
 let strokes = []; // 存储所有笔画
 let currentStroke = null; // 当前正在绘制的笔画
 let lastEraserPos = null; // 删除模式下的上一个位置
+let pendingPoints = []; // 待绘制的点队列（移动端优化）
+let rafId = null; // requestAnimationFrame ID
 
 // 工具函数
 // 生成唯一ID
