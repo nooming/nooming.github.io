@@ -291,34 +291,21 @@ function draw(e) {
     // 检测是否为触摸事件（移动端）
     const isTouch = e.touches && e.touches.length > 0;
     
-    if (isTouch) {
-        // 移动端：使用 requestAnimationFrame 优化性能
-        // 将点添加到队列中
-        pendingPoints.push({ x: pos.x, y: pos.y });
-        
-        // 每次 touchmove 都安排一个新的 RAF，确保及时绘制
-        // 如果已有 RAF，取消它并创建新的，这样可以保证最新的点被绘制
-        // 这样可以确保绘制尽可能及时，接近拖拽的流畅度
-        if (rafId) {
-            cancelAnimationFrame(rafId);
-        }
-        
-        rafId = requestAnimationFrame(() => {
-            performDrawBatch();
-            rafId = null;
-        });
-    } else {
-        // 桌面端：直接绘制（鼠标事件频率较低）
-        // 添加点到当前笔画
-        currentStroke.points.push({ x: pos.x, y: pos.y });
-        
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.lineWidth = currentSize;
-        ctx.strokeStyle = currentColor;
-        
-        ctx.lineTo(pos.x, pos.y);
-        ctx.stroke();
+    // 统一使用 requestAnimationFrame 优化性能
+    // 将点添加到队列中
+    pendingPoints.push({ x: pos.x, y: pos.y });
+    
+    // 每次移动都安排一个新的 RAF，确保及时绘制
+    // 如果已有 RAF，取消它并创建新的，这样可以保证最新的点被绘制
+    // 这样可以确保绘制尽可能及时，接近拖拽的流畅度
+    if (rafId) {
+        cancelAnimationFrame(rafId);
     }
+    
+    rafId = requestAnimationFrame(() => {
+        performDrawBatch();
+        rafId = null;
+    });
 }
 
 // 停止绘制
