@@ -1,16 +1,11 @@
 // 主入口和事件绑定
 
-// 主入口和事件绑定
-
-// 检测是否为移动端
-function isMobileDevice() {
-    return window.innerWidth <= 768;
-}
+// 工具函数已移至 utils.js
 
 // 点击外部关闭面板
 document.addEventListener('click', (e) => {
     // 移动端：点击编辑器区域时关闭侧边栏
-    if (isMobileDevice() && typeof sidebarVisible !== 'undefined' && sidebarVisible) {
+    if (isMobile() && typeof sidebarVisible !== 'undefined' && sidebarVisible) {
         const editor = document.getElementById('editor');
         const sidebar = document.getElementById('sidebar');
         if (editor && sidebar && !sidebar.contains(e.target) && 
@@ -25,45 +20,30 @@ document.addEventListener('click', (e) => {
         }
     }
     
-    // 关闭颜色面板
-    const colorWrapper = document.querySelector('.color-picker-wrapper');
-    if (colorWrapper && !colorWrapper.contains(e.target) && colorPanelOpen) {
-        colorPanelOpen = false;
-        const panel = document.querySelector('.color-presets-panel');
-        if (panel) panel.classList.remove('open');
-    }
+    // 关闭各种面板（统一处理）
+    const panelConfigs = [
+        { wrapper: '.color-picker-wrapper', panel: '.color-presets-panel', stateVar: 'colorPanelOpen' },
+        { wrapper: '.size-picker-wrapper', panel: '.size-presets-panel', stateVar: 'sizePanelOpen' },
+        { wrapper: '.align-picker-wrapper', panel: '.align-presets-panel', stateVar: 'alignPanelOpen' },
+        { wrapper: '.page-picker-wrapper:first-of-type', panel: '#drawPagesPanel', stateVar: 'drawPanelOpen' },
+        { wrapper: '.page-picker-wrapper:last-of-type', panel: '#textPagesPanel', stateVar: 'textPanelOpen' },
+        { wrapper: '.selection-color-picker-wrapper', panel: '#selectionColorPanel', stateVar: null }
+    ];
     
-    // 关闭粗细面板
-    const sizeWrapper = document.querySelector('.size-picker-wrapper');
-    if (sizeWrapper && !sizeWrapper.contains(e.target) && sizePanelOpen) {
-        sizePanelOpen = false;
-        const panel = document.querySelector('.size-presets-panel');
-        if (panel) panel.classList.remove('open');
-    }
-    
-    // 关闭对齐面板
-    const alignWrapper = document.querySelector('.align-picker-wrapper');
-    if (alignWrapper && !alignWrapper.contains(e.target) && alignPanelOpen) {
-        alignPanelOpen = false;
-        const panel = document.querySelector('.align-presets-panel');
-        if (panel) panel.classList.remove('open');
-    }
-    
-    // 关闭绘图页面面板
-    const drawWrapper = document.querySelector('.page-picker-wrapper:first-of-type');
-    if (drawWrapper && !drawWrapper.contains(e.target) && drawPanelOpen) {
-        drawPanelOpen = false;
-        const panel = document.getElementById('drawPagesPanel');
-        if (panel) panel.classList.remove('open');
-    }
-    
-    // 关闭文本页面面板
-    const textWrapper = document.querySelector('.page-picker-wrapper:last-of-type');
-    if (textWrapper && !textWrapper.contains(e.target) && textPanelOpen) {
-        textPanelOpen = false;
-        const panel = document.getElementById('textPagesPanel');
-        if (panel) panel.classList.remove('open');
-    }
+    panelConfigs.forEach(config => {
+        const wrapper = document.querySelector(config.wrapper);
+        if (wrapper && !wrapper.contains(e.target)) {
+            if (config.stateVar === null || window[config.stateVar]) {
+                if (config.stateVar) {
+                    window[config.stateVar] = false;
+                }
+                const panel = document.querySelector(config.panel);
+                if (panel) {
+                    panel.classList.remove('open');
+                }
+            }
+        }
+    });
 });
 
 // 窗口大小改变时调整画布

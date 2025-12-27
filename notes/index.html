@@ -3,8 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="description" content="手写笔记 - 支持手写绘图和文本编辑的在线笔记工具，随时记录想法，支持多页面管理，数据自动保存到本地">
+    <meta name="keywords" content="手写笔记,在线笔记,绘图笔记,文本编辑,笔记工具">
+    <meta name="author" content="nooming">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../favicon-io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../favicon-io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../favicon-io/favicon-16x16.png">
+    <link rel="manifest" href="../favicon-io/site.webmanifest">
+    <link rel="shortcut icon" href="../favicon-io/favicon.ico">
+    
     <title>手写笔记</title>
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -15,19 +26,31 @@
             <div class="sidebar-header">
                 <button class="btn-toggle-sidebar" onclick="toggleSidebar()" title="隐藏侧边栏">◀</button>
             </div>
-            <a href="../index.html" class="btn-back-home" title="返回主页">🏠</a>
+            <a href="../index.html" class="btn-back-home" title="返回主页">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><g stroke-width="1.5"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l-2 0l9 -9l9 9l-2 0"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7"/><path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6"/></g></svg>
+            </a>
             <div class="page-picker-wrapper">
                 <div class="btn-group-create">
-                    <button class="btn-create btn-create-draw" onclick="handleDrawButtonClick(event)" title="绘图页面">🎨 绘图</button>
+                    <button class="btn-create btn-create-draw" onclick="handleDrawButtonClick(event)" title="绘图页面">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><g stroke-width="1.25"><path clip-rule="evenodd" d="m7.643 15.69 7.774-7.773a2.357 2.357 0 1 0-3.334-3.334L4.31 12.357a3.333 3.333 0 0 0-.977 2.357v1.953h1.953c.884 0 1.732-.352 2.357-.977Z"/><path d="m11.25 5.417 3.333 3.333"/></g></svg>
+                        绘图
+                    </button>
                 </div>
-                <button class="btn-add-page" onclick="createPage('draw')" title="新建绘图页面">+</button>
+                <button class="btn-add-page" onclick="createPage('draw')" title="新建绘图页面">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><g stroke-width="1.5"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></g></svg>
+                </button>
                 <div class="page-list-panel draw-pages-panel" id="drawPagesPanel"></div>
             </div>
             <div class="page-picker-wrapper">
                 <div class="btn-group-create">
-                    <button class="btn-create btn-create-text" onclick="handleTextButtonClick(event)" title="文本页面">📄 文本</button>
+                    <button class="btn-create btn-create-text" onclick="handleTextButtonClick(event)" title="文本页面">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><g stroke-width="1.5"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><line x1="4" y1="20" x2="7" y2="20"/><line x1="14" y1="20" x2="21" y2="20"/><line x1="6.9" y1="15" x2="13.8" y2="15"/><line x1="10.2" y1="6.3" x2="16" y2="20"/><polyline points="5 20 11 4 13 4 20 20"/></g></svg>
+                        文本
+                    </button>
                 </div>
-                <button class="btn-add-page" onclick="createPage('text')" title="新建文本页面">+</button>
+                <button class="btn-add-page" onclick="createPage('text')" title="新建文本页面">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><g stroke-width="1.5"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></g></svg>
+                </button>
                 <div class="page-list-panel text-pages-panel" id="textPagesPanel"></div>
             </div>
             <div class="multi-select-controls" id="multiSelectControls" style="display: none;">
@@ -52,9 +75,37 @@
                 <p>从左侧选择一个页面，或创建新的页面开始记录</p>
             </div>
         </div>
+
+        <!-- 撤销/重做按钮 -->
+        <div class="undo-redo-controls">
+            <button class="undo-redo-btn" id="undoBtn" onclick="undo()" title="撤销">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7.5 10.833 4.167 7.5 7.5 4.167 M4.167 7.5h9.166a3.333 3.333 0 0 1 0 6.667H12.5"/>
+                </svg>
+            </button>
+            <button class="undo-redo-btn" id="redoBtn" onclick="redo()" title="重做">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12.5 10.833 15.833 7.5 12.5 4.167 M15.833 7.5H6.667a3.333 3.333 0 0 0 0 6.667H7.5"/>
+                </svg>
+            </button>
+        </div>
     </div>
 
+    <!-- 引入perfect-freehand库（Excalidraw使用的核心画笔库） -->
+    <script type="module">
+        // 通过ESM方式加载perfect-freehand
+        window.perfectFreehandLoaded = false;
+        import('https://esm.sh/perfect-freehand@1.2.0').then(module => {
+            window.getStroke = module.getStroke;
+            window.perfectFreehandLoaded = true;
+            console.log('perfect-freehand库加载成功');
+        }).catch(err => {
+            console.error('perfect-freehand库加载失败:', err);
+            window.perfectFreehandLoaded = false;
+        });
+    </script>
     <!-- 按依赖顺序引入模块 -->
+    <script src="js/utils.js"></script>
     <script src="js/state.js"></script>
     <script src="js/storage.js"></script>
     <script src="js/page.js"></script>

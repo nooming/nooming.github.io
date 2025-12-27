@@ -105,6 +105,25 @@ function renderSidebar() {
     // 渲染页面列表
     renderPageListPanel(drawPages, 'drawPagesPanel', drawPanelOpen);
     renderPageListPanel(textPages, 'textPagesPanel', textPanelOpen);
+    
+    // 更新创建按钮的激活状态
+    const activePage = state.pages.find(p => p.id === state.activePageId);
+    const drawBtn = document.querySelector('.btn-create-draw');
+    const textBtn = document.querySelector('.btn-create-text');
+    
+    if (drawBtn && textBtn) {
+        if (activePage && activePage.type === 'draw') {
+            drawBtn.classList.add('active');
+            textBtn.classList.remove('active');
+        } else if (activePage && activePage.type === 'text') {
+            textBtn.classList.add('active');
+            drawBtn.classList.remove('active');
+        } else {
+            // 没有活动页面时，移除所有active状态
+            drawBtn.classList.remove('active');
+            textBtn.classList.remove('active');
+        }
+    }
 }
 
 // 生成工具栏按钮HTML（通用函数）
@@ -113,13 +132,17 @@ function generateToolbarButton(text, onclick, title, active = false) {
     return `<button class="toolbar-btn ${activeClass}" onclick="${onclick}" title="${title}">${text}</button>`;
 }
 
+// 生成带SVG图标的工具栏按钮
+function generateToolbarButtonWithSVG(onclick, title, active = false, svgContent, dataMode = '') {
+    const activeClass = active ? 'active' : '';
+    const dataModeAttr = dataMode ? `data-mode="${dataMode}"` : '';
+    return `<button class="toolbar-btn ${activeClass}" ${dataModeAttr} onclick="${onclick}" title="${title}">${svgContent}</button>`;
+}
+
 // 关闭面板的通用函数（用于内联onclick）
 // 注意：由于需要在HTML字符串中内联调用，使用全局变量访问
 function closePanelInline(panelSelector, stateVarName) {
-    // 通过window对象访问全局变量
-    window[stateVarName] = false;
-    const panel = document.querySelector(panelSelector);
-    if (panel) panel.classList.remove('open');
+    closePanel(panelSelector, stateVarName);
 }
 
 // 生成颜色选择器HTML（优化：使用数组join）
@@ -139,7 +162,6 @@ function generateColorPickerHTML() {
         <div class="color-picker-wrapper">
             <button class="toolbar-btn color-trigger" onclick="toggleColorPanel(event)" title="选择颜色">
                 <span style="display: inline-block; width: 20px; height: 20px; background-color: ${currentColor}; border: 1px solid #ddd; border-radius: 3px; vertical-align: middle;"></span>
-                颜色
             </button>
             <div class="color-presets-panel ${colorPanelOpen ? 'open' : ''}">
                 ${colorButtons}
@@ -177,13 +199,45 @@ function generateSizePickerHTML() {
         <div class="size-picker-wrapper">
             <button class="toolbar-btn size-trigger" onclick="toggleSizePanel(event)" title="选择粗细">
                 <span class="size-preview-dot" style="width: ${sizePreview}px; height: ${sizePreview}px;"></span>
-                粗细
             </button>
             <div class="size-presets-panel ${sizePanelOpen ? 'open' : ''}">
                 ${sizeButtons}
             </div>
         </div>
     `;
+}
+
+// 生成选择工具的颜色选择器HTML（用于更改选中内容的颜色）
+function generateSelectionColorPickerHTML() {
+    const colorButtons = presetColors.map(color => `
+        <button class="color-btn" 
+            style="background-color: ${color.value};" 
+            onclick="changeSelectedStrokesColor('${color.value}'); 
+            const panel = document.getElementById('selectionColorPanel');
+            if (panel) panel.classList.remove('open');"
+            title="${color.name}">
+        </button>
+    `).join('');
+    
+    return `
+        <div class="selection-color-picker-wrapper">
+            <button class="toolbar-btn selection-color-trigger" onclick="toggleSelectionColorPanel(event)" title="更改选中内容颜色">
+                <span style="display: inline-block; width: 20px; height: 20px; background-color: ${currentColor}; border: 1px solid #ddd; border-radius: 3px; vertical-align: middle;"></span>
+            </button>
+            <div class="selection-color-presets-panel" id="selectionColorPanel">
+                ${colorButtons}
+            </div>
+        </div>
+    `;
+}
+
+// 切换选择颜色面板
+function toggleSelectionColorPanel(e) {
+    e.stopPropagation();
+    const panel = document.getElementById('selectionColorPanel');
+    if (panel) {
+        panel.classList.toggle('open');
+    }
 }
 
 // 生成对齐选择器HTML（优化：使用数组join）
@@ -204,7 +258,6 @@ function generateAlignPickerHTML() {
         <div class="align-picker-wrapper">
             <button class="toolbar-btn align-trigger" onclick="toggleAlignPanel(event)" title="文本对齐">
                 <span class="align-icon ${currentAlignOption.iconClass}"></span>
-                对齐
             </button>
             <div class="align-presets-panel ${alignPanelOpen ? 'open' : ''}">
                 ${alignButtons}
@@ -217,23 +270,25 @@ function generateAlignPickerHTML() {
 function generateToolbarHTML(pageType) {
     if (pageType === 'text') {
         return `
-            ${generateToolbarButton('📋 复制', 'copyText()', '复制全部文本')}
-            ${generateToolbarButton('🔍 查找', 'toggleFindPanel()', '查找文本')}
-            ${generateToolbarButton('🖍️ 高亮', 'highlightSelectedText()', '高亮选中文本')}
-            ${generateToolbarButton('📊 统计', 'showTextStats()', '字数统计')}
+            ${generateToolbarButtonWithSVG('copyText()', '复制全部文本', false, `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><g stroke-width="1.5"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 8m0 2a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2z"/><path d="M16 8v-2a2 2 0 0 0 -2 -2h-8a2 2 0 0 0 -2 2v8a2 2 0 0 0 2 2h2"/></g></svg>`)}
+            ${generateToolbarButtonWithSVG('toggleFindPanel()', '查找文本', false, `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><g stroke-width="1.5"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/></g></svg>`)}
+            ${generateToolbarButtonWithSVG('highlightSelectedText()', '高亮选中文本', false, `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><g stroke-width="1.5"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 19h4l6.5 -6.5a2.828 2.828 0 1 0 -4 -4l-6.5 6.5v4"/><path d="M13.5 6.5l4 4"/></g></svg>`)}
+            ${generateToolbarButtonWithSVG('showTextStats()', '字数统计', false, `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><g stroke-width="1.5"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 3v18h18"/><path d="M7 16h8"/><path d="M7 12h12"/><path d="M7 8h12"/></g></svg>`)}
             ${generateAlignPickerHTML()}
-            ${generateToolbarButton('🗑️ 清空', 'clearText()', '清空文本')}
+            ${generateToolbarButtonWithSVG('clearText()', '清空文本', false, `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path stroke-width="1.25" d="M3.333 5.833h13.334M8.333 9.167v5M11.667 9.167v5M4.167 5.833l.833 10c0 .92.746 1.667 1.667 1.667h6.666c.92 0 1.667-.746 1.667-1.667l.833-10M7.5 5.833v-2.5c0-.46.373-.833.833-.833h3.334c.46 0 .833.373.833.833v2.5"/></svg>`)}
         `;
     }
     
     // 绘图页面工具栏
     return `
-        ${generateToolbarButton('✏️ 画笔', "setMode('pen'); updateToolbarActive();", '画笔', currentMode === 'pen')}
-        ${generateToolbarButton('🗑️ 删除笔画', "setMode('eraser'); updateToolbarActive();", '删除笔画', currentMode === 'eraser')}
-        ${generateToolbarButton('✋ 拖拽', "setMode('drag'); updateToolbarActive();", '拖拽画布', currentMode === 'drag')}
+        ${generateToolbarButtonWithSVG("setMode('select'); updateToolbarActive();", '选择', currentMode === 'select', `<svg width="20" height="20" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 6l4.153 11.793a0.365 .365 0 0 0 .331 .207a0.366 .366 0 0 0 .332 -.207l2.184 -4.793l4.787 -1.994a0.355 .355 0 0 0 .213 -.323a0.355 .355 0 0 0 -.213 -.323l-11.787 -4.36z"/><path d="M13.5 13.5l4.5 4.5"/></g></svg>`, 'select')}
+        ${generateToolbarButtonWithSVG("setMode('pen'); updateToolbarActive();", '画笔', currentMode === 'pen', `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><g stroke-width="1.25"><path clip-rule="evenodd" d="m7.643 15.69 7.774-7.773a2.357 2.357 0 1 0-3.334-3.334L4.31 12.357a3.333 3.333 0 0 0-.977 2.357v1.953h1.953c.884 0 1.732-.352 2.357-.977Z"/><path d="m11.25 5.417 3.333 3.333"/></g></svg>`, 'pen')}
+        ${generateToolbarButtonWithSVG("setMode('eraser'); updateToolbarActive();", '橡皮', currentMode === 'eraser', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><g stroke-width="1.5"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19 20h-10.5l-4.21 -4.3a1 1 0 0 1 0 -1.41l10 -10a1 1 0 0 1 1.41 0l5 5a1 1 0 0 1 0 1.41l-9.2 9.3"/><path d="M18 13.3l-6.3 -6.3"/></g></svg>`, 'eraser')}
+        ${generateToolbarButtonWithSVG("setMode('drag'); updateToolbarActive();", '拖拽画布', currentMode === 'drag', `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><g stroke-width="1.25"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 13v-7.5a1.5 1.5 0 0 1 3 0v6.5"/><path d="M11 5.5v-2a1.5 1.5 0 1 1 3 0v8.5"/><path d="M14 5.5a1.5 1.5 0 0 1 3 0v6.5"/><path d="M17 7.5a1.5 1.5 0 0 1 3 0v8.5a6 6 0 0 1 -6 6h-2h.208a6 6 0 0 1 -5.012 -2.7a69.74 69.74 0 0 1 -.196 -.3c-.312 -.479 -1.407 -2.388 -3.286 -5.728a1.5 1.5 0 0 1 .536 -2.022a1.867 1.867 0 0 1 2.28 .28l1.47 1.47"/></g></svg>`, 'drag')}
         ${generateColorPickerHTML()}
         ${generateSizePickerHTML()}
-        ${generateToolbarButton('🗑️ 清空', 'clearCanvas()', '清空画布')}
+        ${currentMode === 'select' && selectedStrokeIds.size > 0 ? generateSelectionColorPickerHTML() : ''}
+        ${generateToolbarButtonWithSVG('clearCanvas()', '清空画布', false, `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path stroke-width="1.25" d="M3.333 5.833h13.334M8.333 9.167v5M11.667 9.167v5M4.167 5.833l.833 10c0 .92.746 1.667 1.667 1.667h6.666c.92 0 1.667-.746 1.667-1.667l.833-10M7.5 5.833v-2.5c0-.46.373-.833.833-.833h3.334c.46 0 .833.373.833.833v2.5"/></svg>`)}
     `;
 }
 
@@ -292,6 +347,16 @@ function generateEditorContentHTML(pageType, activePage) {
 
 // 渲染编辑器
 function renderEditor() {
+    // 更新撤销/重做按钮的显示状态
+    const undoRedoControls = document.querySelector('.undo-redo-controls');
+    if (undoRedoControls) {
+        const activePage = state.pages.find(p => p.id === state.activePageId);
+        if (activePage && activePage.type === 'draw') {
+            undoRedoControls.style.display = 'flex';
+        } else {
+            undoRedoControls.style.display = 'none';
+        }
+    }
     const editor = document.getElementById('editor');
     const activePage = state.pages.find(page => page.id === state.activePageId);
 
@@ -399,8 +464,9 @@ function toggleFloatingToolbar() {
 // 模式按钮文本映射
 const MODE_BUTTON_TEXT = {
     'pen': '画笔',
-    'eraser': '删除笔画',
-    'drag': '拖拽'
+    'eraser': '橡皮',
+    'drag': '拖拽',
+    'select': '选择'
 };
 
 // 更新工具栏按钮激活状态（优化：减少DOM查询）
@@ -408,9 +474,16 @@ function updateToolbarActive() {
     const buttons = document.querySelectorAll('.toolbar-btn');
     buttons.forEach(btn => btn.classList.remove('active'));
     
+    // 优先通过 data-mode 属性查找按钮
+    const activeBtnByMode = document.querySelector(`.toolbar-btn[data-mode="${currentMode}"]`);
+    if (activeBtnByMode) {
+        activeBtnByMode.classList.add('active');
+        return;
+    }
+    
+    // 降级方案：通过文本内容查找（兼容旧按钮）
     const buttonText = MODE_BUTTON_TEXT[currentMode];
     if (buttonText) {
-        // 优化：直接使用已查询的按钮列表
         const activeBtn = Array.from(buttons)
             .find(btn => btn.textContent.includes(buttonText));
         if (activeBtn) activeBtn.classList.add('active');
@@ -449,10 +522,7 @@ function toggleSidebar() {
     updateSidebarVisibility();
 }
 
-// 检测是否为移动端
-function isMobile() {
-    return window.innerWidth <= 768;
-}
+// 工具函数已移至 utils.js
 
 // 更新侧边栏可见性
 function updateSidebarVisibility() {

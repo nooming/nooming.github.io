@@ -595,33 +595,5 @@ function highlightSelectedText() {
     }
 }
 
-// 显示提示消息
-function showToast(message) {
-    // 创建临时提示元素
-    const toast = document.createElement('div');
-    toast.className = 'toast-message';
-    toast.textContent = message;
-    toast.style.cssText = `
-        position: fixed;
-        top: 80px;
-        right: 28px;
-        background: rgba(0, 0, 0, 0.8);
-        color: white;
-        padding: 12px 20px;
-        border-radius: 8px;
-        z-index: 10000;
-        font-size: 14px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        animation: fadeIn 0.3s ease;
-    `;
-    
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.style.animation = 'fadeOut 0.3s ease';
-        setTimeout(() => {
-            document.body.removeChild(toast);
-        }, 300);
-    }, 2000);
-}
+// 工具函数已移至 utils.js
 
