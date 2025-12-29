@@ -62,9 +62,9 @@ function generateStrokePath(points, strokeWidth) {
     const options = {
         simulatePressure: true, // 模拟压感
         size: adjustedWidth * 4.25, // Excalidraw使用的尺寸倍数
-        thinning: 0.6,
+        thinning: 0.8, // 与橡皮擦尾迹一致，让画笔更流畅
         smoothing: 0.5,
-        streamline: 0.5,
+        streamline: 0.2, // 与橡皮擦尾迹一致，让画笔更流畅
         easing: (t) => Math.sin((t * Math.PI) / 2), // easeOutSine
         last: true,
     };
