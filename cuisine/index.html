@@ -205,7 +205,6 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            justify-content: flex-start; /* 标题在左，按钮在最右 */
         }
 
 .panel-header-title-text {
@@ -214,32 +213,54 @@
             gap: 8px;
         }
 
-.back-home-btn {
-            padding: 4px 10px;
-            font-size: 12px;
-            border-radius: 999px;
-            border: 1px solid rgba(255, 255, 255, 0.7);
-            background: rgba(255, 255, 255, 0.12);
-            color: #ffffff;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            transition: all 0.25s ease;
-            white-space: nowrap;
-            margin-left: auto;  /* 将按钮推到最右侧 */
-            margin-right: 28px; /* 和右侧小三角挨在一起，预留一点空隙 */
-        }
-
-.back-home-btn:hover {
-            background: rgba(255, 255, 255, 0.22);
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        }
-
         .panel-header h2::before {
             content: '🚶';
             font-size: 22px;
+        }
+
+        /* 悬浮返回主页按钮样式（地图上的圆形按钮） */
+        .back-home-fab {
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            width: 40px;
+            height: 40px;
+            border-radius: 999px;
+            border: none;
+            background: rgba(15, 23, 42, 0.82);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.35);
+            cursor: pointer;
+            z-index: 150;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+        }
+
+        .back-home-fab:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 30px rgba(15, 23, 42, 0.45);
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        .back-home-fab:active {
+            transform: translateY(1px) scale(0.96);
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .back-home-fab {
+                top: 14px;
+                left: 12px;
+                width: 36px;
+                height: 36px;
+                font-size: 16px;
+                box-shadow: 0 8px 20px rgba(15, 23, 42, 0.35);
+            }
         }
 
         .panel-body {
@@ -913,6 +934,11 @@
 <body>
     <div id="container"></div>
 
+    <!-- 悬浮返回主页按钮（地图上的圆形按钮） -->
+    <button class="back-home-fab" onclick="window.location.href='../'">
+        ←
+    </button>
+
     <!-- 分步骤加载动画 -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-card">
@@ -948,9 +974,6 @@
         <div class="panel-header">
             <h2>
                 <span class="panel-header-title-text">上海Citywalk定制器</span>
-                <button class="back-home-btn" onclick="window.location.href='../'">
-                    ← 返回主页
-                </button>
             </h2>
         </div>
         <div class="panel-body">
@@ -2334,30 +2357,14 @@ function showCustomModal(content) {
                 }
             }
 
-            // 点击头部切换（更严格：只允许最右侧一小块区域控制展开/收起）
+            // 点击头部切换（还原为：点击整个头部都可以展开/收起）
             header.addEventListener('click', function(e) {
-                // 如果点击的是「返回主页」按钮，则只执行跳转，不处理面板展开收起
-                if (e.target && e.target.closest('.back-home-btn')) {
-                    return;
-                }
-                // 计算点击位置是否在头部最右侧的控制区域内（例如距离右边 48px 以内）
-                const rect = header.getBoundingClientRect();
-                const clickX = e.clientX;
-                const toggleWidth = 48; // 只保留右侧 48px 作为「小三角/控制区」
-                if (clickX < rect.right - toggleWidth) {
-                    // 不是点在最右侧控制区，不执行展开/收起
-                    return;
-                }
                 if (hasMoved) return; // 如果是拖动操作，不触发点击
                 togglePanel();
             });
 
             // 触摸开始
             header.addEventListener('touchstart', function(e) {
-                // 如果是在点返回按钮，不参与拖动逻辑，交给按钮自己处理
-                if (e.target && e.target.closest('.back-home-btn')) {
-                    return;
-                }
                 startY = e.touches[0].clientY;
                 startTime = Date.now();
                 isDragging = true;
@@ -2367,10 +2374,6 @@ function showCustomModal(content) {
 
             // 触摸移动 - 检测滑动方向
             header.addEventListener('touchmove', function(e) {
-                // 点在返回按钮上时，不处理拖动
-                if (e.target && e.target.closest('.back-home-btn')) {
-                    return;
-                }
                 if (!isDragging) return;
                 
                 const currentY = e.touches[0].clientY;
@@ -2393,13 +2396,6 @@ function showCustomModal(content) {
 
             // 触摸结束
             header.addEventListener('touchend', function(e) {
-                // 点在返回按钮上时，不处理拖动结束，交给按钮触发点击/跳转
-                if (e.target && e.target.closest('.back-home-btn')) {
-                    isDragging = false;
-                    header.style.cursor = 'grab';
-                    header.style.transform = '';
-                    return;
-                }
                 if (!isDragging) return;
                 isDragging = false;
                 header.style.cursor = 'grab';
@@ -2427,11 +2423,8 @@ function showCustomModal(content) {
                 // 否则认为是点击，由 click 事件处理
             }, { passive: true });
 
-            // 阻止头部区域的默认滚动行为（不影响返回按钮）
+            // 阻止头部区域的默认滚动行为
             header.addEventListener('touchmove', function(e) {
-                if (e.target && e.target.closest('.back-home-btn')) {
-                    return; // 允许在按钮上触发默认行为（产生点击，执行跳转）
-                }
                 e.preventDefault();
             }, { passive: false });
 
