@@ -205,7 +205,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            justify-content: space-between;
+            justify-content: flex-start; /* 标题在左，按钮在最右 */
         }
 
 .panel-header-title-text {
@@ -227,6 +227,8 @@
             gap: 4px;
             transition: all 0.25s ease;
             white-space: nowrap;
+            margin-left: auto;  /* 将按钮推到最右侧 */
+            margin-right: 28px; /* 和右侧小三角挨在一起，预留一点空隙 */
         }
 
 .back-home-btn:hover {
@@ -2332,8 +2334,12 @@ function showCustomModal(content) {
                 }
             }
 
-            // 点击头部切换
+            // 点击头部切换（避免点击返回按钮时触发展开/收起）
             header.addEventListener('click', function(e) {
+                // 如果点击的是「返回主页」按钮，则只执行跳转，不处理面板展开收起
+                if (e.target && e.target.closest('.back-home-btn')) {
+                    return;
+                }
                 if (hasMoved) return; // 如果是拖动操作，不触发点击
                 togglePanel();
             });
