@@ -1,161 +1,6 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#ff7e5f">
-    <meta name="description" content="shanzhuyang.com - 上海Citywalk定制路线规划，发现城市之美">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚶</text></svg>">
-    <title>上海Citywalk · 定制路线规划</title>
-    <script type="text/javascript">
-        window._AMapSecurityConfig = {
-            securityJsCode: 'dd98c8e83161c0d87e596a17f2d29750'
-        }
-    </script>
-    <script src="https://webapi.amap.com/maps?v=2.0&key=4ade0b9a9942f8c1d5b470525887a258&plugin=AMap.Marker,AMap.InfoWindow,AMap.Weather" async defer onload="initMap()" onerror="mapLoadError()"></script>
-    <link rel="stylesheet" href="styles.css">
-    
-    <!-- 引入 html2canvas 用于生成分享图片 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-</head>
-<body>
-    <div id="container"></div>
-
-    <!-- 悬浮返回主页按钮（地图上的圆形按钮） -->
-    <button class="back-home-fab" onclick="window.location.href='../'">
-        ←
-    </button>
-
-    <!-- 分步骤加载动画 -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-card">
-            <div class="loading-title">🚶 正在规划您的专属路线</div>
-            <div class="loading-steps">
-                <div class="loading-step" id="step1">
-                    <span class="step-icon">🗺️</span>
-                    <span class="step-text">计算最优路径...</span>
-                    <span class="step-status"></span>
-                </div>
-                <div class="loading-step" id="step2">
-                    <span class="step-icon">☕</span>
-                    <span class="step-text">沿途搜寻好店...</span>
-                    <span class="step-status"></span>
-                </div>
-                <div class="loading-step" id="step3">
-                    <span class="step-icon">🚶</span>
-                    <span class="step-text">优化路线顺序...</span>
-                    <span class="step-status"></span>
-                </div>
-                <div class="loading-step" id="step4">
-                    <span class="step-icon">✨</span>
-                    <span class="step-text">生成精美路线...</span>
-                    <span class="step-status"></span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="error-toast" id="errorToast"></div>
-
-    <div class="control-panel">
-        <div class="panel-header">
-            <h2>
-                <span class="panel-header-title-text">上海Citywalk定制器</span>
-            </h2>
-        </div>
-        <div class="panel-body">
-            <!-- 搜索框 -->
-            <div class="search-box" style="margin-bottom: 16px;">
-                <input type="text" id="searchInput" placeholder="🔍 搜索地址（输入后回车定位）" style="width: 100%; padding: 12px 16px; border: 2px solid var(--border-light); border-radius: var(--radius-md); font-size: 14px; transition: all 0.3s;">
-            </div>
-
-            <!-- 天气卡片 -->
-            <div class="weather-card" id="weatherCard" style="cursor: pointer;" title="点击刷新天气">
-                <div class="weather-icon" id="weatherIcon">🌤️</div>
-                <div class="weather-info">
-                    <div class="title" id="weatherTitle">加载中...</div>
-                    <div class="desc" id="weatherDesc">正在获取上海实时天气</div>
-                </div>
-            </div>
-
-            <!-- 起终点状态 -->
-            <div class="status-group">
-                <div class="status-card" id="startCard">
-                    <div class="label">📍 起点</div>
-                    <div class="value" id="startValue">点击地图选择</div>
-                </div>
-                <div class="status-card" id="endCard">
-                    <div class="label">🏁 终点</div>
-                    <div class="value" id="endValue">点击地图选择</div>
-                </div>
-            </div>
-
-            <!-- 使用提示 -->
-            <div class="tips-box" style="background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 12px; color: #0369a1;">
-                💡 <strong>操作提示：</strong>点击地图选择起点和终点，或在上方搜索框输入地址
-            </div>
-
-            <!-- 筛选条件 -->
-            <div class="filter-group">
-                <div class="filter-title">路线偏好</div>
-                <div class="poi-type-group">
-                    <div class="poi-type-btn active" data-type="无偏好">无偏好</div>
-                    <div class="poi-type-btn" data-type="自然">🌳 自然</div>
-                    <div class="poi-type-btn" data-type="历史">🏛️ 历史</div>
-                    <div class="poi-type-btn" data-type="文创">✨ 文创</div>
-                    <div class="poi-type-btn" data-type="花店">💐 花店</div>
-                    <div class="poi-type-btn" data-type="咖啡">☕ 咖啡</div>
-                    <div class="poi-type-btn" data-type="甜品">🍰 甜品</div>
-                    <div class="poi-type-btn" data-type="烘焙">🥐 烘焙</div>
-                </div>
-
-                <div class="filter-title">计划游玩时间</div>
-                <div class="time-slider-group" style="padding: 8px 0;">
-                    <input type="range" id="planTimeSlider" min="30" max="180" value="60" style="width: 100%; accent-color: var(--primary);">
-                    <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-light); margin-top: 4px;">
-                        <span>30分钟</span>
-                        <span id="planTimeValue" style="font-weight: 600; color: var(--primary);">60 分钟</span>
-                        <span>3小时</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 功能按钮 -->
-            <div class="btn-group">
-                <button class="btn btn-reset" onclick="resetSelection()">重置选择</button>
-                <button class="btn btn-plan" id="btnPlan" onclick="generateRoute()" disabled>等待选择起终点</button>
-            </div>
-
-            <button class="btn-generate-plan" id="btnGeneratePlan" onclick="generatePlanText()">生成游玩文字方案</button>
-
-            <!-- 新增：生成分享图片按钮 -->
-            <button class="btn-generate-plan" id="btnShareImage" onclick="generateShareImage()" style="margin-top: 12px; background: linear-gradient(135deg, #667eea, #764ba2); display: none;">
-                📸 生成朋友圈分享图
-            </button>
-
-            <!-- 结果展示 -->
-            <div class="result-area" id="resultArea">
-                <div class="result-header">路线规划完成</div>
-                <div class="result-item">
-                    <div class="label">总距离</div>
-                    <div class="value highlight" id="distanceValue">--</div>
-                </div>
-                <div class="result-item">
-                    <div class="label">预计耗时</div>
-                    <div class="value highlight" id="durationValue">--</div>
-                </div>
-                <div class="result-item">
-                    <div class="label">打卡点</div>
-                    <div class="value highlight" id="poiCountValue">0个</div>
-                </div>
-                <div class="poi-list" id="poiList"></div>
-            </div>
-        </div>
-    </div>
-
-    <script>
+        // ============================================================
+        // 配置与全局状态
+        // ============================================================
         // 全局变量
         let map = null;
         let startPoint = null;
@@ -207,6 +52,9 @@
             showToast("高德地图加载失败，请刷新页面重试");
         }
 
+        // ============================================================
+        // 天气相关逻辑（获取 / 刷新 / 渲染）
+        // ============================================================
         // 获取上海天气（增加主动刷新逻辑）
         function getShanghaiWeather(forceRefresh = false) {
             // 如果已有天气数据且不强制刷新，直接更新UI
@@ -279,6 +127,9 @@
             document.getElementById('weatherDesc').textContent = desc;
         }
 
+        // ============================================================
+        // 地图初始化与基础交互
+        // ============================================================
         // 初始化地图
         function initMap() {
             if (!window.AMap) {
@@ -343,6 +194,9 @@
             }, duration);
         }
 
+        // ============================================================
+        // 路线选择与 POI 标记
+        // ============================================================
         // 设置起点
         function setStartPoint(point) {
             startPoint = point;
@@ -724,6 +578,9 @@
             });
         }
 
+        // ============================================================
+        // 高级功能：文字攻略与分享长图
+        // ============================================================
         // 生成更贴心的文字方案
         function generatePlanText() {
             if (!routeData || !routeData.success) {
@@ -1218,6 +1075,9 @@ function showCustomModal(content) {
     };
 }
 
+        // ============================================================
+        // 初始化与事件绑定（筛选 / 输入 / 搜索）
+        // ============================================================
         // 绑定 POI 类型选择事件
         document.querySelectorAll('.poi-type-btn').forEach(btn => {
             btn.onclick = function() {
@@ -1346,6 +1206,9 @@ function showCustomModal(content) {
             });
         }
 
+        // ============================================================
+        // UI 辅助：加载动画 / Toast / 面板交互
+        // ============================================================
         // 分步骤加载动画
         function showLoadingSteps() {
             const overlay = document.getElementById('loadingOverlay');
@@ -1593,7 +1456,4 @@ function showCustomModal(content) {
                 }
             }, { passive: true });
         })();
-    </script>
-    <script src="app.js"></script>
-</body>
-</html>
+
