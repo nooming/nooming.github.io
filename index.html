@@ -642,46 +642,47 @@
                 margin-bottom: 25px;
             }
 
+            .top-banners > div {
+                min-width: 0;
+                width: 100%;
+            }
+
             .navigation-banner,
             .notes-banner,
             .citywalk-banner {
                 padding: 22px 18px;
                 border-radius: 14px;
+                overflow: visible;
             }
             
-            .navigation-title {
+            .navigation-title,
+            .notes-title,
+            .citywalk-title {
                 font-size: 1.4rem;
                 margin-bottom: 10px;
             }
             
-            .navigation-desc {
+            .navigation-desc,
+            .notes-desc,
+            .citywalk-desc {
                 font-size: 0.95rem;
                 margin-bottom: 18px;
             }
             
-            .navigation-btn {
+            .navigation-btn,
+            .notes-btn,
+            .citywalk-btn {
                 padding: 12px 28px;
                 font-size: 0.95rem;
-            }
-            
-            .notes-banner {
-                padding: 22px 18px;
-                border-radius: 14px;
+                max-width: 100%;
+                white-space: nowrap;
             }
 
-            .notes-title {
-                font-size: 1.4rem;
-                margin-bottom: 10px;
-            }
-            
-            .notes-desc {
-                font-size: 0.95rem;
-                margin-bottom: 18px;
-            }
-            
-            .notes-btn {
-                padding: 12px 28px;
-                font-size: 0.95rem;
+            .citywalk-btn {
+                white-space: normal;
+                text-align: center;
+                justify-content: center;
+                line-height: 1.3;
             }
             
             footer {
@@ -690,6 +691,41 @@
                 font-size: 0.85rem;
             }
             
+        }
+
+        /* 手机竖屏进一步优化顶部三张横幅 */
+        @media (max-width: 575.98px) and (orientation: portrait) {
+            .top-banners {
+                gap: 14px;
+            }
+
+            .navigation-banner,
+            .notes-banner,
+            .citywalk-banner {
+                padding: 20px 16px;
+            }
+
+            .navigation-title,
+            .notes-title,
+            .citywalk-title {
+                font-size: 1.25rem;
+            }
+
+            .navigation-desc,
+            .notes-desc,
+            .citywalk-desc {
+                font-size: 0.9rem;
+                margin-bottom: 16px;
+            }
+
+            .navigation-btn,
+            .notes-btn,
+            .citywalk-btn {
+                width: 100%;
+                justify-content: center;
+                padding: 11px 18px;
+                font-size: 0.92rem;
+            }
         }
     </style>
     
