@@ -2354,6 +2354,10 @@ function showCustomModal(content) {
 
             // 触摸开始
             header.addEventListener('touchstart', function(e) {
+                // 如果是在点返回按钮，不参与拖动逻辑，交给按钮自己处理
+                if (e.target && e.target.closest('.back-home-btn')) {
+                    return;
+                }
                 startY = e.touches[0].clientY;
                 startTime = Date.now();
                 isDragging = true;
@@ -2363,6 +2367,10 @@ function showCustomModal(content) {
 
             // 触摸移动 - 检测滑动方向
             header.addEventListener('touchmove', function(e) {
+                // 点在返回按钮上时，不处理拖动
+                if (e.target && e.target.closest('.back-home-btn')) {
+                    return;
+                }
                 if (!isDragging) return;
                 
                 const currentY = e.touches[0].clientY;
@@ -2385,6 +2393,13 @@ function showCustomModal(content) {
 
             // 触摸结束
             header.addEventListener('touchend', function(e) {
+                // 点在返回按钮上时，不处理拖动结束，交给按钮触发点击/跳转
+                if (e.target && e.target.closest('.back-home-btn')) {
+                    isDragging = false;
+                    header.style.cursor = 'grab';
+                    header.style.transform = '';
+                    return;
+                }
                 if (!isDragging) return;
                 isDragging = false;
                 header.style.cursor = 'grab';
@@ -2412,8 +2427,11 @@ function showCustomModal(content) {
                 // 否则认为是点击，由 click 事件处理
             }, { passive: true });
 
-            // 阻止头部区域的默认滚动行为
+            // 阻止头部区域的默认滚动行为（不影响返回按钮）
             header.addEventListener('touchmove', function(e) {
+                if (e.target && e.target.closest('.back-home-btn')) {
+                    return; // 允许在按钮上触发默认行为（产生点击，执行跳转）
+                }
                 e.preventDefault();
             }, { passive: false });
 
