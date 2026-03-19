@@ -2334,10 +2334,18 @@ function showCustomModal(content) {
                 }
             }
 
-            // 点击头部切换（避免点击返回按钮时触发展开/收起）
+            // 点击头部切换（更严格：只允许最右侧一小块区域控制展开/收起）
             header.addEventListener('click', function(e) {
                 // 如果点击的是「返回主页」按钮，则只执行跳转，不处理面板展开收起
                 if (e.target && e.target.closest('.back-home-btn')) {
+                    return;
+                }
+                // 计算点击位置是否在头部最右侧的控制区域内（例如距离右边 48px 以内）
+                const rect = header.getBoundingClientRect();
+                const clickX = e.clientX;
+                const toggleWidth = 48; // 只保留右侧 48px 作为「小三角/控制区」
+                if (clickX < rect.right - toggleWidth) {
+                    // 不是点在最右侧控制区，不执行展开/收起
                     return;
                 }
                 if (hasMoved) return; // 如果是拖动操作，不触发点击
