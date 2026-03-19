@@ -1,0 +1,2317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#ff7e5f">
+    <meta name="description" content="shanzhuyang.com - 上海Citywalk定制路线规划，发现城市之美">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚶</text></svg>">
+    <title>上海Citywalk · 定制路线规划</title>
+    <script type="text/javascript">
+        window._AMapSecurityConfig = {
+            securityJsCode: 'dd98c8e83161c0d87e596a17f2d29750'
+        }
+    </script>
+    <script src="https://webapi.amap.com/maps?v=2.0&key=4ade0b9a9942f8c1d5b470525887a258&plugin=AMap.Marker,AMap.InfoWindow,AMap.Weather" async defer onload="initMap()" onerror="mapLoadError()"></script>
+    <style>
+        /* 定义CSS变量 - 现代化配色（将由JS动态设置） */
+        :root {
+            --primary: #ff7e5f;
+            --primary-light: #feb47b;
+            --primary-dark: #e85d40;
+            --bg-white: #ffffff;
+            --bg-light: #f8fafc;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --border-light: #e2e8f0;
+            --text-dark: #1e293b;
+            --text-medium: #475569;
+            --text-light: #94a3b8;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+            --shadow-lg: 0 10px 40px rgba(0,0,0,0.12);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-light);
+        }
+
+        /* 地图容器 */
+        #container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* 加载动画 - 分步骤进度 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 32px 40px;
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+            max-width: 320px;
+        }
+
+        .loading-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 24px;
+        }
+
+        .loading-steps {
+            text-align: left;
+        }
+
+        .loading-step {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            font-size: 14px;
+            color: var(--text-light);
+            transition: all 0.3s ease;
+        }
+
+        .loading-step.active {
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .loading-step.done {
+            color: #22c55e;
+        }
+
+        .loading-step .step-icon {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .loading-step.active .step-icon {
+            animation: bounce 0.6s ease infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+
+        .loading-step .step-status {
+            margin-left: auto;
+            font-size: 12px;
+        }
+
+        .loading-step.done .step-status::after {
+            content: '✓';
+            color: #22c55e;
+        }
+
+        .loading-step.active .step-status::after {
+            content: '';
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid var(--primary);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 错误提示 */
+        .error-toast {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #ef4444, #f87171);
+            color: white;
+            padding: 12px 24px;
+            border-radius: var(--radius-md);
+            z-index: 1000;
+            display: none;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: var(--shadow-lg);
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+
+        /* 控制面板 - 玻璃拟态风格 */
+        .control-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 340px;
+            height: calc(100vh - 40px);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            z-index: 100;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 面板头部 - 渐变背景 */
+        .panel-header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            padding: 20px 20px;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .panel-header h2 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: space-between;
+        }
+
+.panel-header-title-text {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+.back-home-btn {
+            padding: 4px 10px;
+            font-size: 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            background: rgba(255, 255, 255, 0.12);
+            color: #ffffff;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.25s ease;
+            white-space: nowrap;
+        }
+
+.back-home-btn:hover {
+            background: rgba(255, 255, 255, 0.22);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .panel-header h2::before {
+            content: '🚶';
+            font-size: 22px;
+        }
+
+        .panel-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* 自定义滚动条 - panel-body */
+        .panel-body::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .panel-body::-webkit-scrollbar-track {
+            background: var(--bg-light);
+            border-radius: 3px;
+        }
+
+        .panel-body::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, var(--primary-light), var(--primary));
+            border-radius: 3px;
+        }
+
+        .panel-body::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+
+        /* 天气卡片 - 渐变背景 */
+        .weather-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: var(--radius-md);
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            color: white;
+            box-shadow: var(--shadow-md);
+            transition: var(--transition);
+        }
+
+        .weather-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .weather-icon {
+            font-size: 36px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        }
+
+        .weather-info {
+            flex: 1;
+        }
+
+        .weather-info .title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .weather-info .desc {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        /* 起终点状态卡片 */
+        .status-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .status-card {
+            flex: 1;
+            padding: 14px 16px;
+            background: var(--bg-light);
+            border: 2px solid var(--border-light);
+            border-radius: var(--radius-md);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .status-card:hover {
+            border-color: var(--primary-light);
+            background: #fff8f5;
+        }
+
+        .status-card.selected {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, #fff5f2, #fff9f7);
+            box-shadow: 0 0 0 3px rgba(255, 126, 95, 0.1);
+        }
+
+        .status-card .label {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-bottom: 6px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-card .value {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dark);
+            word-break: break-all;
+        }
+
+        .status-card.selected .value {
+            color: var(--primary-dark);
+        }
+
+        /* 筛选标题 */
+        .filter-title {
+            font-size: 13px;
+            font-weight: 600;
+            margin: 16px 0 10px 0;
+            color: var(--text-medium);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .filter-title::before {
+            content: '';
+            width: 3px;
+            height: 14px;
+            background: linear-gradient(180deg, var(--primary), var(--primary-light));
+            border-radius: 2px;
+        }
+
+        /* POI类型按钮组 */
+        .poi-type-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .poi-type-btn {
+            padding: 8px 14px;
+            border: 1.5px solid var(--border-light);
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            background: white;
+            color: var(--text-medium);
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .poi-type-btn:hover {
+            border-color: var(--primary-light);
+            color: var(--primary);
+            background: #fff8f5;
+        }
+
+        .poi-type-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(255, 126, 95, 0.3);
+        }
+
+        /* 时间输入组 */
+        .time-input-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .time-input-group input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid var(--border-light);
+            border-radius: var(--radius-md);
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-dark);
+            transition: var(--transition);
+            background: white;
+        }
+
+        .time-input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255, 126, 95, 0.1);
+        }
+
+        .unit {
+            font-size: 14px;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        /* 按钮组 */
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-reset {
+            background: var(--bg-light);
+            color: var(--text-medium);
+            border: 2px solid var(--border-light);
+        }
+
+        .btn-reset:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+
+        .btn-plan {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 126, 95, 0.3);
+        }
+
+        .btn-plan:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 126, 95, 0.4);
+        }
+
+        .btn-plan:disabled {
+            background: #e2e8f0;
+            color: #94a3b8;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* 生成方案按钮 */
+        .btn-generate-plan {
+            width: 100%;
+            padding: 12px 16px;
+            border: none;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 8px 0;
+            display: none;
+            transition: var(--transition);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-generate-plan:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        /* 结果区域 */
+        .result-area {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-light);
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-header {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .result-header::before {
+            content: '✅';
+            font-size: 16px;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            margin: 8px 0;
+            background: var(--bg-light);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+        }
+
+        .result-item .label {
+            color: var(--text-medium);
+            font-weight: 500;
+        }
+
+        .result-item .highlight {
+            font-weight: 700;
+            color: var(--primary-dark);
+            font-size: 15px;
+        }
+
+        /* POI列表 */
+        .poi-list {
+            margin-top: 12px;
+            max-height: 180px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .poi-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .poi-list::-webkit-scrollbar-track {
+            background: var(--bg-light);
+            border-radius: 2px;
+        }
+
+        .poi-list::-webkit-scrollbar-thumb {
+            background: var(--border-light);
+            border-radius: 2px;
+        }
+
+        .poi-item {
+            padding: 10px 12px;
+            font-size: 13px;
+            color: var(--text-medium);
+            cursor: pointer;
+            border-radius: var(--radius-sm);
+            margin-bottom: 6px;
+            background: white;
+            border: 1px solid var(--border-light);
+            transition: var(--transition);
+        }
+
+        .poi-item:hover {
+            color: var(--primary-dark);
+            border-color: var(--primary-light);
+            background: #fff8f5;
+            transform: translateX(4px);
+        }
+
+        .poi-item strong {
+            color: var(--text-dark);
+        }
+
+        /* POI序号标记样式（地图上的） */
+        .poi-number-marker {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 22px;
+            height: 22px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            border: 2px solid white;
+            z-index: 101;
+            box-shadow: 0 2px 6px rgba(255, 126, 95, 0.4);
+        }
+
+        /* 响应式适配 - 全面移动端优化 */
+        @media (max-width: 768px) {
+            .control-panel {
+                width: 100%;
+                right: 0;
+                left: 0;
+                top: auto;
+                bottom: 0;
+                height: auto;
+                max-height: 55vh;
+                min-height: 200px;
+                border-radius: 20px 20px 0 0;
+                box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+                border: none;
+                border-top: 1px solid rgba(255,255,255,0.8);
+            }
+
+            .panel-header {
+                padding: 16px 20px;
+                border-radius: 20px 20px 0 0;
+            }
+
+            .panel-header h2 {
+                font-size: 18px;
+            }
+
+            .panel-body {
+                padding: 16px 20px;
+                padding-bottom: env(safe-area-inset-bottom, 20px);
+            }
+
+            .poi-type-btn {
+                padding: 8px 14px;
+                font-size: 13px;
+            }
+
+            /* 移动端搜索框优化 */
+            .search-box input {
+                font-size: 16px; /* 防止iOS缩放 */
+                padding: 14px 18px;
+            }
+
+            /* 移动端状态卡片优化 */
+            .status-group {
+                gap: 10px;
+            }
+
+            .status-card {
+                padding: 12px 14px;
+            }
+
+            .status-card .label {
+                font-size: 11px;
+            }
+
+            .status-card .value {
+                font-size: 12px;
+            }
+
+            /* 移动端按钮优化 */
+            .btn {
+                padding: 14px 16px;
+                font-size: 15px;
+            }
+
+            /* 移动端结果区域 */
+            .result-area {
+                margin-top: 16px;
+                padding-top: 16px;
+            }
+
+            .result-item {
+                padding: 12px 14px;
+            }
+
+            /* 移动端POI列表 */
+            .poi-list {
+                max-height: 150px;
+            }
+
+            .poi-item {
+                padding: 12px 14px;
+            }
+
+            /* 移动端天气卡片 */
+            .weather-card {
+                padding: 14px 16px;
+                margin-bottom: 16px;
+            }
+
+            .weather-icon {
+                font-size: 32px;
+            }
+
+            /* 移动端加载动画 */
+            .loading-card {
+                padding: 24px 32px;
+                max-width: 280px;
+            }
+
+            .loading-title {
+                font-size: 16px;
+            }
+
+            .loading-step {
+                font-size: 13px;
+                padding: 8px 0;
+            }
+
+            /* 移动端提示框 */
+            .error-toast {
+                top: 16px;
+                padding: 14px 20px;
+                font-size: 14px;
+                max-width: 90vw;
+            }
+
+            /* 移动端筛选标题 */
+            .filter-title {
+                font-size: 12px;
+                margin: 14px 0 10px 0;
+            }
+
+            /* 移动端时间滑块 */
+            .time-slider-group {
+                padding: 12px 0;
+            }
+
+            /* 移动端tips */
+            .tips-box {
+                font-size: 12px;
+                padding: 12px;
+            }
+        }
+
+        /* 超小屏幕适配 */
+        @media (max-width: 375px) {
+            .control-panel {
+                max-height: 60vh;
+            }
+
+            .panel-header h2 {
+                font-size: 16px;
+            }
+
+            .poi-type-btn {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+
+            .status-card .value {
+                font-size: 11px;
+            }
+        }
+
+        /* 横屏模式适配 */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .control-panel {
+                max-height: 75vh;
+                width: 50%;
+                right: 0;
+                left: auto;
+                top: 10px;
+                bottom: auto;
+                border-radius: 16px;
+            }
+        }
+
+        /* iPhone X+ 安全区域适配 */
+        @supports (padding-bottom: env(safe-area-inset-bottom)) {
+            .control-panel {
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+        }
+    </style>
+    
+    <!-- 引入 html2canvas 用于生成分享图片 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+    <div id="container"></div>
+
+    <!-- 分步骤加载动画 -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-card">
+            <div class="loading-title">🚶 正在规划您的专属路线</div>
+            <div class="loading-steps">
+                <div class="loading-step" id="step1">
+                    <span class="step-icon">🗺️</span>
+                    <span class="step-text">计算最优路径...</span>
+                    <span class="step-status"></span>
+                </div>
+                <div class="loading-step" id="step2">
+                    <span class="step-icon">☕</span>
+                    <span class="step-text">沿途搜寻好店...</span>
+                    <span class="step-status"></span>
+                </div>
+                <div class="loading-step" id="step3">
+                    <span class="step-icon">🚶</span>
+                    <span class="step-text">优化路线顺序...</span>
+                    <span class="step-status"></span>
+                </div>
+                <div class="loading-step" id="step4">
+                    <span class="step-icon">✨</span>
+                    <span class="step-text">生成精美路线...</span>
+                    <span class="step-status"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="error-toast" id="errorToast"></div>
+
+    <div class="control-panel">
+        <div class="panel-header">
+            <h2>
+                <span class="panel-header-title-text">上海Citywalk定制器</span>
+                <button class="back-home-btn" onclick="window.location.href='../index.html'">
+                    ← 返回主页
+                </button>
+            </h2>
+        </div>
+        <div class="panel-body">
+            <!-- 搜索框 -->
+            <div class="search-box" style="margin-bottom: 16px;">
+                <input type="text" id="searchInput" placeholder="🔍 搜索地址（输入后回车定位）" style="width: 100%; padding: 12px 16px; border: 2px solid var(--border-light); border-radius: var(--radius-md); font-size: 14px; transition: all 0.3s;">
+            </div>
+
+            <!-- 天气卡片 -->
+            <div class="weather-card" id="weatherCard" style="cursor: pointer;" title="点击刷新天气">
+                <div class="weather-icon" id="weatherIcon">🌤️</div>
+                <div class="weather-info">
+                    <div class="title" id="weatherTitle">加载中...</div>
+                    <div class="desc" id="weatherDesc">正在获取上海实时天气</div>
+                </div>
+            </div>
+
+            <!-- 起终点状态 -->
+            <div class="status-group">
+                <div class="status-card" id="startCard">
+                    <div class="label">📍 起点</div>
+                    <div class="value" id="startValue">点击地图选择</div>
+                </div>
+                <div class="status-card" id="endCard">
+                    <div class="label">🏁 终点</div>
+                    <div class="value" id="endValue">点击地图选择</div>
+                </div>
+            </div>
+
+            <!-- 使用提示 -->
+            <div class="tips-box" style="background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 12px; color: #0369a1;">
+                💡 <strong>操作提示：</strong>点击地图选择起点和终点，或在上方搜索框输入地址
+            </div>
+
+            <!-- 筛选条件 -->
+            <div class="filter-group">
+                <div class="filter-title">路线偏好</div>
+                <div class="poi-type-group">
+                    <div class="poi-type-btn active" data-type="无偏好">无偏好</div>
+                    <div class="poi-type-btn" data-type="自然">🌳 自然</div>
+                    <div class="poi-type-btn" data-type="历史">🏛️ 历史</div>
+                    <div class="poi-type-btn" data-type="文创">✨ 文创</div>
+                    <div class="poi-type-btn" data-type="花店">💐 花店</div>
+                    <div class="poi-type-btn" data-type="咖啡">☕ 咖啡</div>
+                    <div class="poi-type-btn" data-type="甜品">🍰 甜品</div>
+                    <div class="poi-type-btn" data-type="烘焙">🥐 烘焙</div>
+                </div>
+
+                <div class="filter-title">计划游玩时间</div>
+                <div class="time-slider-group" style="padding: 8px 0;">
+                    <input type="range" id="planTimeSlider" min="30" max="180" value="60" style="width: 100%; accent-color: var(--primary);">
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-light); margin-top: 4px;">
+                        <span>30分钟</span>
+                        <span id="planTimeValue" style="font-weight: 600; color: var(--primary);">60 分钟</span>
+                        <span>3小时</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 功能按钮 -->
+            <div class="btn-group">
+                <button class="btn btn-reset" onclick="resetSelection()">重置选择</button>
+                <button class="btn btn-plan" id="btnPlan" onclick="generateRoute()" disabled>等待选择起终点</button>
+            </div>
+
+            <button class="btn-generate-plan" id="btnGeneratePlan" onclick="generatePlanText()">生成游玩文字方案</button>
+
+            <!-- 新增：生成分享图片按钮 -->
+            <button class="btn-generate-plan" id="btnShareImage" onclick="generateShareImage()" style="margin-top: 12px; background: linear-gradient(135deg, #667eea, #764ba2); display: none;">
+                📸 生成朋友圈分享图
+            </button>
+
+            <!-- 结果展示 -->
+            <div class="result-area" id="resultArea">
+                <div class="result-header">路线规划完成</div>
+                <div class="result-item">
+                    <div class="label">总距离</div>
+                    <div class="value highlight" id="distanceValue">--</div>
+                </div>
+                <div class="result-item">
+                    <div class="label">预计耗时</div>
+                    <div class="value highlight" id="durationValue">--</div>
+                </div>
+                <div class="result-item">
+                    <div class="label">打卡点</div>
+                    <div class="value highlight" id="poiCountValue">0个</div>
+                </div>
+                <div class="poi-list" id="poiList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let map = null;
+        let startPoint = null;
+        let endPoint = null;
+        let startMarker = null;
+        let endMarker = null;
+        let routeLine = null;
+        let poiMarkers = [];
+        let infoWindow = null;
+        let selectedPoiType = "无偏好";
+        let routeData = null;
+        let debounceTimer = null;
+        let shanghaiWeather = null;
+        let currentTheme = null;
+
+        // API 基础地址配置 - 根据环境自动切换
+        const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:5000'
+            : '';  // 生产环境使用相对路径（同域部署）
+
+        // 主题配色方案
+        const colorThemes = [
+            { name: '日落橙', primary: '#ff7e5f', primaryLight: '#feb47b', primaryDark: '#e85d40' },
+            { name: '薄荷绿', primary: '#11998e', primaryLight: '#38ef7d', primaryDark: '#0d7a6e' },
+            { name: '珊瑚粉', primary: '#ff6b6b', primaryLight: '#feca57', primaryDark: '#ee5a5a' },
+            { name: '深海蓝', primary: '#4facfe', primaryLight: '#00f2fe', primaryDark: '#3d9be5' },
+            { name: '紫罗兰', primary: '#a18cd1', primaryLight: '#fbc2eb', primaryDark: '#8a7bc8' },
+            { name: '樱花粉', primary: '#f093fb', primaryLight: '#f5576c', primaryDark: '#e07ce8' },
+            { name: '森林绿', primary: '#56ab2f', primaryLight: '#a8e063', primaryDark: '#4a9a28' },
+            { name: '焦糖棕', primary: '#8B4513', primaryLight: '#D2691E', primaryDark: '#6d360f' }
+        ];
+
+        // 设置随机主题色
+        function setRandomTheme() {
+            currentTheme = colorThemes[Math.floor(Math.random() * colorThemes.length)];
+            const root = document.documentElement;
+            root.style.setProperty('--primary', currentTheme.primary);
+            root.style.setProperty('--primary-light', currentTheme.primaryLight);
+            root.style.setProperty('--primary-dark', currentTheme.primaryDark);
+            console.log('当前主题:', currentTheme.name);
+        }
+
+        // 页面加载时设置随机主题
+        setRandomTheme();
+
+        // 地图加载失败处理
+        function mapLoadError() {
+            showToast("高德地图加载失败，请刷新页面重试");
+        }
+
+        // 获取上海天气（增加主动刷新逻辑）
+        function getShanghaiWeather(forceRefresh = false) {
+            // 如果已有天气数据且不强制刷新，直接更新UI
+            if (shanghaiWeather && !forceRefresh) {
+                updateWeatherUI(
+                    `${shanghaiWeather.weather} ${shanghaiWeather.temperature}℃`,
+                    `风向${shanghaiWeather.windDirection} ${shanghaiWeather.windPower}级 | 湿度${shanghaiWeather.humidity}%`,
+                    getWeatherIcon(shanghaiWeather.weather)
+                );
+                return;
+            }
+
+            if (!window.AMap || !AMap.Weather) {
+                updateWeatherUI("天气加载失败", "无法获取天气数据", "⛅");
+                return;
+            }
+
+            // 显示加载状态
+            updateWeatherUI("加载中...", "正在获取上海实时天气", "🌤️");
+
+            const weather = new AMap.Weather();
+            weather.getLive('上海市', function(err, data) {
+                if (err || !data) {
+                    updateWeatherUI("天气加载失败", "建议出行前查看实时天气", "⛅");
+                    return;
+                }
+
+                shanghaiWeather = {
+                    temperature: data.temperature,
+                    weather: data.weather,
+                    windDirection: data.windDirection,
+                    windPower: data.windPower,
+                    humidity: data.humidity,
+                    updateTime: new Date() // 记录更新时间
+                };
+
+                // 更新天气UI
+                updateWeatherUI(
+                    `${data.weather} ${data.temperature}℃`,
+                    `风向${data.windDirection} ${data.windPower}级 | 湿度${data.humidity}% | 刚刚更新`,
+                    getWeatherIcon(data.weather)
+                );
+            });
+        }
+
+        // 定时刷新天气（每5分钟）
+        function startWeatherRefresh() {
+            // 立即获取一次
+            getShanghaiWeather(true);
+            // 每5分钟刷新一次
+            setInterval(() => {
+                getShanghaiWeather(true);
+            }, 5 * 60 * 1000);
+        }
+
+        // 根据天气类型获取对应图标
+        function getWeatherIcon(weather) {
+            if (weather.includes('晴')) return '☀️';
+            if (weather.includes('云')) return '☁️';
+            if (weather.includes('雨')) return '🌧️';
+            if (weather.includes('雪')) return '❄️';
+            if (weather.includes('风')) return '🌬️';
+            return '⛅';
+        }
+
+        // 更新天气卡片UI
+        function updateWeatherUI(title, desc, icon) {
+            document.getElementById('weatherIcon').textContent = icon;
+            document.getElementById('weatherTitle').textContent = title;
+            document.getElementById('weatherDesc').textContent = desc;
+        }
+
+        // 初始化地图
+        function initMap() {
+            if (!window.AMap) {
+                showToast("高德地图加载失败，请检查网络或Key有效性");
+                return;
+            }
+
+            try {
+                map = new AMap.Map('container', {
+                    zoom: 15,
+                    center: [121.480656, 31.230416],
+                    viewMode: '2D',
+                    clickEnable: true,
+                    dragEnable: true,
+                    resizeEnable: true
+                });
+
+                infoWindow = new AMap.InfoWindow({
+                    offset: new AMap.Pixel(0, -30)
+                });
+
+                // 地图点击选点逻辑
+                map.on('click', function(e) {
+                    const lng = e.lnglat.lng;
+                    const lat = e.lnglat.lat;
+                    const point = {
+                        lng: parseFloat(lng.toFixed(6)),
+                        lat: parseFloat(lat.toFixed(6))
+                    };
+
+                    if (!startPoint) {
+                        setStartPoint(point);
+                    } else if (!endPoint) {
+                        setEndPoint(point);
+                    } else {
+                        if (confirm("已选择起终点，是否重新选择？")) {
+                            resetSelection();
+                            setStartPoint(point);
+                        }
+                    }
+                });
+
+                // 启动天气定时刷新
+                startWeatherRefresh();
+
+                console.log("地图初始化成功");
+            } catch (e) {
+                showToast(`地图初始化失败：${e.message}`);
+                console.error("地图初始化错误：", e);
+            }
+        }
+
+        // 显示提示框（防抖）
+        function showToast(message, duration = 3000) {
+            clearTimeout(debounceTimer);
+            const toast = document.getElementById('errorToast');
+            toast.textContent = message;
+            toast.style.display = 'block';
+
+            debounceTimer = setTimeout(() => {
+                toast.style.display = 'none';
+            }, duration);
+        }
+
+        // 设置起点
+        function setStartPoint(point) {
+            startPoint = point;
+            if (startMarker) map.remove(startMarker);
+
+            startMarker = new AMap.Marker({
+                position: [point.lng, point.lat],
+                title: '起点',
+                icon: new AMap.Icon({
+                    size: new AMap.Size(25, 34),
+                    image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_r.png',
+                    imageSize: new AMap.Size(25, 34)
+                }),
+                offset: new AMap.Pixel(-12, -34),
+                zIndex: 100
+            });
+            map.add(startMarker);
+
+            document.getElementById('startCard').className = 'status-card selected';
+            document.getElementById('startValue').textContent = '定位中...';
+
+            // 逆地理编码获取地址名称
+            reverseGeocode(point.lng, point.lat, function(address) {
+                document.getElementById('startValue').textContent = address || `(${point.lng.toFixed(4)}, ${point.lat.toFixed(4)})`;
+                startPoint.address = address;
+            });
+
+            updateBtnStatus();
+        }
+
+        // 设置终点
+        function setEndPoint(point) {
+            endPoint = point;
+            if (endMarker) map.remove(endMarker);
+
+            endMarker = new AMap.Marker({
+                position: [point.lng, point.lat],
+                title: '终点',
+                icon: new AMap.Icon({
+                    size: new AMap.Size(25, 34),
+                    image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
+                    imageSize: new AMap.Size(25, 34)
+                }),
+                offset: new AMap.Pixel(-12, -34),
+                zIndex: 100
+            });
+            map.add(endMarker);
+
+            document.getElementById('endCard').className = 'status-card selected';
+            document.getElementById('endValue').textContent = '定位中...';
+
+            // 逆地理编码获取地址名称
+            reverseGeocode(point.lng, point.lat, function(address) {
+                document.getElementById('endValue').textContent = address || `(${point.lng.toFixed(4)}, ${point.lat.toFixed(4)})`;
+                endPoint.address = address;
+            });
+
+            updateBtnStatus();
+        }
+
+        // 逆地理编码
+        function reverseGeocode(lng, lat, callback) {
+            if (!window.AMap) {
+                callback(null);
+                return;
+            }
+
+            AMap.plugin('AMap.Geocoder', function() {
+                const geocoder = new AMap.Geocoder({ city: '上海' });
+                geocoder.getAddress([lng, lat], function(status, result) {
+                    if (status === 'complete' && result.regeocode) {
+                        const address = result.regeocode.formattedAddress;
+                        // 简化地址显示（去掉上海市前缀）
+                        const shortAddress = address.replace(/^上海市/, '').replace(/^中国/, '');
+                        callback(shortAddress || address);
+                    } else {
+                        callback(null);
+                    }
+                });
+            });
+        }
+
+        // 更新按钮状态
+        function updateBtnStatus() {
+            const btn = document.getElementById('btnPlan');
+            const planTimeSlider = document.getElementById('planTimeSlider');
+            const planTime = parseInt(planTimeSlider.value);
+
+            const isTimeValid = !isNaN(planTime) && planTime >= 30 && planTime <= 180;
+            const isPointValid = !!startPoint && !!endPoint;
+
+            if (isPointValid && isTimeValid) {
+                btn.disabled = false;
+                btn.innerText = "生成路线";
+            } else {
+                btn.disabled = true;
+                if (!isPointValid) {
+                    btn.innerText = "等待选择起终点";
+                } else {
+                    btn.innerText = "请设置游玩时间";
+                }
+            }
+        }
+
+        // 清除POI标记
+        function clearPoiMarkers() {
+            poiMarkers.forEach(marker => {
+                map.remove(marker);
+            });
+            poiMarkers = [];
+        }
+
+        // 添加带有序号的POI标记（仅显示数字，不显示蓝色标记点）
+        function addPoiMarkers(pois) {
+            clearPoiMarkers();
+
+            if (!Array.isArray(pois) || pois.length === 0) return;
+
+            pois.forEach((poi, index) => {
+                if (!poi.location || !Array.isArray(poi.location) || poi.location.length !== 2) {
+                    console.warn(`POI ${poi.name} 坐标无效，跳过标记`);
+                    return;
+                }
+
+                // 只创建序号标签（圆形数字标记 - 使用当前主题色）
+                const themeColor = currentTheme ? currentTheme.primary : '#ff7e5f';
+                const themeLightColor = currentTheme ? currentTheme.primaryLight : '#feb47b';
+                const numberLabel = new AMap.Text({
+                    text: `${index+1}`,
+                    position: poi.location,
+                    offset: new AMap.Pixel(0, 0),
+                    style: {
+                        'background': `linear-gradient(135deg, ${themeColor}, ${themeLightColor})`,
+                        'color': 'white',
+                        'border-radius': '14px',
+                        'min-width': '28px',
+                        'height': '28px',
+                        'text-align': 'center',
+                        'line-height': '28px',
+                        'font-size': '13px',
+                        'font-weight': 'bold',
+                        'border': '3px solid white',
+                        'box-shadow': '0 3px 8px rgba(255, 126, 95, 0.4)',
+                        'cursor': 'pointer',
+                        'padding': '0 6px',
+                        'white-space': 'nowrap'
+                    },
+                    zIndex: 100 + index,
+                    title: `${index+1}. ${poi.name}`
+                });
+
+                // 点击数字标签显示信息窗口（美化后的样式）
+                numberLabel.on('click', function() {
+                    const infoWindow = new AMap.InfoWindow({
+                        content: `
+                            <div style="padding: 16px; font-size: 14px; min-width: 200px; font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;">
+                                <h4 style="margin: 0 0 12px 0; color: #1e293b; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                                    <span style="background: linear-gradient(135deg, #ff7e5f, #feb47b); color: white; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px;">${index+1}</span>
+                                    ${poi.name}
+                                </h4>
+                                <p style="margin: 8px 0; color: #64748b; display: flex; align-items: center; gap: 6px;">
+                                    <span style="color: #94a3b8;">🏷️</span> ${poi.category || poi.type || '未知类型'}
+                                </p>
+                                <p style="margin: 8px 0; color: #64748b; display: flex; align-items: center; gap: 6px;">
+                                    <span style="color: #94a3b8;">📍</span> ${poi.address || '暂无地址'}
+                                </p>
+                                <p style="margin: 8px 0; color: #ff7e5f; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                                    <span>⏱️</span> 建议停留 ${poi.stay_time || 8} 分钟
+                                </p>
+                            </div>
+                        `,
+                        offset: new AMap.Pixel(0, -18)
+                    });
+                    infoWindow.open(map, poi.location);
+                });
+
+                // 添加到地图
+                map.add(numberLabel);
+                poiMarkers.push(numberLabel);
+            });
+        }
+
+        // 重置选择
+        function resetSelection() {
+            startPoint = null;
+            endPoint = null;
+            if (startMarker) map.remove(startMarker);
+            if (endMarker) map.remove(endMarker);
+            if (routeLine) map.remove(routeLine);
+            clearPoiMarkers();
+
+            startMarker = null;
+            endMarker = null;
+            routeLine = null;
+            routeData = null;
+
+            document.getElementById('startCard').className = 'status-card';
+            document.getElementById('endCard').className = 'status-card';
+            document.getElementById('startValue').textContent = "点击地图选择";
+            document.getElementById('endValue').textContent = "点击地图选择";
+            document.getElementById('resultArea').style.display = 'none';
+            document.getElementById('btnGeneratePlan').style.display = 'none';
+            document.getElementById('btnShareImage').style.display = 'none';
+            document.getElementById('poiList').innerHTML = '';
+
+            const planTimeSlider = document.getElementById('planTimeSlider');
+            planTimeSlider.value = 60;
+            document.getElementById('planTimeValue').textContent = '60 分钟';
+            document.querySelectorAll('.poi-type-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.poi-type-btn[data-type="无偏好"]').classList.add('active');
+            selectedPoiType = "无偏好";
+
+            updateBtnStatus();
+        }
+
+        // 生成路线
+        function generateRoute() {
+            if (!startPoint || !endPoint) {
+                showToast("请先选择起终点");
+                return;
+            }
+
+            const planTimeSlider = document.getElementById('planTimeSlider');
+            let planTime = parseInt(planTimeSlider.value, 10);
+
+            if (isNaN(planTime) || planTime < 30 || planTime > 180) {
+                showToast("请设置30-180分钟的游玩时间");
+                return;
+            }
+
+            const start = [parseFloat(startPoint.lng.toFixed(6)), parseFloat(startPoint.lat.toFixed(6))];
+            const end = [parseFloat(endPoint.lng.toFixed(6)), parseFloat(endPoint.lat.toFixed(6))];
+
+            // 显示分步骤加载动画
+            showLoadingSteps();
+
+            // 创建超时控制器
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒超时
+
+            fetch(`${API_BASE_URL}/plan`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    start: start,
+                    end: end,
+                    plan_time: planTime,
+                    poi_type: selectedPoiType.trim()
+                }),
+                signal: controller.signal
+            })
+            .then(response => {
+                clearTimeout(timeoutId);
+                if (!response.ok) {
+                    // 尝试解析后端返回的JSON错误详情
+                    return response.json().then(errData => {
+                        const detail = errData.message || errData.error || `HTTP错误：${response.status}`;
+                        throw new Error(detail);
+                    }).catch(() => {
+                        throw new Error(`HTTP错误：${response.status}`);
+                    });
+                }
+                return response.json().catch(err => {
+                    throw new Error("后端返回数据格式错误");
+                });
+            })
+            .then(data => {
+                hideLoadingSteps();
+                if (!data.success) {
+                    showToast(`路线规划失败：${data.message || '未知错误'}`);
+                    return;
+                }
+
+                routeData = data;
+
+                if (routeLine) map.remove(routeLine);
+                // 绘制路线 - 使用当前主题色
+                const routeColor = currentTheme ? currentTheme.primary : '#ff7e5f';
+                routeLine = new AMap.Polyline({
+                    path: data.path,
+                    strokeColor: routeColor,
+                    strokeWeight: 6,
+                    strokeOpacity: 0.9,
+                    strokeStyle: 'solid',
+                    lineJoin: 'round',
+                    lineCap: 'round',
+                    zIndex: 50,
+                    showDir: true  // 显示方向箭头
+                });
+                map.add(routeLine);
+
+                // 添加带有序号的POI标记
+                addPoiMarkers(data.pois);
+
+                map.setFitView([startMarker, endMarker, routeLine, ...poiMarkers], {
+                    padding: [50, 50, 50, 50],
+                    animate: true
+                });
+
+                document.getElementById('distanceValue').textContent =
+                    (data.distance / 1000).toFixed(2) + ' km';
+                
+                // 计算总耗时：步行时间 + POI停留时间（每个POI约5分钟）
+                const walkDuration = data.duration || 0;
+                const poiStayTime = (data.pois ? data.pois.length : 0) * 5;
+                const totalDuration = walkDuration + poiStayTime;
+                document.getElementById('durationValue').textContent = totalDuration + ' 分钟';
+                
+                document.getElementById('poiCountValue').textContent =
+                    data.pois.length + '个';
+
+                const poiList = document.getElementById('poiList');
+                poiList.innerHTML = '';
+                if (poiList) {
+                    const pois = Array.isArray(data.pois) ? data.pois : [];
+                    if (pois.length > 0) {
+                        pois.forEach((poi, index) => {
+                            const poiName = poi.name || '未知名称';
+                            const poiType = poi.type || '未知类型';
+                            const poiIcon = poi.icon || '📍';
+
+                            const poiItem = document.createElement('div');
+                            poiItem.className = 'poi-item';
+                            poiItem.onclick = () => {
+                                if (poi.location && Array.isArray(poi.location) && poi.location.length === 2) {
+                                    map.setCenter(poi.location);
+                                    map.setZoom(17);
+                                }
+                            };
+                            poiItem.innerHTML = `
+                                <div style="display: flex; align-items: flex-start; gap: 8px;">
+                                    <span style="font-size: 18px;">${poiIcon}</span>
+                                    <div style="flex: 1;">
+                                        <strong>${index+1}. ${poiName}</strong>
+                                        <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">${poiType}</div>
+                                    </div>
+                                </div>
+                            `;
+                            poiList.appendChild(poiItem);
+                        });
+                    } else {
+                        poiList.innerHTML = `
+                            <div class="poi-item" style="color: var(--text-light, #999);">
+                                暂无推荐打卡点
+                            </div>
+                        `;
+                    }
+                }
+
+                const resultArea = document.getElementById('resultArea');
+                if (resultArea) resultArea.style.display = 'block';
+                const btnGeneratePlan = document.getElementById('btnGeneratePlan');
+                if (btnGeneratePlan) btnGeneratePlan.style.display = 'block';
+                const btnShareImage = document.getElementById('btnShareImage');
+                if (btnShareImage) btnShareImage.style.display = 'block';
+
+                // 生成路线后主动刷新天气
+                getShanghaiWeather(true);
+            })
+            .catch(error => {
+                hideLoadingSteps();
+                let errorMsg = '';
+                if (error.name === 'AbortError') {
+                    errorMsg = "请求超时（30秒），请检查后端服务是否运行";
+                } else if (error.message.includes('timeout')) {
+                    errorMsg = "请求超时，请检查网络或后端服务是否运行";
+                } else if (error.message.includes('Failed to fetch')) {
+                    errorMsg = "无法连接到后端服务，请确认：1.后端已启动 2.地址端口正确 3.已配置跨域";
+                } else if (error.message.includes('JSON')) {
+                    errorMsg = "后端返回数据格式错误，请检查接口返回值";
+                } else {
+                    errorMsg = `请求失败：${error.message}`;
+                }
+                showToast(errorMsg);
+                console.error('路线规划错误：', error);
+            });
+        }
+
+        // 生成更贴心的文字方案
+        function generatePlanText() {
+            if (!routeData || !routeData.success) {
+                showToast("请先生成有效的路线规划！");
+                return;
+            }
+
+            // 获取基础数据
+            const planTime = document.getElementById('planTimeSlider').value;
+            const poiType = selectedPoiType || "无偏好";
+            const distance = (routeData.distance / 1000).toFixed(2);
+            const walkDuration = routeData.duration || 0;
+            const poiCount = routeData.pois ? routeData.pois.length : 0;
+            // 总耗时 = 步行时间 + POI停留时间（每个约5分钟）
+            const duration = walkDuration + poiCount * 5;
+
+            // 获取当前时间，生成个性化问候
+            const now = new Date();
+            const hour = now.getHours();
+            let greeting = '';
+            if (hour < 10) {
+                greeting = '☀️ 早上好呀～';
+            } else if (hour < 14) {
+                greeting = '🍛 中午好～';
+            } else if (hour < 18) {
+                greeting = '☕ 下午好～';
+            } else {
+                greeting = '🌙 晚上好～';
+            }
+
+            // 构建POI列表（优化排版，含距离提示）
+            let poiText = '';
+            if (poiCount > 0) {
+                poiText = '\n✨ 【今日推荐打卡点】\n';
+                routeData.pois.forEach((poi, index) => {
+                    const poiName = poi.name || '未知名称';
+                    const poiIcon = poi.icon || '📍';
+                    poiText += `${index+1}. ${poiIcon} ${poiName}\n`;
+                });
+            } else {
+                poiText = '\n✨ 【今日推荐打卡点】\n暂时没有推荐的打卡点哦，不妨随心走走，说不定会发现意外的美好～';
+            }
+
+            // 构建天气提示（更贴心）
+            let weatherTips = '\n🌤️ 【今日天气小贴士】\n';
+            if (shanghaiWeather) {
+                weatherTips += `今天上海${shanghaiWeather.weather}，气温${shanghaiWeather.temperature}℃，${shanghaiWeather.windDirection}${shanghaiWeather.windPower}级，湿度${shanghaiWeather.humidity}%\n`;
+
+                // 更贴心的天气建议
+                if (shanghaiWeather.weather.includes('雨')) {
+                    weatherTips += '💧 温馨提示：今日有雨，记得带上小雨伞哦～路面可能湿滑，走路慢慢走，安全第一❤️\n';
+                } else if (parseInt(shanghaiWeather.temperature) > 30) {
+                    weatherTips += '☀️ 温馨提示：今日气温较高，做好防晒哦～记得随身带瓶水，补充水分💦\n';
+                } else if (parseInt(shanghaiWeather.temperature) < 10) {
+                    weatherTips += '🧣 温馨提示：今日气温较低，多穿点衣服哦～别着凉啦❤️\n';
+                } else if (shanghaiWeather.weather.includes('晴')) {
+                    weatherTips += '😘 温馨提示：今日天气超棒！适合出门走走，记得带上好心情～\n';
+                } else {
+                    weatherTips += '😊 温馨提示：今日天气舒适，适合Citywalk，享受慢时光～\n';
+                }
+            } else {
+                weatherTips += '暂时无法获取实时天气，出门前记得看下天气预报哦～\n';
+            }
+
+            // 生成更暖心的完整方案（优化整体排版）
+            const planText = `${greeting} 这份专属你的上海Citywalk攻略来啦～
+
+🎈 【游玩主题】：${poiType}
+⏰ 【计划时长】：${planTime}分钟
+📏 【路线总长】：${distance}公里
+⌛ 【预计耗时】：${duration} 分钟
+${weatherTips}
+${poiText}
+
+💖 【暖心小建议】：
+1. 建议按照序号顺序游玩，每个打卡点慢慢逛，不用赶时间～
+2. 走路累了可以找家小店歇歇脚，喝杯咖啡或奶茶☕
+3. 记得多拍点美美的照片，记录美好的瞬间～
+4. 注意随身物品安全，开开心心出门，平平安安回家～
+5. 如果走累了，随时可以调整路线，游玩最重要的是开心呀🥳
+
+✨ 愿你在上海的街头，遇见美好，收获满满的快乐～`;
+
+            // 修复：改用自定义弹窗显示完整内容（替代alert）
+            showCustomModal(planText);
+
+            // 复制到剪贴板
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(planText).then(() => {
+                        showToast("❤️ 游玩方案已复制到剪贴板啦～");
+                    }).catch(err => {
+                        throw err;
+                    });
+                } else {
+                    const textArea = document.createElement('textarea');
+                    textArea.value = planText;
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    showToast("❤️ 游玩方案已复制到剪贴板啦～");
+                }
+            } catch (err) {
+                console.error('复制失败：', err);
+                showToast("😥 复制失败啦，可以手动复制弹窗里的内容哦～");
+            }
+        }
+
+// 生成分享长图（以地图为主，信息叠加显示）
+async function generateShareImage() {
+    if (!routeData || !routeData.success) {
+        showToast("请先生成有效的路线规划！");
+        return;
+    }
+
+    showToast("🎨 正在准备截图，请稍候...");
+
+    // ========== 第一步：使用浏览器原生截图API截取地图 ==========
+    let mapImageDataUrl = null;
+    try {
+        // 临时隐藏UI元素
+        const controlPanel = document.querySelector('.control-panel');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const errorToast = document.getElementById('errorToast');
+        
+        if (controlPanel) controlPanel.style.display = 'none';
+        if (loadingOverlay) loadingOverlay.style.display = 'none';
+        if (errorToast) errorToast.style.display = 'none';
+        
+        // 等待UI隐藏完成
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // 请求屏幕截图权限
+        showToast("📸 请选择地图区域进行截图");
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+            video: { cursor: 'always' },
+            audio: false
+        });
+        
+        // 创建视频元素捕获画面
+        const video = document.createElement('video');
+        video.srcObject = stream;
+        video.autoplay = true;
+        
+        await new Promise((resolve) => {
+            video.onloadedmetadata = () => {
+                video.play();
+                resolve();
+            };
+        });
+        
+        // 等待一帧以确保画面稳定
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // 截图
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // 停止屏幕共享
+        stream.getTracks().forEach(track => track.stop());
+        
+        // 裁剪为4:5比例（从中心裁剪）
+        const targetWidth = 400;
+        const targetHeight = 500;
+        const aspectRatio = targetWidth / targetHeight;
+        
+        let cropWidth, cropHeight, startX, startY;
+        if (canvas.width / canvas.height > aspectRatio) {
+            // 原图更宽，以高度为基准
+            cropHeight = canvas.height;
+            cropWidth = cropHeight * aspectRatio;
+            startX = (canvas.width - cropWidth) / 2;
+            startY = 0;
+        } else {
+            // 原图更高，以宽度为基准
+            cropWidth = canvas.width;
+            cropHeight = cropWidth / aspectRatio;
+            startX = 0;
+            startY = (canvas.height - cropHeight) / 2;
+        }
+        
+        const cropCanvas = document.createElement('canvas');
+        cropCanvas.width = targetWidth * 2;
+        cropCanvas.height = targetHeight * 2;
+        const cropCtx = cropCanvas.getContext('2d');
+        cropCtx.drawImage(canvas, startX, startY, cropWidth, cropHeight, 0, 0, targetWidth * 2, targetHeight * 2);
+        
+        mapImageDataUrl = cropCanvas.toDataURL('image/png');
+        
+        // 恢复UI元素
+        if (controlPanel) controlPanel.style.display = '';
+        if (loadingOverlay) loadingOverlay.style.display = '';
+        if (errorToast) errorToast.style.display = '';
+        
+        showToast("✅ 截图成功，正在生成长图...");
+    } catch (e) {
+        console.warn('截图失败:', e);
+        // 恢复UI元素
+        const controlPanel = document.querySelector('.control-panel');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const errorToast = document.getElementById('errorToast');
+        if (controlPanel) controlPanel.style.display = '';
+        if (loadingOverlay) loadingOverlay.style.display = '';
+        if (errorToast) errorToast.style.display = '';
+        
+        showToast("截图已取消或失败，将使用默认背景");
+        mapImageDataUrl = null;
+    }
+
+    // ========== 第二步：收集数据 ==========
+    const poiType = selectedPoiType || "无偏好";
+    const distance = (routeData.distance / 1000).toFixed(2);
+    const walkDuration = routeData.duration || 0;
+    const poiCount = routeData.pois ? routeData.pois.length : 0;
+    // 总耗时 = 步行 + POI停留
+    const duration = walkDuration + poiCount * 5;
+    const now = new Date();
+    
+    // 主题名称映射
+    const themeNames = {
+        '无偏好': '城市漫游',
+        '自然': '绿意寻踪',
+        '历史': '时光漫步',
+        '文创': '文艺探索',
+        '花店': '花香之旅',
+        '咖啡': '咖啡时光',
+        '甜品': '甜蜜漫步',
+        '烘焙': '麦香寻味',
+        '商场': '都市探索'
+    };
+    const themeName = themeNames[poiType] || '城市漫游';
+    
+    // 提取区域名称
+    const startAddr = startPoint?.address || document.getElementById('startValue').textContent || '';
+    const endAddr = endPoint?.address || document.getElementById('endValue').textContent || '';
+    let areaName = '上海';
+    const areaMatch = (startAddr + endAddr).match(/(黄浦|静安|徐汇|长宁|普陀|虹口|杨浦|浦东|闵行|宝山|嘉定|松江|青浦|奉贤|金山|崇明)/);
+    if (areaMatch) areaName = areaMatch[1];
+    
+    // 天气信息
+    let weatherText = '适宜出行';
+    let weatherIcon = '🌤️';
+    if (shanghaiWeather) {
+        weatherText = `${shanghaiWeather.weather} ${shanghaiWeather.temperature}℃`;
+        weatherIcon = getWeatherIcon(shanghaiWeather.weather);
+    }
+    
+    // 日期格式化
+    const dateStr = now.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' });
+    
+    // ========== 第三步：使用当前网页主题色 ==========
+    // 使用与网页相同的主题色，如果没有则随机选择
+    let theme;
+    if (currentTheme) {
+        theme = {
+            name: currentTheme.name,
+            primary: currentTheme.primary,
+            secondary: currentTheme.primaryLight,
+            gradient: `linear-gradient(180deg, ${currentTheme.primary}e6 0%, ${currentTheme.primaryLight}b3 50%, transparent 100%)`
+        };
+    } else {
+        // 备选：随机选择
+        const colorThemes = [
+            { name: '日落橙', primary: '#ff7e5f', secondary: '#feb47b', gradient: 'linear-gradient(180deg, rgba(255,126,95,0.9) 0%, rgba(254,180,123,0.7) 50%, transparent 100%)' },
+            { name: '薄荷绿', primary: '#11998e', secondary: '#38ef7d', gradient: 'linear-gradient(180deg, rgba(17,153,142,0.9) 0%, rgba(56,239,125,0.7) 50%, transparent 100%)' },
+            { name: '珊瑚粉', primary: '#ff6b6b', secondary: '#feca57', gradient: 'linear-gradient(180deg, rgba(255,107,107,0.9) 0%, rgba(254,202,87,0.7) 50%, transparent 100%)' },
+            { name: '深海蓝', primary: '#4facfe', secondary: '#00f2fe', gradient: 'linear-gradient(180deg, rgba(79,172,254,0.9) 0%, rgba(0,242,254,0.7) 50%, transparent 100%)' },
+            { name: '紫罗兰', primary: '#a18cd1', secondary: '#fbc2eb', gradient: 'linear-gradient(180deg, rgba(161,140,209,0.9) 0%, rgba(251,194,235,0.7) 50%, transparent 100%)' },
+            { name: '樱花粉', primary: '#f093fb', secondary: '#f5576c', gradient: 'linear-gradient(180deg, rgba(240,147,251,0.9) 0%, rgba(245,87,108,0.7) 50%, transparent 100%)' },
+            { name: '森林绿', primary: '#56ab2f', secondary: '#a8e063', gradient: 'linear-gradient(180deg, rgba(86,171,47,0.9) 0%, rgba(168,224,99,0.7) 50%, transparent 100%)' },
+            { name: '焦糖棕', primary: '#8B4513', secondary: '#D2691E', gradient: 'linear-gradient(180deg, rgba(139,69,19,0.9) 0%, rgba(210,105,30,0.7) 50%, transparent 100%)' }
+        ];
+        theme = colorThemes[Math.floor(Math.random() * colorThemes.length)];
+    }
+    
+    // 文艺文案库（扩充并优化）
+    const slogans = [
+        '用脚步丈量城市的温度',
+        '在街角遇见生活的美好',
+        '每一步都是新的发现',
+        '与城市来一场浪漫邂逅',
+        '慢下来，看见不一样的风景',
+        '漫步城市，发现不一样的自己',
+        '最好的风景，永远在路上',
+        '城市的每一个角落都有故事',
+        '走街串巷，品味人间烟火',
+        '今日份的美好已送达',
+        '生活明朗，万物可爱',
+        '保持热爱，奔赴山海',
+        '不负春光，野蛮生长',
+        '心之所向，素履以往'
+    ];
+    const randomSlogan = slogans[Math.floor(Math.random() * slogans.length)];
+
+    // 构建POI列表（美化版，悬浮气泡样式）
+    let poisHtml = '';
+    if (poiCount > 0) {
+        const showPois = routeData.pois.slice(0, 4);
+        poisHtml = '<div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; padding: 0 10px;">';
+        showPois.forEach((poi, index) => {
+            const poiIcon = poi.icon || '📍';
+            const poiName = (poi.name || '未知').slice(0, 6);
+            poisHtml += `
+                <div style="background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(255,255,255,0.9)); border-radius: 20px; padding: 8px 14px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.5); backdrop-filter: blur(10px);">
+                    <span style="font-size: 16px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));">${poiIcon}</span>
+                    <span style="font-size: 11px; color: #2d3748; font-weight: 600; letter-spacing: 0.3px;">${poiName}</span>
+                </div>
+            `;
+        });
+        if (poiCount > 4) {
+            poisHtml += `
+                <div style="background: linear-gradient(135deg, ${theme.primary}, ${theme.secondary}); border-radius: 20px; padding: 8px 14px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.3);">
+                    <span style="font-size: 12px; color: white; font-weight: 700;">+${poiCount - 4}</span>
+                </div>
+            `;
+        }
+        poisHtml += '</div>';
+    }
+
+    // ========== 第四步：构建长图HTML（4:5比例，地图为主） ==========
+    const shareCard = document.createElement('div');
+    shareCard.style.cssText = `
+        position: fixed;
+        top: -9999px;
+        left: -9999px;
+        width: 400px;
+        height: 500px;
+        font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        overflow: hidden;
+    `;
+
+    shareCard.innerHTML = `
+        <!-- 地图背景层 -->
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; ${mapImageDataUrl ? '' : 'background: linear-gradient(135deg, #e0e5ec, #f5f7fa);'}">
+            ${mapImageDataUrl 
+                ? `<img src="${mapImageDataUrl}" style="width: 100%; height: 100%; object-fit: cover;" />` 
+                : ''}
+        </div>
+        
+        <!-- 顶部主题色渐变遮罩 -->
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 150px; background: ${theme.gradient};"></div>
+        
+        <!-- 底部主题色渐变遮罩 -->
+        <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 200px; background: linear-gradient(0deg, ${theme.primary}ee 0%, ${theme.secondary}aa 30%, transparent 100%);"></div>
+        
+        <!-- 顶部信息区 -->
+        <div style="position: absolute; top: 0; left: 0; width: 100%; padding: 18px 22px; box-sizing: border-box;">
+            <div style="font-size: 10px; color: rgba(255,255,255,0.95); margin-bottom: 6px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 500; text-shadow: 0 1px 3px rgba(0,0,0,0.2);">🚶 CITYWALK · ${areaName}</div>
+            <h1 style="margin: 0; font-size: 24px; font-weight: 800; color: white; line-height: 1.2; text-shadow: 0 2px 12px rgba(0,0,0,0.3); letter-spacing: 0.5px;">
+                ${themeName}
+            </h1>
+            <div style="margin-top: 10px; font-size: 12px; color: rgba(255,255,255,0.9); font-weight: 500; text-shadow: 0 1px 3px rgba(0,0,0,0.2);">${dateStr} · ${weatherIcon} ${weatherText}</div>
+        </div>
+        
+        <!-- 右侧竖排文案区 -->
+        <div style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); writing-mode: vertical-rl; text-orientation: upright; z-index: 10;">
+            <div style="font-size: 13px; color: white; font-weight: 700; text-shadow: 0 2px 8px rgba(0,0,0,0.4); letter-spacing: 4px; padding: 12px 8px; background: linear-gradient(180deg, ${theme.primary}cc, ${theme.secondary}aa); border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                ${randomSlogan}
+            </div>
+        </div>
+        
+        <!-- 底部信息区 - 毛玻璃卡片样式 -->
+        <div style="position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); width: calc(100% - 32px); max-width: 360px; padding: 20px; box-sizing: border-box; background: rgba(255,255,255,0.25); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 24px; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.3);">
+            <!-- 数据统计 -->
+            <div style="display: flex; justify-content: space-around; margin-bottom: 16px;">
+                <div style="text-align: center; flex: 1;">
+                    <div style="font-size: 26px; font-weight: 800; color: white; text-shadow: 0 2px 8px rgba(0,0,0,0.3); letter-spacing: -0.5px;">${distance}<span style="font-size: 11px; font-weight: 600; margin-left: 2px;">km</span></div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.85); margin-top: 4px; font-weight: 500;">总距离</div>
+                </div>
+                <div style="width: 1px; background: linear-gradient(180deg, transparent, rgba(255,255,255,0.5), transparent);"></div>
+                <div style="text-align: center; flex: 1;">
+                    <div style="font-size: 26px; font-weight: 800; color: white; text-shadow: 0 2px 8px rgba(0,0,0,0.3); letter-spacing: -0.5px;">${duration}<span style="font-size: 11px; font-weight: 600; margin-left: 2px;">min</span></div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.85); margin-top: 4px; font-weight: 500;">预计用时</div>
+                </div>
+                <div style="width: 1px; background: linear-gradient(180deg, transparent, rgba(255,255,255,0.5), transparent);"></div>
+                <div style="text-align: center; flex: 1;">
+                    <div style="font-size: 26px; font-weight: 800; color: white; text-shadow: 0 2px 8px rgba(0,0,0,0.3); letter-spacing: -0.5px;">${poiCount}<span style="font-size: 11px; font-weight: 600; margin-left: 2px;">个</span></div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.85); margin-top: 4px; font-weight: 500;">打卡点</div>
+                </div>
+            </div>
+            
+            <!-- POI列表 -->
+            ${poisHtml}
+        </div>
+    `;
+
+    document.body.appendChild(shareCard);
+
+    // ========== 第五步：生成并下载图片 ==========
+    try {
+        const canvas = await html2canvas(shareCard, {
+            scale: 3,
+            backgroundColor: null,
+            useCORS: true,
+            logging: false,
+            width: 400,
+            height: 500
+        });
+        
+        canvas.toBlob(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Citywalk-${areaName}-${themeName}-${now.getTime()}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showToast("🎉 精美长图已生成，快去分享吧！");
+        }, 'image/png', 0.95);
+        
+        document.body.removeChild(shareCard);
+    } catch (err) {
+        console.error('生成图片失败:', err);
+        document.body.removeChild(shareCard);
+        showToast("😥 生成图片失败，请重试");
+    }
+}
+
+// 新增：自定义弹窗函数（支持滚动查看全部内容）
+function showCustomModal(content) {
+    // 创建弹窗容器
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0,0,0,0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        padding: 20px;
+        box-sizing: border-box;
+    `;
+
+    // 创建弹窗内容区
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        font-size: 14px;
+        line-height: 1.6;
+        white-space: pre-wrap; /* 保留换行符 */
+        word-wrap: break-word; /* 自动换行 */
+    `;
+    modalContent.textContent = content;
+
+    // 创建关闭按钮
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '关闭';
+    closeBtn.style.cssText = `
+        margin-top: 20px;
+        padding: 8px 20px;
+        background: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    `;
+    closeBtn.onclick = () => {
+        document.body.removeChild(modal);
+    };
+
+    // 组装弹窗
+    modalContent.appendChild(closeBtn);
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+
+    // 点击空白处关闭
+    modal.onclick = (e) => {
+        if (e.target === modal) {
+            document.body.removeChild(modal);
+        }
+    };
+}
+
+        // 绑定 POI 类型选择事件
+        document.querySelectorAll('.poi-type-btn').forEach(btn => {
+            btn.onclick = function() {
+                document.querySelectorAll('.poi-type-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                selectedPoiType = this.dataset.type;
+            };
+        });
+
+        // 时间滑块实时更新
+        const planTimeSlider = document.getElementById('planTimeSlider');
+        const planTimeValue = document.getElementById('planTimeValue');
+        planTimeSlider.addEventListener('input', function() {
+            const val = parseInt(this.value);
+            planTimeValue.textContent = `${val} 分钟`;
+            updateBtnStatus();
+        });
+
+        // 搜索框功能
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    const keyword = this.value.trim();
+                    if (keyword) {
+                        searchAddress(keyword);
+                    }
+                }
+            });
+        }
+
+        // 搜索地址（使用PlaceSearch支持模糊搜索）
+        function searchAddress(keyword) {
+            if (!window.AMap) {
+                showToast("地图未加载，请稍后重试");
+                return;
+            }
+
+            showToast(`🔍 正在搜索 "${keyword}"...`);
+
+            // 先尝试使用 PlaceSearch 进行POI搜索（支持模糊匹配）
+            AMap.plugin('AMap.PlaceSearch', function() {
+                const placeSearch = new AMap.PlaceSearch({
+                    city: '上海',
+                    citylimit: false,  // 不限制只在上海搜索
+                    pageSize: 5,
+                    pageIndex: 1
+                });
+                
+                placeSearch.search(keyword, function(status, result) {
+                    if (status === 'complete' && result.info === 'OK' && result.poiList && result.poiList.pois.length > 0) {
+                        // 找到POI结果
+                        const pois = result.poiList.pois;
+                        const poi = pois[0];  // 取第一个结果
+                        
+                        // 在地图上标记位置
+                        const marker = new AMap.Marker({
+                            position: [poi.location.lng, poi.location.lat],
+                            title: poi.name
+                        });
+                        map.add(marker);
+                        
+                        // 设置地图中心和缩放
+                        map.setCenter([poi.location.lng, poi.location.lat]);
+                        map.setZoom(17);
+                        
+                        // 显示信息窗体
+                        const infoWindow = new AMap.InfoWindow({
+                            content: `<div style="padding: 10px; font-size: 14px;">
+                                <strong>${poi.name}</strong><br/>
+                                <span style="color: #666; font-size: 12px;">${poi.address || ''}</span><br/>
+                                <span style="color: #ff7e5f; font-size: 12px;">点击地图设为起点或终点</span>
+                            </div>`,
+                            offset: new AMap.Pixel(0, -30)
+                        });
+                        infoWindow.open(map, [poi.location.lng, poi.location.lat]);
+                        
+                        showToast(`✅ 找到 "${poi.name}"，点击地图选择为起点或终点`);
+                        
+                        // 3秒后清除标记和信息窗
+                        setTimeout(() => {
+                            map.remove(marker);
+                            infoWindow.close();
+                        }, 5000);
+                    } else {
+                        // POI搜索无结果，尝试地理编码
+                        tryGeocodeSearch(keyword);
+                    }
+                });
+            });
+        }
+        
+        // 备选：地理编码搜索
+        function tryGeocodeSearch(keyword) {
+            AMap.plugin('AMap.Geocoder', function() {
+                const geocoder = new AMap.Geocoder({ 
+                    city: '上海',
+                    radius: 50000  // 扩大搜索范围
+                });
+                geocoder.getLocation(keyword, function(status, result) {
+                    if (status === 'complete' && result.geocodes && result.geocodes.length > 0) {
+                        const geocode = result.geocodes[0];
+                        const location = geocode.location;
+                        
+                        // 在地图上标记位置
+                        const marker = new AMap.Marker({
+                            position: [location.lng, location.lat],
+                            title: geocode.formattedAddress || keyword
+                        });
+                        map.add(marker);
+                        
+                        // 设置地图中心和缩放
+                        map.setCenter([location.lng, location.lat]);
+                        map.setZoom(17);
+                        
+                        showToast("✅ 已定位，请点击地图选择为起点或终点");
+                        
+                        // 3秒后清除标记
+                        setTimeout(() => {
+                            map.remove(marker);
+                        }, 3000);
+                    } else {
+                        showToast("❌ 未找到相关地点，请尝试其他关键词如：南京路、外滩、陆家嘴");
+                    }
+                });
+            });
+        }
+
+        // 分步骤加载动画
+        function showLoadingSteps() {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
+                
+                // 重置所有步骤状态
+                ['step1', 'step2', 'step3', 'step4'].forEach((stepId, index) => {
+                    const step = document.getElementById(stepId);
+                    step.className = 'loading-step';
+                    setTimeout(() => {
+                        if (index === 0) {
+                            step.classList.add('active');
+                        }
+                    }, 100);
+                });
+                
+                // 模拟进度（实际由后端响应触发）
+                let currentStep = 1;
+                window.loadingProgressInterval = setInterval(() => {
+                    if (currentStep < 4) {
+                        const prevStep = document.getElementById(`step${currentStep}`);
+                        prevStep.classList.remove('active');
+                        prevStep.classList.add('done');
+                        
+                        currentStep++;
+                        const nextStep = document.getElementById(`step${currentStep}`);
+                        nextStep.classList.add('active');
+                    }
+                }, 1500);
+            }
+        }
+
+        function hideLoadingSteps() {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                // 清除定时器
+                if (window.loadingProgressInterval) {
+                    clearInterval(window.loadingProgressInterval);
+                }
+                
+                // 将所有步骤标记为完成
+                ['step1', 'step2', 'step3', 'step4'].forEach((stepId) => {
+                    const step = document.getElementById(stepId);
+                    step.classList.remove('active');
+                    step.classList.add('done');
+                });
+                
+                // 延迟关闭动画
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 800);
+            }
+        }
+
+        // 天气卡片点击刷新
+        const weatherCard = document.getElementById('weatherCard');
+        if (weatherCard) {
+            weatherCard.addEventListener('click', function() {
+                getShanghaiWeather(true);
+            });
+        }
+
+        // 页面加载完成初始化
+        if (window.AMap) {
+            initMap();
+        } else {
+            setTimeout(() => {
+                if (!map) initMap();
+            }, 2000);
+        }
+
+        // 移动端触摸手势支持
+        (function initTouchGestures() {
+            const controlPanel = document.querySelector('.control-panel');
+            if (!controlPanel) return;
+
+            let startY = 0;
+            let startHeight = 0;
+            let isDragging = false;
+            const panelBody = controlPanel.querySelector('.panel-body');
+            const header = controlPanel.querySelector('.panel-header');
+
+            // 创建拖动指示器
+            const dragHandle = document.createElement('div');
+            dragHandle.style.cssText = `
+                position: absolute;
+                top: 8px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 40px;
+                height: 4px;
+                background: rgba(255,255,255,0.5);
+                border-radius: 2px;
+                cursor: grab;
+                z-index: 10;
+            `;
+            header.appendChild(dragHandle);
+
+            // 触摸开始
+            header.addEventListener('touchstart', function(e) {
+                startY = e.touches[0].clientY;
+                startHeight = controlPanel.offsetHeight;
+                isDragging = true;
+                dragHandle.style.cursor = 'grabbing';
+            }, { passive: true });
+
+            // 触摸移动
+            document.addEventListener('touchmove', function(e) {
+                if (!isDragging) return;
+                const deltaY = startY - e.touches[0].clientY;
+                const newHeight = Math.max(200, Math.min(window.innerHeight * 0.8, startHeight + deltaY));
+                controlPanel.style.height = newHeight + 'px';
+                controlPanel.style.maxHeight = 'none';
+            }, { passive: true });
+
+            // 触摸结束
+            document.addEventListener('touchend', function() {
+                if (!isDragging) return;
+                isDragging = false;
+                dragHandle.style.cursor = 'grab';
+
+                // 吸附效果
+                const currentHeight = controlPanel.offsetHeight;
+                const minHeight = 200;
+                const maxHeight = window.innerHeight * 0.8;
+                const midHeight = (minHeight + maxHeight) / 2;
+
+                if (currentHeight < midHeight) {
+                    controlPanel.style.height = minHeight + 'px';
+                } else {
+                    controlPanel.style.height = maxHeight + 'px';
+                }
+            }, { passive: true });
+
+            // 点击头部展开/收起
+            header.addEventListener('click', function(e) {
+                if (isDragging) return;
+                const currentHeight = controlPanel.offsetHeight;
+                const minHeight = 200;
+                const maxHeight = window.innerHeight * 0.8;
+
+                if (currentHeight < (minHeight + maxHeight) / 2) {
+                    controlPanel.style.transition = 'height 0.3s ease';
+                    controlPanel.style.height = maxHeight + 'px';
+                    setTimeout(() => {
+                        controlPanel.style.transition = '';
+                    }, 300);
+                }
+            });
+        })();
+
+        // 移动端双击放大地图
+        (function initMapDoubleTap() {
+            const container = document.getElementById('container');
+            if (!container) return;
+
+            let lastTapTime = 0;
+            let lastTapX = 0;
+            let lastTapY = 0;
+
+            container.addEventListener('touchend', function(e) {
+                const currentTime = new Date().getTime();
+                const tapX = e.changedTouches[0].clientX;
+                const tapY = e.changedTouches[0].clientY;
+                const tapLength = currentTime - lastTapTime;
+
+                if (tapLength < 300 && tapLength > 0) {
+                    // 双击检测
+                    const distance = Math.sqrt(
+                        Math.pow(tapX - lastTapX, 2) + Math.pow(tapY - lastTapY, 2)
+                    );
+                    if (distance < 30 && map) {
+                        e.preventDefault();
+                        const currentZoom = map.getZoom();
+                        map.setZoom(currentZoom + 1);
+                    }
+                }
+
+                lastTapTime = currentTime;
+                lastTapX = tapX;
+                lastTapY = tapY;
+            });
+        })();
+
+        // 阻止移动端默认滚动行为（在地图区域）
+        document.getElementById('container').addEventListener('touchmove', function(e) {
+            // 允许地图正常滚动
+            e.stopPropagation();
+        }, { passive: true });
+    </script>
+</body>
+</html>
