@@ -629,26 +629,135 @@
                 top: auto;
                 bottom: 0;
                 height: auto;
-                max-height: 55vh;
-                min-height: 200px;
+                /* 默认只显示头部，让用户看到更多地图 */
+                max-height: none;
                 border-radius: 20px 20px 0 0;
                 box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
                 border: none;
                 border-top: 1px solid rgba(255,255,255,0.8);
+                /* 使用 transform 实现硬件加速，拖动更流畅 */
+                will-change: transform;
+                transform: translateZ(0);
             }
 
             .panel-header {
-                padding: 16px 20px;
+                padding: 24px 20px 16px 20px;
                 border-radius: 20px 20px 0 0;
+                /* 增加拖动区域 */
+                position: relative;
+                cursor: grab;
+                user-select: none;
+                -webkit-user-select: none;
+                touch-action: none;
+                /* 最小高度确保可拖动 */
+                min-height: 56px;
+                display: flex;
+                align-items: center;
+            }
+
+            .panel-header:active {
+                cursor: grabbing;
             }
 
             .panel-header h2 {
-                font-size: 18px;
+                font-size: 17px;
+                pointer-events: none;
+                margin: 0;
             }
 
             .panel-body {
-                padding: 16px 20px;
-                padding-bottom: env(safe-area-inset-bottom, 20px);
+                padding: 0 20px 20px 20px;
+                padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+                /* 默认收起状态 */
+                max-height: 0;
+                overflow: hidden;
+                opacity: 0;
+                transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                            opacity 0.25s ease,
+                            padding 0.3s ease;
+            }
+
+            /* 展开状态 */
+            .control-panel.expanded .panel-body {
+                max-height: 55vh;
+                overflow-y: auto;
+                opacity: 1;
+                padding-top: 16px;
+                /* 优化滚动性能 */
+                -webkit-overflow-scrolling: touch;
+                overscroll-behavior: contain;
+            }
+
+            /* 面板内容收起时的隐藏 */
+            .panel-body {
+                scrollbar-width: none; /* Firefox */
+                -ms-overflow-style: none; /* IE 10+ */
+            }
+
+            .panel-body::-webkit-scrollbar {
+                display: none; /* Chrome Safari */
+            }
+
+            /* 拖动指示器 */
+            .panel-header::before {
+                content: '';
+                position: absolute;
+                top: 8px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 36px;
+                height: 4px;
+                background: rgba(255,255,255,0.6);
+                border-radius: 2px;
+                pointer-events: none;
+                transition: width 0.2s ease, background 0.2s ease;
+            }
+
+            .panel-header:active::before {
+                width: 48px;
+                background: rgba(255,255,255,0.9);
+            }
+
+            /* 展开状态指示 */
+            .control-panel.expanded .panel-header::after {
+                content: '▼';
+                position: absolute;
+                right: 20px;
+                top: 50%;
+                transform: translateY(-50%);
+                font-size: 12px;
+                color: rgba(255,255,255,0.8);
+                pointer-events: none;
+            }
+
+            .control-panel:not(.expanded) .panel-header::after {
+                content: '▲';
+                position: absolute;
+                right: 20px;
+                top: 50%;
+                transform: translateY(-50%);
+                font-size: 12px;
+                color: rgba(255,255,255,0.8);
+                pointer-events: none;
+            }
+
+            /* 展开时的遮罩层（点击地图收起面板） */
+            .control-panel.expanded::after {
+                content: '';
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.2);
+                z-index: -1;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+                pointer-events: none;
+            }
+
+            .control-panel.expanded:active::after {
+                opacity: 1;
             }
 
             .poi-type-btn {
@@ -2195,84 +2304,127 @@ function showCustomModal(content) {
             }, 2000);
         }
 
-        // 移动端触摸手势支持
+        // 移动端触摸手势支持 - 流畅的展开/收起
         (function initTouchGestures() {
             const controlPanel = document.querySelector('.control-panel');
             if (!controlPanel) return;
 
-            let startY = 0;
-            let startHeight = 0;
-            let isDragging = false;
-            const panelBody = controlPanel.querySelector('.panel-body');
             const header = controlPanel.querySelector('.panel-header');
+            if (!header) return;
 
-            // 创建拖动指示器
-            const dragHandle = document.createElement('div');
-            dragHandle.style.cssText = `
-                position: absolute;
-                top: 8px;
-                left: 50%;
-                transform: translateX(-50%);
-                width: 40px;
-                height: 4px;
-                background: rgba(255,255,255,0.5);
-                border-radius: 2px;
-                cursor: grab;
-                z-index: 10;
-            `;
-            header.appendChild(dragHandle);
+            let startY = 0;
+            let startTime = 0;
+            let isExpanded = false;
+            let isDragging = false;
+            let hasMoved = false;
+
+            // 检测是否为移动设备
+            const isMobile = window.matchMedia('(max-width: 768px)').matches;
+            if (!isMobile) return;
+
+            // 切换展开/收起状态
+            function togglePanel(expand) {
+                isExpanded = expand !== undefined ? expand : !isExpanded;
+                if (isExpanded) {
+                    controlPanel.classList.add('expanded');
+                } else {
+                    controlPanel.classList.remove('expanded');
+                }
+            }
+
+            // 点击头部切换
+            header.addEventListener('click', function(e) {
+                if (hasMoved) return; // 如果是拖动操作，不触发点击
+                togglePanel();
+            });
 
             // 触摸开始
             header.addEventListener('touchstart', function(e) {
                 startY = e.touches[0].clientY;
-                startHeight = controlPanel.offsetHeight;
+                startTime = Date.now();
                 isDragging = true;
-                dragHandle.style.cursor = 'grabbing';
+                hasMoved = false;
+                header.style.cursor = 'grabbing';
             }, { passive: true });
 
-            // 触摸移动
-            document.addEventListener('touchmove', function(e) {
+            // 触摸移动 - 检测滑动方向
+            header.addEventListener('touchmove', function(e) {
                 if (!isDragging) return;
-                const deltaY = startY - e.touches[0].clientY;
-                const newHeight = Math.max(200, Math.min(window.innerHeight * 0.8, startHeight + deltaY));
-                controlPanel.style.height = newHeight + 'px';
-                controlPanel.style.maxHeight = 'none';
+                
+                const currentY = e.touches[0].clientY;
+                const deltaY = startY - currentY;
+                
+                // 移动超过 10px 认为是拖动
+                if (Math.abs(deltaY) > 10) {
+                    hasMoved = true;
+                }
+                
+                // 根据滑动方向实时反馈
+                if (deltaY > 30 && !isExpanded) {
+                    // 向上滑动，准备展开
+                    header.style.transform = 'translateY(-2px)';
+                } else if (deltaY < -30 && isExpanded) {
+                    // 向下滑动，准备收起
+                    header.style.transform = 'translateY(2px)';
+                }
             }, { passive: true });
 
             // 触摸结束
-            document.addEventListener('touchend', function() {
+            header.addEventListener('touchend', function(e) {
                 if (!isDragging) return;
                 isDragging = false;
-                dragHandle.style.cursor = 'grab';
+                header.style.cursor = 'grab';
+                header.style.transform = '';
 
-                // 吸附效果
-                const currentHeight = controlPanel.offsetHeight;
-                const minHeight = 200;
-                const maxHeight = window.innerHeight * 0.8;
-                const midHeight = (minHeight + maxHeight) / 2;
+                const endY = e.changedTouches[0].clientY;
+                const deltaY = startY - endY;
+                const deltaTime = Date.now() - startTime;
 
-                if (currentHeight < midHeight) {
-                    controlPanel.style.height = minHeight + 'px';
-                } else {
-                    controlPanel.style.height = maxHeight + 'px';
+                // 快速滑动（轻扫）
+                if (deltaTime < 300 && Math.abs(deltaY) > 50) {
+                    if (deltaY > 0) {
+                        togglePanel(true); // 向上轻扫，展开
+                    } else {
+                        togglePanel(false); // 向下轻扫，收起
+                    }
+                } else if (Math.abs(deltaY) > 80) {
+                    // 慢速但滑动距离大
+                    if (deltaY > 0) {
+                        togglePanel(true);
+                    } else {
+                        togglePanel(false);
+                    }
                 }
+                // 否则认为是点击，由 click 事件处理
             }, { passive: true });
 
-            // 点击头部展开/收起
-            header.addEventListener('click', function(e) {
-                if (isDragging) return;
-                const currentHeight = controlPanel.offsetHeight;
-                const minHeight = 200;
-                const maxHeight = window.innerHeight * 0.8;
+            // 阻止头部区域的默认滚动行为
+            header.addEventListener('touchmove', function(e) {
+                e.preventDefault();
+            }, { passive: false });
 
-                if (currentHeight < (minHeight + maxHeight) / 2) {
-                    controlPanel.style.transition = 'height 0.3s ease';
-                    controlPanel.style.height = maxHeight + 'px';
-                    setTimeout(() => {
-                        controlPanel.style.transition = '';
-                    }, 300);
-                }
-            });
+            // 面板内容区域滚动时，如果滚动到顶部继续下拉则收起面板
+            const panelBody = controlPanel.querySelector('.panel-body');
+            if (panelBody) {
+                let bodyStartY = 0;
+                
+                panelBody.addEventListener('touchstart', function(e) {
+                    bodyStartY = e.touches[0].clientY;
+                }, { passive: true });
+
+                panelBody.addEventListener('touchmove', function(e) {
+                    const currentY = e.touches[0].clientY;
+                    const deltaY = currentY - bodyStartY;
+                    
+                    // 如果已经在顶部且继续向下滑动
+                    if (panelBody.scrollTop <= 0 && deltaY > 30) {
+                        // 阻止默认滚动，准备收起面板
+                        if (deltaY > 50) {
+                            togglePanel(false);
+                        }
+                    }
+                }, { passive: true });
+            }
         })();
 
         // 移动端双击放大地图
@@ -2313,6 +2465,20 @@ function showCustomModal(content) {
             // 允许地图正常滚动
             e.stopPropagation();
         }, { passive: true });
+
+        // 点击地图区域收起面板
+        (function initMapTapToClose() {
+            const container = document.getElementById('container');
+            const controlPanel = document.querySelector('.control-panel');
+            if (!container || !controlPanel) return;
+
+            container.addEventListener('touchstart', function(e) {
+                // 如果面板是展开的，点击地图收起
+                if (controlPanel.classList.contains('expanded')) {
+                    controlPanel.classList.remove('expanded');
+                }
+            }, { passive: true });
+        })();
     </script>
 </body>
 </html>
