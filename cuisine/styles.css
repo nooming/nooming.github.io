@@ -18,6 +18,23 @@
             --transition: all 0.3s ease;
         }
 
+        /* 热门城市标签样式 */
+        .hot-city-tag {
+            display: inline-block;
+            padding: 4px 10px;
+            background: rgba(255,255,255,0.25);
+            color: white;
+            border-radius: 12px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .hot-city-tag:hover {
+            background: rgba(255,255,255,0.4);
+            transform: translateY(-1px);
+        }
+
         * {
             margin: 0;
             padding: 0;

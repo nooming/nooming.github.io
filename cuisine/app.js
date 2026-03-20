@@ -15,6 +15,26 @@
         let debounceTimer = null;
         let shanghaiWeather = null;
         let currentTheme = null;
+        let currentCity = "北京"; // 当前城市（默认为北京）
+        let currentCityCenter = [116.4074, 39.9042]; // 当前城市中心坐标
+
+        // 主要城市坐标配置
+        const CITY_COORDS = {
+            "北京": [116.4074, 39.9042],
+            "上海": [121.4737, 31.2304],
+            "广州": [113.2644, 23.1291],
+            "深圳": [114.0579, 22.5431],
+            "成都": [104.0668, 30.5728],
+            "杭州": [120.1551, 30.2741],
+            "南京": [118.7969, 32.0603],
+            "武汉": [114.3054, 30.5931],
+            "西安": [108.9398, 34.3416],
+            "重庆": [106.5516, 29.5630],
+            "天津": [117.2009, 39.0842],
+            "苏州": [120.5853, 31.2989],
+            "香港": [114.1694, 22.3193],
+            "澳门": [113.5491, 22.1987]
+        };
 
         // API 基础地址配置 - 根据环境自动切换
         const API_BASE_URL =
@@ -130,6 +150,104 @@
         // ============================================================
         // 地图初始化与基础交互
         // ============================================================
+        // IP定位获取当前城市
+        async function locateUserCity() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/locate_city`);
+                const data = await response.json();
+                if (data.success && data.city) {
+                    currentCity = data.city;
+                    currentCityCenter = data.center || CITY_COORDS[data.city] || [116.4074, 39.9042];
+                    document.getElementById('currentCity').textContent = currentCity;
+                    // 更新地图中心
+                    if (map) {
+                        map.setCenter(currentCityCenter);
+                    }
+                    // 更新天气
+                    getCityWeather(currentCity);
+                    console.log(`定位到城市：${currentCity}`, currentCityCenter);
+                }
+            } catch (e) {
+                console.error('IP定位失败：', e);
+                document.getElementById('currentCity').textContent = currentCity;
+            }
+        }
+
+        // 切换城市
+        function switchCity() {
+            const cityInput = document.getElementById('cityInput');
+            const city = cityInput.value.trim();
+            if (!city) {
+                showToast('请输入城市名称');
+                return;
+            }
+            quickSwitchCity(city);
+        }
+
+        // 快速切换城市
+        function quickSwitchCity(city) {
+            // 检查是否是已知城市
+            if (CITY_COORDS[city]) {
+                currentCity = city;
+                currentCityCenter = CITY_COORDS[city];
+            } else {
+                // 未知城市，尝试使用地理编码获取坐标
+                currentCity = city;
+                // 使用默认坐标，地图会自动调整
+                currentCityCenter = [116.4074, 39.9042];
+            }
+            
+            document.getElementById('currentCity').textContent = currentCity;
+            document.getElementById('cityInput').value = '';
+            
+            // 更新地图中心
+            if (map) {
+                map.setCenter(currentCityCenter);
+                map.setZoom(13);
+            }
+            
+            // 更新天气
+            getCityWeather(currentCity);
+            
+            // 重置路线选择
+            resetSelection();
+            
+            showToast(`已切换到：${currentCity}`);
+        }
+
+        // 获取指定城市天气
+        function getCityWeather(city) {
+            if (!window.AMap || !AMap.Weather) {
+                updateWeatherUI("天气加载失败", "无法获取天气数据", "⛅");
+                return;
+            }
+
+            updateWeatherUI("加载中...", `正在获取${city}实时天气`, "🌤️");
+
+            const weather = new AMap.Weather();
+            weather.getLive(city, function(err, data) {
+                if (err || !data) {
+                    updateWeatherUI("天气加载失败", "建议出行前查看实时天气", "⛅");
+                    return;
+                }
+
+                shanghaiWeather = {
+                    temperature: data.temperature,
+                    weather: data.weather,
+                    windDirection: data.windDirection,
+                    windPower: data.windPower,
+                    humidity: data.humidity,
+                    updateTime: new Date()
+                };
+
+                updateWeatherUI(
+                    `${data.weather} ${data.temperature}℃`,
+                    `风向${data.windDirection} ${data.windPower}级 | 湿度${data.humidity}% | 刚刚更新`,
+                    getWeatherIcon(data.weather)
+                );
+            });
+        }
+
         // 初始化地图
         function initMap() {
             if (!window.AMap) {
@@ -139,8 +257,8 @@
 
             try {
                 map = new AMap.Map('container', {
-                    zoom: 15,
-                    center: [121.480656, 31.230416],
+                    zoom: 13,
+                    center: currentCityCenter,
                     viewMode: '2D',
                     clickEnable: true,
                     dragEnable: true,
@@ -172,8 +290,8 @@
                     }
                 });
 
-                // 启动天气定时刷新
-                startWeatherRefresh();
+                // IP定位城市
+                locateUserCity();
 
                 console.log("地图初始化成功");
             } catch (e) {
@@ -447,7 +565,8 @@
                     start: start,
                     end: end,
                     plan_time: planTime,
-                    poi_type: selectedPoiType.trim()
+                    poi_type: selectedPoiType.trim(),
+                    city: currentCity
                 }),
                 signal: controller.signal
             })
@@ -627,7 +746,7 @@
             // 构建天气提示（更贴心）
             let weatherTips = '\n🌤️ 【今日天气小贴士】\n';
             if (shanghaiWeather) {
-                weatherTips += `今天上海${shanghaiWeather.weather}，气温${shanghaiWeather.temperature}℃，${shanghaiWeather.windDirection}${shanghaiWeather.windPower}级，湿度${shanghaiWeather.humidity}%\n`;
+                weatherTips += `今天${currentCity}${shanghaiWeather.weather}，气温${shanghaiWeather.temperature}℃，${shanghaiWeather.windDirection}${shanghaiWeather.windPower}级，湿度${shanghaiWeather.humidity}%\n`;
 
                 // 更贴心的天气建议
                 if (shanghaiWeather.weather.includes('雨')) {
@@ -646,7 +765,7 @@
             }
 
             // 生成更暖心的完整方案（优化整体排版）
-            const planText = `${greeting} 这份专属你的上海Citywalk攻略来啦～
+            const planText = `${greeting} 这份专属你的${currentCity}Citywalk攻略来啦～
 
 🎈 【游玩主题】：${poiType}
 ⏰ 【计划时长】：${planTime}分钟
@@ -662,7 +781,7 @@ ${poiText}
 4. 注意随身物品安全，开开心心出门，平平安安回家～
 5. 如果走累了，随时可以调整路线，游玩最重要的是开心呀🥳
 
-✨ 愿你在上海的街头，遇见美好，收获满满的快乐～`;
+✨ 愿你在${currentCity}的街头，遇见美好，收获满满的快乐～`;
 
             // 修复：改用自定义弹窗显示完整内容（替代alert）
             showCustomModal(planText);
@@ -691,108 +810,52 @@ ${poiText}
             }
         }
 
-// 生成分享长图（以地图为主，信息叠加显示）
+// 生成分享长图（使用地点美图作为背景）
 async function generateShareImage() {
     if (!routeData || !routeData.success) {
         showToast("请先生成有效的路线规划！");
         return;
     }
 
-    showToast("🎨 正在准备截图，请稍候...");
+    showToast("🎨 正在搜索地点美图，请稍候...");
 
-    // ========== 第一步：使用浏览器原生截图API截取地图 ==========
-    let mapImageDataUrl = null;
+    // ========== 第一步：搜索地点美图（精确到区/县级） ==========
+    let backgroundImageUrl = null;
+
+    // 提取第一个 POI 名称
+    const firstPoiName = (routeData.pois && routeData.pois.length > 0)
+        ? routeData.pois[0].name || ''
+        : '';
+
+    // 起点坐标（用于后端逆地理编码到区/县级）
+    const startLng = startPoint ? startPoint.lng : null;
+    const startLat = startPoint ? startPoint.lat : null;
+
     try {
-        // 临时隐藏UI元素
-        const controlPanel = document.querySelector('.control-panel');
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        const errorToast = document.getElementById('errorToast');
-        
-        if (controlPanel) controlPanel.style.display = 'none';
-        if (loadingOverlay) loadingOverlay.style.display = 'none';
-        if (errorToast) errorToast.style.display = 'none';
-        
-        // 等待UI隐藏完成
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        // 请求屏幕截图权限
-        showToast("📸 请选择地图区域进行截图");
-        const stream = await navigator.mediaDevices.getDisplayMedia({
-            video: { cursor: 'always' },
-            audio: false
+        const response = await fetch(`${API_BASE_URL}/search_image`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                city: currentCity,
+                poi_name: firstPoiName,
+                start_lng: startLng,
+                start_lat: startLat
+            })
         });
-        
-        // 创建视频元素捕获画面
-        const video = document.createElement('video');
-        video.srcObject = stream;
-        video.autoplay = true;
-        
-        await new Promise((resolve) => {
-            video.onloadedmetadata = () => {
-                video.play();
-                resolve();
-            };
-        });
-        
-        // 等待一帧以确保画面稳定
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // 截图
-        const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
-        // 停止屏幕共享
-        stream.getTracks().forEach(track => track.stop());
-        
-        // 裁剪为4:5比例（从中心裁剪）
-        const targetWidth = 400;
-        const targetHeight = 500;
-        const aspectRatio = targetWidth / targetHeight;
-        
-        let cropWidth, cropHeight, startX, startY;
-        if (canvas.width / canvas.height > aspectRatio) {
-            // 原图更宽，以高度为基准
-            cropHeight = canvas.height;
-            cropWidth = cropHeight * aspectRatio;
-            startX = (canvas.width - cropWidth) / 2;
-            startY = 0;
-        } else {
-            // 原图更高，以宽度为基准
-            cropWidth = canvas.width;
-            cropHeight = cropWidth / aspectRatio;
-            startX = 0;
-            startY = (canvas.height - cropHeight) / 2;
+
+        const data = await response.json();
+        if (data.success && data.image_url) {
+            backgroundImageUrl = data.image_url;
+            const districtHint = data.district ? `${data.district} · ` : '';
+            showToast(`✅ 找到美图（${districtHint}${firstPoiName || data.city}），正在生成长图...`);
         }
-        
-        const cropCanvas = document.createElement('canvas');
-        cropCanvas.width = targetWidth * 2;
-        cropCanvas.height = targetHeight * 2;
-        const cropCtx = cropCanvas.getContext('2d');
-        cropCtx.drawImage(canvas, startX, startY, cropWidth, cropHeight, 0, 0, targetWidth * 2, targetHeight * 2);
-        
-        mapImageDataUrl = cropCanvas.toDataURL('image/png');
-        
-        // 恢复UI元素
-        if (controlPanel) controlPanel.style.display = '';
-        if (loadingOverlay) loadingOverlay.style.display = '';
-        if (errorToast) errorToast.style.display = '';
-        
-        showToast("✅ 截图成功，正在生成长图...");
     } catch (e) {
-        console.warn('截图失败:', e);
-        // 恢复UI元素
-        const controlPanel = document.querySelector('.control-panel');
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        const errorToast = document.getElementById('errorToast');
-        if (controlPanel) controlPanel.style.display = '';
-        if (loadingOverlay) loadingOverlay.style.display = '';
-        if (errorToast) errorToast.style.display = '';
-        
-        showToast("截图已取消或失败，将使用默认背景");
-        mapImageDataUrl = null;
+        console.warn('图片搜索失败:', e);
+    }
+
+    // 如果搜索失败，使用默认渐变背景
+    if (!backgroundImageUrl) {
+        showToast("未找到相关图片，使用默认背景...");
     }
 
     // ========== 第二步：收集数据 ==========
@@ -821,9 +884,7 @@ async function generateShareImage() {
     // 提取区域名称
     const startAddr = startPoint?.address || document.getElementById('startValue').textContent || '';
     const endAddr = endPoint?.address || document.getElementById('endValue').textContent || '';
-    let areaName = '上海';
-    const areaMatch = (startAddr + endAddr).match(/(黄浦|静安|徐汇|长宁|普陀|虹口|杨浦|浦东|闵行|宝山|嘉定|松江|青浦|奉贤|金山|崇明)/);
-    if (areaMatch) areaName = areaMatch[1];
+    let areaName = currentCity;
     
     // 天气信息
     let weatherText = '适宜出行';
@@ -905,7 +966,7 @@ async function generateShareImage() {
         poisHtml += '</div>';
     }
 
-    // ========== 第四步：构建长图HTML（4:5比例，地图为主） ==========
+    // ========== 第四步：构建长图HTML（4:5比例，美图为主） ==========
     const shareCard = document.createElement('div');
     shareCard.style.cssText = `
         position: fixed;
@@ -917,12 +978,15 @@ async function generateShareImage() {
         overflow: hidden;
     `;
 
+    // 背景样式：有图片用图片，无图片用渐变
+    const bgStyle = backgroundImageUrl 
+        ? `background-image: url('${backgroundImageUrl}'); background-size: cover; background-position: center;`
+        : `background: linear-gradient(135deg, ${theme.primary}22, ${theme.secondary}44);`;
+
     shareCard.innerHTML = `
-        <!-- 地图背景层 -->
-        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; ${mapImageDataUrl ? '' : 'background: linear-gradient(135deg, #e0e5ec, #f5f7fa);'}">
-            ${mapImageDataUrl 
-                ? `<img src="${mapImageDataUrl}" style="width: 100%; height: 100%; object-fit: cover;" />` 
-                : ''}
+        <!-- 美图背景层 -->
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; ${bgStyle}">
+            ${backgroundImageUrl ? '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.25);"></div>' : ''}
         </div>
         
         <!-- 顶部主题色渐变遮罩 -->

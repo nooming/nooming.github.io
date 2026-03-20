@@ -6,9 +6,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#ff7e5f">
-    <meta name="description" content="shanzhuyang.com - 上海Citywalk定制路线规划，发现城市之美">
+    <meta name="description" content="全国Citywalk定制路线规划，发现城市之美，支持北京、上海、广州、深圳、成都、杭州、香港、澳门等城市">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚶</text></svg>">
-    <title>上海Citywalk · 定制路线规划</title>
+    <title>全国Citywalk · 定制路线规划</title>
     <script type="text/javascript">
         window._AMapSecurityConfig = {
             securityJsCode: 'dd98c8e83161c0d87e596a17f2d29750'
@@ -62,10 +62,34 @@
     <div class="control-panel">
         <div class="panel-header">
             <h2>
-                <span class="panel-header-title-text">上海Citywalk定制器</span>
+                <span class="panel-header-title-text">您的Citywalk定制器</span>
             </h2>
         </div>
         <div class="panel-body">
+            <!-- 城市选择器 -->
+            <div class="city-selector" style="margin-bottom: 16px; background: linear-gradient(135deg, var(--primary-light), var(--primary)); padding: 12px; border-radius: var(--radius-md);">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <span style="font-size: 18px;">📍</span>
+                    <span style="font-weight: 600; color: white; font-size: 14px;">当前城市</span>
+                    <span id="currentCity" style="font-weight: 700; color: white; font-size: 16px;">定位中...</span>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <input type="text" id="cityInput" placeholder="输入城市名切换（如：北京、香港）" style="flex: 1; padding: 8px 12px; border: none; border-radius: var(--radius-sm); font-size: 13px;">
+                    <button onclick="switchCity()" style="padding: 8px 16px; background: white; color: var(--primary); border: none; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; font-size: 13px;">切换</button>
+                </div>
+                <div style="margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap;">
+                    <span style="font-size: 11px; color: rgba(255,255,255,0.9);">热门：</span>
+                    <span class="hot-city-tag" onclick="quickSwitchCity('北京')">北京</span>
+                    <span class="hot-city-tag" onclick="quickSwitchCity('上海')">上海</span>
+                    <span class="hot-city-tag" onclick="quickSwitchCity('广州')">广州</span>
+                    <span class="hot-city-tag" onclick="quickSwitchCity('深圳')">深圳</span>
+                    <span class="hot-city-tag" onclick="quickSwitchCity('成都')">成都</span>
+                    <span class="hot-city-tag" onclick="quickSwitchCity('杭州')">杭州</span>
+                    <span class="hot-city-tag" onclick="quickSwitchCity('香港')">香港</span>
+                    <span class="hot-city-tag" onclick="quickSwitchCity('澳门')">澳门</span>
+                </div>
+            </div>
+
             <!-- 搜索框 -->
             <div class="search-box" style="margin-bottom: 16px;">
                 <input type="text" id="searchInput" placeholder="🔍 搜索地址（输入后回车定位）" style="width: 100%; padding: 12px 16px; border: 2px solid var(--border-light); border-radius: var(--radius-md); font-size: 14px; transition: all 0.3s;">
@@ -76,7 +100,7 @@
                 <div class="weather-icon" id="weatherIcon">🌤️</div>
                 <div class="weather-info">
                     <div class="title" id="weatherTitle">加载中...</div>
-                    <div class="desc" id="weatherDesc">正在获取上海实时天气</div>
+                    <div class="desc" id="weatherDesc">正在获取实时天气</div>
                 </div>
             </div>
 
@@ -170,6 +194,8 @@
         let debounceTimer = null;
         let shanghaiWeather = null;
         let currentTheme = null;
+        let currentCity = "北京";
+        let currentCityCenter = [116.4074, 39.9042];
 
         // API 基础地址配置 - 根据环境自动切换
         const API_BASE_URL =
@@ -205,6 +231,131 @@
         // 地图加载失败处理
         function mapLoadError() {
             showToast("高德地图加载失败，请刷新页面重试");
+        }
+
+        // 设置默认城市为上海人民广场
+        function setDefaultCity() {
+            currentCity = '上海';
+            currentCityCenter = [121.4737, 31.2304]; // 上海人民广场附近
+            document.getElementById('currentCity').textContent = currentCity;
+
+            // 更新地图中心
+            if (map) {
+                map.setCenter(currentCityCenter);
+                map.setZoom(13);
+            }
+
+            console.log('已设置为默认城市：上海');
+        }
+
+        // 切换城市
+        function switchCity() {
+            const cityInput = document.getElementById('cityInput');
+            const city = cityInput.value.trim();
+            if (!city) {
+                showToast('请输入城市名称');
+                return;
+            }
+            quickSwitchCity(city);
+        }
+
+        // 快速切换城市
+        function quickSwitchCity(city) {
+            // 检查是否是已知城市
+            const CITY_COORDS = {
+                "北京": [116.4074, 39.9042],
+                "上海": [121.4737, 31.2304],
+                "广州": [113.2644, 23.1291],
+                "深圳": [114.0579, 22.5431],
+                "成都": [104.0668, 30.5728],
+                "杭州": [120.1551, 30.2741],
+                "南京": [118.7969, 32.0603],
+                "武汉": [114.3054, 30.5931],
+                "西安": [108.9398, 34.3416],
+                "重庆": [106.5516, 29.5630],
+                "天津": [117.2009, 39.0842],
+                "苏州": [120.5853, 31.2989],
+                "香港": [114.1694, 22.3193],
+                "澳门": [113.5491, 22.1987]
+            };
+
+            if (CITY_COORDS[city]) {
+                // 已知城市，直接使用预设坐标
+                currentCityCenter = CITY_COORDS[city];
+                applyCityChange(city, currentCityCenter);
+            } else {
+                // 未知城市，使用高德地理编码验证是否为有效城市
+                showToast(`🔍 正在验证 "${city}"...`);
+                AMap.plugin('AMap.Geocoder', function() {
+                    const geocoder = new AMap.Geocoder({
+                        city: '全国',
+                        radius: 50000
+                    });
+                    geocoder.getLocation(city, function(status, result) {
+                        if (status === 'complete' && result.geocodes && result.geocodes.length > 0) {
+                            const geocode = result.geocodes[0];
+                            const addressComponent = geocode.addressComponent || {};
+                            const formattedAddress = geocode.formattedAddress || '';
+
+                            // 获取返回的城市和省份名称
+                            const returnedCity = (addressComponent.city || '').replace('市', '');
+                            const returnedProvince = (addressComponent.province || '').replace('省', '').replace('市', '');
+
+                            // 严格验证：输入的城市名必须与返回的城市名或省份名匹配
+                            // 或者输入的是知名城市的简称（如"北京"对应"北京市"）
+                            const isValidCity =
+                                returnedCity === city ||
+                                returnedProvince === city ||
+                                (addressComponent.city && addressComponent.city.includes(city)) ||
+                                (addressComponent.province && addressComponent.province.includes(city));
+
+                            // 检查地址中是否包含非城市级别的关键词（如街道、路、号楼等）
+                            const nonCityKeywords = ['街道', '路', '号', '楼', '单元', '室', '镇', '乡', '村', '区'];
+                            const hasNonCityKeyword = nonCityKeywords.some(kw => {
+                                // 检查输入中是否包含这些关键词（不是地址中）
+                                return city.includes(kw);
+                            });
+
+                            // 检查输入是否包含具体地点名称（如景点、建筑等）
+                            const specificLocationKeywords = ['明珠', '外滩', '故宫', '长城', '东方', '塔', '广场', '公园'];
+                            const hasSpecificLocation = specificLocationKeywords.some(kw => city.includes(kw));
+
+                            if (isValidCity && !hasNonCityKeyword && !hasSpecificLocation) {
+                                const location = geocode.location;
+                                currentCityCenter = [location.lng, location.lat];
+                                applyCityChange(city, currentCityCenter);
+                            } else {
+                                showToast(`❌ "${city}" 不是一个有效的城市名称，请输入正确的城市名（如：北京、上海）`);
+                                document.getElementById('cityInput').value = '';
+                                document.getElementById('cityInput').focus();
+                            }
+                        } else {
+                            showToast(`❌ 未找到城市 "${city}"，请检查城市名称`);
+                            document.getElementById('cityInput').value = '';
+                            document.getElementById('cityInput').focus();
+                        }
+                    });
+                });
+            }
+        }
+
+        // 应用城市切换
+        function applyCityChange(city, center) {
+            currentCity = city;
+            currentCityCenter = center;
+            document.getElementById('currentCity').textContent = currentCity;
+            document.getElementById('cityInput').value = '';
+
+            // 更新地图中心
+            if (map) {
+                map.setCenter(currentCityCenter);
+                map.setZoom(13);
+            }
+
+            // 重置路线选择
+            resetSelection();
+
+            showToast(`已切换到：${currentCity}`);
         }
 
         // 获取上海天气（增加主动刷新逻辑）
@@ -288,8 +439,8 @@
 
             try {
                 map = new AMap.Map('container', {
-                    zoom: 15,
-                    center: [121.480656, 31.230416],
+                    zoom: 13,
+                    center: currentCityCenter,
                     viewMode: '2D',
                     clickEnable: true,
                     dragEnable: true,
@@ -323,6 +474,9 @@
 
                 // 启动天气定时刷新
                 startWeatherRefresh();
+
+                // 设置默认城市（上海）
+                setDefaultCity();
 
                 console.log("地图初始化成功");
             } catch (e) {
@@ -411,12 +565,12 @@
             }
 
             AMap.plugin('AMap.Geocoder', function() {
-                const geocoder = new AMap.Geocoder({ city: '上海' });
+                const geocoder = new AMap.Geocoder({ city: currentCity });
                 geocoder.getAddress([lng, lat], function(status, result) {
                     if (status === 'complete' && result.regeocode) {
                         const address = result.regeocode.formattedAddress;
-                        // 简化地址显示（去掉上海市前缀）
-                        const shortAddress = address.replace(/^上海市/, '').replace(/^中国/, '');
+                        // 简化地址显示（去掉城市前缀）
+                        const shortAddress = address.replace(new RegExp(`^${currentCity}市?`), '').replace(/^中国/, '');
                         callback(shortAddress || address);
                     } else {
                         callback(null);
@@ -700,7 +854,9 @@
                 const btnGeneratePlan = document.getElementById('btnGeneratePlan');
                 if (btnGeneratePlan) btnGeneratePlan.style.display = 'block';
                 const btnShareImage = document.getElementById('btnShareImage');
-                if (btnShareImage) btnShareImage.style.display = 'block';
+                // 手机端隐藏生成图片按钮
+                const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                if (btnShareImage && !isMobileDevice) btnShareImage.style.display = 'block';
 
                 // 生成路线后主动刷新天气
                 getShanghaiWeather(true);
@@ -770,7 +926,7 @@
             // 构建天气提示（更贴心）
             let weatherTips = '\n🌤️ 【今日天气小贴士】\n';
             if (shanghaiWeather) {
-                weatherTips += `今天上海${shanghaiWeather.weather}，气温${shanghaiWeather.temperature}℃，${shanghaiWeather.windDirection}${shanghaiWeather.windPower}级，湿度${shanghaiWeather.humidity}%\n`;
+                weatherTips += `今天${currentCity}${shanghaiWeather.weather}，气温${shanghaiWeather.temperature}℃，${shanghaiWeather.windDirection}${shanghaiWeather.windPower}级，湿度${shanghaiWeather.humidity}%\n`;
 
                 // 更贴心的天气建议
                 if (shanghaiWeather.weather.includes('雨')) {
@@ -789,7 +945,7 @@
             }
 
             // 生成更暖心的完整方案（优化整体排版）
-            const planText = `${greeting} 这份专属你的上海Citywalk攻略来啦～
+            const planText = `${greeting} 这份专属你的${currentCity}Citywalk攻略来啦～
 
 🎈 【游玩主题】：${poiType}
 ⏰ 【计划时长】：${planTime}分钟
@@ -805,7 +961,7 @@ ${poiText}
 4. 注意随身物品安全，开开心心出门，平平安安回家～
 5. 如果走累了，随时可以调整路线，游玩最重要的是开心呀🥳
 
-✨ 愿你在上海的街头，遇见美好，收获满满的快乐～`;
+✨ 愿你在${currentCity}的街头，遇见美好，收获满满的快乐～`;
 
             // 修复：改用自定义弹窗显示完整内容（替代alert）
             showCustomModal(planText);
@@ -834,108 +990,58 @@ ${poiText}
             }
         }
 
-// 生成分享长图（以地图为主，信息叠加显示）
+// 生成分享长图（仅电脑端，使用屏幕截取）
 async function generateShareImage() {
     if (!routeData || !routeData.success) {
         showToast("请先生成有效的路线规划！");
         return;
     }
 
-    showToast("🎨 正在准备截图，请稍候...");
+    // 检测是否为移动端
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobile) {
+        showToast("📱 手机端暂不支持生成图片，请在电脑上使用");
+        return;
+    }
 
-    // ========== 第一步：使用浏览器原生截图API截取地图 ==========
+    showToast("🎨 请选择要截取的窗口或屏幕区域...");
+
+    // ========== 第一步：屏幕截取 ==========
     let mapImageDataUrl = null;
+
     try {
-        // 临时隐藏UI元素
-        const controlPanel = document.querySelector('.control-panel');
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        const errorToast = document.getElementById('errorToast');
-        
-        if (controlPanel) controlPanel.style.display = 'none';
-        if (loadingOverlay) loadingOverlay.style.display = 'none';
-        if (errorToast) errorToast.style.display = 'none';
-        
-        // 等待UI隐藏完成
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        // 请求屏幕截图权限
-        showToast("📸 请选择地图区域进行截图");
+        // 使用 getDisplayMedia 让用户选择截取区域
         const stream = await navigator.mediaDevices.getDisplayMedia({
-            video: { cursor: 'always' },
-            audio: false
+            video: { mediaSource: 'screen' },
+            preferCurrentTab: true
         });
         
-        // 创建视频元素捕获画面
         const video = document.createElement('video');
         video.srcObject = stream;
-        video.autoplay = true;
+        await video.play();
         
-        await new Promise((resolve) => {
-            video.onloadedmetadata = () => {
-                video.play();
-                resolve();
-            };
-        });
+        // 等待视频加载
+        await new Promise(resolve => setTimeout(resolve, 300));
         
-        // 等待一帧以确保画面稳定
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // 截图
+        // 截取当前帧
         const canvas = document.createElement('canvas');
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         const ctx = canvas.getContext('2d');
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        ctx.drawImage(video, 0, 0);
         
-        // 停止屏幕共享
+        // 停止流
         stream.getTracks().forEach(track => track.stop());
         
-        // 裁剪为4:5比例（从中心裁剪）
-        const targetWidth = 400;
-        const targetHeight = 500;
-        const aspectRatio = targetWidth / targetHeight;
-        
-        let cropWidth, cropHeight, startX, startY;
-        if (canvas.width / canvas.height > aspectRatio) {
-            // 原图更宽，以高度为基准
-            cropHeight = canvas.height;
-            cropWidth = cropHeight * aspectRatio;
-            startX = (canvas.width - cropWidth) / 2;
-            startY = 0;
-        } else {
-            // 原图更高，以宽度为基准
-            cropWidth = canvas.width;
-            cropHeight = cropWidth / aspectRatio;
-            startX = 0;
-            startY = (canvas.height - cropHeight) / 2;
-        }
-        
-        const cropCanvas = document.createElement('canvas');
-        cropCanvas.width = targetWidth * 2;
-        cropCanvas.height = targetHeight * 2;
-        const cropCtx = cropCanvas.getContext('2d');
-        cropCtx.drawImage(canvas, startX, startY, cropWidth, cropHeight, 0, 0, targetWidth * 2, targetHeight * 2);
-        
-        mapImageDataUrl = cropCanvas.toDataURL('image/png');
-        
-        // 恢复UI元素
-        if (controlPanel) controlPanel.style.display = '';
-        if (loadingOverlay) loadingOverlay.style.display = '';
-        if (errorToast) errorToast.style.display = '';
-        
-        showToast("✅ 截图成功，正在生成长图...");
+        mapImageDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+        showToast("✅ 截取成功，正在生成长图...");
     } catch (e) {
-        console.warn('截图失败:', e);
-        // 恢复UI元素
-        const controlPanel = document.querySelector('.control-panel');
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        const errorToast = document.getElementById('errorToast');
-        if (controlPanel) controlPanel.style.display = '';
-        if (loadingOverlay) loadingOverlay.style.display = '';
-        if (errorToast) errorToast.style.display = '';
-        
-        showToast("截图已取消或失败，将使用默认背景");
-        mapImageDataUrl = null;
+        console.warn('屏幕截取失败或用户取消:', e);
+        if (e.name === 'NotAllowedError') {
+            showToast("❌ 已取消截取");
+        } else {
+            showToast("截取失败，使用默认背景...");
+        }
     }
 
     // ========== 第二步：收集数据 ==========
@@ -964,9 +1070,7 @@ async function generateShareImage() {
     // 提取区域名称
     const startAddr = startPoint?.address || document.getElementById('startValue').textContent || '';
     const endAddr = endPoint?.address || document.getElementById('endValue').textContent || '';
-    let areaName = '上海';
-    const areaMatch = (startAddr + endAddr).match(/(黄浦|静安|徐汇|长宁|普陀|虹口|杨浦|浦东|闵行|宝山|嘉定|松江|青浦|奉贤|金山|崇明)/);
-    if (areaMatch) areaName = areaMatch[1];
+    let areaName = currentCity;
     
     // 天气信息
     let weatherText = '适宜出行';
@@ -1249,7 +1353,20 @@ function showCustomModal(content) {
             });
         }
 
-        // 搜索地址（使用PlaceSearch支持模糊搜索）
+        // 城市输入框回车切换
+        const cityInput = document.getElementById('cityInput');
+        if (cityInput) {
+            cityInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    const city = this.value.trim();
+                    if (city) {
+                        switchCity();
+                    }
+                }
+            });
+        }
+
+        // 搜索地址（使用PlaceSearch支持模糊搜索，支持全国范围）
         function searchAddress(keyword) {
             if (!window.AMap) {
                 showToast("地图未加载，请稍后重试");
@@ -1258,32 +1375,42 @@ function showCustomModal(content) {
 
             showToast(`🔍 正在搜索 "${keyword}"...`);
 
-            // 先尝试使用 PlaceSearch 进行POI搜索（支持模糊匹配）
+            // 先尝试使用 PlaceSearch 进行POI搜索（支持模糊匹配，全国范围）
             AMap.plugin('AMap.PlaceSearch', function() {
                 const placeSearch = new AMap.PlaceSearch({
-                    city: '上海',
-                    citylimit: false,  // 不限制只在上海搜索
-                    pageSize: 5,
+                    city: '全国',  // 改为全国搜索
+                    citylimit: false,  // 不限制城市
+                    pageSize: 10,
                     pageIndex: 1
                 });
-                
+
                 placeSearch.search(keyword, function(status, result) {
                     if (status === 'complete' && result.info === 'OK' && result.poiList && result.poiList.pois.length > 0) {
                         // 找到POI结果
                         const pois = result.poiList.pois;
                         const poi = pois[0];  // 取第一个结果
-                        
+
+                        // 检查搜索结果是否在当前城市附近（500公里内）
+                        const poiLng = poi.location.lng;
+                        const poiLat = poi.location.lat;
+                        const distance = calculateDistance(currentCityCenter[0], currentCityCenter[1], poiLng, poiLat);
+
+                        // 如果距离太远（超过500公里），提示用户
+                        if (distance > 500000) {
+                            showToast(`⚠️ "${poi.name}" 距离当前城市较远（${(distance/1000).toFixed(0)}公里），正在跳转...`);
+                        }
+
                         // 在地图上标记位置
                         const marker = new AMap.Marker({
-                            position: [poi.location.lng, poi.location.lat],
+                            position: [poiLng, poiLat],
                             title: poi.name
                         });
                         map.add(marker);
-                        
-                        // 设置地图中心和缩放
-                        map.setCenter([poi.location.lng, poi.location.lat]);
+
+                        // 设置地图中心和缩放（无论多远都跳转）
+                        map.setCenter([poiLng, poiLat]);
                         map.setZoom(17);
-                        
+
                         // 显示信息窗体
                         const infoWindow = new AMap.InfoWindow({
                             content: `<div style="padding: 10px; font-size: 14px;">
@@ -1293,28 +1420,39 @@ function showCustomModal(content) {
                             </div>`,
                             offset: new AMap.Pixel(0, -30)
                         });
-                        infoWindow.open(map, [poi.location.lng, poi.location.lat]);
-                        
+                        infoWindow.open(map, [poiLng, poiLat]);
+
                         showToast(`✅ 找到 "${poi.name}"，点击地图选择为起点或终点`);
-                        
+
                         // 3秒后清除标记和信息窗
                         setTimeout(() => {
                             map.remove(marker);
                             infoWindow.close();
                         }, 5000);
                     } else {
-                        // POI搜索无结果，尝试地理编码
+                        // POI搜索无结果，尝试地理编码（全国范围）
                         tryGeocodeSearch(keyword);
                     }
                 });
             });
         }
+
+        // 计算两点间距离（米）
+        function calculateDistance(lng1, lat1, lng2, lat2) {
+            const radLat1 = lat1 * Math.PI / 180;
+            const radLat2 = lat2 * Math.PI / 180;
+            const a = radLat1 - radLat2;
+            const b = lng1 * Math.PI / 180 - lng2 * Math.PI / 180;
+            const s = 2 * Math.asin(Math.sqrt(Math.pow(Math.sin(a / 2), 2) +
+                Math.cos(radLat1) * Math.cos(radLat2) * Math.pow(Math.sin(b / 2), 2)));
+            return s * 6378137;  // 地球半径（米）
+        }
         
         // 备选：地理编码搜索
         function tryGeocodeSearch(keyword) {
             AMap.plugin('AMap.Geocoder', function() {
-                const geocoder = new AMap.Geocoder({ 
-                    city: '上海',
+                const geocoder = new AMap.Geocoder({
+                    city: currentCity,
                     radius: 50000  // 扩大搜索范围
                 });
                 geocoder.getLocation(keyword, function(status, result) {
