@@ -78,13 +78,17 @@
         // ============================================================
         /**
          * 高德 getLive 支持「城市名」或区域编码 adcode（如 110000）。
-         * 港澳用中文全称时经常出现无回调或一直加载，优先使用国标 adcode。
+         * 港澳：多种写法并行请求，谁先返回完整字段用谁；避免 adcode 先回调「空壳」时串行超时拖死或误跳过可用关键字。
          */
         function getWeatherQueryKeys(city) {
             if (!city || typeof city !== 'string') return ['北京市'];
             const c = city.trim();
-            if (c === '香港' || c === '香港特别行政区') return ['810000', '香港'];
-            if (c === '澳门' || c === '澳门特别行政区') return ['820000', '澳门'];
+            if (c === '香港' || c === '香港特别行政区') {
+                return ['香港', '810000', '香港特别行政区'];
+            }
+            if (c === '澳门' || c === '澳门特别行政区') {
+                return ['澳门', '820000', '澳门特别行政区'];
+            }
             if (c.includes('特别行政区')) return [c];
             if (c.endsWith('市') || c.endsWith('州')) return [c];
             return [c + '市'];
@@ -114,60 +118,60 @@
             updateWeatherUI("加载中...", `正在获取${city}实时天气`, "🌤️");
 
             const keys = getWeatherQueryKeys(city);
-            let keyIndex = 0;
-            let requestGeneration = 0;
+            const WEATHER_DEADLINE_MS = 10000;
+            let finished = false;
+            let pending = keys.length;
 
-            function tryNextKey() {
-                if (keyIndex >= keys.length) {
-                    updateWeatherUI(
-                        "天气暂不可用",
-                        "该地区暂无高德实时天气或名称不匹配，请出门前查看当地预报",
-                        "⛅"
-                    );
-                    return;
-                }
+            const deadlineTimer = setTimeout(function() {
+                if (finished) return;
+                finished = true;
+                updateWeatherUI(
+                    "天气暂不可用",
+                    "该地区暂无高德实时天气或名称不匹配，请出门前查看当地预报",
+                    "⛅"
+                );
+            }, WEATHER_DEADLINE_MS);
 
-                const district = keys[keyIndex++];
-                const myGen = ++requestGeneration;
-                const WEATHER_TIMEOUT_MS = 6000;
-                let settled = false;
-
-                const timer = setTimeout(function() {
-                    if (myGen !== requestGeneration || settled) return;
-                    settled = true;
-                    tryNextKey();
-                }, WEATHER_TIMEOUT_MS);
-
-                const weather = new AMap.Weather();
-                weather.getLive(district, function(err, data) {
-                    if (myGen !== requestGeneration) return;
-                    clearTimeout(timer);
-                    if (settled) return;
-                    if (err || !data || !isValidLiveWeatherPayload(data)) {
-                        tryNextKey();
-                        return;
-                    }
-                    settled = true;
-
-                    liveWeatherForCity = city;
-                    liveWeatherData = {
-                        temperature: data.temperature,
-                        weather: data.weather,
-                        windDirection: data.windDirection || '--',
-                        windPower: data.windPower != null ? data.windPower : '--',
-                        humidity: data.humidity != null ? data.humidity : '--',
-                        updateTime: new Date()
-                    };
-
-                    updateWeatherUI(
-                        `${data.weather} ${data.temperature}℃`,
-                        `风向${liveWeatherData.windDirection} ${liveWeatherData.windPower}级 | 湿度${liveWeatherData.humidity}% | 刚刚更新`,
-                        getWeatherIcon(data.weather)
-                    );
-                });
+            function applyLiveWeather(data) {
+                liveWeatherForCity = city;
+                liveWeatherData = {
+                    temperature: data.temperature,
+                    weather: data.weather,
+                    windDirection: data.windDirection || '--',
+                    windPower: data.windPower != null ? data.windPower : '--',
+                    humidity: data.humidity != null ? data.humidity : '--',
+                    updateTime: new Date()
+                };
+                updateWeatherUI(
+                    `${data.weather} ${data.temperature}℃`,
+                    `风向${liveWeatherData.windDirection} ${liveWeatherData.windPower}级 | 湿度${liveWeatherData.humidity}% | 刚刚更新`,
+                    getWeatherIcon(data.weather)
+                );
             }
 
-            tryNextKey();
+            keys.forEach(function(district) {
+                const weatherApi = new AMap.Weather();
+                weatherApi.getLive(district, function(err, data) {
+                    pending--;
+                    if (finished) return;
+                    if (!err && data && isValidLiveWeatherPayload(data)) {
+                        finished = true;
+                        clearTimeout(deadlineTimer);
+                        applyLiveWeather(data);
+                        return;
+                    }
+                    // 全部关键字都已回调且无一有效 → 立即失败，不必等满 deadline
+                    if (pending === 0) {
+                        clearTimeout(deadlineTimer);
+                        finished = true;
+                        updateWeatherUI(
+                            "天气暂不可用",
+                            "该地区暂无高德实时天气或名称不匹配，请出门前查看当地预报",
+                            "⛅"
+                        );
+                    }
+                });
+            });
         }
 
         function startWeatherRefresh() {
