@@ -78,20 +78,45 @@
         // ============================================================
         /**
          * 高德 getLive 支持「城市名」或区域编码 adcode（如 110000）。
-         * 港澳：多种写法并行请求，谁先返回完整字段用谁；避免 adcode 先回调「空壳」时串行超时拖死或误跳过可用关键字。
+         * 港澳：不查本地关键字，直接使用邻近内地城市（香港→深圳，澳门→珠海）并行请求。
          */
-        function getWeatherQueryKeys(city) {
-            if (!city || typeof city !== 'string') return ['北京市'];
+        function getWeatherQueryMeta(city) {
+            if (!city || typeof city !== 'string') {
+                return { keys: ['北京市'], proxyNeighborName: null, loadingHint: null };
+            }
             const c = city.trim();
             if (c === '香港' || c === '香港特别行政区') {
-                return ['香港', '810000', '香港特别行政区'];
+                return {
+                    keys: ['深圳市', '440300'],
+                    proxyNeighborName: '深圳',
+                    loadingHint: `正在获取深圳市天气（${c}邻近城市·供参考）…`
+                };
             }
             if (c === '澳门' || c === '澳门特别行政区') {
-                return ['澳门', '820000', '澳门特别行政区'];
+                return {
+                    keys: ['珠海市', '440400'],
+                    proxyNeighborName: '珠海',
+                    loadingHint: `正在获取珠海市天气（${c}邻近城市·供参考）…`
+                };
             }
-            if (c.includes('特别行政区')) return [c];
-            if (c.endsWith('市') || c.endsWith('州')) return [c];
-            return [c + '市'];
+            let keys;
+            if (c.includes('特别行政区')) keys = [c];
+            else if (c.endsWith('市') || c.endsWith('州')) keys = [c];
+            else keys = [c + '市'];
+            return { keys: keys, proxyNeighborName: null, loadingHint: null };
+        }
+
+        function weatherCardDescFromStoredLiveData(d) {
+            if (!d) return '';
+            const w = d.windDirection || '--';
+            const p = d.windPower != null ? d.windPower : '--';
+            const h = d.humidity != null ? d.humidity : '--';
+            const base = `风向${w} ${p}级 | 湿度${h}%`;
+            if (d.proxyNeighborName) {
+                const dest = liveWeatherForCity || currentCity || '';
+                return `${d.proxyNeighborName}市天气 · 供${dest}参考 | ${base} | 刚刚更新`;
+            }
+            return `${base} | 刚刚更新`;
         }
 
         /**
@@ -104,7 +129,7 @@
             if (!forceRefresh && liveWeatherData && liveWeatherForCity === city) {
                 updateWeatherUI(
                     `${liveWeatherData.weather} ${liveWeatherData.temperature}℃`,
-                    `风向${liveWeatherData.windDirection} ${liveWeatherData.windPower}级 | 湿度${liveWeatherData.humidity}%`,
+                    weatherCardDescFromStoredLiveData(liveWeatherData),
                     getWeatherIcon(liveWeatherData.weather)
                 );
                 return;
@@ -115,24 +140,22 @@
                 return;
             }
 
-            updateWeatherUI("加载中...", `正在获取${city}实时天气`, "🌤️");
+            const meta = getWeatherQueryMeta(city);
+            updateWeatherUI(
+                "加载中...",
+                meta.loadingHint || `正在获取${city}实时天气`,
+                "🌤️"
+            );
 
-            const keys = getWeatherQueryKeys(city);
-            const WEATHER_DEADLINE_MS = 10000;
-            let finished = false;
-            let pending = keys.length;
-
-            const deadlineTimer = setTimeout(function() {
-                if (finished) return;
-                finished = true;
+            function showUnavailable() {
                 updateWeatherUI(
                     "天气暂不可用",
                     "该地区暂无高德实时天气或名称不匹配，请出门前查看当地预报",
                     "⛅"
                 );
-            }, WEATHER_DEADLINE_MS);
+            }
 
-            function applyLiveWeather(data) {
+            function applyLiveWeather(data, proxyNeighborName) {
                 liveWeatherForCity = city;
                 liveWeatherData = {
                     temperature: data.temperature,
@@ -140,38 +163,47 @@
                     windDirection: data.windDirection || '--',
                     windPower: data.windPower != null ? data.windPower : '--',
                     humidity: data.humidity != null ? data.humidity : '--',
-                    updateTime: new Date()
+                    updateTime: new Date(),
+                    proxyNeighborName: proxyNeighborName || null
                 };
                 updateWeatherUI(
                     `${data.weather} ${data.temperature}℃`,
-                    `风向${liveWeatherData.windDirection} ${liveWeatherData.windPower}级 | 湿度${liveWeatherData.humidity}% | 刚刚更新`,
+                    weatherCardDescFromStoredLiveData(liveWeatherData),
                     getWeatherIcon(data.weather)
                 );
             }
 
-            keys.forEach(function(district) {
-                const weatherApi = new AMap.Weather();
-                weatherApi.getLive(district, function(err, data) {
-                    pending--;
-                    if (finished) return;
-                    if (!err && data && isValidLiveWeatherPayload(data)) {
-                        finished = true;
-                        clearTimeout(deadlineTimer);
-                        applyLiveWeather(data);
-                        return;
-                    }
-                    // 全部关键字都已回调且无一有效 → 立即失败，不必等满 deadline
-                    if (pending === 0) {
-                        clearTimeout(deadlineTimer);
-                        finished = true;
-                        updateWeatherUI(
-                            "天气暂不可用",
-                            "该地区暂无高德实时天气或名称不匹配，请出门前查看当地预报",
-                            "⛅"
-                        );
-                    }
+            function tryWeatherKeys(keys, proxyNeighborName, onAllFailed) {
+                const DEADLINE_MS = 10000;
+                let settled = false;
+                let pending = keys.length;
+                const deadlineTimer = setTimeout(function() {
+                    if (settled) return;
+                    settled = true;
+                    onAllFailed();
+                }, DEADLINE_MS);
+
+                keys.forEach(function(district) {
+                    const weatherApi = new AMap.Weather();
+                    weatherApi.getLive(district, function(err, data) {
+                        if (settled) return;
+                        pending--;
+                        if (!err && data && isValidLiveWeatherPayload(data)) {
+                            settled = true;
+                            clearTimeout(deadlineTimer);
+                            applyLiveWeather(data, proxyNeighborName);
+                            return;
+                        }
+                        if (pending === 0) {
+                            settled = true;
+                            clearTimeout(deadlineTimer);
+                            onAllFailed();
+                        }
+                    });
                 });
-            });
+            }
+
+            tryWeatherKeys(meta.keys, meta.proxyNeighborName, showUnavailable);
         }
 
         function startWeatherRefresh() {
@@ -779,7 +811,10 @@
             // 构建天气提示（更贴心）
             let weatherTips = '\n🌤️ 【今日天气小贴士】\n';
             if (liveWeatherData && liveWeatherData.weather != null) {
-                weatherTips += `今天${currentCity}${liveWeatherData.weather}，气温${liveWeatherData.temperature}℃，${liveWeatherData.windDirection}${liveWeatherData.windPower}级，湿度${liveWeatherData.humidity}%\n`;
+                const proxyHint = liveWeatherData.proxyNeighborName
+                    ? `（${liveWeatherData.proxyNeighborName}市实况，供${currentCity}参考）`
+                    : '';
+                weatherTips += `${proxyHint}今天${currentCity}${liveWeatherData.weather}，气温${liveWeatherData.temperature}℃，${liveWeatherData.windDirection}${liveWeatherData.windPower}级，湿度${liveWeatherData.humidity}%\n`;
 
                 // 更贴心的天气建议
                 const wx = String(liveWeatherData.weather);
@@ -924,7 +959,10 @@ async function generateShareImage() {
     let weatherText = '适宜出行';
     let weatherIcon = '🌤️';
     if (liveWeatherData) {
-        weatherText = `${liveWeatherData.weather} ${liveWeatherData.temperature}℃`;
+        const px = liveWeatherData.proxyNeighborName
+            ? `${liveWeatherData.proxyNeighborName}市 `
+            : '';
+        weatherText = `${px}${liveWeatherData.weather} ${liveWeatherData.temperature}℃`;
         weatherIcon = getWeatherIcon(liveWeatherData.weather);
     }
     
