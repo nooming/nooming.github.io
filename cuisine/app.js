@@ -13,7 +13,8 @@
         let selectedPoiType = "无偏好";
         let routeData = null;
         let debounceTimer = null;
-        let shanghaiWeather = null;
+        let liveWeatherData = null;
+        let liveWeatherForCity = null;
         let currentTheme = null;
         let currentCity = "北京"; // 当前城市（默认为北京）
         let currentCityCenter = [116.4074, 39.9042]; // 当前城市中心坐标
@@ -75,14 +76,32 @@
         // ============================================================
         // 天气相关逻辑（获取 / 刷新 / 渲染）
         // ============================================================
-        // 获取上海天气（增加主动刷新逻辑）
-        function getShanghaiWeather(forceRefresh = false) {
-            // 如果已有天气数据且不强制刷新，直接更新UI
-            if (shanghaiWeather && !forceRefresh) {
+        /**
+         * 高德 getLive 支持「城市名」或区域编码 adcode（如 110000）。
+         * 港澳用中文全称时经常出现无回调或一直加载，优先使用国标 adcode。
+         */
+        function getWeatherQueryKeys(city) {
+            if (!city || typeof city !== 'string') return ['北京市'];
+            const c = city.trim();
+            if (c === '香港' || c === '香港特别行政区') return ['810000', '香港'];
+            if (c === '澳门' || c === '澳门特别行政区') return ['820000', '澳门'];
+            if (c.includes('特别行政区')) return [c];
+            if (c.endsWith('市') || c.endsWith('州')) return [c];
+            return [c + '市'];
+        }
+
+        /**
+         * 获取当前选中城市的实时天气
+         * @param {string} city 城市名（与面板「当前城市」一致，如 北京、上海）
+         * @param {boolean} forceRefresh 为 true 时忽略缓存重新请求
+         */
+        function getCityWeather(city, forceRefresh = false) {
+            if (!city) city = currentCity;
+            if (!forceRefresh && liveWeatherData && liveWeatherForCity === city) {
                 updateWeatherUI(
-                    `${shanghaiWeather.weather} ${shanghaiWeather.temperature}℃`,
-                    `风向${shanghaiWeather.windDirection} ${shanghaiWeather.windPower}级 | 湿度${shanghaiWeather.humidity}%`,
-                    getWeatherIcon(shanghaiWeather.weather)
+                    `${liveWeatherData.weather} ${liveWeatherData.temperature}℃`,
+                    `风向${liveWeatherData.windDirection} ${liveWeatherData.windPower}级 | 湿度${liveWeatherData.humidity}%`,
+                    getWeatherIcon(liveWeatherData.weather)
                 );
                 return;
             }
@@ -92,51 +111,90 @@
                 return;
             }
 
-            // 显示加载状态
-            updateWeatherUI("加载中...", "正在获取上海实时天气", "🌤️");
+            updateWeatherUI("加载中...", `正在获取${city}实时天气`, "🌤️");
 
-            const weather = new AMap.Weather();
-            weather.getLive('上海市', function(err, data) {
-                if (err || !data) {
-                    updateWeatherUI("天气加载失败", "建议出行前查看实时天气", "⛅");
+            const keys = getWeatherQueryKeys(city);
+            let keyIndex = 0;
+            let requestGeneration = 0;
+
+            function tryNextKey() {
+                if (keyIndex >= keys.length) {
+                    updateWeatherUI(
+                        "天气暂不可用",
+                        "该地区暂无高德实时天气或名称不匹配，请出门前查看当地预报",
+                        "⛅"
+                    );
                     return;
                 }
 
-                shanghaiWeather = {
-                    temperature: data.temperature,
-                    weather: data.weather,
-                    windDirection: data.windDirection,
-                    windPower: data.windPower,
-                    humidity: data.humidity,
-                    updateTime: new Date() // 记录更新时间
-                };
+                const district = keys[keyIndex++];
+                const myGen = ++requestGeneration;
+                const WEATHER_TIMEOUT_MS = 6000;
+                let settled = false;
 
-                // 更新天气UI
-                updateWeatherUI(
-                    `${data.weather} ${data.temperature}℃`,
-                    `风向${data.windDirection} ${data.windPower}级 | 湿度${data.humidity}% | 刚刚更新`,
-                    getWeatherIcon(data.weather)
-                );
-            });
+                const timer = setTimeout(function() {
+                    if (myGen !== requestGeneration || settled) return;
+                    settled = true;
+                    tryNextKey();
+                }, WEATHER_TIMEOUT_MS);
+
+                const weather = new AMap.Weather();
+                weather.getLive(district, function(err, data) {
+                    if (myGen !== requestGeneration) return;
+                    clearTimeout(timer);
+                    if (settled) return;
+                    if (err || !data || !isValidLiveWeatherPayload(data)) {
+                        tryNextKey();
+                        return;
+                    }
+                    settled = true;
+
+                    liveWeatherForCity = city;
+                    liveWeatherData = {
+                        temperature: data.temperature,
+                        weather: data.weather,
+                        windDirection: data.windDirection || '--',
+                        windPower: data.windPower != null ? data.windPower : '--',
+                        humidity: data.humidity != null ? data.humidity : '--',
+                        updateTime: new Date()
+                    };
+
+                    updateWeatherUI(
+                        `${data.weather} ${data.temperature}℃`,
+                        `风向${liveWeatherData.windDirection} ${liveWeatherData.windPower}级 | 湿度${liveWeatherData.humidity}% | 刚刚更新`,
+                        getWeatherIcon(data.weather)
+                    );
+                });
+            }
+
+            tryNextKey();
         }
 
-        // 定时刷新天气（每5分钟）
         function startWeatherRefresh() {
-            // 立即获取一次
-            getShanghaiWeather(true);
-            // 每5分钟刷新一次
-            setInterval(() => {
-                getShanghaiWeather(true);
+            getCityWeather(currentCity, true);
+            setInterval(function() {
+                getCityWeather(currentCity, true);
             }, 5 * 60 * 1000);
         }
 
-        // 根据天气类型获取对应图标
+        /** 高德港澳等区域可能返回空对象，字段全缺，不能当成功 */
+        function isValidLiveWeatherPayload(data) {
+            if (!data || typeof data !== 'object') return false;
+            const w = data.weather;
+            const t = data.temperature;
+            if (w == null || String(w).trim() === '') return false;
+            if (t == null || String(t).trim() === '') return false;
+            return true;
+        }
+
+        // 根据天气类型获取对应图标（weather 可能为 undefined，需兜底）
         function getWeatherIcon(weather) {
-            if (weather.includes('晴')) return '☀️';
-            if (weather.includes('云')) return '☁️';
-            if (weather.includes('雨')) return '🌧️';
-            if (weather.includes('雪')) return '❄️';
-            if (weather.includes('风')) return '🌬️';
+            const s = weather == null ? '' : String(weather);
+            if (s.includes('晴')) return '☀️';
+            if (s.includes('云')) return '☁️';
+            if (s.includes('雨')) return '🌧️';
+            if (s.includes('雪')) return '❄️';
+            if (s.includes('风')) return '🌬️';
             return '⛅';
         }
 
@@ -163,13 +221,14 @@
                     if (map) {
                         map.setCenter(currentCityCenter);
                     }
-                    // 更新天气
-                    getCityWeather(currentCity);
+                    // 更新天气（定位城市变化后强制拉取）
+                    getCityWeather(currentCity, true);
                     console.log(`定位到城市：${currentCity}`, currentCityCenter);
                 }
             } catch (e) {
                 console.error('IP定位失败：', e);
                 document.getElementById('currentCity').textContent = currentCity;
+                getCityWeather(currentCity, true);
             }
         }
 
@@ -206,46 +265,13 @@
                 map.setZoom(13);
             }
             
-            // 更新天气
-            getCityWeather(currentCity);
+            // 更新天气（切换城市后强制拉取）
+            getCityWeather(currentCity, true);
             
             // 重置路线选择
             resetSelection();
             
             showToast(`已切换到：${currentCity}`);
-        }
-
-        // 获取指定城市天气
-        function getCityWeather(city) {
-            if (!window.AMap || !AMap.Weather) {
-                updateWeatherUI("天气加载失败", "无法获取天气数据", "⛅");
-                return;
-            }
-
-            updateWeatherUI("加载中...", `正在获取${city}实时天气`, "🌤️");
-
-            const weather = new AMap.Weather();
-            weather.getLive(city, function(err, data) {
-                if (err || !data) {
-                    updateWeatherUI("天气加载失败", "建议出行前查看实时天气", "⛅");
-                    return;
-                }
-
-                shanghaiWeather = {
-                    temperature: data.temperature,
-                    weather: data.weather,
-                    windDirection: data.windDirection,
-                    windPower: data.windPower,
-                    humidity: data.humidity,
-                    updateTime: new Date()
-                };
-
-                updateWeatherUI(
-                    `${data.weather} ${data.temperature}℃`,
-                    `风向${data.windDirection} ${data.windPower}级 | 湿度${data.humidity}% | 刚刚更新`,
-                    getWeatherIcon(data.weather)
-                );
-            });
         }
 
         // 初始化地图
@@ -290,7 +316,7 @@
                     }
                 });
 
-                // IP定位城市
+                startWeatherRefresh();
                 locateUserCity();
 
                 console.log("地图初始化成功");
@@ -383,12 +409,15 @@
             }
 
             AMap.plugin('AMap.Geocoder', function() {
-                const geocoder = new AMap.Geocoder({ city: '上海' });
+                const geocoder = new AMap.Geocoder({ city: currentCity || '全国' });
                 geocoder.getAddress([lng, lat], function(status, result) {
                     if (status === 'complete' && result.regeocode) {
                         const address = result.regeocode.formattedAddress;
-                        // 简化地址显示（去掉上海市前缀）
-                        const shortAddress = address.replace(/^上海市/, '').replace(/^中国/, '');
+                        let shortAddress = address.replace(/^中国/, '');
+                        if (currentCity) {
+                            const esc = currentCity.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                            shortAddress = shortAddress.replace(new RegExp('^' + esc + '市'), '');
+                        }
                         callback(shortAddress || address);
                     } else {
                         callback(null);
@@ -676,7 +705,7 @@
                 if (btnShareImage) btnShareImage.style.display = 'block';
 
                 // 生成路线后主动刷新天气
-                getShanghaiWeather(true);
+                getCityWeather(currentCity, true);
             })
             .catch(error => {
                 hideLoadingSteps();
@@ -745,17 +774,18 @@
 
             // 构建天气提示（更贴心）
             let weatherTips = '\n🌤️ 【今日天气小贴士】\n';
-            if (shanghaiWeather) {
-                weatherTips += `今天${currentCity}${shanghaiWeather.weather}，气温${shanghaiWeather.temperature}℃，${shanghaiWeather.windDirection}${shanghaiWeather.windPower}级，湿度${shanghaiWeather.humidity}%\n`;
+            if (liveWeatherData && liveWeatherData.weather != null) {
+                weatherTips += `今天${currentCity}${liveWeatherData.weather}，气温${liveWeatherData.temperature}℃，${liveWeatherData.windDirection}${liveWeatherData.windPower}级，湿度${liveWeatherData.humidity}%\n`;
 
                 // 更贴心的天气建议
-                if (shanghaiWeather.weather.includes('雨')) {
+                const wx = String(liveWeatherData.weather);
+                if (wx.includes('雨')) {
                     weatherTips += '💧 温馨提示：今日有雨，记得带上小雨伞哦～路面可能湿滑，走路慢慢走，安全第一❤️\n';
-                } else if (parseInt(shanghaiWeather.temperature) > 30) {
+                } else if (parseInt(liveWeatherData.temperature, 10) > 30) {
                     weatherTips += '☀️ 温馨提示：今日气温较高，做好防晒哦～记得随身带瓶水，补充水分💦\n';
-                } else if (parseInt(shanghaiWeather.temperature) < 10) {
+                } else if (parseInt(liveWeatherData.temperature, 10) < 10) {
                     weatherTips += '🧣 温馨提示：今日气温较低，多穿点衣服哦～别着凉啦❤️\n';
-                } else if (shanghaiWeather.weather.includes('晴')) {
+                } else if (wx.includes('晴')) {
                     weatherTips += '😘 温馨提示：今日天气超棒！适合出门走走，记得带上好心情～\n';
                 } else {
                     weatherTips += '😊 温馨提示：今日天气舒适，适合Citywalk，享受慢时光～\n';
@@ -889,9 +919,9 @@ async function generateShareImage() {
     // 天气信息
     let weatherText = '适宜出行';
     let weatherIcon = '🌤️';
-    if (shanghaiWeather) {
-        weatherText = `${shanghaiWeather.weather} ${shanghaiWeather.temperature}℃`;
-        weatherIcon = getWeatherIcon(shanghaiWeather.weather);
+    if (liveWeatherData) {
+        weatherText = `${liveWeatherData.weather} ${liveWeatherData.temperature}℃`;
+        weatherIcon = getWeatherIcon(liveWeatherData.weather);
     }
     
     // 日期格式化
@@ -1185,8 +1215,8 @@ function showCustomModal(content) {
             // 先尝试使用 PlaceSearch 进行POI搜索（支持模糊匹配）
             AMap.plugin('AMap.PlaceSearch', function() {
                 const placeSearch = new AMap.PlaceSearch({
-                    city: '上海',
-                    citylimit: false,  // 不限制只在上海搜索
+                    city: currentCity || '全国',
+                    citylimit: false,
                     pageSize: 5,
                     pageIndex: 1
                 });
@@ -1238,8 +1268,8 @@ function showCustomModal(content) {
         function tryGeocodeSearch(keyword) {
             AMap.plugin('AMap.Geocoder', function() {
                 const geocoder = new AMap.Geocoder({ 
-                    city: '上海',
-                    radius: 50000  // 扩大搜索范围
+                    city: currentCity || '全国',
+                    radius: 50000
                 });
                 geocoder.getLocation(keyword, function(status, result) {
                     if (status === 'complete' && result.geocodes && result.geocodes.length > 0) {
@@ -1332,7 +1362,7 @@ function showCustomModal(content) {
         const weatherCard = document.getElementById('weatherCard');
         if (weatherCard) {
             weatherCard.addEventListener('click', function() {
-                getShanghaiWeather(true);
+                getCityWeather(currentCity, true);
             });
         }
 
