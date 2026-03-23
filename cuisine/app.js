@@ -37,9 +37,10 @@
             "澳门": [113.5491, 22.1987]
         };
 
-        // API 基础地址配置 - 根据环境自动切换
+        // API 基础地址配置 - 根据环境自动切换（本地含 IPv6 ::1）
+        const _h = window.location.hostname;
         const API_BASE_URL =
-            window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            _h === 'localhost' || _h === '127.0.0.1' || _h === '[::1]' || _h === '::1'
                 ? 'http://localhost:5000'
                 : 'https://noomings-backend.zeabur.app';
 
