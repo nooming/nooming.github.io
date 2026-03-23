@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="虚拟小区停车分配优化：编辑地块、楼与车位，精确最优（匈牙利）或 PSO 粒子群近似求解，可视化步行与行车路径。" />
+  <meta name="keywords" content="停车分配,PSO,粒子群,匈牙利算法,小区规划,在线工具" />
+  <link rel="apple-touch-icon" sizes="180x180" href="../../favicon-io/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="../../favicon-io/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="../../favicon-io/favicon-16x16.png">
+  <link rel="manifest" href="../../favicon-io/site.webmanifest">
+  <link rel="shortcut icon" href="../../favicon-io/favicon.ico">
+  <title>小区停车分配优化 · 专题与实践</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div class="site-tool-bar">
+      <a href="../../" class="site-tool-back">← 返回主页</a>
+    </div>
+    <h1>虚拟小区编辑器 · 停车分配优化</h1>
+    <span class="hint hint--header" title="可拖拽：入口、花坛、楼、车位。内环道路不可拖拽，请在右侧侧栏改数值。车位沿内环停车带吸附；入口吸附内环边线。">
+      可拖拽：入口、花坛、楼、车位；右侧侧栏改内环数值；车位与入口自动吸附内环。
+    </span>
+    <p id="file-protocol-hint" class="hint" style="display:none;margin:0.5rem 0 0;padding:0.5rem 0.75rem;background:#3f1d1d;border:1px solid #b91c1c;border-radius:6px;color:#fecaca;">
+      当前是<strong>本地文件</strong>打开。请先在本机运行后端（<code style="background:#1f1414;padding:0.1em 0.35em;border-radius:4px;">cd noomings_backend &amp;&amp; python citywalk.py</code>），再用浏览器访问 <code style="background:#1f1414;padding:0.1em 0.35em;border-radius:4px;">http://127.0.0.1:5000</code> 或部署后的 Zeabur 地址；勿仅双击本 HTML。
+    </p>
+  </header>
+  <div class="layout">
+    <div class="canvas-wrap">
+      <div class="map-stage">
+        <canvas id="map" width="720" height="720" aria-label="小区平面图"></canvas>
+        <aside class="map-legend" aria-label="平面图图例">
+          <h3 class="map-legend-title">图例</h3>
+          <ul class="map-legend-list">
+            <li><span class="map-legend-swatch map-legend-swatch--entrance" aria-hidden="true"></span>入口</li>
+            <li><span class="map-legend-swatch map-legend-swatch--building" aria-hidden="true"></span>居民楼（楼号）</li>
+            <li><span class="map-legend-swatch map-legend-swatch--slot" aria-hidden="true"></span>车位（优化后车→楼）</li>
+            <li><span class="map-legend-swatch map-legend-swatch--grass" aria-hidden="true"></span>中央花坛</li>
+            <li><span class="map-legend-swatch map-legend-swatch--road" aria-hidden="true"></span>内环道路</li>
+            <li><span class="map-legend-swatch map-legend-swatch--strip" aria-hidden="true"></span>泊位带</li>
+            <li><span class="map-legend-swatch map-legend-swatch--path" aria-hidden="true"></span>步行路径</li>
+            <li><span class="map-legend-swatch map-legend-swatch--select" aria-hidden="true"></span>选中</li>
+          </ul>
+        </aside>
+      </div>
+      <p id="map-unit-caption" class="map-caption" aria-hidden="true"></p>
+    </div>
+    <aside class="sidebar-vehicle" aria-label="车辆目的楼">
+      <div class="panel panel--scroll vehicle-targets-panel vehicle-targets-panel--solo">
+        <h2>车辆 → 目的楼</h2>
+        <p class="panel-note panel-note--vehicle">
+          屋面数字为楼号；PSO 后车位显示车号与目的楼。下拉为每车选目的地。
+        </p>
+        <div class="vehicle-targets-actions">
+          <button type="button" id="btn-random-dest">随机各车目的楼</button>
+        </div>
+        <div id="vehicle-targets-list" class="vehicle-targets-list"></div>
+      </div>
+    </aside>
+    <aside class="sidebar" aria-label="场景与操作">
+      <div class="panel">
+        <h2>场景参数</h2>
+        <p id="lot-dim-hint" class="panel-note"></p>
+        <p class="panel-note">
+          长度单位为 <strong>m</strong>；优化总时间为 <strong>s</strong>（行车/步行距离 ÷ 假定速度）。
+        </p>
+        <div class="prop-grid">
+          <label for="n-veh">车辆数（辆）</label>
+          <input type="number" id="n-veh" min="1" step="1" value="12" />
+        </div>
+        <div class="prop-grid">
+          <label for="optimizer-method">优化方式</label>
+          <select id="optimizer-method">
+            <option value="exact" selected>精确最优（全局最小总时间）</option>
+            <option value="pso">PSO 粒子群（近似，可看收敛曲线）</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <button type="button" id="btn-add-building">添加居民楼</button>
+        <button type="button" id="btn-add-slot">添加车位</button>
+        <button type="button" class="danger" id="btn-delete">删除选中</button>
+        <button type="button" class="primary" id="btn-run">运行优化</button>
+      </div>
+
+      <div class="panel panel--scroll panel--props">
+        <h2>选中项属性</h2>
+        <div id="props-empty" class="empty-select">
+          点击画布上的入口、花坛、内环、楼或车位进行选中
+        </div>
+        <div id="props-form" class="prop-grid" hidden></div>
+      </div>
+
+      <div class="panel panel--result">
+        <h2>优化结果</h2>
+        <p id="result-status" class="hint">尚未运行</p>
+        <p class="result-value" id="result-gbest" style="display:none"></p>
+        <canvas id="chart" width="300" height="168"></canvas>
+        <p id="chart-caption" class="chart-caption"></p>
+      </div>
+    </aside>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
