@@ -1,4 +1,4 @@
-// 等待DOM加载完成后执行
+// ========== 二维码生成与识别 ==========
 document.addEventListener('DOMContentLoaded', function() {
     // ========== 获取DOM元素 ==========
     const qrInput = document.getElementById('qrInput');

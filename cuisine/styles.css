@@ -1,4 +1,5 @@
-        /* 定义CSS变量 - 现代化配色（将由JS动态设置） */
+        /* ========== Citywalk 页面样式 ========== */
+        /* CSS 变量：主题色由 app.js 动态写入 */
         :root {
             --primary: #ff7e5f;
             --primary-light: #feb47b;

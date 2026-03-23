@@ -1,6 +1,5 @@
-// 页面管理
-
-// 对齐选项配置（与render.js中的ALIGN_OPTIONS保持一致）
+// ========== 手写笔记 · 页面与对齐 ==========
+// 对齐选项与 render.js 中 ALIGN_OPTIONS 保持一致
 const ALIGN_OPTIONS = [
     { align: 'left', iconClass: 'align-icon-left', title: '左对齐' },
     { align: 'center', iconClass: 'align-icon-center', title: '居中' },

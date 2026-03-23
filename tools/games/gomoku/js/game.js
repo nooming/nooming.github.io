@@ -178,7 +178,7 @@ function evaluateThreat(row, col, player) {
     let jumpFour = 0, jumpThree = 0; // 跳四、跳三
     let doubleThree = false;
     
-    // 临时放置棋子进行评估
+    // 试探落子（仅用于评估，不提交终局）
     board[row][col] = player;
     
     for (let [dr, dc] of directions) {

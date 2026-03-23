@@ -1,4 +1,4 @@
-// 等待DOM加载完成后执行
+// ========== 进制转换工具 ==========
 document.addEventListener('DOMContentLoaded', function() {
     // ========== 获取DOM元素 ==========
     const inputBase = document.getElementById('inputBase');

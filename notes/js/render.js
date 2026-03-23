@@ -1,4 +1,4 @@
-// UI渲染
+// ========== 手写笔记 · 列表与工具栏渲染 ==========
 
 // 渲染单个页面列表项
 function renderPageListItem(page, panelType) {

@@ -1,6 +1,6 @@
-// 公共工具函数
+// ========== 手写笔记 · 工具函数 ==========
 
-// 生成唯一ID
+// 生成唯一 ID
 function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
 }
@@ -12,7 +12,7 @@ function isMobile() {
 
 // 显示提示消息
 function showToast(message) {
-    // 创建临时提示元素
+    // 构建 Toast 节点
     const toast = document.createElement('div');
     toast.className = 'toast-message';
     toast.textContent = message;

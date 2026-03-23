@@ -1,4 +1,4 @@
-// localStorage 操作
+// ========== 手写笔记 · localStorage ==========
 
 // 加载数据
 function loadState() {

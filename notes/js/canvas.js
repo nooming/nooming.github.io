@@ -1,6 +1,5 @@
-// 画布绘制相关功能 - 使用Excalidraw的perfect-freehand算法
-
-// 等待perfect-freehand库加载
+// ========== 手写笔记 · 画布与笔迹（perfect-freehand） ==========
+// 等待 perfect-freehand 就绪后再绘制
 (function checkPerfectFreehand() {
     if (typeof window !== 'undefined' && !window.getStroke) {
         // 库还在加载中，等待后重试
@@ -580,11 +579,11 @@ function drawSelectionBox() {
     ctx.restore();
 }
 
-// 绘制选择框（临时框选时）
+// 框选进行中：绘制选区矩形
 function drawSelectionBoxTemp() {
     if (!selectionBox || !isSelecting) return;
     
-    // 在主canvas上绘制临时选择框（在已有内容之上）
+    // 在主画布上层叠加选区框
     ctx.save();
     ctx.strokeStyle = '#0066FF';
     ctx.fillStyle = 'rgba(0, 102, 255, 0.1)';

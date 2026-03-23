@@ -1,4 +1,4 @@
-// 等待DOM加载完成后执行
+// ========== Base64 编解码工具 ==========
 document.addEventListener('DOMContentLoaded', function() {
     // ========== 获取DOM元素 ==========
     const encodeInput = document.getElementById('encodeInput');

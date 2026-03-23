@@ -1,6 +1,5 @@
-// 主入口和事件绑定
-
-// 工具函数已移至 utils.js
+// ========== 手写笔记 · 入口与全局事件 ==========
+// 通用工具见 utils.js
 
 // 点击外部关闭面板
 document.addEventListener('click', (e) => {

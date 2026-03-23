@@ -1,3 +1,7 @@
+/**
+ * 小区停车分配 · 前端画布
+ * 约定：与 parking_engine / 后端 /api 字段一致；分段注释用「// --- 标题 ---」。
+ */
 (function () {
   "use strict";
 
@@ -49,7 +53,7 @@
     cctx.imageSmoothingEnabled = true;
   }
 
-  // file:// 须指向本机 Flask；线上 GitHub Pages 走 Zeabur 同源 API
+  // --- API 基址：file:// 走本机 Flask；线上静态站走 Zeabur ---
   function apiUrl(path) {
     if (window.location.protocol === "file:") {
       return "http://127.0.0.1:5000" + path;
