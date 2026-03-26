@@ -147,7 +147,7 @@ logging.basicConfig(
 
 
 # ==================== 通用工具函数 ====================
-def api_request_with_retry(url: str, params: dict, max_retries: int = 3, timeout: int = 10) -> Optional[dict]:
+def api_request_with_retry(url: str, params: dict, max_retries: int = 3, timeout: int = 30) -> Optional[dict]:
     """统一的API请求函数，带重试机制"""
     for retry in range(max_retries):
         try:
@@ -196,7 +196,7 @@ def get_geo_code(address: str, city: str = None) -> Tuple[float, float]:
 
     for retry in range(3):
         try:
-            resp = requests.get(url, params=params, timeout=10)
+            resp = requests.get(url, params=params, timeout=30)
             resp.raise_for_status()
             data = resp.json()
             if data.get("status") == "1" and len(data.get("geocodes", [])) > 0:
@@ -231,7 +231,7 @@ def get_city_from_location(lng: float, lat: float) -> Optional[str]:
         "output": "json"
     }
     try:
-        resp = requests.get(url, params=params, timeout=8)
+        resp = requests.get(url, params=params, timeout=30)
         resp.raise_for_status()
         data = resp.json()
         if data.get("status") == "1" and data.get("regeocode"):
@@ -296,7 +296,7 @@ def get_shortest_route(start: Tuple[float, float], end: Tuple[float, float]) -> 
     }
 
     try:
-        resp = requests.get(url, params=params, timeout=10)
+        resp = requests.get(url, params=params, timeout=30)
         resp.raise_for_status()
         data = resp.json()
         if data.get("status") != "1":
@@ -387,7 +387,7 @@ def sample_poi_along_shortest_route(route_points: List[Tuple[float, float]],
             params["city"] = target_city
 
         try:
-            resp = requests.get(url, params=params, timeout=10)
+            resp = requests.get(url, params=params, timeout=30)
             resp.raise_for_status()
             data = resp.json()
             if data.get("status") != "1":
@@ -539,7 +539,7 @@ def generate_new_route(start: Tuple[float, float], end: Tuple[float, float],
         }
 
         try:
-            resp = requests.get(url, params=params, timeout=10)
+            resp = requests.get(url, params=params, timeout=30)
             resp.raise_for_status()
             data = resp.json()
             if data.get("status") != "1":
@@ -729,7 +729,7 @@ def get_district_by_coords(lng: float, lat: float) -> dict:
         "output": "json"
     }
     try:
-        resp = requests.get(url, params=params, timeout=8)
+        resp = requests.get(url, params=params, timeout=30)
         resp.raise_for_status()
         data = resp.json()
         if data.get("status") == "1" and data.get("regeocode"):
@@ -863,7 +863,7 @@ def locate_city():
                 "output": "json"
             }
 
-            resp = requests.get(url, params=params, timeout=10)
+            resp = requests.get(url, params=params, timeout=30)
             resp.raise_for_status()
             data = resp.json()
 
@@ -892,7 +892,7 @@ def locate_city():
             "output": "json"
         }
 
-        resp = requests.get(url, params=params, timeout=10)
+        resp = requests.get(url, params=params, timeout=30)
         resp.raise_for_status()
         data = resp.json()
 

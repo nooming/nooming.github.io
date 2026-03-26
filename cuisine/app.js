@@ -611,7 +611,7 @@
 
             // 创建超时控制器
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒超时
+            const timeoutId = setTimeout(() => controller.abort(), 120000); // 120秒超时（2分钟）
 
             fetch(`${API_BASE_URL}/plan`, {
                 method: 'POST',
@@ -740,7 +740,7 @@
                 hideLoadingSteps();
                 let errorMsg = '';
                 if (error.name === 'AbortError') {
-                    errorMsg = "请求超时（30秒），请检查后端服务是否运行";
+                    errorMsg = "请求超时（2分钟），请检查后端服务是否运行或缩短路线距离";
                 } else if (error.message.includes('timeout')) {
                     errorMsg = "请求超时，请检查网络或后端服务是否运行";
                 } else if (error.message.includes('Failed to fetch')) {
@@ -870,52 +870,63 @@ ${poiText}
             }
         }
 
-// 生成分享长图（使用地点美图作为背景）
+// 生成分享长图（使用浏览器原生截图API截取地图）
 async function generateShareImage() {
     if (!routeData || !routeData.success) {
         showToast("请先生成有效的路线规划！");
         return;
     }
 
-    showToast("🎨 正在搜索地点美图，请稍候...");
+    showToast("🎨 正在截取地图，请稍候...");
 
-    // ========== 第一步：搜索地点美图（精确到区/县级） ==========
-    let backgroundImageUrl = null;
-
-    // 提取第一个 POI 名称
-    const firstPoiName = (routeData.pois && routeData.pois.length > 0)
-        ? routeData.pois[0].name || ''
-        : '';
-
-    // 起点坐标（用于后端逆地理编码到区/县级）
-    const startLng = startPoint ? startPoint.lng : null;
-    const startLat = startPoint ? startPoint.lat : null;
-
+    // ========== 第一步：使用屏幕共享API截取地图 ==========
+    let mapImageUrl = null;
     try {
-        const response = await fetch(`${API_BASE_URL}/search_image`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                city: currentCity,
-                poi_name: firstPoiName,
-                start_lng: startLng,
-                start_lat: startLat
-            })
+        showToast("🗺️ 请选择要分享的地图区域...");
+        
+        // 请求屏幕共享
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+            video: {
+                cursor: 'never',
+                displaySurface: 'browser' // 优先浏览器标签页
+            },
+            audio: false
         });
-
-        const data = await response.json();
-        if (data.success && data.image_url) {
-            backgroundImageUrl = data.image_url;
-            const districtHint = data.district ? `${data.district} · ` : '';
-            showToast(`✅ 找到美图（${districtHint}${firstPoiName || data.city}），正在生成长图...`);
-        }
+        
+        showToast("📸 正在截取地图...");
+        
+        // 创建视频元素捕获画面
+        const video = document.createElement('video');
+        video.srcObject = stream;
+        video.play();
+        
+        // 等待视频准备好
+        await new Promise((resolve) => {
+            video.onloadedmetadata = () => {
+                setTimeout(resolve, 500); // 额外等待确保画面稳定
+            };
+        });
+        
+        // 创建canvas绘制视频帧
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // 停止屏幕共享
+        stream.getTracks().forEach(track => track.stop());
+        
+        // 转换为图片URL
+        mapImageUrl = canvas.toDataURL('image/png', 0.9);
+        showToast("✅ 地图截取成功，正在合成长图...");
     } catch (e) {
-        console.warn('图片搜索失败:', e);
-    }
-
-    // 如果搜索失败，使用默认渐变背景
-    if (!backgroundImageUrl) {
-        showToast("未找到相关图片，使用默认背景...");
+        console.warn('屏幕共享取消或失败:', e);
+        if (e.name === 'NotAllowedError') {
+            showToast("已取消屏幕共享，使用默认背景...");
+        } else {
+            showToast("截图失败，使用默认背景...");
+        }
     }
 
     // ========== 第二步：收集数据 ==========
@@ -1041,15 +1052,15 @@ async function generateShareImage() {
         overflow: hidden;
     `;
 
-    // 背景样式：有图片用图片，无图片用渐变
-    const bgStyle = backgroundImageUrl 
-        ? `background-image: url('${backgroundImageUrl}'); background-size: cover; background-position: center;`
+    // 背景样式：有地图截图用截图，无截图用渐变
+    const bgStyle = mapImageUrl 
+        ? `background-image: url('${mapImageUrl}'); background-size: cover; background-position: center;`
         : `background: linear-gradient(135deg, ${theme.primary}22, ${theme.secondary}44);`;
 
     shareCard.innerHTML = `
-        <!-- 美图背景层 -->
+        <!-- 地图截图背景层 -->
         <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; ${bgStyle}">
-            ${backgroundImageUrl ? '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.25);"></div>' : ''}
+            ${mapImageUrl ? '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.25);"></div>' : ''}
         </div>
         
         <!-- 顶部主题色渐变遮罩 -->
