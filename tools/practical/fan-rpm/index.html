@@ -51,18 +51,33 @@
     }
     .fan-rpm-shell .stage {
       position: relative;
-      border-radius: var(--radius);
-      overflow: hidden;
       background: #000;
-      aspect-ratio: 4 / 3;
+      border-radius: var(--radius);
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+    }
+    /* 仅裁剪画面圆角，说明文字在下方单独一行，避免 overflow:hidden 裁掉 ::after */
+    .fan-rpm-shell .stage-viewport {
+      position: relative;
+      aspect-ratio: 4 / 3;
+      overflow: hidden;
+      border-radius: var(--radius);
+      background: #000;
+    }
+    .fan-rpm-shell .stage-caption {
+      margin: 10px 4px 0;
+      padding-bottom: 2px;
+      text-align: center;
+      font-size: 11px;
+      line-height: 1.45;
+      color: var(--accent);
+      text-shadow: 0 1px 2px #000;
+      word-break: break-word;
     }
     .fan-rpm-shell video {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
-      transform: scaleX(-1);
     }
     .fan-rpm-shell canvas { display: none; }
     .fan-rpm-shell .roi {
@@ -80,19 +95,8 @@
       pointer-events: none;
       opacity: 0.85;
     }
-    .fan-rpm-shell .roi::after {
-      content: "采样区域 · 对准扇叶边缘对比明显处";
-      position: absolute;
-      bottom: -28px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 11px;
-      color: var(--accent);
-      white-space: nowrap;
-      text-shadow: 0 1px 2px #000;
-    }
     .fan-rpm-shell .panel {
-      margin-top: 36px;
+      margin-top: 18px;
       padding: 16px;
       background: var(--surface);
       border-radius: var(--radius);
@@ -184,8 +188,11 @@
     <p class="sub">用手机摄像头对准旋转的风扇，让中间绿框覆盖「扇叶扫过、明暗变化明显」的一条窄带。系统根据画面亮度变化频率估算转速。</p>
 
     <div class="stage">
-      <video id="video" playsinline muted></video>
-      <div class="roi" aria-hidden="true"></div>
+      <div class="stage-viewport">
+        <video id="video" playsinline muted></video>
+        <div class="roi" aria-hidden="true"></div>
+      </div>
+      <p class="stage-caption">采样区域 · 对准扇叶边缘对比明显处</p>
     </div>
     <canvas id="work"></canvas>
 
