@@ -275,34 +275,83 @@
         }
 
         // 快速切换城市
-        function quickSwitchCity(city) {
-            // 检查是否是已知城市
-            if (CITY_COORDS[city]) {
-                currentCity = city;
-                currentCityCenter = CITY_COORDS[city];
-            } else {
-                // 未知城市，尝试使用地理编码获取坐标
-                currentCity = city;
-                // 使用默认坐标，地图会自动调整
-                currentCityCenter = [116.4074, 39.9042];
+        async function quickSwitchCity(city) {
+            if (!city || !city.trim()) {
+                showToast('请输入有效的城市名称');
+                return;
             }
             
-            document.getElementById('currentCity').textContent = currentCity;
+            const cityName = city.trim();
+            
+            // 检查是否是已知城市（预置坐标）
+            if (CITY_COORDS[cityName]) {
+                currentCity = cityName;
+                currentCityCenter = CITY_COORDS[cityName];
+                applyCitySwitch(currentCity, currentCityCenter);
+                return;
+            }
+            
+            // 未知城市，使用高德地理编码获取坐标
+            showToast(`🔍 正在定位 ${cityName}...`);
+            
+            try {
+                const coords = await geocodeCity(cityName);
+                if (coords) {
+                    currentCity = cityName;
+                    currentCityCenter = coords;
+                    applyCitySwitch(currentCity, currentCityCenter);
+                } else {
+                    showToast(`❌ 无法定位城市：${cityName}，请检查城市名称`);
+                }
+            } catch (e) {
+                console.error('城市定位失败：', e);
+                showToast(`❌ 定位失败：${cityName}`);
+            }
+        }
+        
+        // 使用高德地理编码获取城市坐标
+        function geocodeCity(cityName) {
+            return new Promise((resolve, reject) => {
+                if (!window.AMap) {
+                    reject(new Error('高德地图未加载'));
+                    return;
+                }
+                
+                AMap.plugin('AMap.Geocoder', function() {
+                    const geocoder = new AMap.Geocoder({
+                        city: '全国'
+                    });
+                    
+                    geocoder.getLocation(cityName, function(status, result) {
+                        if (status === 'complete' && result.geocodes && result.geocodes.length > 0) {
+                            const location = result.geocodes[0].location;
+                            resolve([location.lng, location.lat]);
+                        } else {
+                            resolve(null);
+                        }
+                    });
+                });
+            });
+        }
+        
+        // 应用城市切换
+        function applyCitySwitch(cityName, center) {
+            document.getElementById('currentCity').textContent = cityName;
             document.getElementById('cityInput').value = '';
             
             // 更新地图中心
             if (map) {
-                map.setCenter(currentCityCenter);
+                map.setCenter(center);
                 map.setZoom(13);
             }
             
             // 更新天气（切换城市后强制拉取）
-            getCityWeather(currentCity, true);
+            getCityWeather(cityName, true);
             
             // 重置路线选择
             resetSelection();
             
-            showToast(`已切换到：${currentCity}`);
+            showToast(`✅ 已切换到：${cityName}`);
         }
 
         // 初始化地图

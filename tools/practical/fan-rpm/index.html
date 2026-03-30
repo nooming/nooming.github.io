@@ -217,7 +217,7 @@
       <button type="button" class="btn" id="startBtn">开启摄像头并开始</button>
       <button type="button" class="btn secondary" id="stopBtn" disabled>停止</button>
       <p class="hint">
-        说明：转速上限受相机帧率限制（多数手机约 30fps，约可估到每分钟几百转量级；若设备支持 60fps 会更高）。环境光尽量稳定，避免频闪灯；扇叶与背景对比越强越准。采样区域<strong>优先使用亮度空间方差</strong>（纹理变化），并与均值对照；仅当均值通道置信度明显更高时改用均值。已启用帧间隔统计、去漂移、加窗与频谱细化，可适当<strong>拉长采样时长</strong>提高低频分辨率。没有风扇时可用电脑打开 <a href="flash-calibrator.html" style="color:var(--accent);">闪屏校准页</a>，另一台手机对准屏幕做对照测试。低速风扇若读数仍偏差，可略增大对比度或采样时长；算法已尽量区分「转频」与「叶尖通过频率」。
+        说明：转速上限受相机帧率限制（多数手机约 30fps，约可估到每分钟几百转量级；若设备支持 60fps 会更高）。环境光尽量稳定，避免频闪灯；扇叶与背景对比越强越准。采样区域<strong>优先使用亮度空间方差</strong>（纹理变化），并与均值对照；仅当均值通道置信度明显更高时改用均值。已启用<strong>谐波加权选频</strong>、<strong>自相关与 FFT 融合</strong>、帧间隔统计、去漂移与加窗；建议采样<strong>≥4 秒</strong>以便自相关稳定。可适当<strong>拉长采样时长</strong>提高低频分辨率。没有风扇时可用电脑打开 <a href="flash-calibrator.html" style="color:var(--accent);">闪屏校准页</a>，另一台手机对准屏幕做对照测试。低速风扇若读数仍偏差，可略增大对比度或采样时长；算法已尽量区分「转频」与「叶尖通过频率」。
       </p>
       <p class="err" id="errBox" hidden></p>
       <p class="status" id="status"></p>
@@ -425,6 +425,82 @@
   }
 
   /**
+   * 谐波加权：真实周期往往在 f、2f、3f 处均有能量，单纯 max(bin) 易锁到谐波或噪声峰
+   */
+  function pickBestKHarmonicWeighted(mag, kMin, kMax) {
+    let bestK = kMin;
+    let bestScore = -1;
+    for (let k = kMin; k <= kMax; k++) {
+      const m0 = mag[k];
+      let score = m0;
+      const k2 = Math.round(2 * k);
+      if (k2 !== k && k2 >= kMin && k2 <= kMax) score += 0.44 * mag[k2];
+      const k3 = Math.round(3 * k);
+      if (k3 !== k && k3 >= kMin && k3 <= kMax) score += 0.22 * mag[k3];
+      if (score > bestScore) {
+        bestScore = score;
+        bestK = k;
+      }
+    }
+    return { bestK, bestScore };
+  }
+
+  /**
+   * 时域归一化自相关主峰 → 角频率 (Hz)，与 FFT 互补；对纯噪声相关弱
+   */
+  function autocorrDominantFrequencyHz(detrended, fps) {
+    const n = detrended.length;
+    if (n < 96) return null;
+    let var0 = 0;
+    for (let i = 0; i < n; i++) var0 += detrended[i] * detrended[i];
+    var0 /= n;
+    if (var0 < 1e-14) return null;
+    const inv = 1 / var0;
+    const minLag = Math.max(2, Math.ceil(fps / (0.47 * fps)));
+    const maxLag = Math.min(n - 1, Math.floor(fps / 0.26));
+    if (maxLag <= minLag) return null;
+    let bestLag = minLag;
+    let bestR = -1;
+    for (let lag = minLag; lag <= maxLag; lag++) {
+      let s = 0;
+      for (let i = 0; i < n - lag; i++) s += detrended[i] * detrended[i + lag];
+      s /= n - lag;
+      const r = s * inv;
+      if (r > bestR) {
+        bestR = r;
+        bestLag = lag;
+      }
+    }
+    if (bestR < 0.11) return null;
+    if (bestLag >= 8 && bestLag % 2 === 0) {
+      const lag2 = bestLag >> 1;
+      if (lag2 >= minLag) {
+        let s2 = 0;
+        for (let i = 0; i < n - lag2; i++) s2 += detrended[i] * detrended[i + lag2];
+        s2 /= n - lag2;
+        const r2 = s2 * inv;
+        if (r2 > bestR * 0.78 && r2 > 0.12) {
+          bestLag = lag2;
+          bestR = Math.max(bestR, r2);
+        }
+      }
+    }
+    const fHz = fps / bestLag;
+    if (fHz < 0.26 || fHz > 0.47 * fps) return null;
+    return { fHz, quality: bestR };
+  }
+
+  function fuseFftAndAutocorr(fFftHz, ac) {
+    if (!ac || ac.quality < 0.1) return fFftHz;
+    const den = Math.max(fFftHz, 0.001);
+    const rel = Math.abs(fFftHz - ac.fHz) / den;
+    if (rel < 0.16) return fFftHz * 0.38 + ac.fHz * 0.62;
+    if (rel < 0.32 && ac.quality > 0.18) return fFftHz * 0.52 + ac.fHz * 0.48;
+    if (rel < 0.45 && ac.quality > 0.26) return fFftHz * 0.62 + ac.fHz * 0.38;
+    return fFftHz;
+  }
+
+  /**
    * 对一路时间序列做 FFT 与峰解释；channel 为 "mean" | "var" 仅用于状态展示
    */
   function analyzeSeries(values, bladeCount, channel) {
@@ -443,11 +519,13 @@
     if (channel === "var" && rmsPre < MIN_RMS_VAR) return null;
 
     detrendLinear(raw);
-    applyHannWindow(raw);
+    const detrended = new Float64Array(raw);
+    const forFft = new Float64Array(detrended);
+    applyHannWindow(forFft);
 
-    const N = nextPow2(raw.length);
+    const N = nextPow2(forFft.length);
     const padded = new Float64Array(N);
-    padded.set(raw);
+    padded.set(forFft);
     const { real, imag } = fftReal(padded);
     const mag = magnitudeSpectrum(real, imag);
 
@@ -456,14 +534,9 @@
     const kMax = Math.min(mag.length - 2, Math.floor((measuredFps * 0.48) / df));
     if (kMax < kMin) return null;
 
-    let bestK = kMin;
-    let bestMag = 0;
-    for (let k = kMin; k <= kMax; k++) {
-      if (mag[k] > bestMag) {
-        bestMag = mag[k];
-        bestK = k;
-      }
-    }
+    const hw = pickBestKHarmonicWeighted(mag, kMin, kMax);
+    let bestK = hw.bestK;
+    let bestMag = mag[bestK];
 
     let kHarm = Math.round(bestK * bladeCount);
     if (kHarm >= kMin && kHarm <= kMax && kHarm !== bestK && mag[kHarm] >= mag[bestK] * 0.32) {
@@ -504,8 +577,13 @@
       return null;
     }
 
-    let kRef = parabolicPeakBin(mag, bestK);
-    let fPeak = kRef * df;
+    const kRef = parabolicPeakBin(mag, bestK);
+    const fFftHz = kRef * df;
+    let fPeak = fFftHz;
+    if (detrended.length >= 96) {
+      const ac = autocorrDominantFrequencyHz(detrended, measuredFps);
+      fPeak = fuseFftAndAutocorr(fFftHz, ac);
+    }
 
     let fPass;
     let fRot;
@@ -563,7 +641,7 @@
     const duration = (t1 - t0) / 1000;
     const fpsFromWindow = sampleTimes.length / Math.max(duration, 0.01);
     const fpsMedian = effectiveFpsFromTimes(sampleTimes);
-    measuredFps = fpsMedian * 0.65 + fpsFromWindow * 0.35;
+    measuredFps = fpsMedian * 0.84 + fpsFromWindow * 0.16;
 
     const rMean = analyzeSeries(samples, bladeCount, "mean");
     const rVar =
