@@ -257,16 +257,16 @@
   let rpmEma = null;
   let hzEma = null;
 
-  /** 无真实周期时抑制误报（如对着静物/桌面）— 略严，宁可少报勿误报 */
-  const MIN_SPECTRAL_CONFIDENCE = 0.38;
-  const MIN_PEAK_PROMINENCE = 7.2;
-  /** 主峰须明显高于次强峰（噪声谱常多峰接近） */
-  const MIN_PEAK_TO_SECOND_RATIO = 1.28;
-  /** 谱平坦度过高 ≈ 接近白噪声，不像单一周期 */
-  const MAX_SPECTRAL_FLATNESS = 0.48;
+  /** 无真实周期时抑制误报；阈值在「桌面误报」与「闪屏校准可测」之间折中 */
+  const MIN_SPECTRAL_CONFIDENCE = 0.31;
+  const MIN_PEAK_PROMINENCE = 5.0;
+  /** 主峰须高于次峰；正弦会有谐波，阈值不宜过高 */
+  const MIN_PEAK_TO_SECOND_RATIO = 1.12;
+  /** 谱过平像白噪声；LCD 拍屏会略抬高平坦度，略放宽 */
+  const MAX_SPECTRAL_FLATNESS = 0.56;
   /** 去漂移前，均值 / 方差 序列 RMS 过低 ≈ 几乎无波动 */
-  const MIN_RMS_MEAN_LUM = 1.08;
-  const MIN_RMS_VAR = 0.00075;
+  const MIN_RMS_MEAN_LUM = 0.96;
+  const MIN_RMS_VAR = 0.00045;
 
   function resetRpmSmoothing() {
     rpmEma = null;
@@ -512,13 +512,14 @@
     let rpm;
     const rpmPass = (fPeak * 60) / bladeCount;
     const rpmRot = fPeak * 60;
+    /** 仅当 f 落在常见「转频」区间（约 1.15～2.5 Hz）才启用，避免 1 Hz 闪屏等被误当成转频 */
     const useRotInterpret =
       rpmRot >= 40 &&
       rpmRot <= 15000 &&
       rpmPass < rpmRot * 0.42 &&
       rpmPass < 80 &&
-      fPeak < 2.6 &&
-      fPeak > 0.55 &&
+      fPeak >= 1.15 &&
+      fPeak <= 2.5 &&
       rpmRot > rpmPass + 32;
     if (useRotInterpret) {
       fPass = fPeak * bladeCount;
