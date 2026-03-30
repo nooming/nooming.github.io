@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="description" content="已知频率的屏幕亮度正弦闪屏，用于校验风扇转速估算工具（需另一台设备摄像头对准本屏）。" />
+  <title>闪屏校准信号</title>
+  <style>
+    :root {
+      --ui-bg: rgba(10, 14, 20, 0.92);
+      --text: #e8edf4;
+      --muted: #8b98a8;
+      --accent: #3dd6c6;
+      --border: rgba(255, 255, 255, 0.1);
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: #000;
+      overflow: hidden;
+    }
+    #flashLayer {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background: #808080;
+    }
+    #panel {
+      position: fixed;
+      z-index: 10;
+      left: 12px;
+      right: 12px;
+      top: max(12px, env(safe-area-inset-top));
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: var(--ui-bg);
+      color: var(--text);
+      font: 14px/1.5 "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      border: 1px solid var(--border);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    #panel.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    h1 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 0 0 10px;
+      color: var(--accent);
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    label { color: var(--muted); min-width: 72px; }
+    input[type="range"] { flex: 1; min-width: 120px; accent-color: var(--accent); }
+    input[type="number"] {
+      width: 72px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #121820;
+      color: var(--text);
+    }
+    select {
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #121820;
+      color: var(--text);
+    }
+    .readout {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 8px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+    .readout strong { color: var(--accent); font-variant-numeric: tabular-nums; }
+    .btns {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 8px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #1a222c;
+      color: var(--text);
+      font-size: 13px;
+      cursor: pointer;
+    }
+    button.primary {
+      background: linear-gradient(145deg, #2ebfaf, var(--accent));
+      color: #041210;
+      border: none;
+      font-weight: 600;
+    }
+    .hint {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 10px;
+      line-height: 1.5;
+    }
+    #hintCorner {
+      position: fixed;
+      z-index: 5;
+      bottom: max(12px, env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.55);
+      color: var(--muted);
+      font-size: 11px;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    #hintCorner.off { display: none; }
+  </style>
+</head>
+<body>
+  <div id="flashLayer" aria-hidden="true"></div>
+
+  <div id="panel">
+    <h1>闪屏校准信号</h1>
+    <div class="row">
+      <label for="freq">频率 (Hz)</label>
+      <input type="range" id="freq" min="0.5" max="24" step="0.1" value="6" />
+      <input type="number" id="freqNum" min="0.1" max="60" step="0.1" value="6" />
+    </div>
+    <div class="row">
+      <label for="wave">波形</label>
+      <select id="wave">
+        <option value="sine" selected>正弦（推荐）</option>
+        <option value="square">方波</option>
+      </select>
+    </div>
+    <div class="row">
+      <label for="blades">对照叶片数</label>
+      <input type="range" id="blades" min="2" max="8" value="3" />
+      <span id="bladeVal" style="min-width:24px;color:var(--accent);font-weight:600;">3</span>
+    </div>
+    <div class="readout">
+      叶尖通过频率（真值）<strong id="hzOut">6.00</strong> Hz<br />
+      若转速工具叶片数与上相同，理论 RPM ≈ <strong id="rpmOut">120</strong>
+    </div>
+    <div class="btns">
+      <button type="button" class="primary" id="toggleUi">隐藏面板（全屏闪）</button>
+      <button type="button" id="toggleCorner">角标开关</button>
+    </div>
+    <p class="hint">
+      用<strong>另一台手机</strong>打开「风扇转速估算」页，镜头对准本屏中央；本页频率即「叶尖通过频率」真值。正弦波更稳；部分 LCD 会有 PWM，若读数乱跳可试降低 Hz 或换显示器。
+    </p>
+  </div>
+
+  <div id="hintCorner">双击屏幕可再显示面板</div>
+
+  <script>
+(function () {
+  const flashLayer = document.getElementById("flashLayer");
+  const panel = document.getElementById("panel");
+  const freq = document.getElementById("freq");
+  const freqNum = document.getElementById("freqNum");
+  const wave = document.getElementById("wave");
+  const blades = document.getElementById("blades");
+  const bladeVal = document.getElementById("bladeVal");
+  const hzOut = document.getElementById("hzOut");
+  const rpmOut = document.getElementById("rpmOut");
+  const toggleUi = document.getElementById("toggleUi");
+  const toggleCorner = document.getElementById("toggleCorner");
+  const hintCorner = document.getElementById("hintCorner");
+
+  function getFreq() {
+    const v = parseFloat(freqNum.value);
+    if (Number.isFinite(v) && v > 0 && v <= 120) return v;
+    return parseFloat(freq.value) || 6;
+  }
+
+  function syncSliders() {
+    const v = getFreq();
+    freq.value = String(Math.min(24, Math.max(0.5, v)));
+    freqNum.value = v.toFixed(1);
+    const b = Math.max(2, parseInt(blades.value, 10) || 3);
+    bladeVal.textContent = String(b);
+    hzOut.textContent = v.toFixed(2);
+    const rpm = (v / b) * 60;
+    rpmOut.textContent = Math.round(rpm).toLocaleString("zh-CN");
+  }
+
+  freq.addEventListener("input", () => {
+    freqNum.value = parseFloat(freq.value).toFixed(1);
+    syncSliders();
+  });
+  freqNum.addEventListener("input", syncSliders);
+  blades.addEventListener("input", syncSliders);
+
+  let raf = 0;
+  function tick() {
+    const f = getFreq();
+    const t = performance.now() / 1000;
+    let phase = 2 * Math.PI * f * t;
+    let u;
+    if (wave.value === "square") {
+      u = Math.sin(phase) >= 0 ? 1 : 0;
+    } else {
+      u = 0.5 + 0.5 * Math.sin(phase);
+    }
+    const g = Math.round(u * 255);
+    flashLayer.style.background = "rgb(" + g + "," + g + "," + g + ")";
+    raf = requestAnimationFrame(tick);
+  }
+
+  syncSliders();
+  raf = requestAnimationFrame(tick);
+
+  toggleUi.addEventListener("click", () => {
+    panel.classList.toggle("hidden");
+    toggleUi.textContent = panel.classList.contains("hidden")
+      ? "显示面板"
+      : "隐藏面板（全屏闪）";
+  });
+
+  let cornerOn = true;
+  toggleCorner.addEventListener("click", () => {
+    cornerOn = !cornerOn;
+    hintCorner.classList.toggle("off", !cornerOn);
+  });
+
+  document.addEventListener("dblclick", (e) => {
+    if (e.target.closest("#panel") && !panel.classList.contains("hidden")) return;
+    panel.classList.remove("hidden");
+    toggleUi.textContent = "隐藏面板（全屏闪）";
+  });
+})();
+  </script>
+</body>
+</html>

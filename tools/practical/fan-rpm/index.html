@@ -217,7 +217,7 @@
       <button type="button" class="btn" id="startBtn">开启摄像头并开始</button>
       <button type="button" class="btn secondary" id="stopBtn" disabled>停止</button>
       <p class="hint">
-        说明：转速上限受相机帧率限制（多数手机约 30fps，约可估到每分钟几百转量级；若设备支持 60fps 会更高）。环境光尽量稳定，避免频闪灯；扇叶与背景对比越强越准。已启用帧间隔统计、去漂移、加窗与频谱细化，可适当<strong>拉长采样时长</strong>提高低频分辨率。
+        说明：转速上限受相机帧率限制（多数手机约 30fps，约可估到每分钟几百转量级；若设备支持 60fps 会更高）。环境光尽量稳定，避免频闪灯；扇叶与背景对比越强越准。已启用帧间隔统计、去漂移、加窗与频谱细化，可适当<strong>拉长采样时长</strong>提高低频分辨率。没有风扇时可用电脑打开 <a href="flash-calibrator.html" style="color:var(--accent);">闪屏校准页</a>，另一台手机对准屏幕做对照测试。低速风扇若读数仍偏差，可略增大对比度或采样时长；算法已尽量区分「转频」与「叶尖通过频率」。
       </p>
       <p class="err" id="errBox" hidden></p>
       <p class="status" id="status"></p>
@@ -423,10 +423,43 @@
     for (let k = kMin; k <= kMax; k++) sumMag += mag[k];
     const confidence = sumMag > 1e-9 ? Math.min(1, bestMag / (sumMag / (kMax - kMin + 1))) : 0;
 
-    const kRef = parabolicPeakBin(mag, bestK);
-    const fPass = kRef * df;
-    const fRot = fPass / bladeCount;
-    const rpm = fRot * 60;
+    /**
+     * 低速风扇：最强峰常在「转频」f_rot（每圈一次）而非「叶尖通过频率」f_pass = f_rot×叶片数。
+     * 若误把 f_rot 当 f_pass，RPM 会小到约 1/N（例如 100→33）。
+     * 若误抓 ~0.5Hz 曝光漂移，会到十几 RPM。
+     * 处理：① 若 f_rot 处为峰且 f_pass 处有足够能量的谐波峰，改用叶尖通过 bin；② 否则在合理范围内按「转频」解释。
+     */
+    let kHarm = Math.round(bestK * bladeCount);
+    if (kHarm >= kMin && kHarm <= kMax && kHarm !== bestK && mag[kHarm] >= mag[bestK] * 0.32) {
+      bestK = kHarm;
+    }
+
+    let kRef = parabolicPeakBin(mag, bestK);
+    let fPeak = kRef * df;
+
+    let fPass;
+    let fRot;
+    let rpm;
+    const rpmPass = (fPeak * 60) / bladeCount;
+    const rpmRot = fPeak * 60;
+    /** 转频解释：须与「叶尖通过」算出的 RPM 拉开差距，避免 ~0.8Hz 叶尖通过被当成转频 → 误成 ~48 RPM */
+    const useRotInterpret =
+      rpmRot >= 40 &&
+      rpmRot <= 15000 &&
+      rpmPass < rpmRot * 0.42 &&
+      rpmPass < 80 &&
+      fPeak < 2.6 &&
+      fPeak > 0.55 &&
+      rpmRot > rpmPass + 32;
+    if (useRotInterpret) {
+      fPass = fPeak * bladeCount;
+      fRot = fPeak;
+      rpm = rpmRot;
+    } else {
+      fPass = fPeak;
+      fRot = fPass / bladeCount;
+      rpm = fRot * 60;
+    }
 
     rpmDisplay.textContent = rpm > 5 && rpm < 200000 && confidence > 0.15
       ? Math.round(rpm).toLocaleString("zh-CN")
