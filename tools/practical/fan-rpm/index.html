@@ -257,11 +257,16 @@
   let rpmEma = null;
   let hzEma = null;
 
-  /** 无真实周期时抑制误报（如对着静物/桌面） */
-  const MIN_SPECTRAL_CONFIDENCE = 0.27;
-  const MIN_PEAK_PROMINENCE = 4.2;
-  /** 去漂移前，均值通道 RMS 过低 ≈ 几乎无波动 */
-  const MIN_RMS_MEAN_LUM = 0.95;
+  /** 无真实周期时抑制误报（如对着静物/桌面）— 略严，宁可少报勿误报 */
+  const MIN_SPECTRAL_CONFIDENCE = 0.38;
+  const MIN_PEAK_PROMINENCE = 7.2;
+  /** 主峰须明显高于次强峰（噪声谱常多峰接近） */
+  const MIN_PEAK_TO_SECOND_RATIO = 1.28;
+  /** 谱平坦度过高 ≈ 接近白噪声，不像单一周期 */
+  const MAX_SPECTRAL_FLATNESS = 0.48;
+  /** 去漂移前，均值 / 方差 序列 RMS 过低 ≈ 几乎无波动 */
+  const MIN_RMS_MEAN_LUM = 1.08;
+  const MIN_RMS_VAR = 0.00075;
 
   function resetRpmSmoothing() {
     rpmEma = null;
@@ -435,6 +440,7 @@
     for (let i = 0; i < raw.length; i++) rmsPre += raw[i] * raw[i];
     rmsPre = Math.sqrt(rmsPre / raw.length);
     if (channel === "mean" && rmsPre < MIN_RMS_MEAN_LUM) return null;
+    if (channel === "var" && rmsPre < MIN_RMS_VAR) return null;
 
     detrendLinear(raw);
     applyHannWindow(raw);
@@ -476,7 +482,25 @@
     const medianMag = band[Math.floor(nBand / 2)] || 0;
     const prominence = bestMag / (medianMag + 1e-15);
 
-    if (confidence < MIN_SPECTRAL_CONFIDENCE || prominence < MIN_PEAK_PROMINENCE) {
+    let secondMag = 0;
+    for (let k = kMin; k <= kMax; k++) {
+      if (k === bestK) continue;
+      if (mag[k] > secondMag) secondMag = mag[k];
+    }
+    const peakToSecond = bestMag / (secondMag + 1e-15);
+
+    let logSumMag = 0;
+    for (let k = kMin; k <= kMax; k++) logSumMag += Math.log(mag[k] + 1e-12);
+    const geoMeanMag = Math.exp(logSumMag / nBand);
+    const arithMeanMag = sumMag / nBand;
+    const flatness = geoMeanMag / (arithMeanMag + 1e-15);
+
+    if (
+      confidence < MIN_SPECTRAL_CONFIDENCE ||
+      prominence < MIN_PEAK_PROMINENCE ||
+      peakToSecond < MIN_PEAK_TO_SECOND_RATIO ||
+      flatness > MAX_SPECTRAL_FLATNESS
+    ) {
       return null;
     }
 
@@ -505,6 +529,10 @@
       fRot = fPass / bladeCount;
       rpm = fRot * 60;
     }
+
+    /** 相机帧率下的转速物理上限（叶尖通过频率 < ~0.48×fps），超出必为谐波/噪声误锁 */
+    const rpmPhysicsCeil = measuredFps * 0.48 * 60 * 1.22;
+    if (rpm > rpmPhysicsCeil) return null;
 
     return {
       rpm,
