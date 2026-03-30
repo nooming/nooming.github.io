@@ -257,6 +257,12 @@
   let rpmEma = null;
   let hzEma = null;
 
+  /** 无真实周期时抑制误报（如对着静物/桌面） */
+  const MIN_SPECTRAL_CONFIDENCE = 0.27;
+  const MIN_PEAK_PROMINENCE = 4.2;
+  /** 去漂移前，均值通道 RMS 过低 ≈ 几乎无波动 */
+  const MIN_RMS_MEAN_LUM = 0.95;
+
   function resetRpmSmoothing() {
     rpmEma = null;
     hzEma = null;
@@ -266,7 +272,7 @@
    * 对 RPM / 叶尖通过频率做指数平滑；若瞬时相对上一值跳变过大则放慢跟随（尖峰抑制）
    */
   function applyRpmSmoothing(rpm, fPass, confidence) {
-    if (confidence <= 0.15 || rpm <= 5) {
+    if (confidence <= MIN_SPECTRAL_CONFIDENCE || rpm <= 5) {
       if (rpmEma !== null && rpmEma > 5) {
         return { ok: true, rpm: Math.round(rpmEma), hz: hzEma };
       }
@@ -425,6 +431,11 @@
     mean /= raw.length;
     for (let i = 0; i < raw.length; i++) raw[i] -= mean;
 
+    let rmsPre = 0;
+    for (let i = 0; i < raw.length; i++) rmsPre += raw[i] * raw[i];
+    rmsPre = Math.sqrt(rmsPre / raw.length);
+    if (channel === "mean" && rmsPre < MIN_RMS_MEAN_LUM) return null;
+
     detrendLinear(raw);
     applyHannWindow(raw);
 
@@ -448,13 +459,25 @@
       }
     }
 
-    let sumMag = 0;
-    for (let k = kMin; k <= kMax; k++) sumMag += mag[k];
-    const confidence = sumMag > 1e-9 ? Math.min(1, bestMag / (sumMag / (kMax - kMin + 1))) : 0;
-
     let kHarm = Math.round(bestK * bladeCount);
     if (kHarm >= kMin && kHarm <= kMax && kHarm !== bestK && mag[kHarm] >= mag[bestK] * 0.32) {
       bestK = kHarm;
+      bestMag = mag[bestK];
+    }
+
+    let sumMag = 0;
+    for (let k = kMin; k <= kMax; k++) sumMag += mag[k];
+    const nBand = kMax - kMin + 1;
+    const confidence = sumMag > 1e-9 ? Math.min(1, bestMag / (sumMag / nBand)) : 0;
+
+    const band = new Float64Array(nBand);
+    for (let i = 0; i < nBand; i++) band[i] = mag[kMin + i];
+    band.sort((a, b) => a - b);
+    const medianMag = band[Math.floor(nBand / 2)] || 0;
+    const prominence = bestMag / (medianMag + 1e-15);
+
+    if (confidence < MIN_SPECTRAL_CONFIDENCE || prominence < MIN_PEAK_PROMINENCE) {
+      return null;
     }
 
     let kRef = parabolicPeakBin(mag, bestK);
@@ -491,6 +514,7 @@
       bestMag,
       sumMag,
       channel,
+      prominence,
     };
   }
 
@@ -516,7 +540,16 @@
     const rVar =
       samplesVar.length === samples.length ? analyzeSeries(samplesVar, bladeCount, "var") : null;
     const res = pickBetterChannel(rMean, rVar);
-    if (!res) return;
+    if (!res) {
+      rpmDisplay.textContent = "—";
+      hzOut.textContent = "—";
+      confOut.textContent = "低";
+      bladeOut.textContent = String(bladeCount);
+      resetRpmSmoothing();
+      statusEl.textContent =
+        "未检测到稳定周期：请对准旋转扇叶。对着静物/桌面时通常无有效转速信号。";
+      return;
+    }
 
     const { rpm, fPass, confidence } = res;
     const tag = res.channel === "var" ? " · 方差通道" : " · 亮度均值";
@@ -530,9 +563,9 @@
       hzOut.textContent = "—";
     }
     bladeOut.textContent = String(bladeCount);
-    confOut.textContent = confidence > 0.15 ? (confidence * 100).toFixed(0) + "%" : "低";
+    confOut.textContent = confidence > MIN_SPECTRAL_CONFIDENCE ? (confidence * 100).toFixed(0) + "%" : "低";
 
-    if (confidence <= 0.15) {
+    if (confidence <= MIN_SPECTRAL_CONFIDENCE) {
       statusEl.textContent =
         "信号较弱：请对准扇叶、提高对比度或延长采样时间。（优先方差通道，并与均值对照；读数已平滑）";
     } else {
