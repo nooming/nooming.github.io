@@ -217,7 +217,7 @@
       <button type="button" class="btn" id="startBtn">开启摄像头并开始</button>
       <button type="button" class="btn secondary" id="stopBtn" disabled>停止</button>
       <p class="hint">
-        说明：转速上限受相机帧率限制（多数手机约 30fps，约可估到每分钟几百转量级；若设备支持 60fps 会更高）。环境光尽量稳定，避免频闪灯；扇叶与背景对比越强越准。整体明暗变化小时，会<strong>同时用采样区域亮度的空间方差</strong>（纹理变化）与均值一起分析，并自动选更可信的一路。已启用帧间隔统计、去漂移、加窗与频谱细化，可适当<strong>拉长采样时长</strong>提高低频分辨率。没有风扇时可用电脑打开 <a href="flash-calibrator.html" style="color:var(--accent);">闪屏校准页</a>，另一台手机对准屏幕做对照测试。低速风扇若读数仍偏差，可略增大对比度或采样时长；算法已尽量区分「转频」与「叶尖通过频率」。
+        说明：转速上限受相机帧率限制（多数手机约 30fps，约可估到每分钟几百转量级；若设备支持 60fps 会更高）。环境光尽量稳定，避免频闪灯；扇叶与背景对比越强越准。采样区域<strong>优先使用亮度空间方差</strong>（纹理变化），并与均值对照；仅当均值通道置信度明显更高时改用均值。已启用帧间隔统计、去漂移、加窗与频谱细化，可适当<strong>拉长采样时长</strong>提高低频分辨率。没有风扇时可用电脑打开 <a href="flash-calibrator.html" style="color:var(--accent);">闪屏校准页</a>，另一台手机对准屏幕做对照测试。低速风扇若读数仍偏差，可略增大对比度或采样时长；算法已尽量区分「转频」与「叶尖通过频率」。
       </p>
       <p class="err" id="errBox" hidden></p>
       <p class="status" id="status"></p>
@@ -463,12 +463,12 @@
     };
   }
 
-  function pickBetterChannel(a, b) {
-    if (!a) return b;
-    if (!b) return a;
-    if (a.confidence > b.confidence + 0.02) return a;
-    if (b.confidence > a.confidence + 0.02) return b;
-    return a.bestMag >= b.bestMag ? a : b;
+  /** 优先采用「方差」通道（b）；仅当「均值」置信度明显更高时才用均值 */
+  function pickBetterChannel(rMean, rVar) {
+    if (!rMean) return rVar;
+    if (!rVar) return rMean;
+    if (rMean.confidence > rVar.confidence + 0.06) return rMean;
+    return rVar;
   }
 
   function analyze() {
@@ -499,7 +499,7 @@
 
     if (confidence <= 0.15) {
       statusEl.textContent =
-        "信号较弱：请对准扇叶、提高对比度或延长采样时间。（已同时分析区域亮度方差）";
+        "信号较弱：请对准扇叶、提高对比度或延长采样时间。（优先方差通道，并与均值对照）";
     } else {
       statusEl.textContent =
         "约 " +
