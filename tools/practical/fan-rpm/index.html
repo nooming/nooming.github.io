@@ -253,6 +253,37 @@
   /** 与 samples 同步：每帧 ROI 内亮度空间方差，低对比度时往往比均值更有周期 */
   let samplesVar = [];
   let measuredFps = 30;
+  /** 显示用平滑，减轻频谱抖动导致的 RPM 突变 */
+  let rpmEma = null;
+  let hzEma = null;
+
+  function resetRpmSmoothing() {
+    rpmEma = null;
+    hzEma = null;
+  }
+
+  /**
+   * 对 RPM / 叶尖通过频率做指数平滑；若瞬时相对上一值跳变过大则放慢跟随（尖峰抑制）
+   */
+  function applyRpmSmoothing(rpm, fPass, confidence) {
+    if (confidence <= 0.15 || rpm <= 5) {
+      if (rpmEma !== null && rpmEma > 5) {
+        return { ok: true, rpm: Math.round(rpmEma), hz: hzEma };
+      }
+      return { ok: false };
+    }
+    const baseAlpha = 0.22;
+    if (rpmEma === null) {
+      rpmEma = rpm;
+      hzEma = fPass;
+    } else {
+      const ratio = rpm / rpmEma;
+      const alpha = ratio > 1.52 || ratio < 0.66 ? 0.07 : baseAlpha;
+      rpmEma = alpha * rpm + (1 - alpha) * rpmEma;
+      hzEma = alpha * fPass + (1 - alpha) * hzEma;
+    }
+    return { ok: true, rpm: Math.round(rpmEma), hz: hzEma };
+  }
 
   function setErr(msg) {
     if (msg) {
@@ -489,17 +520,21 @@
 
     const { rpm, fPass, confidence } = res;
     const tag = res.channel === "var" ? " · 方差通道" : " · 亮度均值";
+    const sm = applyRpmSmoothing(rpm, fPass, confidence);
 
-    rpmDisplay.textContent = rpm > 5 && rpm < 200000 && confidence > 0.15
-      ? Math.round(rpm).toLocaleString("zh-CN")
-      : "—";
+    if (sm.ok && sm.rpm > 5 && sm.rpm < 200000) {
+      rpmDisplay.textContent = sm.rpm.toLocaleString("zh-CN");
+      hzOut.textContent = sm.hz > 0.05 ? sm.hz.toFixed(2) : "—";
+    } else {
+      rpmDisplay.textContent = "—";
+      hzOut.textContent = "—";
+    }
     bladeOut.textContent = String(bladeCount);
     confOut.textContent = confidence > 0.15 ? (confidence * 100).toFixed(0) + "%" : "低";
-    hzOut.textContent = fPass > 0.05 ? fPass.toFixed(2) : "—";
 
     if (confidence <= 0.15) {
       statusEl.textContent =
-        "信号较弱：请对准扇叶、提高对比度或延长采样时间。（优先方差通道，并与均值对照）";
+        "信号较弱：请对准扇叶、提高对比度或延长采样时间。（优先方差通道，并与均值对照；读数已平滑）";
     } else {
       statusEl.textContent =
         "约 " +
@@ -507,7 +542,8 @@
         " fps · 窗口 " +
         samples.length +
         " 点 · 细化频谱" +
-        tag;
+        tag +
+        " · 平滑";
     }
   }
 
@@ -624,6 +660,7 @@
     samples = [];
     samplesVar = [];
     sampleTimes = [];
+    resetRpmSmoothing();
     startBtn.disabled = true;
     stopBtn.disabled = false;
     statusEl.textContent = "分析中…";
@@ -660,10 +697,12 @@
     confOut.textContent = "—";
     hzOut.textContent = "—";
     statusEl.textContent = "已停止";
+    resetRpmSmoothing();
   }
 
   bladesEl.addEventListener("input", () => {
     bladeVal.textContent = bladesEl.value;
+    resetRpmSmoothing();
     if (running) analyze();
   });
   bufferEl.addEventListener("input", () => {
