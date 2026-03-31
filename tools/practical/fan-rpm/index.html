@@ -226,6 +226,18 @@
       accent-color: var(--accent);
       flex-shrink: 0;
     }
+    .fan-rpm-shell select.signal-select {
+      flex: 1;
+      min-width: 0;
+      max-width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 0.88rem;
+      font-family: inherit;
+    }
   </style>
 </head>
 <body class="page-container">
@@ -273,6 +285,14 @@
         <input type="range" id="patchSize" min="5" max="15" value="9" step="2" />
         <span class="value" id="patchVal">9</span>
       </div>
+      <div class="row">
+        <label for="signalMode">分析信号</label>
+        <select id="signalMode" class="signal-select">
+          <option value="auto" selected>自动（均值与方差取置信度高者）</option>
+          <option value="mean">平均亮度</option>
+          <option value="var">空间方差（纹理）</option>
+        </select>
+      </div>
       <label class="row-check">
         <input type="checkbox" id="screenAssist" />
         <span>拍屏幕/视频画面（放宽谱判定，易误报；测实体风扇请关闭）</span>
@@ -281,7 +301,7 @@
       <button type="button" class="btn" id="startBtn">开启摄像头并开始</button>
       <button type="button" class="btn secondary" id="stopBtn" disabled>停止</button>
       <p class="hint">
-        说明：转速上限受相机帧率限制（多数手机约 30fps，约可估到每分钟几百转量级；若设备支持 60fps 会更高）。环境光尽量稳定，避免频闪灯；扇叶与背景对比越强越准。算法仅使用<strong>参照邻域的平均亮度</strong>随时间的变化（类似光电探头）。<strong>对着屏幕里播放的风扇录像</strong>时，信号常被显示器刷新、摩尔纹、视频帧率与自动曝光「抹平」，默认门限可能一直判失败——请勾选「拍屏幕/视频」模式，并<strong>尽量让扇叶在画面里大、清晰、有对比</strong>。已启用<strong>谐波加权选频</strong>、<strong>自相关与 FFT 融合</strong>、帧间隔统计、去漂移与加窗；建议采样<strong>≥4 秒</strong>。没有风扇时可用 <a href="flash-calibrator.html" style="color:var(--accent);">闪屏校准页</a> 对照测试。算法已尽量区分「转频」与「叶尖通过频率」。
+        说明：转速上限受相机帧率限制（多数手机约 30fps，约可估到每分钟几百转量级；若设备支持 60fps 会更高）。环境光尽量稳定，避免频闪灯。每帧仍会计算平均亮度与空间方差；<strong>分析信号</strong>可选只用其一、或「自动」择优。<strong>对比度低</strong>时可试<strong>空间方差</strong>；<strong>明暗变化大</strong>时常用<strong>平均亮度</strong>。<strong>对着屏幕里播放的风扇录像</strong>时可勾选「拍屏幕/视频」。建议采样<strong>≥4 秒</strong>。没有风扇时可用 <a href="flash-calibrator.html" style="color:var(--accent);">闪屏校准页</a> 对照测试。
       </p>
       <p class="err" id="errBox" hidden></p>
       <p class="status" id="status"></p>
@@ -313,6 +333,7 @@
   const patchSizeEl = document.getElementById("patchSize");
   const patchValEl = document.getElementById("patchVal");
   const screenAssistEl = document.getElementById("screenAssist");
+  const signalModeEl = document.getElementById("signalMode");
   const stageCaption = document.getElementById("stageCaption");
 
   /** 参照点归一化坐标 [0,1]，未点选时用画面中心 */
@@ -327,28 +348,33 @@
   let vfcHandle = 0;
   let lastFrameTime = 0;
   let sampleTimes = [];
-  /** 每帧参照邻域平均亮度（灰度）时间序列 */
+  /** 每帧参照邻域平均亮度时间序列 */
   let samples = [];
+  /** 与 samples 同步：每帧邻域内灰度空间方差（低对比度时扇叶纹理仍可能引起方差周期） */
+  let samplesVar = [];
   let measuredFps = 30;
   /** 显示用平滑，减轻频谱抖动导致的 RPM 突变 */
   let rpmEma = null;
   let hzEma = null;
 
-  /** 无真实周期时抑制误报；阈值在「桌面误报」与「闪屏校准可测」之间折中 */
-  const MIN_SPECTRAL_CONFIDENCE = 0.31;
-  const MIN_PEAK_PROMINENCE = 5.0;
+  /** 无真实周期时抑制误报；默认略偏松以便低对比度；仍靠多门限组合抑制桌面误报 */
+  const MIN_SPECTRAL_CONFIDENCE = 0.28;
+  const MIN_PEAK_PROMINENCE = 4.2;
   /** 主峰须高于次峰；正弦会有谐波，阈值不宜过高 */
-  const MIN_PEAK_TO_SECOND_RATIO = 1.12;
+  const MIN_PEAK_TO_SECOND_RATIO = 1.08;
   /** 谱过平像白噪声；LCD 拍屏会略抬高平坦度，略放宽 */
-  const MAX_SPECTRAL_FLATNESS = 0.56;
-  /** 去漂移前，亮度序列 RMS 过低 ≈ 几乎无波动 */
-  const MIN_RMS_MEAN_LUM = 0.96;
+  const MAX_SPECTRAL_FLATNESS = 0.58;
+  /** 去漂移前，平均亮度序列 RMS（0–255 尺度下交流分量）；原 0.96 对低对比度过严 */
+  const MIN_RMS_MEAN_LUM = 0.52;
+  /** 邻域空间方差时间序列的去漂移前 RMS（方差本身可较大，门限相对更低） */
+  const MIN_RMS_VAR_SERIES = 0.35;
   /** 拍屏幕/回放视频：谱更「糊」、均值 AC 更小，略放宽以易检出（桌面误报风险增加） */
   const SCREEN_MIN_SPECTRAL_CONFIDENCE = 0.26;
   const SCREEN_MIN_PEAK_PROMINENCE = 3.4;
   const SCREEN_MIN_PEAK_TO_SECOND_RATIO = 1.08;
   const SCREEN_MAX_SPECTRAL_FLATNESS = 0.64;
-  const SCREEN_MIN_RMS_MEAN_LUM = 0.72;
+  const SCREEN_MIN_RMS_MEAN_LUM = 0.42;
+  const SCREEN_MIN_RMS_VAR_SERIES = 0.22;
 
   function getSpectralThresholds() {
     if (screenAssistEl && screenAssistEl.checked) {
@@ -358,6 +384,7 @@
         p2s: SCREEN_MIN_PEAK_TO_SECOND_RATIO,
         flat: SCREEN_MAX_SPECTRAL_FLATNESS,
         rmsLum: SCREEN_MIN_RMS_MEAN_LUM,
+        rmsVar: SCREEN_MIN_RMS_VAR_SERIES,
       };
     }
     return {
@@ -366,6 +393,7 @@
       p2s: MIN_PEAK_TO_SECOND_RATIO,
       flat: MAX_SPECTRAL_FLATNESS,
       rmsLum: MIN_RMS_MEAN_LUM,
+      rmsVar: MIN_RMS_VAR_SERIES,
     };
   }
 
@@ -411,6 +439,12 @@
     let ps = parseInt(patchSizeEl.value, 10) || 9;
     if (ps % 2 === 0) ps += 1;
     return Math.max(5, Math.min(15, ps));
+  }
+
+  /** @returns {"auto"|"mean"|"var"} */
+  function getAnalysisSignalMode() {
+    const v = signalModeEl.value;
+    return v === "mean" || v === "var" ? v : "auto";
   }
 
   function updateRefMarkers() {
@@ -670,8 +704,11 @@
     return fFftHz;
   }
 
-  /** 对参照邻域平均亮度时间序列做 FFT 与峰解释 */
-  function analyzeSeries(values, bladeCount) {
+  /**
+   * 对参照邻域标量时间序列做 FFT 与峰解释
+   * @param {"mean"|"var"} channel 均值亮度或空间方差，用于 RMS 门限
+   */
+  function analyzeSeries(values, bladeCount, channel) {
     if (values.length < 64) return null;
     const st = getSpectralThresholds();
 
@@ -684,7 +721,8 @@
     let rmsPre = 0;
     for (let i = 0; i < raw.length; i++) rmsPre += raw[i] * raw[i];
     rmsPre = Math.sqrt(rmsPre / raw.length);
-    if (rmsPre < st.rmsLum) return null;
+    const rmsNeed = channel === "var" ? st.rmsVar : st.rmsLum;
+    if (rmsPre < rmsNeed) return null;
 
     detrendLinear(raw);
     const detrended = new Float64Array(raw);
@@ -789,6 +827,7 @@
       bestMag,
       sumMag,
       prominence,
+      channel,
     };
   }
 
@@ -802,7 +841,28 @@
     const fpsMedian = effectiveFpsFromTimes(sampleTimes);
     measuredFps = fpsMedian * 0.84 + fpsFromWindow * 0.16;
 
-    const res = analyzeSeries(samples, bladeCount);
+    const sigMode = getAnalysisSignalMode();
+    let res = null;
+    if (sigMode === "mean") {
+      res = analyzeSeries(samples, bladeCount, "mean");
+    } else if (sigMode === "var") {
+      res =
+        samplesVar.length === samples.length
+          ? analyzeSeries(samplesVar, bladeCount, "var")
+          : null;
+    } else {
+      const resMean = analyzeSeries(samples, bladeCount, "mean");
+      const resVar =
+        samplesVar.length === samples.length
+          ? analyzeSeries(samplesVar, bladeCount, "var")
+          : null;
+      if (resMean && resVar) {
+        res = resMean.confidence >= resVar.confidence ? resMean : resVar;
+      } else {
+        res = resMean || resVar;
+      }
+    }
+
     if (!res) {
       rpmDisplay.textContent = "—";
       hzOut.textContent = "—";
@@ -816,6 +876,7 @@
     }
 
     const { rpm, fPass, confidence } = res;
+    const sigTag = res.channel === "var" ? "空间方差" : "平均亮度";
     const sm = applyRpmSmoothing(rpm, fPass, confidence);
 
     if (sm.ok && sm.rpm > 5 && sm.rpm < 200000) {
@@ -831,15 +892,29 @@
 
     const cf = getSpectralThresholds().cMin;
     if (confidence <= cf) {
-      statusEl.textContent =
-        "信号较弱：请对准参照点、提高对比度或延长采样时间。（邻域平均亮度 · 读数已平滑）";
+      let weakHint = "信号较弱：请对准参照点、扇叶扫过处，或延长采样。（读数已平滑）";
+      if (sigMode === "auto") {
+        weakHint =
+          "信号较弱：可试改「分析信号」为「平均亮度」或「空间方差」。（当前择优通道：" +
+          sigTag +
+          " · 读数已平滑）";
+      } else if (sigMode === "mean") {
+        weakHint =
+          "信号较弱：明暗不明显时可改「分析信号」为「空间方差」或「自动」。（读数已平滑）";
+      } else {
+        weakHint =
+          "信号较弱：纹理不明显时可改「分析信号」为「平均亮度」或「自动」。（读数已平滑）";
+      }
+      statusEl.textContent = weakHint;
     } else {
       statusEl.textContent =
         "约 " +
         measuredFps.toFixed(0) +
         " fps · 窗口 " +
         samples.length +
-        " 点 · 邻域平均亮度 · 细化频谱 · 平滑";
+        " 点 · " +
+        sigTag +
+        " · 细化频谱 · 平滑";
     }
   }
 
@@ -892,22 +967,27 @@
     const img = ctx.getImageData(x0, y0, ps, ps);
     const d = img.data;
     let sum = 0;
+    let sumSq = 0;
     let cnt = 0;
     for (let i = 0; i < d.length; i += 4) {
       const lv = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
       sum += lv;
+      sumSq += lv * lv;
       cnt++;
     }
     updateRefMarkers();
     const lum = cnt > 0 ? sum / cnt : 0;
+    const spatialVar = cnt > 0 ? Math.max(0, sumSq / cnt - lum * lum) : 0;
 
     const bufSec = parseInt(bufferEl.value, 10) || 4;
     const maxSamples = Math.floor(measuredFps * bufSec * 1.5) || 512;
 
     sampleTimes.push(now);
     samples.push(lum);
+    samplesVar.push(spatialVar);
     while (samples.length > maxSamples) {
       samples.shift();
+      samplesVar.shift();
       sampleTimes.shift();
     }
 
@@ -952,6 +1032,7 @@
     running = true;
     lastFrameTime = 0;
     samples = [];
+    samplesVar = [];
     sampleTimes = [];
     refUserPlaced = false;
     refNx = 0.5;
@@ -1028,6 +1109,11 @@
   });
 
   screenAssistEl.addEventListener("change", () => {
+    resetRpmSmoothing();
+    if (running) analyze();
+  });
+
+  signalModeEl.addEventListener("change", () => {
     resetRpmSmoothing();
     if (running) analyze();
   });
