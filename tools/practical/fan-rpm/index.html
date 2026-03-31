@@ -210,17 +210,21 @@
       margin-top: 8px;
     }
     .fan-rpm-shell .status { font-size: 0.8rem; color: var(--muted); margin-top: 8px; }
-    .fan-rpm-shell select.signal-select {
-      flex: 1;
-      min-width: 0;
-      max-width: 100%;
-      padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      background: var(--bg);
-      color: var(--text);
+    .fan-rpm-shell .row-check {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 14px;
       font-size: 0.88rem;
-      font-family: inherit;
+      color: var(--muted);
+      line-height: 1.45;
+      cursor: pointer;
+      user-select: none;
+    }
+    .fan-rpm-shell .row-check input {
+      margin-top: 3px;
+      accent-color: var(--accent);
+      flex-shrink: 0;
     }
   </style>
 </head>
@@ -233,7 +237,7 @@
   </div>
 
   <main class="fan-rpm-shell">
-    <p class="sub">对准风扇后，先<strong>点选参照位置</strong>（类似红外线转速仪对准一个光敏点）：在扇叶<strong>反复扫过、明暗对比最大</strong>处点一下；算法只分析该点邻域的亮度变化，减少整幅画面噪声干扰。</p>
+    <p class="sub">对准风扇后，先<strong>点选参照位置</strong>（类似红外线转速仪对准一个光敏点）：在扇叶<strong>反复扫过、明暗对比最大</strong>处点一下；算法只分析该点邻域的亮度变化，减少整幅画面噪声干扰。<strong>拍实体风扇</strong>最可靠；若<strong>对着手机/电脑屏幕播放的录像</strong>，易受刷新率、摩尔纹与压缩影响，请勾选下方「拍屏幕/视频」并尽量全屏、提高对比度。</p>
 
     <div class="stage">
       <div class="stage-viewport" id="stageViewport">
@@ -269,19 +273,15 @@
         <input type="range" id="patchSize" min="5" max="15" value="9" step="2" />
         <span class="value" id="patchVal">9</span>
       </div>
-      <div class="row">
-        <label for="signalMode">分析信号</label>
-        <select id="signalMode" class="signal-select">
-          <option value="mean" selected>平均亮度</option>
-          <option value="var">邻域纹理（方差）</option>
-          <option value="diff">帧间差分（运动）</option>
-        </select>
-      </div>
+      <label class="row-check">
+        <input type="checkbox" id="screenAssist" />
+        <span>拍屏幕/视频画面（放宽谱判定，易误报；测实体风扇请关闭）</span>
+      </label>
       <button type="button" class="btn secondary" id="pickRefBtn" disabled>点选参照位置</button>
       <button type="button" class="btn" id="startBtn">开启摄像头并开始</button>
       <button type="button" class="btn secondary" id="stopBtn" disabled>停止</button>
       <p class="hint">
-        说明：转速上限受相机帧率限制（多数手机约 30fps，约可估到每分钟几百转量级；若设备支持 60fps 会更高）。环境光尽量稳定，避免频闪灯。<strong>平均亮度</strong>适合明暗周期明显时（类似光电探头）。若<strong>整体亮度几乎不变、但扇叶/纹理在动</strong>，可试<strong>邻域纹理（方差）</strong>或<strong>帧间差分（运动）</strong>。已启用<strong>谐波加权选频</strong>、<strong>自相关与 FFT 融合</strong>、帧间隔统计、去漂移与加窗；建议采样<strong>≥4 秒</strong>。没有风扇时可用 <a href="flash-calibrator.html" style="color:var(--accent);">闪屏校准页</a> 对照测试。算法已尽量区分「转频」与「叶尖通过频率」。
+        说明：转速上限受相机帧率限制（多数手机约 30fps，约可估到每分钟几百转量级；若设备支持 60fps 会更高）。环境光尽量稳定，避免频闪灯；扇叶与背景对比越强越准。算法仅使用<strong>参照邻域的平均亮度</strong>随时间的变化（类似光电探头）。<strong>对着屏幕里播放的风扇录像</strong>时，信号常被显示器刷新、摩尔纹、视频帧率与自动曝光「抹平」，默认门限可能一直判失败——请勾选「拍屏幕/视频」模式，并<strong>尽量让扇叶在画面里大、清晰、有对比</strong>。已启用<strong>谐波加权选频</strong>、<strong>自相关与 FFT 融合</strong>、帧间隔统计、去漂移与加窗；建议采样<strong>≥4 秒</strong>。没有风扇时可用 <a href="flash-calibrator.html" style="color:var(--accent);">闪屏校准页</a> 对照测试。算法已尽量区分「转频」与「叶尖通过频率」。
       </p>
       <p class="err" id="errBox" hidden></p>
       <p class="status" id="status"></p>
@@ -312,7 +312,7 @@
   const pickRefBtn = document.getElementById("pickRefBtn");
   const patchSizeEl = document.getElementById("patchSize");
   const patchValEl = document.getElementById("patchVal");
-  const signalModeEl = document.getElementById("signalMode");
+  const screenAssistEl = document.getElementById("screenAssist");
   const stageCaption = document.getElementById("stageCaption");
 
   /** 参照点归一化坐标 [0,1]，未点选时用画面中心 */
@@ -327,19 +327,12 @@
   let vfcHandle = 0;
   let lastFrameTime = 0;
   let sampleTimes = [];
-  /** 每帧标量时间序列：平均亮度 / 邻域空间方差 / 帧间平均绝对差分，由「分析信号」决定 */
+  /** 每帧参照邻域平均亮度（灰度）时间序列 */
   let samples = [];
-  /** 帧间差分模式：上一帧邻域各像素灰度 */
-  let prevPatchGray = null;
-  /** diff 模式首帧只缓存、不采样，第二帧起才有有效差分 */
-  let diffWarmupFrames = 0;
   let measuredFps = 30;
   /** 显示用平滑，减轻频谱抖动导致的 RPM 突变 */
   let rpmEma = null;
   let hzEma = null;
-  /** analyzeSeries 连续返回 null 的次数；短时失败时保留上次读数，避免闪屏/LCD 测试时读数闪烁 */
-  let analysisFailStreak = 0;
-  const MAX_ANALYSIS_FAIL_BEFORE_CLEAR = 40;
 
   /** 无真实周期时抑制误报；阈值在「桌面误报」与「闪屏校准可测」之间折中 */
   const MIN_SPECTRAL_CONFIDENCE = 0.31;
@@ -348,10 +341,33 @@
   const MIN_PEAK_TO_SECOND_RATIO = 1.12;
   /** 谱过平像白噪声；LCD 拍屏会略抬高平坦度，略放宽 */
   const MAX_SPECTRAL_FLATNESS = 0.56;
-  /** 去漂移前，序列 RMS 过低 ≈ 几乎无波动（量纲因信号类型而异） */
+  /** 去漂移前，亮度序列 RMS 过低 ≈ 几乎无波动 */
   const MIN_RMS_MEAN_LUM = 0.96;
-  const MIN_RMS_VAR_SERIES = 0.65;
-  const MIN_RMS_DIFF_SERIES = 0.03;
+  /** 拍屏幕/回放视频：谱更「糊」、均值 AC 更小，略放宽以易检出（桌面误报风险增加） */
+  const SCREEN_MIN_SPECTRAL_CONFIDENCE = 0.26;
+  const SCREEN_MIN_PEAK_PROMINENCE = 3.4;
+  const SCREEN_MIN_PEAK_TO_SECOND_RATIO = 1.08;
+  const SCREEN_MAX_SPECTRAL_FLATNESS = 0.64;
+  const SCREEN_MIN_RMS_MEAN_LUM = 0.72;
+
+  function getSpectralThresholds() {
+    if (screenAssistEl && screenAssistEl.checked) {
+      return {
+        cMin: SCREEN_MIN_SPECTRAL_CONFIDENCE,
+        prom: SCREEN_MIN_PEAK_PROMINENCE,
+        p2s: SCREEN_MIN_PEAK_TO_SECOND_RATIO,
+        flat: SCREEN_MAX_SPECTRAL_FLATNESS,
+        rmsLum: SCREEN_MIN_RMS_MEAN_LUM,
+      };
+    }
+    return {
+      cMin: MIN_SPECTRAL_CONFIDENCE,
+      prom: MIN_PEAK_PROMINENCE,
+      p2s: MIN_PEAK_TO_SECOND_RATIO,
+      flat: MAX_SPECTRAL_FLATNESS,
+      rmsLum: MIN_RMS_MEAN_LUM,
+    };
+  }
 
   /** object-fit: cover 下，视频像素与元素内显示位置的映射 */
   function getCoverMapping(videoEl, vw, vh) {
@@ -397,27 +413,6 @@
     return Math.max(5, Math.min(15, ps));
   }
 
-  function getSignalMode() {
-    const v = signalModeEl.value;
-    return v === "var" || v === "diff" ? v : "mean";
-  }
-
-  function signalLabel() {
-    const m = getSignalMode();
-    if (m === "var") return "邻域纹理";
-    if (m === "diff") return "帧间差分";
-    return "平均亮度";
-  }
-
-  function resetSignalBuffersAndSeries() {
-    prevPatchGray = null;
-    diffWarmupFrames = getSignalMode() === "diff" ? 1 : 0;
-    samples = [];
-    sampleTimes = [];
-    resetRpmSmoothing();
-    analysisFailStreak = 0;
-  }
-
   function updateRefMarkers() {
     const vw = video.videoWidth;
     const vh = video.videoHeight;
@@ -451,7 +446,8 @@
    * 对 RPM / 叶尖通过频率做指数平滑；若瞬时相对上一值跳变过大则放慢跟随（尖峰抑制）
    */
   function applyRpmSmoothing(rpm, fPass, confidence) {
-    if (confidence <= MIN_SPECTRAL_CONFIDENCE || rpm <= 5) {
+    const floor = getSpectralThresholds().cMin;
+    if (confidence <= floor || rpm <= 5) {
       if (rpmEma !== null && rpmEma > 5) {
         return { ok: true, rpm: Math.round(rpmEma), hz: hzEma };
       }
@@ -674,9 +670,10 @@
     return fFftHz;
   }
 
-  /** 对参照邻域标量时间序列做 FFT 与峰解释；signalMode 决定 RMS 门限 */
-  function analyzeSeries(values, bladeCount, signalMode) {
+  /** 对参照邻域平均亮度时间序列做 FFT 与峰解释 */
+  function analyzeSeries(values, bladeCount) {
     if (values.length < 64) return null;
+    const st = getSpectralThresholds();
 
     const raw = new Float64Array(values);
     let mean = 0;
@@ -687,11 +684,7 @@
     let rmsPre = 0;
     for (let i = 0; i < raw.length; i++) rmsPre += raw[i] * raw[i];
     rmsPre = Math.sqrt(rmsPre / raw.length);
-    if (signalMode === "var") {
-      if (rmsPre < MIN_RMS_VAR_SERIES) return null;
-    } else if (signalMode === "diff") {
-      if (rmsPre < MIN_RMS_DIFF_SERIES) return null;
-    } else if (rmsPre < MIN_RMS_MEAN_LUM) return null;
+    if (rmsPre < st.rmsLum) return null;
 
     detrendLinear(raw);
     const detrended = new Float64Array(raw);
@@ -744,10 +737,10 @@
     const flatness = geoMeanMag / (arithMeanMag + 1e-15);
 
     if (
-      confidence < MIN_SPECTRAL_CONFIDENCE ||
-      prominence < MIN_PEAK_PROMINENCE ||
-      peakToSecond < MIN_PEAK_TO_SECOND_RATIO ||
-      flatness > MAX_SPECTRAL_FLATNESS
+      confidence < st.cMin ||
+      prominence < st.prom ||
+      peakToSecond < st.p2s ||
+      flatness > st.flat
     ) {
       return null;
     }
@@ -809,30 +802,19 @@
     const fpsMedian = effectiveFpsFromTimes(sampleTimes);
     measuredFps = fpsMedian * 0.84 + fpsFromWindow * 0.16;
 
-    const res = analyzeSeries(samples, bladeCount, getSignalMode());
+    const res = analyzeSeries(samples, bladeCount);
     if (!res) {
-      analysisFailStreak++;
-      if (rpmEma !== null && analysisFailStreak <= MAX_ANALYSIS_FAIL_BEFORE_CLEAR) {
-        rpmDisplay.textContent = Math.round(rpmEma).toLocaleString("zh-CN");
-        hzOut.textContent = hzEma != null && hzEma > 0.05 ? hzEma.toFixed(2) : "—";
-        confOut.textContent = "保持";
-        bladeOut.textContent = String(bladeCount);
-        statusEl.textContent =
-          "瞬时未过谱检测（窗口波动/LCD 噪声等），暂保留上次读数…";
-        return;
-      }
       rpmDisplay.textContent = "—";
       hzOut.textContent = "—";
       confOut.textContent = "低";
       bladeOut.textContent = String(bladeCount);
       resetRpmSmoothing();
-      analysisFailStreak = 0;
-      statusEl.textContent =
-        "未检测到稳定周期：请对准旋转扇叶。对着静物/桌面时通常无有效转速信号。";
+      statusEl.textContent = screenAssistEl.checked
+        ? "未检测到稳定周期：拍屏时请让扇叶尽量大、清晰；若仍无读数，可试拉长采样、提高片源对比度/全屏播放。"
+        : "未检测到稳定周期：请对准旋转扇叶。对着静物/桌面时通常无有效转速信号。若拍的是「屏幕里播放的录像」，可勾选「拍屏幕/视频」。";
       return;
     }
 
-    analysisFailStreak = 0;
     const { rpm, fPass, confidence } = res;
     const sm = applyRpmSmoothing(rpm, fPass, confidence);
 
@@ -844,22 +826,20 @@
       hzOut.textContent = "—";
     }
     bladeOut.textContent = String(bladeCount);
-    confOut.textContent = confidence > MIN_SPECTRAL_CONFIDENCE ? (confidence * 100).toFixed(0) + "%" : "低";
+    confOut.textContent =
+      confidence > getSpectralThresholds().cMin ? (confidence * 100).toFixed(0) + "%" : "低";
 
-    if (confidence <= MIN_SPECTRAL_CONFIDENCE) {
+    const cf = getSpectralThresholds().cMin;
+    if (confidence <= cf) {
       statusEl.textContent =
-        "信号较弱：请对准参照点、提高对比度或延长采样时间。（" +
-        signalLabel() +
-        " · 读数已平滑）";
+        "信号较弱：请对准参照点、提高对比度或延长采样时间。（邻域平均亮度 · 读数已平滑）";
     } else {
       statusEl.textContent =
         "约 " +
         measuredFps.toFixed(0) +
         " fps · 窗口 " +
         samples.length +
-        " 点 · " +
-        signalLabel() +
-        " · 细化频谱 · 平滑";
+        " 点 · 邻域平均亮度 · 细化频谱 · 平滑";
     }
   }
 
@@ -911,63 +891,21 @@
 
     const img = ctx.getImageData(x0, y0, ps, ps);
     const d = img.data;
-    const mode = getSignalMode();
-    const nPix = ps * ps;
-
-    if (mode === "diff" && diffWarmupFrames > 0) {
-      if (!prevPatchGray || prevPatchGray.length !== nPix) {
-        prevPatchGray = new Float32Array(nPix);
-      }
-      let wi = 0;
-      for (let p = 0; p < d.length; p += 4) {
-        prevPatchGray[wi++] =
-          0.299 * d[p] + 0.587 * d[p + 1] + 0.114 * d[p + 2];
-      }
-      diffWarmupFrames--;
-      updateRefMarkers();
-      if (video.requestVideoFrameCallback) {
-        vfcHandle = video.requestVideoFrameCallback(sampleFrame);
-      } else {
-        rafId = requestAnimationFrame(sampleFrame);
-      }
-      return;
-    }
-
-    if (mode === "diff") {
-      if (!prevPatchGray || prevPatchGray.length !== nPix) {
-        prevPatchGray = new Float32Array(nPix);
-      }
-    }
-
     let sum = 0;
-    let sumSq = 0;
-    let madSum = 0;
-    let idx = 0;
-    for (let p = 0; p < d.length; p += 4) {
-      const lv = 0.299 * d[p] + 0.587 * d[p + 1] + 0.114 * d[p + 2];
+    let cnt = 0;
+    for (let i = 0; i < d.length; i += 4) {
+      const lv = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
       sum += lv;
-      sumSq += lv * lv;
-      if (mode === "diff") {
-        madSum += Math.abs(lv - prevPatchGray[idx]);
-        prevPatchGray[idx] = lv;
-        idx++;
-      }
+      cnt++;
     }
     updateRefMarkers();
-    const lum = nPix > 0 ? sum / nPix : 0;
-    const spatialVar = nPix > 0 ? Math.max(0, sumSq / nPix - lum * lum) : 0;
-    const mad = mode === "diff" && nPix > 0 ? madSum / nPix : 0;
-
-    let scalar;
-    if (mode === "mean") scalar = lum;
-    else if (mode === "var") scalar = spatialVar;
-    else scalar = mad;
+    const lum = cnt > 0 ? sum / cnt : 0;
 
     const bufSec = parseInt(bufferEl.value, 10) || 4;
     const maxSamples = Math.floor(measuredFps * bufSec * 1.5) || 512;
 
     sampleTimes.push(now);
-    samples.push(scalar);
+    samples.push(lum);
     while (samples.length > maxSamples) {
       samples.shift();
       sampleTimes.shift();
@@ -1015,8 +953,6 @@
     lastFrameTime = 0;
     samples = [];
     sampleTimes = [];
-    prevPatchGray = null;
-    diffWarmupFrames = getSignalMode() === "diff" ? 1 : 0;
     refUserPlaced = false;
     refNx = 0.5;
     refNy = 0.5;
@@ -1025,7 +961,6 @@
     pickRefBtn.textContent = "点选参照位置";
     pickRefBtn.disabled = false;
     resetRpmSmoothing();
-    analysisFailStreak = 0;
     startBtn.disabled = true;
     stopBtn.disabled = false;
     statusEl.textContent = "分析中…";
@@ -1076,7 +1011,6 @@
     hzOut.textContent = "—";
     statusEl.textContent = "已停止";
     resetRpmSmoothing();
-    analysisFailStreak = 0;
   }
 
   bladesEl.addEventListener("input", () => {
@@ -1089,19 +1023,13 @@
   });
   patchSizeEl.addEventListener("input", () => {
     patchValEl.textContent = patchSizeEl.value;
-    prevPatchGray = null;
-    diffWarmupFrames = getSignalMode() === "diff" ? 1 : 0;
     resetRpmSmoothing();
-    analysisFailStreak = 0;
     if (running) updateRefMarkers();
   });
 
-  signalModeEl.addEventListener("change", () => {
-    resetSignalBuffersAndSeries();
-    if (running) {
-      updateRefMarkers();
-      analyze();
-    }
+  screenAssistEl.addEventListener("change", () => {
+    resetRpmSmoothing();
+    if (running) analyze();
   });
 
   function toggleRefPickMode() {
