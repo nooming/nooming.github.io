@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="description" content="用手机摄像头对准风扇转轴邻域，根据梯度极向质心角随时间变化估算转速（RPM）。需授权摄像头，建议在 HTTPS 或本地环境使用。" />
-  <meta name="keywords" content="风扇转速,RPM,转速估算,摄像头,在线工具" />
+  <meta name="keywords" content="角向跟踪,极向质心,风扇转速,RPM,摄像头" />
   <meta name="theme-color" content="#0a0e14" />
-  <title>风扇转速估算 - 实用工具</title>
+  <title>角向跟踪测转速 - 实用工具</title>
 
   <link rel="apple-touch-icon" sizes="180x180" href="../../../favicon-io/apple-touch-icon.png" />
   <link rel="icon" type="image/png" sizes="32x32" href="../../../favicon-io/favicon-32x32.png" />
@@ -210,22 +210,6 @@
       margin-top: 8px;
     }
     .fan-rpm-shell .status { font-size: 0.8rem; color: var(--muted); margin-top: 8px; }
-    .fan-rpm-shell .row-check {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      margin-bottom: 14px;
-      font-size: 0.88rem;
-      color: var(--muted);
-      line-height: 1.45;
-      cursor: pointer;
-      user-select: none;
-    }
-    .fan-rpm-shell .row-check input {
-      margin-top: 3px;
-      accent-color: var(--accent);
-      flex-shrink: 0;
-    }
   </style>
 </head>
 <body class="page-container">
@@ -233,7 +217,7 @@
     <div class="header-top">
       <a href="../" class="back-btn">返回上一级</a>
     </div>
-    <h1 class="page-title">风扇转速估算</h1>
+    <h1 class="page-title">角向跟踪测转速</h1>
   </div>
 
   <main class="fan-rpm-shell">
@@ -273,26 +257,17 @@
         <input type="range" id="patchSize" min="5" max="15" value="9" step="2" />
         <span class="value" id="patchVal">9</span>
       </div>
-      <label class="row-check">
-        <input type="checkbox" id="screenAssist" />
-        <span>拍屏幕/视频画面（放宽谱判定，易误报；测实体风扇请关闭）</span>
-      </label>
-      <label class="row-check">
-        <input type="checkbox" id="weakSignal" />
-        <span>弱信号模式（再放宽门限；FFT 不过时尝试自相关；桌面易误报）</span>
-      </label>
       <button type="button" class="btn secondary" id="pickRefBtn" disabled>点选参照位置</button>
       <button type="button" class="btn" id="startBtn">开启摄像头并开始</button>
       <button type="button" class="btn secondary" id="stopBtn" disabled>停止</button>
       <p class="hint">
-        说明：转速上限受相机帧率限制。每帧在参照邻域内计算<strong>极向质心角</strong>时间序列并做频谱分析。<strong>多叶对称</strong>时主频可能与轴转速呈倍数关系。<strong>弱信号模式</strong>含自相关回退；<strong>拍屏</strong>可勾选「拍屏幕/视频」。建议采样<strong>≥4 秒</strong>。<a href="flash-calibrator.html" style="color:var(--accent);">闪屏校准页</a> 可对照。
+        说明：转速上限受相机帧率限制（奈奎斯特）。每帧在参照邻域内计算<strong>解缠绕极向角</strong>，对序列做 FFT 得主频，再按叶片数换算 RPM。<strong>多叶对称</strong>时主峰可能与轴转速呈倍数关系，需结合目视。建议采样<strong>≥4 秒</strong>。
       </p>
       <p class="err" id="errBox" hidden></p>
       <p class="status" id="status"></p>
     </div>
   </main>
 
-  <script src="../../../common/js/utils.js" defer></script>
   <script>
 (function () {
   const video = document.getElementById("video");
@@ -316,8 +291,6 @@
   const pickRefBtn = document.getElementById("pickRefBtn");
   const patchSizeEl = document.getElementById("patchSize");
   const patchValEl = document.getElementById("patchVal");
-  const screenAssistEl = document.getElementById("screenAssist");
-  const weakSignalEl = document.getElementById("weakSignal");
   const stageCaption = document.getElementById("stageCaption");
 
   /** 参照点归一化坐标 [0,1]，未点选时用画面中心 */
@@ -337,51 +310,16 @@
   /** 极向角解缠绕状态 */
   let polarUnwrap = { lastRaw: null, acc: 0 };
   let measuredFps = 30;
-  /** 显示用平滑，减轻频谱抖动导致的 RPM 突变 */
-  let rpmEma = null;
-  let hzEma = null;
 
-  /** 无真实周期时抑制误报；默认略偏松以便低对比度；仍靠多门限组合抑制桌面误报 */
+  /** 谱峰可信度：抑制无周期噪声 */
   const MIN_SPECTRAL_CONFIDENCE = 0.28;
   const MIN_PEAK_PROMINENCE = 4.2;
-  /** 主峰须高于次峰；正弦会有谐波，阈值不宜过高 */
   const MIN_PEAK_TO_SECOND_RATIO = 1.08;
-  /** 谱过平像白噪声；LCD 拍屏会略抬高平坦度，略放宽 */
   const MAX_SPECTRAL_FLATNESS = 0.58;
-  /** 拍屏幕/回放视频：谱更「糊」，略放宽（桌面误报风险增加） */
-  const SCREEN_MIN_SPECTRAL_CONFIDENCE = 0.26;
-  const SCREEN_MIN_PEAK_PROMINENCE = 3.4;
-  const SCREEN_MIN_PEAK_TO_SECOND_RATIO = 1.08;
-  const SCREEN_MAX_SPECTRAL_FLATNESS = 0.64;
-  /** 弱信号：进一步放宽，并允许 FFT 失败时走自相关回退 */
-  const WEAK_MIN_SPECTRAL_CONFIDENCE = 0.22;
-  const WEAK_MIN_PEAK_PROMINENCE = 2.8;
-  const WEAK_MIN_PEAK_TO_SECOND_RATIO = 1.04;
-  const WEAK_MAX_SPECTRAL_FLATNESS = 0.66;
-  /** 解缠绕后极向角序列的去均值前 RMS（弧度量级） */
+  /** 解缠绕极向角序列去均值前 RMS（弧度） */
   const MIN_RMS_POLAR = 0.012;
-  const SCREEN_MIN_RMS_POLAR = 0.009;
-  const WEAK_MIN_RMS_POLAR = 0.006;
 
   function getSpectralThresholds() {
-    if (weakSignalEl && weakSignalEl.checked) {
-      return {
-        cMin: WEAK_MIN_SPECTRAL_CONFIDENCE,
-        prom: WEAK_MIN_PEAK_PROMINENCE,
-        p2s: WEAK_MIN_PEAK_TO_SECOND_RATIO,
-        flat: WEAK_MAX_SPECTRAL_FLATNESS,
-        rmsPolar: WEAK_MIN_RMS_POLAR,
-      };
-    }
-    if (screenAssistEl && screenAssistEl.checked) {
-      return {
-        cMin: SCREEN_MIN_SPECTRAL_CONFIDENCE,
-        prom: SCREEN_MIN_PEAK_PROMINENCE,
-        p2s: SCREEN_MIN_PEAK_TO_SECOND_RATIO,
-        flat: SCREEN_MAX_SPECTRAL_FLATNESS,
-        rmsPolar: SCREEN_MIN_RMS_POLAR,
-      };
-    }
     return {
       cMin: MIN_SPECTRAL_CONFIDENCE,
       prom: MIN_PEAK_PROMINENCE,
@@ -502,36 +440,6 @@
     refPatchRing.style.visibility = "visible";
   }
 
-  function resetRpmSmoothing() {
-    rpmEma = null;
-    hzEma = null;
-  }
-
-  /**
-   * 对 RPM / 叶尖通过频率做指数平滑；若瞬时相对上一值跳变过大则放慢跟随（尖峰抑制）
-   */
-  function applyRpmSmoothing(rpm, fPass, confidence) {
-    const floor = getSpectralThresholds().cMin;
-    /** analyzeSeries 仅在 confidence >= floor 时返回；此处须用 < 不能用 <=，否则恰等于门限时会被误判为低置信度 */
-    if (confidence < floor || rpm <= 5) {
-      if (rpmEma !== null && rpmEma > 5) {
-        return { ok: true, rpm: Math.round(rpmEma), hz: hzEma };
-      }
-      return { ok: false };
-    }
-    const baseAlpha = 0.22;
-    if (rpmEma === null) {
-      rpmEma = rpm;
-      hzEma = fPass;
-    } else {
-      const ratio = rpm / rpmEma;
-      const alpha = ratio > 1.52 || ratio < 0.66 ? 0.07 : baseAlpha;
-      rpmEma = alpha * rpm + (1 - alpha) * rpmEma;
-      hzEma = alpha * fPass + (1 - alpha) * hzEma;
-    }
-    return { ok: true, rpm: Math.round(rpmEma), hz: hzEma };
-  }
-
   function setErr(msg) {
     if (msg) {
       errBox.hidden = false;
@@ -616,7 +524,7 @@
     return Math.min(240, Math.max(5, 1000 / mid));
   }
 
-  /** 去线性漂移，减轻慢变亮度对低频的干扰 */
+  /** 去线性漂移，减轻慢变对低频的干扰 */
   function detrendLinear(arr) {
     const n = arr.length;
     if (n < 4) return;
@@ -681,63 +589,6 @@
     return { bestK, bestScore };
   }
 
-  /**
-   * 时域归一化自相关主峰 → 角频率 (Hz)，与 FFT 互补；对纯噪声相关弱
-   * @param minPeakR 归一化相关峰值下限，默认 0.11；弱信号可降到 ~0.055
-   */
-  function autocorrDominantFrequencyHz(detrended, fps, minPeakR) {
-    const minR = minPeakR !== undefined && minPeakR !== null ? minPeakR : 0.11;
-    const n = detrended.length;
-    if (n < 96) return null;
-    let var0 = 0;
-    for (let i = 0; i < n; i++) var0 += detrended[i] * detrended[i];
-    var0 /= n;
-    if (var0 < 1e-14) return null;
-    const inv = 1 / var0;
-    const minLag = Math.max(2, Math.ceil(fps / (0.47 * fps)));
-    const maxLag = Math.min(n - 1, Math.floor(fps / 0.26));
-    if (maxLag <= minLag) return null;
-    let bestLag = minLag;
-    let bestR = -1;
-    for (let lag = minLag; lag <= maxLag; lag++) {
-      let s = 0;
-      for (let i = 0; i < n - lag; i++) s += detrended[i] * detrended[i + lag];
-      s /= n - lag;
-      const r = s * inv;
-      if (r > bestR) {
-        bestR = r;
-        bestLag = lag;
-      }
-    }
-    if (bestR < minR) return null;
-    if (bestLag >= 8 && bestLag % 2 === 0) {
-      const lag2 = bestLag >> 1;
-      if (lag2 >= minLag) {
-        let s2 = 0;
-        for (let i = 0; i < n - lag2; i++) s2 += detrended[i] * detrended[i + lag2];
-        s2 /= n - lag2;
-        const r2 = s2 * inv;
-        if (r2 > bestR * 0.78 && r2 > 0.12) {
-          bestLag = lag2;
-          bestR = Math.max(bestR, r2);
-        }
-      }
-    }
-    const fHz = fps / bestLag;
-    if (fHz < 0.26 || fHz > 0.47 * fps) return null;
-    return { fHz, quality: bestR };
-  }
-
-  function fuseFftAndAutocorr(fFftHz, ac) {
-    if (!ac || ac.quality < 0.1) return fFftHz;
-    const den = Math.max(fFftHz, 0.001);
-    const rel = Math.abs(fFftHz - ac.fHz) / den;
-    if (rel < 0.16) return fFftHz * 0.38 + ac.fHz * 0.62;
-    if (rel < 0.32 && ac.quality > 0.18) return fFftHz * 0.52 + ac.fHz * 0.48;
-    if (rel < 0.45 && ac.quality > 0.26) return fFftHz * 0.62 + ac.fHz * 0.38;
-    return fFftHz;
-  }
-
   /** 对解缠绕极向角时间序列（弧度）做 FFT 与峰解释 */
   function analyzeSeries(values, bladeCount) {
     if (values.length < 64) return null;
@@ -768,9 +619,7 @@
     const df = measuredFps / N;
     const kMin = Math.max(1, Math.floor(0.3 / df));
     const kMax = Math.min(mag.length - 2, Math.floor((measuredFps * 0.48) / df));
-    if (kMax < kMin) {
-      return tryAutocorrOnlyFallback(detrended, bladeCount, st);
-    }
+    if (kMax < kMin) return null;
 
     const hw = pickBestKHarmonicWeighted(mag, kMin, kMax);
     let bestK = hw.bestK;
@@ -812,16 +661,11 @@
       peakToSecond < st.p2s ||
       flatness > st.flat
     ) {
-      return tryAutocorrOnlyFallback(detrended, bladeCount, st);
+      return null;
     }
 
     const kRef = parabolicPeakBin(mag, bestK);
-    const fFftHz = kRef * df;
-    let fPeak = fFftHz;
-    if (detrended.length >= 96) {
-      const ac = autocorrDominantFrequencyHz(detrended, measuredFps);
-      fPeak = fuseFftAndAutocorr(fFftHz, ac);
-    }
+    const fPeak = kRef * df;
 
     const rpmOut = computeRpmFromPeakHz(fPeak, bladeCount);
     if (!rpmOut) return null;
@@ -837,57 +681,14 @@
     };
   }
 
-  /** 由叶尖通过频率 (Hz) 与叶片数换算 RPM，并做物理上限检查 */
+  /** 主峰频率视为叶尖通过频率 (Hz)，与叶片数换算轴转速 RPM */
   function computeRpmFromPeakHz(fPeak, bladeCount) {
-    const rpmPass = (fPeak * 60) / bladeCount;
-    const rpmRot = fPeak * 60;
-    const useRotInterpret =
-      rpmRot >= 40 &&
-      rpmRot <= 15000 &&
-      rpmPass < rpmRot * 0.42 &&
-      rpmPass < 80 &&
-      fPeak >= 1.15 &&
-      fPeak <= 2.5 &&
-      rpmRot > rpmPass + 32;
-    let fPass;
-    let fRot;
-    let rpm;
-    if (useRotInterpret) {
-      fPass = fPeak * bladeCount;
-      fRot = fPeak;
-      rpm = rpmRot;
-    } else {
-      fPass = fPeak;
-      fRot = fPass / bladeCount;
-      rpm = fRot * 60;
-    }
+    const fPass = fPeak;
+    const fRot = fPass / bladeCount;
+    const rpm = fRot * 60;
     const rpmPhysicsCeil = measuredFps * 0.48 * 60 * 1.22;
     if (rpm > rpmPhysicsCeil) return null;
     return { rpm, fPass, fRot };
-  }
-
-  /**
-   * 弱信号：FFT 谱峰未过门限时，仅用自相关估计主频（更易检出弱周期，也更容易误报）
-   */
-  function tryAutocorrOnlyFallback(detrended, bladeCount, st) {
-    if (!weakSignalEl || !weakSignalEl.checked) return null;
-    if (detrended.length < 96) return null;
-    const ac = autocorrDominantFrequencyHz(detrended, measuredFps, 0.055);
-    if (!ac) return null;
-    const rpmOut = computeRpmFromPeakHz(ac.fHz, bladeCount);
-    if (!rpmOut) return null;
-    const confidence = Math.min(0.5, 0.16 + ac.quality * 2.2);
-    if (confidence < st.cMin) return null;
-    return {
-      rpm: rpmOut.rpm,
-      fPass: rpmOut.fPass,
-      fRot: rpmOut.fRot,
-      confidence,
-      bestMag: ac.quality,
-      sumMag: 1,
-      prominence: 3 + ac.quality * 6,
-      acFallback: true,
-    };
   }
 
   function analyze() {
@@ -911,42 +712,35 @@
       hzOut.textContent = "—";
       confOut.textContent = "低";
       bladeOut.textContent = String(bladeCount);
-      resetRpmSmoothing();
-      statusEl.textContent = screenAssistEl.checked
-        ? "未检测到稳定周期：拍屏时请让扇叶尽量大、清晰；可勾选「弱信号模式」。"
-        : "未检测到稳定周期：请把十字对准转轴、邻域含清晰边缘，或勾选「弱信号模式」；拍屏可勾选「拍屏幕/视频」。";
+      statusEl.textContent =
+        "未检测到稳定周期：请把十字对准转轴中心、邻域含清晰边缘，或延长采样。";
       return;
     }
 
     const { rpm, fPass, confidence } = res;
-    const sigTag = "角向跟踪";
-    const sm = applyRpmSmoothing(rpm, fPass, confidence);
+    const cf = getSpectralThresholds().cMin;
+    bladeOut.textContent = String(bladeCount);
+    confOut.textContent =
+      confidence >= cf ? (confidence * 100).toFixed(0) + "%" : "低";
 
-    if (sm.ok && sm.rpm > 5 && sm.rpm < 200000) {
-      rpmDisplay.textContent = sm.rpm.toLocaleString("zh-CN");
-      hzOut.textContent = sm.hz > 0.05 ? sm.hz.toFixed(2) : "—";
+    if (confidence >= cf && rpm > 5 && rpm < 200000) {
+      rpmDisplay.textContent = Math.round(rpm).toLocaleString("zh-CN");
+      hzOut.textContent = fPass > 0.05 ? fPass.toFixed(2) : "—";
     } else {
       rpmDisplay.textContent = "—";
       hzOut.textContent = "—";
     }
-    bladeOut.textContent = String(bladeCount);
-    const cf = getSpectralThresholds().cMin;
-    confOut.textContent =
-      confidence >= cf ? (confidence * 100).toFixed(0) + "%" : "低";
 
-    /** 恰等于谱门限时仍视为偏弱，提示操作；applyRpmSmoothing 已用 confidence < floor 区分 */
     if (confidence <= cf) {
       statusEl.textContent =
-        "信号较弱：请确认十字对准转轴中心、邻域含清晰边缘，或延长采样、勾选「弱信号模式」。（读数已平滑）";
+        "信号较弱：请确认十字对准转轴中心、邻域含清晰边缘，或延长采样。";
     } else {
       statusEl.textContent =
         "约 " +
         measuredFps.toFixed(0) +
         " fps · 窗口 " +
         samplesPolar.length +
-        " 点 · " +
-        sigTag +
-        " · 细化频谱 · 平滑";
+        " 点 · FFT · 主峰";
     }
   }
 
@@ -1067,7 +861,6 @@
     refTapLayer.classList.remove("active");
     pickRefBtn.textContent = "点选参照位置";
     pickRefBtn.disabled = false;
-    resetRpmSmoothing();
     startBtn.disabled = true;
     stopBtn.disabled = false;
     statusEl.textContent = "分析中…";
@@ -1117,12 +910,10 @@
     confOut.textContent = "—";
     hzOut.textContent = "—";
     statusEl.textContent = "已停止";
-    resetRpmSmoothing();
   }
 
   bladesEl.addEventListener("input", () => {
     bladeVal.textContent = bladesEl.value;
-    resetRpmSmoothing();
     if (running) analyze();
   });
   bufferEl.addEventListener("input", () => {
@@ -1130,23 +921,12 @@
   });
   patchSizeEl.addEventListener("input", () => {
     patchValEl.textContent = patchSizeEl.value;
-    resetRpmSmoothing();
     if (running) {
       samplesPolar = [];
       sampleTimes = [];
       resetPolarUnwrap();
       if (video.videoWidth && video.videoHeight) updateRefMarkers();
     }
-  });
-
-  screenAssistEl.addEventListener("change", () => {
-    resetRpmSmoothing();
-    if (running) analyze();
-  });
-
-  weakSignalEl.addEventListener("change", () => {
-    resetRpmSmoothing();
-    if (running) analyze();
   });
 
   function toggleRefPickMode() {
@@ -1176,7 +956,6 @@
     pickRefBtn.textContent = "点选参照位置";
     stageCaption.textContent = "参照点邻域采样 · 点「点选参照」后可重新选点";
     updateRefMarkers();
-    resetRpmSmoothing();
   }
 
   pickRefBtn.addEventListener("click", toggleRefPickMode);
