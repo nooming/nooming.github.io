@@ -481,7 +481,8 @@
    */
   function applyRpmSmoothing(rpm, fPass, confidence) {
     const floor = getSpectralThresholds().cMin;
-    if (confidence <= floor || rpm <= 5) {
+    /** analyzeSeries 仅在 confidence >= floor 时返回；此处须用 < 不能用 <=，否则恰等于门限时会被误判为低置信度 */
+    if (confidence < floor || rpm <= 5) {
       if (rpmEma !== null && rpmEma > 5) {
         return { ok: true, rpm: Math.round(rpmEma), hz: hzEma };
       }
@@ -833,6 +834,8 @@
 
   function analyze() {
     if (samples.length < 64) return;
+    if (samplesVar.length !== samples.length || sampleTimes.length !== samples.length) return;
+
     const bladeCount = Math.max(2, parseInt(bladesEl.value, 10) || 3);
     const t0 = sampleTimes[0];
     const t1 = sampleTimes[sampleTimes.length - 1];
@@ -887,10 +890,11 @@
       hzOut.textContent = "—";
     }
     bladeOut.textContent = String(bladeCount);
-    confOut.textContent =
-      confidence > getSpectralThresholds().cMin ? (confidence * 100).toFixed(0) + "%" : "低";
-
     const cf = getSpectralThresholds().cMin;
+    confOut.textContent =
+      confidence >= cf ? (confidence * 100).toFixed(0) + "%" : "低";
+
+    /** 恰等于谱门限时仍视为偏弱，提示操作；applyRpmSmoothing 已用 confidence < floor 区分 */
     if (confidence <= cf) {
       let weakHint = "信号较弱：请对准参照点、扇叶扫过处，或延长采样。（读数已平滑）";
       if (sigMode === "auto") {
@@ -1105,7 +1109,12 @@
   patchSizeEl.addEventListener("input", () => {
     patchValEl.textContent = patchSizeEl.value;
     resetRpmSmoothing();
-    if (running) updateRefMarkers();
+    if (running) {
+      samples = [];
+      samplesVar = [];
+      sampleTimes = [];
+      if (video.videoWidth && video.videoHeight) updateRefMarkers();
+    }
   });
 
   screenAssistEl.addEventListener("change", () => {
