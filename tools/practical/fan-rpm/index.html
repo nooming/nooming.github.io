@@ -312,6 +312,9 @@
   /** 显示用平滑，减轻频谱抖动导致的 RPM 突变 */
   let rpmEma = null;
   let hzEma = null;
+  /** analyzeSeries 连续返回 null 的次数；短时失败时保留上次读数，避免闪屏/LCD 测试时读数闪烁 */
+  let analysisFailStreak = 0;
+  const MAX_ANALYSIS_FAIL_BEFORE_CLEAR = 40;
 
   /** 无真实周期时抑制误报；阈值在「桌面误报」与「闪屏校准可测」之间折中 */
   const MIN_SPECTRAL_CONFIDENCE = 0.31;
@@ -756,16 +759,28 @@
 
     const res = analyzeSeries(samples, bladeCount);
     if (!res) {
+      analysisFailStreak++;
+      if (rpmEma !== null && analysisFailStreak <= MAX_ANALYSIS_FAIL_BEFORE_CLEAR) {
+        rpmDisplay.textContent = Math.round(rpmEma).toLocaleString("zh-CN");
+        hzOut.textContent = hzEma != null && hzEma > 0.05 ? hzEma.toFixed(2) : "—";
+        confOut.textContent = "保持";
+        bladeOut.textContent = String(bladeCount);
+        statusEl.textContent =
+          "瞬时未过谱检测（窗口波动/LCD 噪声等），暂保留上次读数…";
+        return;
+      }
       rpmDisplay.textContent = "—";
       hzOut.textContent = "—";
       confOut.textContent = "低";
       bladeOut.textContent = String(bladeCount);
       resetRpmSmoothing();
+      analysisFailStreak = 0;
       statusEl.textContent =
         "未检测到稳定周期：请对准旋转扇叶。对着静物/桌面时通常无有效转速信号。";
       return;
     }
 
+    analysisFailStreak = 0;
     const { rpm, fPass, confidence } = res;
     const sm = applyRpmSmoothing(rpm, fPass, confidence);
 
@@ -910,6 +925,7 @@
     pickRefBtn.textContent = "点选参照位置";
     pickRefBtn.disabled = false;
     resetRpmSmoothing();
+    analysisFailStreak = 0;
     startBtn.disabled = true;
     stopBtn.disabled = false;
     statusEl.textContent = "分析中…";
@@ -960,6 +976,7 @@
     hzOut.textContent = "—";
     statusEl.textContent = "已停止";
     resetRpmSmoothing();
+    analysisFailStreak = 0;
   }
 
   bladesEl.addEventListener("input", () => {
