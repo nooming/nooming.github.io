@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="description" content="用手机摄像头对准旋转风扇，根据画面亮度变化频率估算转速（RPM）。需授权摄像头，建议在 HTTPS 或本地环境使用。" />
+  <meta name="description" content="用手机摄像头对准风扇转轴邻域，根据梯度极向质心角随时间变化估算转速（RPM）。需授权摄像头，建议在 HTTPS 或本地环境使用。" />
   <meta name="keywords" content="风扇转速,RPM,转速估算,摄像头,在线工具" />
   <meta name="theme-color" content="#0a0e14" />
   <title>风扇转速估算 - 实用工具</title>
@@ -226,18 +226,6 @@
       accent-color: var(--accent);
       flex-shrink: 0;
     }
-    .fan-rpm-shell select.signal-select {
-      flex: 1;
-      min-width: 0;
-      max-width: 100%;
-      padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      background: var(--bg);
-      color: var(--text);
-      font-size: 0.88rem;
-      font-family: inherit;
-    }
   </style>
 </head>
 <body class="page-container">
@@ -249,7 +237,7 @@
   </div>
 
   <main class="fan-rpm-shell">
-    <p class="sub">对准风扇后，先<strong>点选参照位置</strong>（类似红外线转速仪对准一个光敏点）：在扇叶<strong>反复扫过、明暗对比最大</strong>处点一下；算法只分析该点邻域的亮度变化，减少整幅画面噪声干扰。<strong>拍实体风扇</strong>最可靠；若<strong>对着手机/电脑屏幕播放的录像</strong>，易受刷新率、摩尔纹与压缩影响，请勾选下方「拍屏幕/视频」并尽量全屏、提高对比度。</p>
+    <p class="sub">请把十字对准<strong>转轴中心</strong>（轮毂），邻域覆盖有纹理或清晰边缘的扇叶区域。本页用邻域内<strong>梯度极向质心方向角</strong>随时间变化估角速度并换算 RPM；<strong>对称多叶</strong>时读数可能与真实轴转速差整数倍，需结合叶片数、目视或标定。</p>
 
     <div class="stage">
       <div class="stage-viewport" id="stageViewport">
@@ -285,15 +273,6 @@
         <input type="range" id="patchSize" min="5" max="15" value="9" step="2" />
         <span class="value" id="patchVal">9</span>
       </div>
-      <div class="row">
-        <label for="signalMode">分析信号</label>
-        <select id="signalMode" class="signal-select">
-          <option value="auto" selected>自动（均值/方差/帧间差分择优）</option>
-          <option value="mean">平均亮度</option>
-          <option value="var">空间方差（纹理）</option>
-          <option value="diff">帧间差分（运动）</option>
-        </select>
-      </div>
       <label class="row-check">
         <input type="checkbox" id="screenAssist" />
         <span>拍屏幕/视频画面（放宽谱判定，易误报；测实体风扇请关闭）</span>
@@ -306,7 +285,7 @@
       <button type="button" class="btn" id="startBtn">开启摄像头并开始</button>
       <button type="button" class="btn secondary" id="stopBtn" disabled>停止</button>
       <p class="hint">
-        说明：转速上限受相机帧率限制（多数手机约 30fps，约可估到每分钟几百转量级；若设备支持 60fps 会更高）。环境光尽量稳定，避免频闪灯。每帧计算<strong>平均亮度、空间方差、帧间差分</strong>；<strong>分析信号</strong>可选其一或「自动」择优。<strong>对比度低</strong>可试<strong>空间方差</strong>或<strong>帧间差分</strong>；仍测不出可勾选<strong>弱信号模式</strong>（FFT 失败时会再试自相关，桌面易误报）。<strong>拍屏</strong>可勾选「拍屏幕/视频」。建议采样<strong>≥4 秒</strong>。没有风扇时可用 <a href="flash-calibrator.html" style="color:var(--accent);">闪屏校准页</a> 对照测试。
+        说明：转速上限受相机帧率限制。每帧在参照邻域内计算<strong>极向质心角</strong>时间序列并做频谱分析。<strong>多叶对称</strong>时主频可能与轴转速呈倍数关系。<strong>弱信号模式</strong>含自相关回退；<strong>拍屏</strong>可勾选「拍屏幕/视频」。建议采样<strong>≥4 秒</strong>。<a href="flash-calibrator.html" style="color:var(--accent);">闪屏校准页</a> 可对照。
       </p>
       <p class="err" id="errBox" hidden></p>
       <p class="status" id="status"></p>
@@ -339,7 +318,6 @@
   const patchValEl = document.getElementById("patchVal");
   const screenAssistEl = document.getElementById("screenAssist");
   const weakSignalEl = document.getElementById("weakSignal");
-  const signalModeEl = document.getElementById("signalMode");
   const stageCaption = document.getElementById("stageCaption");
 
   /** 参照点归一化坐标 [0,1]，未点选时用画面中心 */
@@ -354,14 +332,10 @@
   let vfcHandle = 0;
   let lastFrameTime = 0;
   let sampleTimes = [];
-  /** 每帧参照邻域平均亮度时间序列 */
-  let samples = [];
-  /** 与 samples 同步：每帧邻域内灰度空间方差（低对比度时扇叶纹理仍可能引起方差周期） */
-  let samplesVar = [];
-  /** 帧间邻域平均绝对差分（需与上一帧对比） */
-  let samplesDiff = [];
-  let prevPatchGray = null;
-  let diffWarmupFrames = 0;
+  /** 极向质心方向角（解缠绕后，弧度）时间序列，参照点应对准转轴中心 */
+  let samplesPolar = [];
+  /** 极向角解缠绕状态 */
+  let polarUnwrap = { lastRaw: null, acc: 0 };
   let measuredFps = 30;
   /** 显示用平滑，减轻频谱抖动导致的 RPM 突变 */
   let rpmEma = null;
@@ -374,28 +348,20 @@
   const MIN_PEAK_TO_SECOND_RATIO = 1.08;
   /** 谱过平像白噪声；LCD 拍屏会略抬高平坦度，略放宽 */
   const MAX_SPECTRAL_FLATNESS = 0.58;
-  /** 去漂移前，平均亮度序列 RMS（0–255 尺度下交流分量）；原 0.96 对低对比度过严 */
-  const MIN_RMS_MEAN_LUM = 0.52;
-  /** 邻域空间方差时间序列的去漂移前 RMS（方差本身可较大，门限相对更低） */
-  const MIN_RMS_VAR_SERIES = 0.35;
-  /** 拍屏幕/回放视频：谱更「糊」、均值 AC 更小，略放宽以易检出（桌面误报风险增加） */
+  /** 拍屏幕/回放视频：谱更「糊」，略放宽（桌面误报风险增加） */
   const SCREEN_MIN_SPECTRAL_CONFIDENCE = 0.26;
   const SCREEN_MIN_PEAK_PROMINENCE = 3.4;
   const SCREEN_MIN_PEAK_TO_SECOND_RATIO = 1.08;
   const SCREEN_MAX_SPECTRAL_FLATNESS = 0.64;
-  const SCREEN_MIN_RMS_MEAN_LUM = 0.42;
-  const SCREEN_MIN_RMS_VAR_SERIES = 0.22;
-  const SCREEN_MIN_RMS_DIFF_SERIES = 0.018;
-  /** 帧间平均绝对差分序列的 RMS 门限（0–255 尺度） */
-  const MIN_RMS_DIFF_SERIES = 0.028;
   /** 弱信号：进一步放宽，并允许 FFT 失败时走自相关回退 */
   const WEAK_MIN_SPECTRAL_CONFIDENCE = 0.22;
   const WEAK_MIN_PEAK_PROMINENCE = 2.8;
   const WEAK_MIN_PEAK_TO_SECOND_RATIO = 1.04;
   const WEAK_MAX_SPECTRAL_FLATNESS = 0.66;
-  const WEAK_MIN_RMS_MEAN_LUM = 0.32;
-  const WEAK_MIN_RMS_VAR_SERIES = 0.18;
-  const WEAK_MIN_RMS_DIFF_SERIES = 0.014;
+  /** 解缠绕后极向角序列的去均值前 RMS（弧度量级） */
+  const MIN_RMS_POLAR = 0.012;
+  const SCREEN_MIN_RMS_POLAR = 0.009;
+  const WEAK_MIN_RMS_POLAR = 0.006;
 
   function getSpectralThresholds() {
     if (weakSignalEl && weakSignalEl.checked) {
@@ -404,9 +370,7 @@
         prom: WEAK_MIN_PEAK_PROMINENCE,
         p2s: WEAK_MIN_PEAK_TO_SECOND_RATIO,
         flat: WEAK_MAX_SPECTRAL_FLATNESS,
-        rmsLum: WEAK_MIN_RMS_MEAN_LUM,
-        rmsVar: WEAK_MIN_RMS_VAR_SERIES,
-        rmsDiff: WEAK_MIN_RMS_DIFF_SERIES,
+        rmsPolar: WEAK_MIN_RMS_POLAR,
       };
     }
     if (screenAssistEl && screenAssistEl.checked) {
@@ -415,9 +379,7 @@
         prom: SCREEN_MIN_PEAK_PROMINENCE,
         p2s: SCREEN_MIN_PEAK_TO_SECOND_RATIO,
         flat: SCREEN_MAX_SPECTRAL_FLATNESS,
-        rmsLum: SCREEN_MIN_RMS_MEAN_LUM,
-        rmsVar: SCREEN_MIN_RMS_VAR_SERIES,
-        rmsDiff: SCREEN_MIN_RMS_DIFF_SERIES,
+        rmsPolar: SCREEN_MIN_RMS_POLAR,
       };
     }
     return {
@@ -425,9 +387,7 @@
       prom: MIN_PEAK_PROMINENCE,
       p2s: MIN_PEAK_TO_SECOND_RATIO,
       flat: MAX_SPECTRAL_FLATNESS,
-      rmsLum: MIN_RMS_MEAN_LUM,
-      rmsVar: MIN_RMS_VAR_SERIES,
-      rmsDiff: MIN_RMS_DIFF_SERIES,
+      rmsPolar: MIN_RMS_POLAR,
     };
   }
 
@@ -475,10 +435,47 @@
     return Math.max(5, Math.min(15, ps));
   }
 
-  /** @returns {"auto"|"mean"|"var"|"diff"} */
-  function getAnalysisSignalMode() {
-    const v = signalModeEl.value;
-    return v === "mean" || v === "var" || v === "diff" ? v : "auto";
+  /**
+   * 邻域内梯度幅加权的极向质心方向角（相对转轴即邻域中心），[-π, π]
+   */
+  function computePolarGradientCentroidAngle(gray, ps) {
+    const cx = (ps - 1) * 0.5;
+    const cy = (ps - 1) * 0.5;
+    let cr = 0;
+    let si = 0;
+    for (let y = 1; y < ps - 1; y++) {
+      const row = y * ps;
+      for (let x = 1; x < ps - 1; x++) {
+        const idx = row + x;
+        const gx = (gray[idx + 1] - gray[idx - 1]) * 0.5;
+        const gy = (gray[idx + ps] - gray[idx - ps]) * 0.5;
+        const mag = Math.hypot(gx, gy);
+        const alpha = Math.atan2(y - cy, x - cx);
+        cr += mag * Math.cos(alpha);
+        si += mag * Math.sin(alpha);
+      }
+    }
+    if (cr * cr + si * si < 1e-18) return 0;
+    return Math.atan2(si, cr);
+  }
+
+  function unwrapPolarAngle(rawRad) {
+    if (polarUnwrap.lastRaw === null) {
+      polarUnwrap.lastRaw = rawRad;
+      polarUnwrap.acc = rawRad;
+      return polarUnwrap.acc;
+    }
+    let d = rawRad - polarUnwrap.lastRaw;
+    while (d > Math.PI) d -= 2 * Math.PI;
+    while (d < -Math.PI) d += 2 * Math.PI;
+    polarUnwrap.acc += d;
+    polarUnwrap.lastRaw = rawRad;
+    return polarUnwrap.acc;
+  }
+
+  function resetPolarUnwrap() {
+    polarUnwrap.lastRaw = null;
+    polarUnwrap.acc = 0;
   }
 
   function updateRefMarkers() {
@@ -741,11 +738,8 @@
     return fFftHz;
   }
 
-  /**
-   * 对参照邻域标量时间序列做 FFT 与峰解释
-   * @param {"mean"|"var"|"diff"} channel RMS 门限类型
-   */
-  function analyzeSeries(values, bladeCount, channel) {
+  /** 对解缠绕极向角时间序列（弧度）做 FFT 与峰解释 */
+  function analyzeSeries(values, bladeCount) {
     if (values.length < 64) return null;
     const st = getSpectralThresholds();
 
@@ -758,9 +752,7 @@
     let rmsPre = 0;
     for (let i = 0; i < raw.length; i++) rmsPre += raw[i] * raw[i];
     rmsPre = Math.sqrt(rmsPre / raw.length);
-    const rmsNeed =
-      channel === "var" ? st.rmsVar : channel === "diff" ? st.rmsDiff : st.rmsLum;
-    if (rmsPre < rmsNeed) return null;
+    if (rmsPre < st.rmsPolar) return null;
 
     detrendLinear(raw);
     const detrended = new Float64Array(raw);
@@ -777,7 +769,7 @@
     const kMin = Math.max(1, Math.floor(0.3 / df));
     const kMax = Math.min(mag.length - 2, Math.floor((measuredFps * 0.48) / df));
     if (kMax < kMin) {
-      return tryAutocorrOnlyFallback(detrended, bladeCount, channel, st);
+      return tryAutocorrOnlyFallback(detrended, bladeCount, st);
     }
 
     const hw = pickBestKHarmonicWeighted(mag, kMin, kMax);
@@ -820,7 +812,7 @@
       peakToSecond < st.p2s ||
       flatness > st.flat
     ) {
-      return tryAutocorrOnlyFallback(detrended, bladeCount, channel, st);
+      return tryAutocorrOnlyFallback(detrended, bladeCount, st);
     }
 
     const kRef = parabolicPeakBin(mag, bestK);
@@ -842,7 +834,6 @@
       bestMag,
       sumMag,
       prominence,
-      channel,
     };
   }
 
@@ -878,7 +869,7 @@
   /**
    * 弱信号：FFT 谱峰未过门限时，仅用自相关估计主频（更易检出弱周期，也更容易误报）
    */
-  function tryAutocorrOnlyFallback(detrended, bladeCount, channel, st) {
+  function tryAutocorrOnlyFallback(detrended, bladeCount, st) {
     if (!weakSignalEl || !weakSignalEl.checked) return null;
     if (detrended.length < 96) return null;
     const ac = autocorrDominantFrequencyHz(detrended, measuredFps, 0.055);
@@ -895,27 +886,13 @@
       bestMag: ac.quality,
       sumMag: 1,
       prominence: 3 + ac.quality * 6,
-      channel,
       acFallback: true,
     };
   }
 
-  function pickBestConf(...results) {
-    let best = null;
-    for (const r of results) {
-      if (!r) continue;
-      if (!best || r.confidence > best.confidence) best = r;
-    }
-    return best;
-  }
-
   function analyze() {
-    if (samples.length < 64) return;
-    if (
-      samplesVar.length !== samples.length ||
-      samplesDiff.length !== samples.length ||
-      sampleTimes.length !== samples.length
-    ) {
+    if (samplesPolar.length < 64) return;
+    if (samplesPolar.length !== sampleTimes.length) {
       return;
     }
 
@@ -927,21 +904,7 @@
     const fpsMedian = effectiveFpsFromTimes(sampleTimes);
     measuredFps = fpsMedian * 0.84 + fpsFromWindow * 0.16;
 
-    const sigMode = getAnalysisSignalMode();
-    let res = null;
-    if (sigMode === "mean") {
-      res = analyzeSeries(samples, bladeCount, "mean");
-    } else if (sigMode === "var") {
-      res = analyzeSeries(samplesVar, bladeCount, "var");
-    } else if (sigMode === "diff") {
-      res = analyzeSeries(samplesDiff, bladeCount, "diff");
-    } else {
-      res = pickBestConf(
-        analyzeSeries(samples, bladeCount, "mean"),
-        analyzeSeries(samplesVar, bladeCount, "var"),
-        analyzeSeries(samplesDiff, bladeCount, "diff")
-      );
-    }
+    const res = analyzeSeries(samplesPolar, bladeCount);
 
     if (!res) {
       rpmDisplay.textContent = "—";
@@ -950,14 +913,13 @@
       bladeOut.textContent = String(bladeCount);
       resetRpmSmoothing();
       statusEl.textContent = screenAssistEl.checked
-        ? "未检测到稳定周期：拍屏时请让扇叶尽量大、清晰；可勾选「弱信号模式」、分析信号选「自动」。"
-        : "未检测到稳定周期：请对准扇叶并点选参照点。可试「弱信号模式」「自动」或「帧间差分」；拍屏可勾选「拍屏幕/视频」。";
+        ? "未检测到稳定周期：拍屏时请让扇叶尽量大、清晰；可勾选「弱信号模式」。"
+        : "未检测到稳定周期：请把十字对准转轴、邻域含清晰边缘，或勾选「弱信号模式」；拍屏可勾选「拍屏幕/视频」。";
       return;
     }
 
     const { rpm, fPass, confidence } = res;
-    const sigTag =
-      res.channel === "var" ? "空间方差" : res.channel === "diff" ? "帧间差分" : "平均亮度";
+    const sigTag = "角向跟踪";
     const sm = applyRpmSmoothing(rpm, fPass, confidence);
 
     if (sm.ok && sm.rpm > 5 && sm.rpm < 200000) {
@@ -974,29 +936,14 @@
 
     /** 恰等于谱门限时仍视为偏弱，提示操作；applyRpmSmoothing 已用 confidence < floor 区分 */
     if (confidence <= cf) {
-      let weakHint = "信号较弱：请对准参照点、扇叶扫过处，或延长采样。（读数已平滑）";
-      if (sigMode === "auto") {
-        weakHint =
-          "信号较弱：可试改「分析信号」为「平均亮度」或「空间方差」。（当前择优通道：" +
-          sigTag +
-          " · 读数已平滑）";
-      } else if (sigMode === "mean") {
-        weakHint =
-          "信号较弱：明暗不明显时可改「空间方差」「帧间差分」或「自动」；可勾选「弱信号模式」。（读数已平滑）";
-      } else if (sigMode === "diff") {
-        weakHint =
-          "信号较弱：可改「平均亮度/空间方差」或「自动」，并勾选「弱信号模式」。（读数已平滑）";
-      } else {
-        weakHint =
-          "信号较弱：纹理不明显时可改「平均亮度」「帧间差分」或「自动」；可勾选「弱信号模式」。（读数已平滑）";
-      }
-      statusEl.textContent = weakHint;
+      statusEl.textContent =
+        "信号较弱：请确认十字对准转轴中心、邻域含清晰边缘，或延长采样、勾选「弱信号模式」。（读数已平滑）";
     } else {
       statusEl.textContent =
         "约 " +
         measuredFps.toFixed(0) +
         " fps · 窗口 " +
-        samples.length +
+        samplesPolar.length +
         " 点 · " +
         sigTag +
         " · 细化频谱 · 平滑";
@@ -1052,42 +999,21 @@
     const img = ctx.getImageData(x0, y0, ps, ps);
     const d = img.data;
     const nPix = ps * ps;
-    if (!prevPatchGray || prevPatchGray.length !== nPix) {
-      prevPatchGray = new Float32Array(nPix);
-    }
-    const canDiff = sampleTimes.length > 0;
-
-    let sum = 0;
-    let sumSq = 0;
-    let madSum = 0;
-    let idx = 0;
-    for (let p = 0; p < d.length; p += 4) {
-      const lv = 0.299 * d[p] + 0.587 * d[p + 1] + 0.114 * d[p + 2];
-      sum += lv;
-      sumSq += lv * lv;
-      if (canDiff) {
-        madSum += Math.abs(lv - prevPatchGray[idx]);
-      }
-      prevPatchGray[idx] = lv;
-      idx++;
+    const gray = new Float32Array(nPix);
+    for (let gi = 0, p = 0; gi < nPix; gi++, p += 4) {
+      gray[gi] = 0.299 * d[p] + 0.587 * d[p + 1] + 0.114 * d[p + 2];
     }
     updateRefMarkers();
-    const cnt = nPix;
-    const lum = cnt > 0 ? sum / cnt : 0;
-    const spatialVar = cnt > 0 ? Math.max(0, sumSq / cnt - lum * lum) : 0;
-    const mad = canDiff && cnt > 0 ? madSum / cnt : 0;
+    const phiRaw = computePolarGradientCentroidAngle(gray, ps);
+    const phiUnwrapped = unwrapPolarAngle(phiRaw);
 
     const bufSec = parseInt(bufferEl.value, 10) || 4;
     const maxSamples = Math.floor(measuredFps * bufSec * 1.5) || 512;
 
     sampleTimes.push(now);
-    samples.push(lum);
-    samplesVar.push(spatialVar);
-    samplesDiff.push(mad);
-    while (samples.length > maxSamples) {
-      samples.shift();
-      samplesVar.shift();
-      samplesDiff.shift();
+    samplesPolar.push(phiUnwrapped);
+    while (samplesPolar.length > maxSamples) {
+      samplesPolar.shift();
       sampleTimes.shift();
     }
 
@@ -1131,11 +1057,9 @@
 
     running = true;
     lastFrameTime = 0;
-    samples = [];
-    samplesVar = [];
-    samplesDiff = [];
+    samplesPolar = [];
     sampleTimes = [];
-    prevPatchGray = null;
+    resetPolarUnwrap();
     refUserPlaced = false;
     refNx = 0.5;
     refNy = 0.5;
@@ -1208,11 +1132,9 @@
     patchValEl.textContent = patchSizeEl.value;
     resetRpmSmoothing();
     if (running) {
-      samples = [];
-      samplesVar = [];
-      samplesDiff = [];
+      samplesPolar = [];
       sampleTimes = [];
-      prevPatchGray = null;
+      resetPolarUnwrap();
       if (video.videoWidth && video.videoHeight) updateRefMarkers();
     }
   });
@@ -1227,11 +1149,6 @@
     if (running) analyze();
   });
 
-  signalModeEl.addEventListener("change", () => {
-    resetRpmSmoothing();
-    if (running) analyze();
-  });
-
   function toggleRefPickMode() {
     if (!running) return;
     refPickMode = !refPickMode;
@@ -1239,7 +1156,7 @@
     refTapLayer.setAttribute("aria-hidden", refPickMode ? "false" : "true");
     pickRefBtn.textContent = refPickMode ? "点击画面完成" : "点选参照位置";
     stageCaption.textContent = refPickMode
-      ? "在画面上点击：扇叶反复扫过、明暗对比最大处"
+      ? "在画面上点击转轴中心（轮毂），邻域需盖住有边缘的扇叶区域"
       : "参照点邻域采样 · 点「点选参照」后在画面上点击";
   }
 
