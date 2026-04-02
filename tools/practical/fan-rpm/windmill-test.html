@@ -139,6 +139,8 @@
       animation: spin var(--period, 4s) linear infinite;
       z-index: 3;
       will-change: transform;
+      transform: translateZ(0);
+      backface-visibility: hidden;
     }
 
     @keyframes spin {
@@ -288,8 +290,7 @@
   <div class="wrap">
     <h1>风车动画测试</h1>
     <p class="sub">
-      纯 CSS 旋转，周期可调；下方给出<strong>理论 RPM = 60 ÷ 每圈秒数</strong>，可用手机摄像头配合
-      <a href="index.html">测转速页</a> 对照（需稳定光照、对准叶片区域）。
+      纯 CSS 旋转，周期可调；下方给出<strong>理论 RPM = 60 ÷ 每圈秒数</strong>。用手机拍<strong>屏幕</strong>测转速时，<strong>转速越高越容易失败</strong>：叶片在曝光时间内扫过角度大 → 画面糊、ROI 平均亮度「周期」变浅；再叠加屏幕刷新与摄像头帧率，频谱易判「无稳定周期」。请把测转速页的 <strong>ROI 对准叶片扫过、明暗变化大</strong> 的区域，并尽量 <strong>60fps、亮环境、手机拿稳</strong>。低速（如几十 RPM）更容易对上。
     </p>
 
     <div class="scene" aria-hidden="true">
