@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="description" content="用手机摄像头对准旋转扇叶，在 ROI 内用 Lucas–Kanade 光流估计角速度并换算轴转速（RPM）。十字为转轴投影。" />
-  <meta name="keywords" content="风扇转速,RPM,光流,Lucas-Kanade,角速度,摄像头" />
+  <meta name="description" content="用手机摄像头对准旋转扇叶，在 ROI 内对相邻帧灰度做帧差，累积时域信号后 FFT 找主频，换算轴转速（RPM）。十字为转轴投影。" />
+  <meta name="keywords" content="风扇转速,RPM,帧差,FFT,转频,摄像头" />
   <meta name="theme-color" content="#0a0e14" />
-  <title>光流法测转速</title>
+  <title>帧差频谱测转速</title>
 
   <link rel="apple-touch-icon" sizes="180x180" href="../../../favicon-io/apple-touch-icon.png" />
   <link rel="icon" type="image/png" sizes="32x32" href="../../../favicon-io/favicon-32x32.png" />
@@ -218,12 +218,12 @@
     <div class="header-top">
       <a href="../" class="back-btn">返回上一级</a>
     </div>
-    <h1 class="page-title">光流法测转速</h1>
+    <h1 class="page-title">帧差频谱测转速</h1>
   </div>
 
   <main class="fan-rpm-shell">
     <p class="sub">
-      将<strong>十字对准转轴在画面上的投影</strong>（轮毂中心），ROI 内需有<strong>纹理清晰的扇叶</strong>。每帧在灰度 ROI 上取网格点做 <strong>Lucas–Kanade 光流</strong>，由位移相对轴心的<strong>角增量 ÷ 帧间隔</strong>得角速度，再换算<strong>轴转速 RPM</strong>（与叶片数无关）。转轴需近似垂直于屏幕时误差较小。
+      将<strong>十字对准转轴在画面上的投影</strong>，ROI 内需有<strong>随转动变化的对比度</strong>（扇叶与背景）。对相邻帧灰度做<strong>绝对值帧差</strong>并取 ROI 均值，得到一维时序；凑满缓冲后做 <strong>FFT</strong> 找主频，再按<strong>每转周期数</strong>（通常≈叶片数）换算<strong>轴转速 RPM</strong>。采样率≈帧率，高转速请尽量<strong>60fps</strong>并避免运动模糊。
     </p>
 
     <div class="stage">
@@ -244,7 +244,7 @@
           置信度 <strong id="confOut">—</strong> · 转频 <strong id="hzOut">—</strong> Hz
         </div>
         <div class="meta-secondary">
-          光流窗口 <strong id="flowWinOut">15×15</strong> · 有效点 <strong id="ptsOut">—</strong>
+          帧差缓冲 <strong id="fftInfoOut">—</strong> · 谱峰 bin <strong id="ptsOut">—</strong>
         </div>
       </div>
       <div class="row">
@@ -257,11 +257,16 @@
         <input type="range" id="patchSize" min="15" max="31" value="21" step="2" />
         <span class="value" id="patchVal">21</span>
       </div>
+      <div class="row">
+        <label for="bladeCycles">每转周期数</label>
+        <input type="range" id="bladeCycles" min="1" max="12" value="3" step="1" />
+        <span class="value" id="bladeCyclesVal">3</span>
+      </div>
       <button type="button" class="btn secondary" id="pickRefBtn" disabled>点选转轴投影</button>
       <button type="button" class="btn" id="startBtn">开启摄像头并开始</button>
       <button type="button" class="btn secondary" id="stopBtn" disabled>停止</button>
       <p class="hint">
-        与 OpenCV <code>calcOpticalFlowPyrLK</code> 同类思路（本页为单层 LK）。需<strong>明显纹理</strong>；运动模糊大或对称纹理易失败。高转速时每帧角变更小，建议<strong>60fps</strong>、尽量<strong>缩短曝光</strong>（光线充足）。读数平滑为对 RPM 的滑动平均。
+        <strong>帧差</strong>即相邻帧对应像素灰度差的绝对值在 ROI 内取平均；其包络随扇叶扫过呈周期性。<strong>每转周期数</strong>若与真实不符，读数会按比例错（可对照已知转速调节）。对称扇叶有时主频为 2×叶片数，可把该值改为 6、8 等试试。读数平滑为对 RPM 的滑动平均。
       </p>
       <p class="err" id="errBox" hidden></p>
       <p class="status" id="status"></p>
@@ -280,7 +285,7 @@
   const rpmDisplay = document.getElementById("rpmDisplay");
   const confOut = document.getElementById("confOut");
   const hzOut = document.getElementById("hzOut");
-  const flowWinOut = document.getElementById("flowWinOut");
+  const fftInfoOut = document.getElementById("fftInfoOut");
   const ptsOut = document.getElementById("ptsOut");
   const errBox = document.getElementById("errBox");
   const statusEl = document.getElementById("status");
@@ -290,6 +295,8 @@
   const pickRefBtn = document.getElementById("pickRefBtn");
   const patchSizeEl = document.getElementById("patchSize");
   const patchValEl = document.getElementById("patchVal");
+  const bladeCyclesEl = document.getElementById("bladeCycles");
+  const bladeCyclesValEl = document.getElementById("bladeCyclesVal");
   const stageCaption = document.getElementById("stageCaption");
 
   let refNx = 0.5;
@@ -312,18 +319,20 @@
   let lastGoodRpm = null;
   let lastGoodHz = null;
   let lastGoodConfText = null;
-  let flowFailStreak = 0;
-  const FLOW_FAIL_STREAK_CLEAR = 15;
+  let spectralFailStreak = 0;
+  const SPECTRAL_FAIL_STREAK_CLEAR = 15;
 
-  /** LK 半窗口（全窗口 2*h+1） */
-  const LK_HALF = 7;
-  const GRID_STEP = 4;
-  /** 距轴心过近的点不求角增量 */
-  const MIN_R_FROM_HUB = 8;
-  /** 2×2 系统行列式下限，过小则纹理不足 */
-  const MIN_DET = 8e-4;
-  /** 单帧最大合理转角（弧度），防飞点 */
-  const MAX_DTHETA = 0.55;
+  /** FFT 长度（须为 2 的幂） */
+  const FFT_SIZE = 256;
+  /** 帧差缓冲（环形，时间顺序由 copyDiffSequential 还原） */
+  const diffRing = new Float32Array(FFT_SIZE);
+  let diffWrite = 0;
+  let diffFilled = 0;
+  const fftRe = new Float32Array(FFT_SIZE);
+  const fftIm = new Float32Array(FFT_SIZE);
+  const winScratch = new Float32Array(FFT_SIZE);
+  /** 谱峰相对邻域均值的倍数下限 */
+  const PEAK_SNR_MIN = 2.2;
 
   function getCoverMapping(videoEl, vw, vh) {
     const r = videoEl.getBoundingClientRect();
@@ -409,112 +418,132 @@
     return Math.min(120, Math.max(8, measuredFps));
   }
 
-  /** 将角度差规范到 [-π, π] */
-  function wrapAngle(d) {
-    while (d > Math.PI) d -= 2 * Math.PI;
-    while (d < -Math.PI) d += 2 * Math.PI;
-    return d;
+  function resetDiffBuffer() {
+    diffWrite = 0;
+    diffFilled = 0;
+  }
+
+  function pushDiffSample(x) {
+    diffRing[diffWrite] = x;
+    diffWrite = (diffWrite + 1) % FFT_SIZE;
+    if (diffFilled < FFT_SIZE) diffFilled++;
+  }
+
+  /** Cooley–Tukey FFT，re/im 同长度 2 的幂 */
+  function fftInPlace(re, im) {
+    const n = re.length;
+    let j = 0;
+    for (let i = 1; i < n; i++) {
+      let bit = n >> 1;
+      for (; j & bit; bit >>= 1) j ^= bit;
+      j ^= bit;
+      if (i < j) {
+        let t = re[i];
+        re[i] = re[j];
+        re[j] = t;
+        t = im[i];
+        im[i] = im[j];
+        im[j] = t;
+      }
+    }
+    for (let len = 2; len <= n; len <<= 1) {
+      const ang = (-2 * Math.PI) / len;
+      const wlen = Math.cos(ang);
+      const wleni = Math.sin(ang);
+      for (let i = 0; i < n; i += len) {
+        let w = 1;
+        let wi = 0;
+        for (let k = 0; k < len >> 1; k++) {
+          const u = i + k;
+          const v = u + (len >> 1);
+          const tr = re[v] * w - im[v] * wi;
+          const ti = re[v] * wi + im[v] * w;
+          re[v] = re[u] - tr;
+          im[v] = im[u] - ti;
+          re[u] += tr;
+          im[u] += ti;
+          const nw = w * wlen - wi * wleni;
+          wi = w * wleni + wi * wlen;
+          w = nw;
+        }
+      }
+    }
+  }
+
+  function meanAbsDiff(prev, curr, n) {
+    let s = 0;
+    for (let i = 0; i < n; i++) s += Math.abs(curr[i] - prev[i]);
+    return s / n;
   }
 
   /**
-   * 单层 Lucas–Kanade：在 (ix,iy) 处求 (u,v)，窗口 [ix-h,ix+h]
-   * Ix,Iy,It 与 prev/curr 同尺寸
+   * 从帧差环形缓冲取满 FFT_SIZE 点后做加窗 FFT，找主频并换算轴转速。
+   * peakHz 为帧差信号的调制频率；轴转频 Hz = peakHz / cyclesPerRev。
    */
-  function lucasKanadeAt(Ix, Iy, It, w, h, ix, iy, half) {
-    let gxx = 0;
-    let gyy = 0;
-    let gxy = 0;
-    let gxt = 0;
-    let gyt = 0;
-    let cnt = 0;
-    for (let dy = -half; dy <= half; dy++) {
-      const y = iy + dy;
-      if (y < 1 || y >= h - 1) continue;
-      const row = y * w;
-      for (let dx = -half; dx <= half; dx++) {
-        const x = ix + dx;
-        if (x < 1 || x >= w - 1) continue;
-        const i = row + x;
-        const gx = Ix[i];
-        const gy = Iy[i];
-        const gt = It[i];
-        gxx += gx * gx;
-        gyy += gy * gy;
-        gxy += gx * gy;
-        gxt += gx * gt;
-        gyt += gy * gt;
-        cnt++;
-      }
+  function estimateRpmFromFrameDiff(fsHz) {
+    if (diffFilled < FFT_SIZE || !Number.isFinite(fsHz) || fsHz < 8) return null;
+
+    let sum = 0;
+    for (let i = 0; i < FFT_SIZE; i++) {
+      const v = diffRing[(diffWrite + i) % FFT_SIZE];
+      winScratch[i] = v;
+      sum += v;
     }
-    if (cnt < (2 * half + 1) * (2 * half + 1) * 0.7) return null;
-    const det = gxx * gyy - gxy * gxy;
-    if (det < MIN_DET) return null;
-    const u = (-gxt * gyy + gyt * gxy) / det;
-    const v = (-gyt * gxx + gxt * gxy) / det;
-    if (!Number.isFinite(u) || !Number.isFinite(v)) return null;
-    if (Math.abs(u) > half + 3 || Math.abs(v) > half + 3) return null;
-    return { u, v };
-  }
+    const mean = sum / FFT_SIZE;
+    for (let i = 0; i < FFT_SIZE; i++) {
+      const w =
+        0.5 * (1 - Math.cos((2 * Math.PI * i) / Math.max(1, FFT_SIZE - 1)));
+      winScratch[i] = (winScratch[i] - mean) * w;
+    }
 
-  /**
-   * 由光流估计轴角速度：网格点相对轴心角增量，取中位数
-   */
-  function estimateOmegaFromFlow(prev, curr, ps, dtSec) {
-    const w = ps;
-    const h = ps;
-    const cx = (ps - 1) * 0.5;
-    const cy = (ps - 1) * 0.5;
+    for (let i = 0; i < FFT_SIZE; i++) {
+      fftRe[i] = winScratch[i];
+      fftIm[i] = 0;
+    }
+    fftInPlace(fftRe, fftIm);
 
-    const Ix = new Float32Array(ps * ps);
-    const Iy = new Float32Array(ps * ps);
-    const It = new Float32Array(ps * ps);
+    const half = FFT_SIZE >> 1;
+    const mags = new Float32Array(half);
+    for (let k = 0; k < half; k++) {
+      mags[k] = Math.hypot(fftRe[k], fftIm[k]);
+    }
 
-    for (let y = 1; y < h - 1; y++) {
-      const row = y * w;
-      for (let x = 1; x < w - 1; x++) {
-        const i = row + x;
-        Ix[i] = (curr[i + 1] - curr[i - 1]) * 0.5;
-        Iy[i] = (curr[i + w] - curr[i - w]) * 0.5;
-        It[i] = curr[i] - prev[i];
+    let peakK = 1;
+    let peakMag = mags[1];
+    for (let k = 2; k < half - 1; k++) {
+      if (mags[k] > peakMag) {
+        peakMag = mags[k];
+        peakK = k;
       }
     }
 
-    const dthetas = [];
-    const margin = LK_HALF + 2;
-    for (let iy = margin; iy < ps - margin; iy += GRID_STEP) {
-      for (let ix = margin; ix < ps - margin; ix += GRID_STEP) {
-        const dx0 = ix - cx;
-        const dy0 = iy - cy;
-        const r = Math.hypot(dx0, dy0);
-        if (r < MIN_R_FROM_HUB) continue;
-
-        const flow = lucasKanadeAt(Ix, Iy, It, w, h, ix, iy, LK_HALF);
-        if (!flow) continue;
-
-        const phi0 = Math.atan2(dy0, dx0);
-        const phi1 = Math.atan2(iy + flow.v - cy, ix + flow.u - cx);
-        let dth = wrapAngle(phi1 - phi0);
-        if (Math.abs(dth) > MAX_DTHETA) continue;
-        dthetas.push(dth);
-      }
+    let medSum = 0;
+    let medCnt = 0;
+    for (let k = 1; k < half - 1; k++) {
+      if (k === peakK) continue;
+      medSum += mags[k];
+      medCnt++;
     }
+    const med = medCnt > 0 ? medSum / medCnt : 0;
+    const snr = med > 1e-9 ? peakMag / med : 0;
+    if (snr < PEAK_SNR_MIN) return null;
 
-    if (dthetas.length < 4) return null;
+    const peakHz = (peakK * fsHz) / FFT_SIZE;
+    const cyclesPerRev = Math.max(1, parseInt(bladeCyclesEl.value, 10) || 3);
+    const fRotHz = peakHz / cyclesPerRev;
+    const rpmRaw = fRotHz * 60;
 
-    dthetas.sort((a, b) => a - b);
-    const med = dthetas[Math.floor(dthetas.length / 2)];
-    let spread = 0;
-    for (let i = 0; i < dthetas.length; i++) spread += Math.abs(dthetas[i] - med);
-    spread /= dthetas.length;
-    const omega = med / dtSec;
-    const conf = Math.max(
-      0,
-      Math.min(1, 1 - spread / (Math.abs(med) + 0.04)) * (dthetas.length / 24)
-    );
+    if (!Number.isFinite(rpmRaw) || rpmRaw < 0.5 || rpmRaw > 200000) return null;
+    if (peakHz < 0.08 || peakHz > 0.48 * fsHz) return null;
+
+    const conf = Math.max(0, Math.min(1, (snr - PEAK_SNR_MIN) / 4));
 
     return {
-      omegaRadPerSec: omega,
-      validN: dthetas.length,
+      rpmRaw,
+      fRotHz,
+      peakHz,
+      peakK,
+      snr,
       confidence: conf,
     };
   }
@@ -558,12 +587,13 @@
     lastFrameTime = now;
     effectiveFpsFromTimes(dt * 1000);
 
-    flowWinOut.textContent = 2 * LK_HALF + 1 + "×" + (2 * LK_HALF + 1);
+    fftInfoOut.textContent = FFT_SIZE + " 点 · " + diffFilled + "/" + FFT_SIZE;
 
     if (!prevGray || prevPs !== ps || prevGray.length !== n) {
       prevGray = gray;
       prevPs = ps;
-      statusEl.textContent = "已采集上一帧，下一帧开始光流…";
+      resetDiffBuffer();
+      statusEl.textContent = "已采集上一帧，下一帧开始帧差…";
       return;
     }
 
@@ -572,14 +602,24 @@
       return;
     }
 
-    const om = estimateOmegaFromFlow(prevGray, gray, ps, dt);
+    const mad = meanAbsDiff(prevGray, gray, n);
     prevGray = gray;
+    pushDiffSample(mad);
 
-    if (!om) {
-      flowFailStreak++;
+    if (diffFilled < FFT_SIZE) {
+      ptsOut.textContent = "—";
+      statusEl.textContent =
+        "收集中… " + diffFilled + "/" + FFT_SIZE + " 帧（帧差均值 → FFT）";
+      return;
+    }
+
+    const spec = estimateRpmFromFrameDiff(measuredFps);
+
+    if (!spec) {
+      spectralFailStreak++;
       ptsOut.textContent = "—";
       if (
-        flowFailStreak < FLOW_FAIL_STREAK_CLEAR &&
+        spectralFailStreak < SPECTRAL_FAIL_STREAK_CLEAR &&
         lastGoodRpm !== null &&
         lastGoodHz !== null
       ) {
@@ -587,34 +627,27 @@
         hzOut.textContent = lastGoodHz.toFixed(2);
         confOut.textContent = lastGoodConfText || "—";
         statusEl.textContent =
-          "本帧光流不可靠 · " + flowFailStreak + "/" + FLOW_FAIL_STREAK_CLEAR + " 后清空";
+          "本帧谱不可靠 · " +
+          spectralFailStreak +
+          "/" +
+          SPECTRAL_FAIL_STREAK_CLEAR +
+          " 后清空";
       } else {
         rpmDisplay.textContent = "—";
         hzOut.textContent = "—";
         confOut.textContent = "低";
         statusEl.textContent =
-          "无法估计角速度：请对准转轴、增大 ROI、保证叶上有清晰纹理，或提高帧率。";
+          "无法估计：请对准 ROI、调节「每转周期数」、提高对比度或帧率。";
       }
       return;
     }
 
-    flowFailStreak = 0;
-    ptsOut.textContent = String(om.validN);
+    spectralFailStreak = 0;
+    ptsOut.textContent = String(spec.peakK);
 
-    const omega = om.omegaRadPerSec;
-    const rpmRaw = (Math.abs(omega) * 60) / (2 * Math.PI);
-    const fRotHz = Math.abs(omega) / (2 * Math.PI);
-
-    if (!Number.isFinite(rpmRaw) || rpmRaw > 200000 || rpmRaw < 0.5) {
-      rpmDisplay.textContent = "—";
-      hzOut.textContent = "—";
-      confOut.textContent = "低";
-      statusEl.textContent = "角速度超出合理范围。";
-      return;
-    }
-
-    const rpmSm = applyRpmSmoothing(rpmRaw);
-    const confPct = Math.min(99, Math.round(om.confidence * 100));
+    const rpmSm = applyRpmSmoothing(spec.rpmRaw);
+    const fRotHz = spec.fRotHz;
+    const confPct = Math.min(99, Math.round(spec.confidence * 100));
     const confText = confPct + "%";
 
     rpmDisplay.textContent = Math.round(rpmSm).toLocaleString("zh-CN");
@@ -628,7 +661,9 @@
     statusEl.textContent =
       "约 " +
       measuredFps.toFixed(0) +
-      " fps · LK 光流 · 轴角速度 → RPM（已平滑）";
+      " fps · 帧差 + FFT · 谱峰 " +
+      spec.peakHz.toFixed(2) +
+      " Hz（已平滑）";
   }
 
   function sampleFrame(now) {
@@ -707,11 +742,12 @@
     lastFrameTime = 0;
     prevGray = null;
     prevPs = 0;
+    resetDiffBuffer();
     rpmHistory.length = 0;
     lastGoodRpm = null;
     lastGoodHz = null;
     lastGoodConfText = null;
-    flowFailStreak = 0;
+    spectralFailStreak = 0;
     refUserPlaced = false;
     refNx = 0.5;
     refNy = 0.5;
@@ -775,7 +811,7 @@
     lastGoodRpm = null;
     lastGoodHz = null;
     lastGoodConfText = null;
-    flowFailStreak = 0;
+    spectralFailStreak = 0;
   }
 
   smoothEl.addEventListener("input", () => {
@@ -788,13 +824,19 @@
     if (running) {
       prevGray = null;
       prevPs = 0;
+      resetDiffBuffer();
       rpmHistory.length = 0;
       lastGoodRpm = null;
       lastGoodHz = null;
       lastGoodConfText = null;
-      flowFailStreak = 0;
+      spectralFailStreak = 0;
       if (video.videoWidth && video.videoHeight) updateRefMarkers();
     }
+  });
+
+  bladeCyclesEl.addEventListener("input", () => {
+    bladeCyclesValEl.textContent = bladeCyclesEl.value;
+    rpmHistory.length = 0;
   });
 
   function toggleRefPickMode() {
@@ -825,6 +867,7 @@
     stageCaption.textContent = "已设置转轴投影 · 可再次点选修改";
     prevGray = null;
     prevPs = 0;
+    resetDiffBuffer();
     rpmHistory.length = 0;
     updateRefMarkers();
   }
