@@ -176,6 +176,13 @@
       margin-top: 8px;
       font-size: 0.8rem;
       color: var(--muted);
+      line-height: 1.45;
+    }
+    .fan-rpm-shell .readout .meta-secondary {
+      margin-top: 4px;
+      font-size: 0.72rem;
+      color: var(--muted);
+      opacity: 0.92;
     }
     .fan-rpm-shell .btn {
       width: 100%;
@@ -221,7 +228,7 @@
   </div>
 
   <main class="fan-rpm-shell">
-    <p class="sub">请把十字对准<strong>转轴中心</strong>（轮毂），邻域覆盖有纹理或清晰边缘的扇叶区域。本页用邻域内<strong>梯度极向质心方向角</strong>随时间变化估角速度并换算 RPM；<strong>对称多叶</strong>时读数可能与真实轴转速差整数倍，需结合叶片数、目视或标定。</p>
+    <p class="sub">请把十字对准<strong>转轴中心</strong>（轮毂），窗口内需有清晰边缘或纹理（可在叶片贴小标记以增强对比，与常见 OpenCV 标记跟踪法类似）。本页用<strong>梯度极向质心角</strong>时间序列 + FFT 得主频，再按叶片数换算 RPM；<strong>对称多叶</strong>时读数可能与轴转速差倍数，需目视或标定。</p>
 
     <div class="stage">
       <div class="stage-viewport" id="stageViewport">
@@ -240,6 +247,9 @@
         <div class="meta">
           叶片数 <strong id="bladeOut">3</strong> · 置信度 <strong id="confOut">—</strong>
           · 约 <strong id="hzOut">—</strong> Hz（叶尖通过频率）
+        </div>
+        <div class="meta-secondary" id="metaPhysics">
+          奈奎斯特上限约 <strong id="nyquistOut">—</strong> Hz · 频率分辨率约 <strong id="dfOut">—</strong> Hz
         </div>
       </div>
       <div class="row">
@@ -261,7 +271,7 @@
       <button type="button" class="btn" id="startBtn">开启摄像头并开始</button>
       <button type="button" class="btn secondary" id="stopBtn" disabled>停止</button>
       <p class="hint">
-        说明：转速上限受相机帧率限制（奈奎斯特）。每帧在参照邻域内计算<strong>解缠绕极向角</strong>，对序列做 FFT 得主频，再按叶片数换算 RPM。<strong>多叶对称</strong>时主峰可能与轴转速呈倍数关系，需结合目视。建议采样<strong>≥4 秒</strong>。
+        <strong>与常见「视频 + FFT」测频做法一致：</strong>先得到随时间变化的标量（此处为解缠绕极向角），再 Hann 窗、补零 FFT、取主峰；叶尖通过频率 ×60÷叶片数 得轴转速。建议<strong>环境光稳定</strong>、避免强频闪灯；<strong>更长采样窗口</strong>可提高频率分辨率（见上方「频率分辨率」）。高转速需更高帧率（约 &lt; fps/2 的主频才可靠）。建议采样<strong>≥4 秒</strong>。
       </p>
       <p class="err" id="errBox" hidden></p>
       <p class="status" id="status"></p>
