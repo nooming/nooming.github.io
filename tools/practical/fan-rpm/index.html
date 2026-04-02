@@ -316,6 +316,14 @@
   let samplesLum = [];
   let measuredFps = 30;
 
+  /** 谱分析瞬时失败时暂留上次读数，避免滑动窗口偶发 null 导致 RPM 闪断 */
+  let lastGoodRpm = null;
+  let lastGoodHz = null;
+  let lastGoodConfText = null;
+  /** 连续「未检测到周期」次数，超过阈值才清空显示 */
+  let spectralFailStreak = 0;
+  const SPECTRAL_FAIL_STREAK_CLEAR = 18;
+
   const MIN_SPECTRAL_CONFIDENCE = 0.28;
   const MIN_PEAK_PROMINENCE = 4.2;
   const MIN_PEAK_TO_SECOND_RATIO = 1.08;
@@ -660,25 +668,49 @@
     const res = analyzeSeries(samplesLum, bladeCount);
 
     if (!res) {
-      rpmDisplay.textContent = "—";
-      hzOut.textContent = "—";
-      confOut.textContent = "低";
+      spectralFailStreak++;
       bladeOut.textContent = String(bladeCount);
-      statusEl.textContent =
-        "未检测到稳定周期：请把 ROI 对准扇叶扫过处（明暗变化大），或延长采样。";
+      if (
+        spectralFailStreak < SPECTRAL_FAIL_STREAK_CLEAR &&
+        lastGoodRpm !== null &&
+        lastGoodHz !== null
+      ) {
+        rpmDisplay.textContent = lastGoodRpm.toLocaleString("zh-CN");
+        hzOut.textContent = lastGoodHz.toFixed(2);
+        confOut.textContent = lastGoodConfText || "—";
+        statusEl.textContent =
+          "本帧未过谱判据（窗口内周期不稳），暂显示上次读数 · " +
+          spectralFailStreak +
+          "/" +
+          SPECTRAL_FAIL_STREAK_CLEAR +
+          " 后清空。可对准 ROI、延长采样。";
+      } else {
+        rpmDisplay.textContent = "—";
+        hzOut.textContent = "—";
+        confOut.textContent = "低";
+        statusEl.textContent =
+          "未检测到稳定周期：请把 ROI 对准扇叶扫过处（明暗变化大），或延长采样。";
+      }
       return;
     }
+
+    spectralFailStreak = 0;
 
     const { rpm, fPass, confidence, spectralDf } = res;
     if (spectralDf > 0) dfOut.textContent = spectralDf.toFixed(4);
     const cf = getSpectralThresholds().cMin;
     bladeOut.textContent = String(bladeCount);
-    confOut.textContent =
+    const confText =
       confidence >= cf ? (confidence * 100).toFixed(0) + "%" : "低";
+    confOut.textContent = confText;
 
     if (confidence >= cf && rpm > 5 && rpm < 200000) {
-      rpmDisplay.textContent = Math.round(rpm).toLocaleString("zh-CN");
+      const r = Math.round(rpm);
+      rpmDisplay.textContent = r.toLocaleString("zh-CN");
       hzOut.textContent = fPass > 0.05 ? fPass.toFixed(2) : "—";
+      lastGoodRpm = r;
+      lastGoodHz = fPass;
+      lastGoodConfText = confText;
     } else {
       rpmDisplay.textContent = "—";
       hzOut.textContent = "—";
@@ -806,6 +838,10 @@
     lastFrameTime = 0;
     samplesLum = [];
     sampleTimes = [];
+    lastGoodRpm = null;
+    lastGoodHz = null;
+    lastGoodConfText = null;
+    spectralFailStreak = 0;
     refUserPlaced = false;
     refNx = 0.5;
     refNy = 0.5;
@@ -864,10 +900,18 @@
     nyquistOut.textContent = "—";
     dfOut.textContent = "—";
     statusEl.textContent = "已停止";
+    lastGoodRpm = null;
+    lastGoodHz = null;
+    lastGoodConfText = null;
+    spectralFailStreak = 0;
   }
 
   bladesEl.addEventListener("input", () => {
     bladeVal.textContent = bladesEl.value;
+    lastGoodRpm = null;
+    lastGoodHz = null;
+    lastGoodConfText = null;
+    spectralFailStreak = 0;
     if (running) analyze();
   });
   bufferEl.addEventListener("input", () => {
@@ -878,6 +922,10 @@
     if (running) {
       samplesLum = [];
       sampleTimes = [];
+      lastGoodRpm = null;
+      lastGoodHz = null;
+      lastGoodConfText = null;
+      spectralFailStreak = 0;
       if (video.videoWidth && video.videoHeight) updateRefMarkers();
     }
   });

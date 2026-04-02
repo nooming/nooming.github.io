@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>风车动画测试</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;700&family=Noto+Sans+SC:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --sky-top: #3d6b8a;
+      --sky-mid: #87a7bc;
+      --sky-low: #d4a574;
+      --grass: #2d4a32;
+      --grass-light: #3d5f44;
+      --wood: #5c4033;
+      --wood-light: #8b6914;
+      --blade: #f0ead8;
+      --blade-edge: #c4b8a0;
+      --hub: #4a3f35;
+      --text: #1a1a1a;
+      --panel: rgba(255, 255, 255, 0.88);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: "Noto Sans SC", sans-serif;
+      background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 45%, var(--sky-low) 78%, var(--grass) 78%, var(--grass-light) 100%);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    .wrap {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 24px 18px 32px;
+    }
+
+    h1 {
+      font-family: "Fraunces", "Noto Sans SC", serif;
+      font-weight: 700;
+      font-size: 1.65rem;
+      text-align: center;
+      color: #fff;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+      margin-bottom: 8px;
+    }
+
+    .sub {
+      text-align: center;
+      font-size: 0.82rem;
+      color: rgba(255, 255, 255, 0.9);
+      margin-bottom: 20px;
+      line-height: 1.45;
+    }
+
+    .sub a {
+      color: #fff8e7;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .scene {
+      position: relative;
+      height: 360px;
+      margin-bottom: 20px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, transparent 50%);
+      overflow: hidden;
+    }
+
+    /* 风车塔身 */
+    .tower {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 28px solid transparent;
+      border-right: 28px solid transparent;
+      border-bottom: 150px solid var(--wood);
+      filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.2));
+    }
+
+    .tower::after {
+      content: "";
+      position: absolute;
+      top: 20px;
+      left: -18px;
+      width: 36px;
+      height: 110px;
+      background: linear-gradient(90deg, var(--wood-light), var(--wood));
+      clip-path: polygon(15% 0, 85% 0, 100% 100%, 0 100%);
+    }
+
+    /* 机头外壳 */
+    .nacelle {
+      position: absolute;
+      bottom: 178px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 44px;
+      height: 36px;
+      background: linear-gradient(180deg, #6a5550, var(--hub));
+      border-radius: 10px 10px 6px 6px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      z-index: 2;
+    }
+
+    .nacelle::before {
+      content: "";
+      position: absolute;
+      right: -8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 14px;
+      height: 22px;
+      background: var(--hub);
+      border-radius: 0 8px 8px 0;
+    }
+
+    /* 旋转轮毂（中心与机头右侧伸轴对齐） */
+    .rotor {
+      position: absolute;
+      left: calc(50% + 36px);
+      bottom: 196px;
+      width: 200px;
+      height: 200px;
+      margin-left: -100px;
+      margin-bottom: -100px;
+      animation: spin var(--period, 4s) linear infinite;
+      z-index: 3;
+      will-change: transform;
+    }
+
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .hub-circle {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 28px;
+      height: 28px;
+      margin: -14px 0 0 -14px;
+      background: radial-gradient(circle at 35% 35%, #8b7355, var(--hub));
+      border-radius: 50%;
+      box-shadow: inset 0 -2px 4px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.2);
+      z-index: 4;
+    }
+
+    .blade {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 18px;
+      height: 92px;
+      margin-left: -9px;
+      margin-top: -92px;
+      background: linear-gradient(90deg, var(--blade-edge), var(--blade) 40%, #fffef8);
+      border-radius: 8px 8px 4px 4px;
+      box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.12);
+      transform-origin: 50% 100%;
+    }
+
+    .blade:nth-child(2) {
+      transform: rotate(90deg);
+    }
+    .blade:nth-child(3) {
+      transform: rotate(180deg);
+    }
+    .blade:nth-child(4) {
+      transform: rotate(270deg);
+    }
+
+    .ground {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 52px;
+      background: linear-gradient(180deg, transparent, rgba(45, 74, 50, 0.95));
+      pointer-events: none;
+    }
+
+    .panel {
+      background: var(--panel);
+      border-radius: 14px;
+      padding: 18px 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    }
+
+    .panel h2 {
+      font-family: "Fraunces", serif;
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #2c2c2c;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .row label {
+      flex: 0 0 auto;
+      font-size: 0.88rem;
+      color: #444;
+    }
+
+    .row input[type="range"] {
+      flex: 1;
+      accent-color: #2d5a4a;
+    }
+
+    .row .val {
+      min-width: 3rem;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      color: #1a5c4a;
+    }
+
+    .rpm-readout {
+      text-align: center;
+      padding: 14px;
+      background: linear-gradient(135deg, #e8f0ec 0%, #dce8e2 100%);
+      border-radius: 10px;
+      margin-top: 4px;
+    }
+
+    .rpm-readout .big {
+      font-family: "Fraunces", serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #134032;
+    }
+
+    .rpm-readout .unit {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #3d6b5c;
+      margin-left: 4px;
+    }
+
+    .rpm-readout .hint {
+      font-size: 0.75rem;
+      color: #5a6b66;
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+
+    .pause-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 10px;
+      font-size: 0.85rem;
+      color: #555;
+    }
+
+    .pause-row input {
+      accent-color: #2d5a4a;
+      width: 18px;
+      height: 18px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>风车动画测试</h1>
+    <p class="sub">
+      纯 CSS 旋转，周期可调；下方给出<strong>理论 RPM = 60 ÷ 每圈秒数</strong>，可用手机摄像头配合
+      <a href="index.html">测转速页</a> 对照（需稳定光照、对准叶片区域）。
+    </p>
+
+    <div class="scene" aria-hidden="true">
+      <div class="tower"></div>
+      <div class="nacelle"></div>
+      <div class="rotor" id="rotor">
+        <div class="blade"></div>
+        <div class="blade"></div>
+        <div class="blade"></div>
+        <div class="blade"></div>
+        <div class="hub-circle"></div>
+      </div>
+      <div class="ground"></div>
+    </div>
+
+    <div class="panel">
+      <h2>转速参数</h2>
+      <div class="row">
+        <label for="period">每圈时间</label>
+        <input type="range" id="period" min="0.5" max="12" value="4" step="0.1" />
+        <span class="val" id="periodVal">4.0 s</span>
+      </div>
+      <div class="pause-row">
+        <input type="checkbox" id="paused" />
+        <label for="paused">暂停旋转</label>
+      </div>
+      <div class="rpm-readout">
+        <span class="big" id="rpmNum">15</span><span class="unit">RPM</span>
+        <p class="hint">四叶风车：叶尖通过频率 = 4 × 轴转频；本页动画为<strong>轴转速</strong>。测转速工具里叶片数请设为 <strong>4</strong> 再对比。</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+(function () {
+  const rotor = document.getElementById("rotor");
+  const periodEl = document.getElementById("period");
+  const periodVal = document.getElementById("periodVal");
+  const rpmNum = document.getElementById("rpmNum");
+  const pausedEl = document.getElementById("paused");
+
+  function update() {
+    const sec = parseFloat(periodEl.value, 10);
+    periodVal.textContent = sec.toFixed(1) + " s";
+    const rpm = sec > 0 ? 60 / sec : 0;
+    rpmNum.textContent = Math.round(rpm).toLocaleString("zh-CN");
+
+    rotor.style.setProperty("--period", sec + "s");
+    rotor.style.animationPlayState = pausedEl.checked ? "paused" : "running";
+  }
+
+  periodEl.addEventListener("input", update);
+  pausedEl.addEventListener("change", update);
+  update();
+})();
+  </script>
+</body>
+</html>
