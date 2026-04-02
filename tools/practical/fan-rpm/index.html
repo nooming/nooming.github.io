@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="description" content="用手机摄像头对准风扇转轴邻域，根据梯度极向质心角随时间变化估算转速（RPM）。需授权摄像头，建议在 HTTPS 或本地环境使用。" />
-  <meta name="keywords" content="角向跟踪,极向质心,风扇转速,RPM,摄像头" />
+  <meta name="description" content="摄像头对准旋转扇叶区域，对 ROI 平均亮度做 FFT 估叶通过频率并换算转速（RPM）。与常见 Python/OpenCV 教程中的「视频 + 频谱」思路一致。" />
+  <meta name="keywords" content="风扇转速,RPM,FFT,ROI,亮度,摄像头,OpenCV" />
   <meta name="theme-color" content="#0a0e14" />
-  <title>角向跟踪测转速 - 实用工具</title>
+  <title>视频 ROI + FFT 测转速</title>
 
   <link rel="apple-touch-icon" sizes="180x180" href="../../../favicon-io/apple-touch-icon.png" />
   <link rel="icon" type="image/png" sizes="32x32" href="../../../favicon-io/favicon-32x32.png" />
@@ -55,7 +55,6 @@
       border-radius: var(--radius);
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
     }
-    /* 仅裁剪画面圆角，说明文字在下方单独一行，避免 overflow:hidden 裁掉 ::after */
     .fan-rpm-shell .stage-viewport {
       position: relative;
       aspect-ratio: 4 / 3;
@@ -88,9 +87,7 @@
       cursor: crosshair;
       touch-action: none;
     }
-    .fan-rpm-shell .ref-tap-layer.active {
-      display: block;
-    }
+    .fan-rpm-shell .ref-tap-layer.active { display: block; }
     .fan-rpm-shell .ref-marker {
       position: absolute;
       z-index: 3;
@@ -196,10 +193,7 @@
       color: #041210;
       margin-bottom: 10px;
     }
-    .fan-rpm-shell .btn:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
-    }
+    .fan-rpm-shell .btn:disabled { opacity: 0.45; cursor: not-allowed; }
     .fan-rpm-shell .btn.secondary {
       background: var(--surface);
       color: var(--text);
@@ -224,11 +218,13 @@
     <div class="header-top">
       <a href="../" class="back-btn">返回上一级</a>
     </div>
-    <h1 class="page-title">角向跟踪测转速</h1>
+    <h1 class="page-title">视频 ROI + FFT 测转速</h1>
   </div>
 
   <main class="fan-rpm-shell">
-    <p class="sub">请把十字对准<strong>转轴中心</strong>（轮毂），窗口内需有清晰边缘或纹理（可在叶片贴小标记以增强对比，与常见 OpenCV 标记跟踪法类似）。本页用<strong>梯度极向质心角</strong>时间序列 + FFT 得主频，再按叶片数换算 RPM；<strong>对称多叶</strong>时读数可能与轴转速差倍数，需目视或标定。</p>
+    <p class="sub">
+      与网上常见教程一致：在画面中圈定一块 <strong>ROI</strong>（矩形窗口），每帧计算该区域内<strong>平均灰度/亮度</strong>，得到随时间变化的一维信号；再对该信号做 <strong>去均值、去线性趋势、Hann 窗、补零 FFT</strong>，在有效频带内取<strong>幅值最大</strong>的频率分量作为<strong>叶尖通过频率</strong>，按叶片数换算轴转速。请把 ROI 对准<strong>扇叶反复扫过、明暗变化明显</strong>的位置（可贴标记点以增强对比）。
+    </p>
 
     <div class="stage">
       <div class="stage-viewport" id="stageViewport">
@@ -237,7 +233,7 @@
         <div id="refMarker" class="ref-marker" aria-hidden="true"></div>
         <div id="refTapLayer" class="ref-tap-layer" aria-hidden="true"></div>
       </div>
-      <p class="stage-caption" id="stageCaption">参照点邻域采样 · 点「点选参照」后在画面上点击</p>
+      <p class="stage-caption" id="stageCaption">点「点选 ROI」后在画面上点击：十字为 ROI 中心</p>
     </div>
     <canvas id="work"></canvas>
 
@@ -246,9 +242,9 @@
         <span class="rpm-num" id="rpmDisplay">—</span><span class="unit">RPM</span>
         <div class="meta">
           叶片数 <strong id="bladeOut">3</strong> · 置信度 <strong id="confOut">—</strong>
-          · 约 <strong id="hzOut">—</strong> Hz（叶尖通过频率）
+          · 约 <strong id="hzOut">—</strong> Hz（主峰，叶通过频率）
         </div>
-        <div class="meta-secondary" id="metaPhysics">
+        <div class="meta-secondary">
           奈奎斯特上限约 <strong id="nyquistOut">—</strong> Hz · 频率分辨率约 <strong id="dfOut">—</strong> Hz
         </div>
       </div>
@@ -263,15 +259,15 @@
         <span class="value" id="bufVal">4</span>
       </div>
       <div class="row">
-        <label for="patchSize">邻域边长 (px)</label>
+        <label for="patchSize">ROI 边长 (px)</label>
         <input type="range" id="patchSize" min="5" max="15" value="9" step="2" />
         <span class="value" id="patchVal">9</span>
       </div>
-      <button type="button" class="btn secondary" id="pickRefBtn" disabled>点选参照位置</button>
+      <button type="button" class="btn secondary" id="pickRefBtn" disabled>点选 ROI 中心</button>
       <button type="button" class="btn" id="startBtn">开启摄像头并开始</button>
       <button type="button" class="btn secondary" id="stopBtn" disabled>停止</button>
       <p class="hint">
-        <strong>与常见「视频 + FFT」测频做法一致：</strong>先得到随时间变化的标量（此处为解缠绕极向角），再 Hann 窗、补零 FFT、取主峰；叶尖通过频率 ×60÷叶片数 得轴转速。建议<strong>环境光稳定</strong>、避免强频闪灯；<strong>更长采样窗口</strong>可提高频率分辨率（见上方「频率分辨率」）。高转速需更高帧率（约 &lt; fps/2 的主频才可靠）。建议采样<strong>≥4 秒</strong>。
+        流程与「录一段视频 → 取 ROI 像素强度序列 → <code>numpy.fft</code> 找主峰」类教程相同；本页在浏览器内用 JS 实现。主频应小于约 <strong>fps/2</strong>（奈奎斯特）；更长采样可提高频率分辨率 Δf≈fps/N。环境光尽量稳定，避免 LED 频闪。
       </p>
       <p class="err" id="errBox" hidden></p>
       <p class="status" id="status"></p>
@@ -293,6 +289,8 @@
   const bladeOut = document.getElementById("bladeOut");
   const confOut = document.getElementById("confOut");
   const hzOut = document.getElementById("hzOut");
+  const nyquistOut = document.getElementById("nyquistOut");
+  const dfOut = document.getElementById("dfOut");
   const errBox = document.getElementById("errBox");
   const statusEl = document.getElementById("status");
   const refTapLayer = document.getElementById("refTapLayer");
@@ -303,7 +301,6 @@
   const patchValEl = document.getElementById("patchVal");
   const stageCaption = document.getElementById("stageCaption");
 
-  /** 参照点归一化坐标 [0,1]，未点选时用画面中心 */
   let refNx = 0.5;
   let refNy = 0.5;
   let refUserPlaced = false;
@@ -315,19 +312,16 @@
   let vfcHandle = 0;
   let lastFrameTime = 0;
   let sampleTimes = [];
-  /** 极向质心方向角（解缠绕后，弧度）时间序列，参照点应对准转轴中心 */
-  let samplesPolar = [];
-  /** 极向角解缠绕状态 */
-  let polarUnwrap = { lastRaw: null, acc: 0 };
+  /** 每帧 ROI 平均亮度（0–255），与网上「单通道时序」一致 */
+  let samplesLum = [];
   let measuredFps = 30;
 
-  /** 谱峰可信度：抑制无周期噪声 */
   const MIN_SPECTRAL_CONFIDENCE = 0.28;
   const MIN_PEAK_PROMINENCE = 4.2;
   const MIN_PEAK_TO_SECOND_RATIO = 1.08;
   const MAX_SPECTRAL_FLATNESS = 0.58;
-  /** 解缠绕极向角序列去均值前 RMS（弧度） */
-  const MIN_RMS_POLAR = 0.012;
+  /** 去均值后亮度序列 RMS（0–255 尺度下的交流分量） */
+  const MIN_RMS_LUM = 0.48;
 
   function getSpectralThresholds() {
     return {
@@ -335,11 +329,10 @@
       prom: MIN_PEAK_PROMINENCE,
       p2s: MIN_PEAK_TO_SECOND_RATIO,
       flat: MAX_SPECTRAL_FLATNESS,
-      rmsPolar: MIN_RMS_POLAR,
+      rmsLum: MIN_RMS_LUM,
     };
   }
 
-  /** object-fit: cover 下，视频像素与元素内显示位置的映射 */
   function getCoverMapping(videoEl, vw, vh) {
     const r = videoEl.getBoundingClientRect();
     const dw = r.width;
@@ -381,49 +374,6 @@
     let ps = parseInt(patchSizeEl.value, 10) || 9;
     if (ps % 2 === 0) ps += 1;
     return Math.max(5, Math.min(15, ps));
-  }
-
-  /**
-   * 邻域内梯度幅加权的极向质心方向角（相对转轴即邻域中心），[-π, π]
-   */
-  function computePolarGradientCentroidAngle(gray, ps) {
-    const cx = (ps - 1) * 0.5;
-    const cy = (ps - 1) * 0.5;
-    let cr = 0;
-    let si = 0;
-    for (let y = 1; y < ps - 1; y++) {
-      const row = y * ps;
-      for (let x = 1; x < ps - 1; x++) {
-        const idx = row + x;
-        const gx = (gray[idx + 1] - gray[idx - 1]) * 0.5;
-        const gy = (gray[idx + ps] - gray[idx - ps]) * 0.5;
-        const mag = Math.hypot(gx, gy);
-        const alpha = Math.atan2(y - cy, x - cx);
-        cr += mag * Math.cos(alpha);
-        si += mag * Math.sin(alpha);
-      }
-    }
-    if (cr * cr + si * si < 1e-18) return 0;
-    return Math.atan2(si, cr);
-  }
-
-  function unwrapPolarAngle(rawRad) {
-    if (polarUnwrap.lastRaw === null) {
-      polarUnwrap.lastRaw = rawRad;
-      polarUnwrap.acc = rawRad;
-      return polarUnwrap.acc;
-    }
-    let d = rawRad - polarUnwrap.lastRaw;
-    while (d > Math.PI) d -= 2 * Math.PI;
-    while (d < -Math.PI) d += 2 * Math.PI;
-    polarUnwrap.acc += d;
-    polarUnwrap.lastRaw = rawRad;
-    return polarUnwrap.acc;
-  }
-
-  function resetPolarUnwrap() {
-    polarUnwrap.lastRaw = null;
-    polarUnwrap.acc = 0;
   }
 
   function updateRefMarkers() {
@@ -514,13 +464,10 @@
   function magnitudeSpectrum(real, imag) {
     const n = real.length;
     const mag = new Float64Array(n / 2);
-    for (let k = 0; k < n / 2; k++) {
-      mag[k] = Math.hypot(real[k], imag[k]);
-    }
+    for (let k = 0; k < n / 2; k++) mag[k] = Math.hypot(real[k], imag[k]);
     return mag;
   }
 
-  /** 用帧间隔中位数估计有效帧率，比「点数/总时长」更抗偶发掉帧 */
   function effectiveFpsFromTimes(times) {
     if (times.length < 2) return measuredFps;
     const gaps = [];
@@ -534,7 +481,18 @@
     return Math.min(240, Math.max(5, 1000 / mid));
   }
 
-  /** 去线性漂移，减轻慢变对低频的干扰 */
+  function medianFilter3InPlace(arr) {
+    const n = arr.length;
+    if (n < 3) return;
+    const snap = new Float64Array(arr);
+    for (let i = 1; i < n - 1; i++) {
+      const a = snap[i - 1];
+      const b = snap[i];
+      const c = snap[i + 1];
+      arr[i] = a + b + c - Math.min(a, b, c) - Math.max(a, b, c);
+    }
+  }
+
   function detrendLinear(arr) {
     const n = arr.length;
     if (n < 4) return;
@@ -555,7 +513,6 @@
     for (let i = 0; i < n; i++) arr[i] -= slope * i + intercept;
   }
 
-  /** Hann 窗，减轻有限长序列的频谱泄漏 */
   function applyHannWindow(arr) {
     const n = arr.length;
     if (n < 2) return;
@@ -565,7 +522,6 @@
     }
   }
 
-  /** 频域抛物线插值，得到亚 bin 的峰值频率 */
   function parabolicPeakBin(mag, k) {
     if (k <= 0 || k >= mag.length - 1) return k;
     const a = mag[k - 1];
@@ -579,32 +535,15 @@
   }
 
   /**
-   * 谐波加权：真实周期往往在 f、2f、3f 处均有能量，单纯 max(bin) 易锁到谐波或噪声峰
+   * 经典教程流程：ROI 亮度序列 → 预处理 → rFFT 等价的实数 FFT → 在 [f_min,f_max] 内 argmax |X[k]|
    */
-  function pickBestKHarmonicWeighted(mag, kMin, kMax) {
-    let bestK = kMin;
-    let bestScore = -1;
-    for (let k = kMin; k <= kMax; k++) {
-      const m0 = mag[k];
-      let score = m0;
-      const k2 = Math.round(2 * k);
-      if (k2 !== k && k2 >= kMin && k2 <= kMax) score += 0.44 * mag[k2];
-      const k3 = Math.round(3 * k);
-      if (k3 !== k && k3 >= kMin && k3 <= kMax) score += 0.22 * mag[k3];
-      if (score > bestScore) {
-        bestScore = score;
-        bestK = k;
-      }
-    }
-    return { bestK, bestScore };
-  }
-
-  /** 对解缠绕极向角时间序列（弧度）做 FFT 与峰解释 */
   function analyzeSeries(values, bladeCount) {
     if (values.length < 64) return null;
     const st = getSpectralThresholds();
 
     const raw = new Float64Array(values);
+    medianFilter3InPlace(raw);
+
     let mean = 0;
     for (let i = 0; i < raw.length; i++) mean += raw[i];
     mean /= raw.length;
@@ -613,7 +552,7 @@
     let rmsPre = 0;
     for (let i = 0; i < raw.length; i++) rmsPre += raw[i] * raw[i];
     rmsPre = Math.sqrt(rmsPre / raw.length);
-    if (rmsPre < st.rmsPolar) return null;
+    if (rmsPre < st.rmsLum) return null;
 
     detrendLinear(raw);
     const detrended = new Float64Array(raw);
@@ -631,14 +570,14 @@
     const kMax = Math.min(mag.length - 2, Math.floor((measuredFps * 0.48) / df));
     if (kMax < kMin) return null;
 
-    const hw = pickBestKHarmonicWeighted(mag, kMin, kMax);
-    let bestK = hw.bestK;
-    let bestMag = mag[bestK];
-
-    let kHarm = Math.round(bestK * bladeCount);
-    if (kHarm >= kMin && kHarm <= kMax && kHarm !== bestK && mag[kHarm] >= mag[bestK] * 0.32) {
-      bestK = kHarm;
-      bestMag = mag[bestK];
+    /** 带内最大幅值峰（与 np.argmax(np.abs(rfft)[k_min:k_max])) 同类） */
+    let bestK = kMin;
+    let bestMag = mag[kMin];
+    for (let k = kMin + 1; k <= kMax; k++) {
+      if (mag[k] > bestMag) {
+        bestMag = mag[k];
+        bestK = k;
+      }
     }
 
     let sumMag = 0;
@@ -688,10 +627,10 @@
       bestMag,
       sumMag,
       prominence,
+      spectralDf: df,
     };
   }
 
-  /** 主峰频率视为叶尖通过频率 (Hz)，与叶片数换算轴转速 RPM */
   function computeRpmFromPeakHz(fPeak, bladeCount) {
     const fPass = fPeak;
     const fRot = fPass / bladeCount;
@@ -702,10 +641,8 @@
   }
 
   function analyze() {
-    if (samplesPolar.length < 64) return;
-    if (samplesPolar.length !== sampleTimes.length) {
-      return;
-    }
+    if (samplesLum.length < 64) return;
+    if (samplesLum.length !== sampleTimes.length) return;
 
     const bladeCount = Math.max(2, parseInt(bladesEl.value, 10) || 3);
     const t0 = sampleTimes[0];
@@ -715,7 +652,12 @@
     const fpsMedian = effectiveFpsFromTimes(sampleTimes);
     measuredFps = fpsMedian * 0.84 + fpsFromWindow * 0.16;
 
-    const res = analyzeSeries(samplesPolar, bladeCount);
+    const nFft = nextPow2(samplesLum.length);
+    const dfPreview = measuredFps / nFft;
+    nyquistOut.textContent = (measuredFps * 0.5).toFixed(1);
+    dfOut.textContent = dfPreview.toFixed(4);
+
+    const res = analyzeSeries(samplesLum, bladeCount);
 
     if (!res) {
       rpmDisplay.textContent = "—";
@@ -723,11 +665,12 @@
       confOut.textContent = "低";
       bladeOut.textContent = String(bladeCount);
       statusEl.textContent =
-        "未检测到稳定周期：请把十字对准转轴中心、邻域含清晰边缘，或延长采样。";
+        "未检测到稳定周期：请把 ROI 对准扇叶扫过处（明暗变化大），或延长采样。";
       return;
     }
 
-    const { rpm, fPass, confidence } = res;
+    const { rpm, fPass, confidence, spectralDf } = res;
+    if (spectralDf > 0) dfOut.textContent = spectralDf.toFixed(4);
     const cf = getSpectralThresholds().cMin;
     bladeOut.textContent = String(bladeCount);
     confOut.textContent =
@@ -743,14 +686,14 @@
 
     if (confidence <= cf) {
       statusEl.textContent =
-        "信号较弱：请确认十字对准转轴中心、邻域含清晰边缘，或延长采样。";
+        "信号较弱：请增大 ROI 对比度、稳定光照，或延长采样。";
     } else {
       statusEl.textContent =
         "约 " +
         measuredFps.toFixed(0) +
-        " fps · 窗口 " +
-        samplesPolar.length +
-        " 点 · FFT · 主峰";
+        " fps · " +
+        samplesLum.length +
+        " 点 · ROI 平均亮度 · argmax|FFT| · 抛物线细化";
     }
   }
 
@@ -795,29 +738,29 @@
 
     const ps = getPatchSideOdd();
     const half = (ps - 1) >> 1;
-    let cx = Math.round(refUserPlaced ? refNx * (w - 1) : 0.5 * (w - 1));
-    let cy = Math.round(refUserPlaced ? refNy * (h - 1) : 0.5 * (h - 1));
+    const cx = Math.round(refUserPlaced ? refNx * (w - 1) : 0.5 * (w - 1));
+    const cy = Math.round(refUserPlaced ? refNy * (h - 1) : 0.5 * (h - 1));
     const x0 = Math.max(0, Math.min(w - ps, cx - half));
     const y0 = Math.max(0, Math.min(h - ps, cy - half));
 
     const img = ctx.getImageData(x0, y0, ps, ps);
     const d = img.data;
     const nPix = ps * ps;
-    const gray = new Float32Array(nPix);
-    for (let gi = 0, p = 0; gi < nPix; gi++, p += 4) {
-      gray[gi] = 0.299 * d[p] + 0.587 * d[p + 1] + 0.114 * d[p + 2];
+    let sum = 0;
+    for (let p = 0; p < d.length; p += 4) {
+      sum += 0.299 * d[p] + 0.587 * d[p + 1] + 0.114 * d[p + 2];
     }
+    const meanLum = nPix > 0 ? sum / nPix : 0;
+
     updateRefMarkers();
-    const phiRaw = computePolarGradientCentroidAngle(gray, ps);
-    const phiUnwrapped = unwrapPolarAngle(phiRaw);
 
     const bufSec = parseInt(bufferEl.value, 10) || 4;
     const maxSamples = Math.floor(measuredFps * bufSec * 1.5) || 512;
 
     sampleTimes.push(now);
-    samplesPolar.push(phiUnwrapped);
-    while (samplesPolar.length > maxSamples) {
-      samplesPolar.shift();
+    samplesLum.push(meanLum);
+    while (samplesLum.length > maxSamples) {
+      samplesLum.shift();
       sampleTimes.shift();
     }
 
@@ -861,15 +804,14 @@
 
     running = true;
     lastFrameTime = 0;
-    samplesPolar = [];
+    samplesLum = [];
     sampleTimes = [];
-    resetPolarUnwrap();
     refUserPlaced = false;
     refNx = 0.5;
     refNy = 0.5;
     refPickMode = false;
     refTapLayer.classList.remove("active");
-    pickRefBtn.textContent = "点选参照位置";
+    pickRefBtn.textContent = "点选 ROI 中心";
     pickRefBtn.disabled = false;
     startBtn.disabled = true;
     stopBtn.disabled = false;
@@ -919,6 +861,8 @@
     rpmDisplay.textContent = "—";
     confOut.textContent = "—";
     hzOut.textContent = "—";
+    nyquistOut.textContent = "—";
+    dfOut.textContent = "—";
     statusEl.textContent = "已停止";
   }
 
@@ -932,9 +876,8 @@
   patchSizeEl.addEventListener("input", () => {
     patchValEl.textContent = patchSizeEl.value;
     if (running) {
-      samplesPolar = [];
+      samplesLum = [];
       sampleTimes = [];
-      resetPolarUnwrap();
       if (video.videoWidth && video.videoHeight) updateRefMarkers();
     }
   });
@@ -944,10 +887,10 @@
     refPickMode = !refPickMode;
     refTapLayer.classList.toggle("active", refPickMode);
     refTapLayer.setAttribute("aria-hidden", refPickMode ? "false" : "true");
-    pickRefBtn.textContent = refPickMode ? "点击画面完成" : "点选参照位置";
+    pickRefBtn.textContent = refPickMode ? "点击画面完成" : "点选 ROI 中心";
     stageCaption.textContent = refPickMode
-      ? "在画面上点击转轴中心（轮毂），邻域需盖住有边缘的扇叶区域"
-      : "参照点邻域采样 · 点「点选参照」后在画面上点击";
+      ? "点击扇叶明暗变化明显的区域中心"
+      : "点「点选 ROI」后在画面上点击：十字为 ROI 中心";
   }
 
   function onRefPointerDown(e) {
@@ -963,8 +906,8 @@
     refPickMode = false;
     refTapLayer.classList.remove("active");
     refTapLayer.setAttribute("aria-hidden", "true");
-    pickRefBtn.textContent = "点选参照位置";
-    stageCaption.textContent = "参照点邻域采样 · 点「点选参照」后可重新选点";
+    pickRefBtn.textContent = "点选 ROI 中心";
+    stageCaption.textContent = "已设置 ROI 中心 · 可再次点选修改";
     updateRefMarkers();
   }
 
