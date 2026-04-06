@@ -12,6 +12,10 @@ from math import radians, cos, sin, asin, sqrt
 import requests
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+try:
+    from parking_api import parking_bp
+except Exception:  # pragma: no cover - 参考副本可能不含停车模块
+    parking_bp = None
 
 # ==================== 基础配置 ====================
 import os
@@ -20,6 +24,12 @@ app = Flask(__name__, static_folder='.', static_url_path='')
 
 # 跨域：公开接口，允许任意 Origin；由 flask-cors 统一加响应头
 CORS(app, resources={
+    r"/api/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
+        "supports_credentials": False
+    },
     r"/plan": {
         "origins": "*",
         "methods": ["GET", "POST", "OPTIONS"],
@@ -39,6 +49,10 @@ CORS(app, resources={
         "supports_credentials": False
     }
 })
+
+# 挂载停车优化接口（参考副本目录可能未包含 parking_api.py）
+if parking_bp is not None:
+    app.register_blueprint(parking_bp)
 
 # 静态文件服务 - 支持前端直接访问
 @app.route('/')
