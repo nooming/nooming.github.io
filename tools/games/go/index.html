@@ -297,6 +297,7 @@
                 <div>
                     <button class="undo-btn" id="undoBtn" onclick="undoMove()" disabled>悔棋</button>
                     <button class="pass-btn" onclick="passTurn()">弃权</button>
+                    <button class="undo-btn" id="whereBtn" onclick="showLastMove()">下哪了</button>
                     <button class="reset-btn" onclick="resetGame()">重新开始</button>
                 </div>
             </div>
@@ -337,6 +338,7 @@
         let consecutivePasses = 0;
         let moveHistory = []; // 存储每一步的历史记录
         let aiDifficulty = 'medium'; // 'easy', 'medium', 'hard'
+        let lastHighlight = null; // 最近一次“下哪了”高亮位置
 
         // 初始化棋盘
         function initBoard() {
@@ -511,6 +513,12 @@
                 return;
             }
 
+            // 有高亮时，新落子前清除高亮（重新绘制棋盘）
+            if (lastHighlight) {
+                redrawBoard();
+                lastHighlight = null;
+            }
+
             board[row][col] = currentPlayer;
             drawStone(row, col, currentPlayer);
             lastMove = [row, col];
@@ -680,6 +688,45 @@
                     drawStone(move.row, move.col, move.player);
                 }
             }
+        }
+
+        // 显示最近一步下在哪（黄色高亮）
+        function showLastMove() {
+            if (moveHistory.length === 0) {
+                return;
+            }
+            const last = moveHistory[moveHistory.length - 1];
+            if (last.isPass || last.row === null || last.col === null) {
+                return;
+            }
+
+            // 记录高亮位置，便于下一步自动清除
+            lastHighlight = { row: last.row, col: last.col };
+
+            // 先重绘当前棋盘
+            redrawBoard();
+            // 在最近一步的位置画类似 chess 的高亮效果：柔和黄光 + 细描边
+            const x = (last.col + 1) * CELL_SIZE;
+            const y = (last.row + 1) * CELL_SIZE;
+
+            // 外层柔和光晕
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(x, y, STONE_RADIUS * 1.25, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 235, 59, 0.35)';
+            ctx.shadowColor = 'rgba(255, 235, 59, 0.8)';
+            ctx.shadowBlur = 12;
+            ctx.fill();
+            ctx.restore();
+
+            // 内层细描边圈
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(x, y, STONE_RADIUS * 0.9, 0, Math.PI * 2);
+            ctx.strokeStyle = '#ffeb3b';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.restore();
         }
 
         // 弃权

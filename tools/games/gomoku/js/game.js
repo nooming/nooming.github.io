@@ -14,6 +14,7 @@ let moveHistory = []; // 存储每一步的历史记录
 let aiDifficulty = 'medium'; // 'easy', 'medium', 'hard'
 let transpositionTable = new Map(); // 置换表，用于缓存已计算局面
 let tableSize = 100000; // 置换表最大大小
+let lastHighlight = null; // 最近一次“下哪了”高亮位置
 
 // 初始化棋盘
 function initBoard() {
@@ -716,6 +717,12 @@ function placeStone(row, col, isUndo = false) {
         return;
     }
 
+    // 有高亮时，新落子前清除高亮（重新绘制棋盘）
+    if (lastHighlight) {
+        redrawBoard();
+        lastHighlight = null;
+    }
+
     board[row][col] = currentPlayer;
     drawStone(row, col, currentPlayer);
     
@@ -835,6 +842,44 @@ function redrawBoard() {
     for (let move of moveHistory) {
         drawStone(move.row, move.col, move.player);
     }
+}
+
+// 显示最近一步下在哪（黄色高亮）
+function showLastMove() {
+    if (moveHistory.length === 0) {
+        return;
+    }
+    const last = moveHistory[moveHistory.length - 1];
+    if (last.row == null || last.col == null) {
+        return;
+    }
+    // 记录高亮位置，便于下一步自动清除
+    lastHighlight = { row: last.row, col: last.col };
+
+    // 先重绘当前棋盘
+    redrawBoard();
+    // 在最近一步的位置画类似 chess 的高亮效果：柔和黄光 + 细描边
+    const x = (last.col + 1) * CELL_SIZE;
+    const y = (last.row + 1) * CELL_SIZE;
+
+    // 外层柔和光晕
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, STONE_RADIUS * 1.25, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 235, 59, 0.35)'; // 半透明黄色
+    ctx.shadowColor = 'rgba(255, 235, 59, 0.8)';
+    ctx.shadowBlur = 12;
+    ctx.fill();
+    ctx.restore();
+
+    // 内层细描边圈
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, STONE_RADIUS * 0.9, 0, Math.PI * 2);
+    ctx.strokeStyle = '#ffeb3b';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
 }
 
 // 获取点击坐标（处理移动端缩放）
