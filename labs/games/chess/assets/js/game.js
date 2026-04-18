@@ -39,7 +39,7 @@ let aiDifficulty = 'medium'; // 'easy', 'medium', 'hard'
 function loadPieceImages() {
     const promises = PIECE_KEYS.map(key => {
         const img = new Image();
-        img.src = `lib/img/xiangqipieces/wikimedia/${key}.svg`;
+        img.src = `assets/lib/img/xiangqipieces/wikimedia/${key}.svg`;
         PIECE_IMAGES[key] = img;
         return new Promise((resolve, reject) => {
             img.onload = resolve;
@@ -57,7 +57,7 @@ function initGame() {
     // 加载棋盘背景图
     boardBackground = new Image();
     boardBackground.onload = () => redraw();
-    boardBackground.src = 'lib/img/xiangqiboards/wikimedia/xiangqiboard.svg';
+    boardBackground.src = 'assets/lib/img/xiangqiboards/wikimedia/xiangqiboard.svg';
     
     loadPieceImages().then(() => {
         redraw();

@@ -1,5 +1,14 @@
 # 个人主页更新日志
 
+## v2.0
+
+### 结构调整
+- **`labs/` 统一入口**：原 **`apps/`**（网址导航、手写笔记、Citywalk）与 **`tools/`**（决策、心理测试、实用工具、小游戏）合并为 **`labs/`**；原 **`tools/index.html`** 现为 **`labs/index.html`**（对外路径 **`/labs/`**）。**`sitemap.xml`**、根 **`index.html`** 与各页 **canonical / og:url** 已改为新路径。
+- **静态资源**：**`labs/games/gomoku`**、**`labs/games/chess`** 的脚本与样式迁入各页 **`assets/`**；**`labs/citywalk`** 的 **`app.js`**、**`styles.css`** 迁至 **`assets/js/`**、**`assets/css/`**。
+
+### 文档
+- **`docs/README.md`**、**`docs/SITE-CONVENTIONS.md`**、**`labs/games/card-games/README.md`** 已随 **`labs/`** 约定更新。
+
 ## v1.9
 
 ### 结构调整
