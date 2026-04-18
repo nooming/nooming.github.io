@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>快速选择 - 在线随机选择工具</title>
-    <meta name="description" content="快速输入选项，立即获得随机选择结果，无需复杂设置，适合快速决策场景。">
+    <title>多选随机</title>
+    <meta name="description" content="每行一项，随机保留一项。">
 
     <link rel="apple-touch-icon" sizes="180x180" href="../../../assets/icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="../../../assets/icons/favicon-32x32.png">
@@ -157,7 +157,7 @@
         </div>
     </div>
     <div class="header-center-box">
-        <h1>快速选择</h1>
+        <h1>多选随机</h1>
     </div>
     <div class="header-right-box">
         <div class="header-right-content-box">
@@ -170,12 +170,12 @@
 </header>
 <main>
     <div class="quick-choice-container">
-        <h2 class="quick-choice-title">快速随机选择</h2>
+        <h2 class="quick-choice-title">随机一项</h2>
         
         <div class="input-section">
-            <label for="options-input">请输入选项（每行一个）：</label>
+            <label for="options-input">每行一项：</label>
             <textarea id="options-input" placeholder="选项1&#10;选项2&#10;选项3&#10;..."></textarea>
-            <div class="input-hint">每行输入一个选项，系统会随机选择一个结果</div>
+            <div class="input-hint">换行分隔；点击按钮随机保留一行。</div>
         </div>
 
         <div class="preset-section">
@@ -185,18 +185,18 @@
         </div>
 
         <div class="button-section">
-            <button class="choice-btn" id="choice-btn">开始选择</button>
+            <button class="choice-btn" id="choice-btn">随机</button>
         </div>
 
         <div class="result-section" id="result-section">
-            <div class="result-label">选择结果：</div>
+            <div class="result-label">结果</div>
             <p class="result-text" id="result-text"></p>
         </div>
     </div>
 </main>
 
 <footer>
-    <p>© 2025 个人学习网站 | 仅用于学习交流，请勿用于商业用途</p>
+    <p>© 2026 个人站点 · 非商用学习记录</p>
 </footer>
 
 <script>
@@ -209,9 +209,9 @@
         
         if (!inputValue) {
             if (typeof showToast === 'function') {
-                showToast('请输入至少一个选项！', 'error');
+                showToast('至少填写一项。', 'error');
             } else {
-                alert('请输入至少一个选项！');
+                alert('至少填写一项。');
             }
             return;
         }
@@ -223,9 +223,9 @@
         
         if (options.length === 0) {
             if (typeof showToast === 'function') {
-                showToast('请输入至少一个选项！', 'error');
+                showToast('至少填写一项。', 'error');
             } else {
-                alert('请输入至少一个选项！');
+                alert('至少填写一项。');
             }
             return;
         }

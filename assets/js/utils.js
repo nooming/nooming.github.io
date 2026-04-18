@@ -36,9 +36,9 @@ function showToast(message, type = 'info', duration = 2000) {
 /**
  * 复制文本到剪贴板
  * @param {string} text - 要复制的文本
- * @param {string} successMsg - 成功提示消息（默认: '复制成功！'）
+ * @param {string} successMsg - 成功提示消息（默认: '已复制'）
  */
-async function copyToClipboard(text, successMsg = '复制成功！') {
+async function copyToClipboard(text, successMsg = '已复制') {
     try {
         await navigator.clipboard.writeText(text);
         showToast(successMsg, 'success');
@@ -54,7 +54,7 @@ async function copyToClipboard(text, successMsg = '复制成功！') {
             document.execCommand('copy');
             showToast(successMsg, 'success');
         } catch (e) {
-            showToast('复制失败，请手动复制', 'error');
+            showToast('复制失败，请手动选择文本', 'error');
         }
         document.body.removeChild(textArea);
     }

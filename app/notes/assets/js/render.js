@@ -366,8 +366,8 @@ function renderEditor() {
         editor.className = 'editor empty';
         editor.innerHTML = `
             <div class="empty-editor">
-                <h2>选择一个页面开始</h2>
-                <p>从左侧选择一个页面，或创建新的页面</p>
+                <h2>未打开页面</h2>
+                <p>左侧选页或新建。</p>
             </div>
         `;
         canvas = null;

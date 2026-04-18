@@ -99,7 +99,7 @@
 
         // 地图加载失败处理
         function mapLoadError() {
-            showToast("高德地图加载失败，请刷新页面重试");
+            showToast("地图加载失败，请刷新");
         }
 
         // ========== 天气（获取 / 刷新 / 渲染） ==========
@@ -292,7 +292,7 @@
             const cityInput = document.getElementById('cityInput');
             const city = cityInput.value.trim();
             if (!city) {
-                showToast('请输入城市名称');
+                showToast('请填写城市名');
                 return;
             }
             quickSwitchCity(city);
@@ -301,7 +301,7 @@
         // 快速切换城市
         async function quickSwitchCity(city) {
             if (!city || !city.trim()) {
-                showToast('请输入有效的城市名称');
+                showToast('城市名无效');
                 return;
             }
             
@@ -316,7 +316,7 @@
             }
             
             // 未知城市，使用高德地理编码获取坐标
-            showToast(`正在定位 ${cityName}...`);
+            showToast(`定位中：${cityName}`);
             
             try {
                 const coords = await geocodeCity(cityName);
@@ -325,7 +325,7 @@
                     currentCityCenter = coords;
                     applyCitySwitch(currentCity, currentCityCenter);
                 } else {
-                    showToast(`无法定位城市：${cityName}，请检查城市名称`);
+                    showToast(`未找到城市：${cityName}`);
                 }
             } catch (e) {
                 console.error('城市定位失败：', e);
@@ -375,13 +375,13 @@
             // 重置路线选择
             resetSelection();
             
-            showToast(`已切换到：${cityName}`);
+            showToast(`已切换：${cityName}`);
         }
 
         // 初始化地图
         function initMap() {
             if (!window.AMap) {
-                showToast("高德地图加载失败，请检查网络或Key有效性");
+                showToast("地图加载失败，检查网络或 Key");
                 return;
             }
 
@@ -664,7 +664,7 @@
         // 生成路线
         function generateRoute() {
             if (!startPoint || !endPoint) {
-                showToast("请先选择起终点");
+                showToast("先选起终点");
                 return;
             }
 
@@ -672,7 +672,7 @@
             let planTime = parseInt(planTimeSlider.value, 10);
 
             if (isNaN(planTime) || planTime < 30 || planTime > 180) {
-                showToast("请设置30-180分钟的游玩时间");
+                showToast("计划时长须在 30–180 分钟");
                 return;
             }
 
@@ -719,7 +719,7 @@
             .then(data => {
                 hideLoadingSteps();
                 if (!data.success) {
-                    showToast(`路线规划失败：${data.message || '未知错误'}`);
+                    showToast(`规划失败：${data.message || '未知错误'}`);
                     return;
                 }
 
@@ -811,13 +811,13 @@
                 hideLoadingSteps();
                 let errorMsg = '';
                 if (error.name === 'AbortError') {
-                    errorMsg = "请求超时（2分钟），请检查后端服务是否运行或缩短路线距离";
+                    errorMsg = "请求超时：检查后端是否运行或缩短路线";
                 } else if (error.message.includes('timeout')) {
-                    errorMsg = "请求超时，请检查网络或后端服务是否运行";
+                    errorMsg = "请求超时，检查网络或后端";
                 } else if (error.message.includes('Failed to fetch')) {
-                    errorMsg = "无法连接到后端服务，请确认：1.后端已启动 2.地址端口正确 3.已配置跨域";
+                    errorMsg = "无法连接后端：确认服务已启动、地址端口与跨域";
                 } else if (error.message.includes('JSON')) {
-                    errorMsg = "后端返回数据格式错误，请检查接口返回值";
+                    errorMsg = "接口返回非预期 JSON";
                 } else {
                     errorMsg = `请求失败：${error.message}`;
                 }
@@ -830,7 +830,7 @@
         // 生成更贴心的文字方案
         function generatePlanText() {
             if (!routeData || !routeData.success) {
-                showToast("请先生成有效的路线规划！");
+                showToast("请先生成路线");
                 return;
             }
 
@@ -848,70 +848,58 @@
             const hour = now.getHours();
             let greeting = '';
             if (hour < 10) {
-                greeting = '早上好呀～';
+                greeting = '早上好';
             } else if (hour < 14) {
-                greeting = '中午好～';
+                greeting = '中午好';
             } else if (hour < 18) {
-                greeting = '下午好～';
+                greeting = '下午好';
             } else {
-                greeting = '晚上好～';
+                greeting = '晚上好';
             }
 
-            // 构建POI列表（优化排版，含距离提示）
             let poiText = '';
             if (poiCount > 0) {
-                poiText = '\n【今日推荐打卡点】\n';
+                poiText = '\n【打卡点】\n';
                 routeData.pois.forEach((poi, index) => {
                     const poiName = poi.name || '未知名称';
                     poiText += `${index + 1}. ${poiName}\n`;
                 });
             } else {
-                poiText = '\n【今日推荐打卡点】\n暂时没有推荐的打卡点哦，不妨随心走走，说不定会发现意外的美好～';
+                poiText = '\n【打卡点】\n暂无推荐点，可自由步行。\n';
             }
 
-            // 构建天气提示（更贴心）
-            let weatherTips = '\n【今日天气小贴士】\n';
+            let weatherTips = '\n【天气】\n';
             if (liveWeatherData && liveWeatherData.weather != null) {
                 const proxyHint = liveWeatherData.proxyNeighborName
                     ? `（${liveWeatherData.proxyNeighborName}市实况，供${currentCity}参考）`
                     : '';
-                weatherTips += `${proxyHint}今天${currentCity}${liveWeatherData.weather}，气温${liveWeatherData.temperature}℃，${liveWeatherData.windDirection}${liveWeatherData.windPower}级，湿度${liveWeatherData.humidity}%\n`;
+                weatherTips += `${proxyHint}${currentCity} ${liveWeatherData.weather}，${liveWeatherData.temperature}℃，${liveWeatherData.windDirection}风${liveWeatherData.windPower}级，湿度${liveWeatherData.humidity}%\n`;
 
-                // 更贴心的天气建议
                 const wx = String(liveWeatherData.weather);
+                const t = parseInt(liveWeatherData.temperature, 10);
                 if (wx.includes('雨')) {
-                    weatherTips += '温馨提示：今日有雨，记得带上小雨伞哦～路面可能湿滑，走路慢慢走，安全第一\n';
-                } else if (parseInt(liveWeatherData.temperature, 10) > 30) {
-                    weatherTips += '温馨提示：今日气温较高，做好防晒哦～记得随身带瓶水，补充水分\n';
-                } else if (parseInt(liveWeatherData.temperature, 10) < 10) {
-                    weatherTips += '温馨提示：今日气温较低，多穿点衣服哦～别着凉啦\n';
-                } else if (wx.includes('晴')) {
-                    weatherTips += '温馨提示：今日天气超棒！适合出门走走，记得带上好心情～\n';
+                    weatherTips += '有雨，注意路滑，建议带伞。\n';
+                } else if (t > 30) {
+                    weatherTips += '气温偏高，注意防晒与补水。\n';
+                } else if (t < 10) {
+                    weatherTips += '气温偏低，注意保暖。\n';
                 } else {
-                    weatherTips += '温馨提示：今日天气舒适，适合 Citywalk，享受慢时光～\n';
+                    weatherTips += '体感尚可，适合步行。\n';
                 }
             } else {
-                weatherTips += '暂时无法获取实时天气，出门前记得看下天气预报哦～\n';
+                weatherTips += '暂无实时天气，出门前请自行查看预报。\n';
             }
 
-            // 生成更暖心的完整方案（优化整体排版）
-            const planText = `${greeting} 这份专属你的${currentCity} Citywalk 攻略来啦～
+            const planText = `${greeting}。${currentCity} 步行方案
 
-【游玩主题】：${poiType}
-【计划时长】：${planTime} 分钟
-【路线总长】：${distance} 公里
-【预计耗时】：${duration} 分钟
+【主题】${poiType}
+【计划时长】${planTime} 分钟
+【路线长度】${distance} 公里
+【预计总耗时】${duration} 分钟
 ${weatherTips}
 ${poiText}
 
-【暖心小建议】：
-1. 建议按照序号顺序游玩，每个打卡点慢慢逛，不用赶时间～
-2. 走路累了可以找家小店歇歇脚，喝杯咖啡或奶茶
-3. 记得多拍点美美的照片，记录美好的瞬间～
-4. 注意随身物品安全，开开心心出门，平平安安回家～
-5. 如果走累了，随时可以调整路线，游玩最重要的是开心呀
-
-愿你在${currentCity}的街头，遇见美好，收获满满的快乐～`;
+【备注】按序号游览；可随时改路线。`;
 
             // 使用自定义弹窗展示长文案（避免原生 alert 截断）
             showCustomModal(planText);
@@ -920,7 +908,7 @@ ${poiText}
             try {
                 if (navigator.clipboard && window.isSecureContext) {
                     navigator.clipboard.writeText(planText).then(() => {
-                        showToast("游玩方案已复制到剪贴板啦～");
+                        showToast("文字方案已复制");
                     }).catch(err => {
                         throw err;
                     });
@@ -932,27 +920,27 @@ ${poiText}
                     textArea.select();
                     document.execCommand('copy');
                     document.body.removeChild(textArea);
-                    showToast("游玩方案已复制到剪贴板啦～");
+                    showToast("文字方案已复制");
                 }
             } catch (err) {
                 console.error('复制失败：', err);
-                showToast("复制失败啦，可以手动复制弹窗里的内容哦～");
+                showToast("复制失败，请手动复制弹窗内文字");
             }
         }
 
 // 生成分享长图（使用浏览器原生截图API截取地图）
 async function generateShareImage() {
     if (!routeData || !routeData.success) {
-        showToast("请先生成有效的路线规划！");
+        showToast("请先生成路线");
         return;
     }
 
-    showToast("正在截取地图，请稍候...");
+    showToast("截屏中…");
 
     // ========== 第一步：使用屏幕共享API截取地图 ==========
     let mapImageUrl = null;
     try {
-        showToast("请选择要分享的地图区域...");
+        showToast("请选择要导出的地图区域");
         
         // 请求屏幕共享
         const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -963,7 +951,7 @@ async function generateShareImage() {
             audio: false
         });
         
-        showToast("正在截取地图...");
+        showToast("截屏中…");
         
         // 创建视频元素捕获画面
         const video = document.createElement('video');
@@ -989,13 +977,13 @@ async function generateShareImage() {
         
         // 转换为图片URL
         mapImageUrl = canvas.toDataURL('image/png', 0.9);
-        showToast("地图截取成功，正在合成长图...");
+        showToast("截屏完成，合成中…");
     } catch (e) {
         console.warn('屏幕共享取消或失败:', e);
         if (e.name === 'NotAllowedError') {
-            showToast("已取消屏幕共享，使用默认背景...");
+            showToast("已取消共享，使用默认背景");
         } else {
-            showToast("截图失败，使用默认背景...");
+            showToast("截图失败，使用默认背景");
         }
     }
 
@@ -1201,14 +1189,14 @@ async function generateShareImage() {
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
             
-            showToast("精美长图已生成，快去分享吧！");
+            showToast("长图已生成");
         }, 'image/png', 0.95);
         
         document.body.removeChild(shareCard);
     } catch (err) {
         console.error('生成图片失败:', err);
         document.body.removeChild(shareCard);
-        showToast("生成图片失败，请重试");
+        showToast("导出图片失败，请重试");
     }
 }
 
@@ -1316,11 +1304,11 @@ function showCustomModal(content) {
         // 搜索地址（使用PlaceSearch支持模糊搜索）
         function searchAddress(keyword) {
             if (!window.AMap) {
-                showToast("地图未加载，请稍后重试");
+                showToast("地图未就绪");
                 return;
             }
 
-            showToast(`正在搜索「${keyword}」...`);
+            showToast(`搜索中：${keyword}`);
 
             // 先尝试使用 PlaceSearch 进行POI搜索（支持模糊匹配）
             AMap.plugin('AMap.PlaceSearch', function() {
@@ -1359,7 +1347,7 @@ function showCustomModal(content) {
                         });
                         infoWindow.open(map, [poi.location.lng, poi.location.lat]);
                         
-                        showToast(`已找到「${poi.name}」，点击地图选择为起点或终点`);
+                        showToast(`已找到「${poi.name}」，请在地图选起终点`);
                         
                         // 3秒后清除标记和信息窗
                         setTimeout(() => {
@@ -1397,14 +1385,14 @@ function showCustomModal(content) {
                         map.setCenter([location.lng, location.lat]);
                         map.setZoom(17);
                         
-                        showToast("已定位，请点击地图选择为起点或终点");
+                        showToast("已定位，请在地图选起终点");
                         
                         // 3秒后清除标记
                         setTimeout(() => {
                             map.remove(marker);
                         }, 3000);
                     } else {
-                        showToast("未找到相关地点，请尝试其他关键词如：南京路、外滩、陆家嘴");
+                        showToast("未找到地点，请换关键词");
                     }
                 });
             });

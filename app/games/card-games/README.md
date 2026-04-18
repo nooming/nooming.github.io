@@ -7,4 +7,4 @@
 
 共享样式与脚本放在 **`assets/`**（含 `game-layout.css`、各游戏逻辑与 `assets/common/` 下的共用模块）。子目录内页面通过 **`../assets/...`** 引用。
 
-全站目录约定见 **`docs/SITE-CONVENTIONS.md`** 与 **`docs/README.md`** 中的「前端目录约定」。
+全站目录约定见 **`docs/README.md`** 中的「项目结构」与「前端目录约定」。

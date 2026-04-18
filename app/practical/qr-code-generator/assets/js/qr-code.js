@@ -45,9 +45,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (decodeCopyBtn && decodeResult) {
         decodeCopyBtn.addEventListener('click', function() {
             const text = decodeResult.textContent.trim();
-            if (!text || text === '——' || text === '识别中，请稍候...') return;
+            if (!text || text === '——' || text === '识别中…') return;
             // 使用公共工具函数复制
-            copyToClipboard(text, '识别结果已复制到剪贴板');
+            copyToClipboard(text, '已复制');
         });
     }
     
@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // 校验空输入
         if (!text) {
-            showError('请输入要生成二维码的内容！');
+            showError('请填写要生成的内容。');
             qrCode.innerHTML = '';
             qrCode.parentElement.classList.remove('has-qrcode');
             qrPlaceholder.style.display = 'block';
@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 图片加载失败
         img.onerror = function() {
-            showError('生成二维码失败，请检查网络连接或稍后重试！');
+            showError('生成失败，请检查网络后重试。');
             qrCode.innerHTML = '';
             qrCode.parentElement.classList.remove('has-qrcode');
             qrPlaceholder.style.display = 'block';
@@ -146,18 +146,18 @@ document.addEventListener('DOMContentLoaded', function() {
     function decodeQRCodeImage() {
         const file = decodeFileInput && decodeFileInput.files ? decodeFileInput.files[0] : null;
         if (!file) {
-            showDecodeError('请选择要识别的二维码图片！');
+            showDecodeError('请选择二维码图片。');
             return;
         }
 
         // 仅简单限制一下大小（例如 5MB），避免过大文件
         if (file.size > 5 * 1024 * 1024) {
-            showDecodeError('图片过大，请选择 5MB 以内的图片。');
+            showDecodeError('图片请小于 5MB。');
             return;
         }
 
         hideDecodeError();
-        decodeResult.textContent = '识别中，请稍候...';
+        decodeResult.textContent = '识别中…';
 
         const formData = new FormData();
         formData.append('file', file);
@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     const symbol = data[0].symbol[0];
                     if (symbol.error || !symbol.data) {
-                        showDecodeError('未能识别出二维码内容，请更换图片重试。');
+                        showDecodeError('未识别到内容，请换图重试。');
                         decodeResult.textContent = '——';
                         return;
                     }
@@ -184,7 +184,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         decodeCopyBtn.disabled = false;
                     }
                 } catch (e) {
-                    showDecodeError('解析返回结果失败，请稍后重试。');
+                    showDecodeError('解析结果失败，请稍后重试。');
                     decodeResult.textContent = '——';
                     if (decodeCopyBtn) {
                         decodeCopyBtn.disabled = true;
@@ -192,7 +192,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(() => {
-                showDecodeError('识别失败，可能是网络问题或接口不可用。');
+                showDecodeError('识别失败，可能为网络或接口不可用。');
                 decodeResult.textContent = '——';
                 if (decodeCopyBtn) {
                     decodeCopyBtn.disabled = true;

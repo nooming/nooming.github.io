@@ -119,7 +119,7 @@ function tutor(step) {
             $('.uno-btns-down').html(`${getButton('primary disabled', `出牌`, ``, 'arrow-up')}`)
             break
         case 5:
-            $('.tutor').html('<h3>③ 摸牌</h3><p>摸到的牌可以立即出手。</p>')
+            $('.tutor').html('<h3>③ 摸牌</h3><p>摸到的牌本回合可打出。</p>')
             cur.left = { 0: 7, 1: 6, 2: 6 }
             cur.cards[0] = ["G-", "R-", "R8", "R5", "R9", "RR", "Y9", "B+"]
             for (let i = 0; i < out.length; i++) {

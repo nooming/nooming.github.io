@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <meta name="description" content="一款免费的在线转盘，让选择变得简单又有趣。无论是随机点名、抽奖活动，还是日常的小决定，都能帮你快速做出公平选择。">
+    <meta name="description" content="可编辑项的随机转盘；预设与历史。">
     <meta name="keywords" content="在线转盘,随机选择,抽奖工具,选择困难症,决策工具">
     
-    <title>在线转盘 - 免费随机选择工具</title>
+    <title>转盘</title>
 
     <link rel="apple-touch-icon" sizes="180x180" href="../../../assets/icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="../../../assets/icons/favicon-32x32.png">
@@ -71,13 +71,13 @@
         </div>
     </div>
     <div class="header-center-box">
-        <h1>在线转盘</h1>
+        <h1>转盘</h1>
     </div>
     <div class="header-right-box">
         <div class="header-right-content-box">
             <nav class="nav-links">
                 <a href="../coin-flip/">抛硬币</a>
-                <a href="../quick-choice/">快速选择</a>
+                <a href="../quick-choice/">多选随机</a>
             </nav>
         </div>
     </div>
@@ -107,10 +107,10 @@
                             </div>
                         </div>
                         <div class="wheel-panel-operate-right-box">
-                            <div class="wheel-panel-operate-change-box" onclick="switchToChangeMode()" aria-label="切换模式" title="切换模式：在简单模式和高级模式之间切换">
-                                <span style="font-size: 0.75rem; display: block; margin-top: 2px; color: #7f8c8d;">切换模式</span>
+                            <div class="wheel-panel-operate-change-box" onclick="switchToChangeMode()" aria-label="切换模式" title="简单 / 高级">
+                                <span style="font-size: 0.75rem; display: block; margin-top: 2px; color: #7f8c8d;">模式</span>
                             </div>
-                            <div class="wheel-panel-operate-preset-box" aria-label="预设管理" title="预设管理：保存和加载常用选项组合">
+                            <div class="wheel-panel-operate-preset-box" aria-label="预设" title="保存与加载选项组合">
                                 <span style="font-size: 0.75rem; display: block; margin-top: 2px; color: #7f8c8d;">预设</span>
                                 <div class="wheel-preset-box">
                                     <div class="wheel-preset-text-box">
@@ -210,13 +210,13 @@
 </main>
 
 <footer>
-    <p>© 2025 个人学习网站 | 仅用于学习交流，请勿用于商业用途</p>
+    <p>© 2026 个人站点 · 非商用学习记录</p>
 </footer>
 
 <div class="lucky-modal hidden" id="luckySuccessModal">
     <div class="lucky-modal-content">
-        <h2>恭喜</h2>
-        <p id="luckyPrizeText">你获得了奖品</p>
+        <h2>结果</h2>
+        <p id="luckyPrizeText">—</p>
         <button onclick="closeLuckyModal()" aria-label="关闭结果显示">关闭</button>
     </div>
 </div>

@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // 校验空输入
         if (!number) {
-            showError('请输入要转换的数字！');
+            showError('请填写要转换的数字。');
             return;
         }
 
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error('格式错误');
             }
         } catch (err) {
-            showError('输入格式错误，请检查对应进制的规则！');
+            showError('格式与当前进制不符。');
             return;
         }
 

@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // 校验空输入
         if (!text) {
-            showEncodeError('请输入要编码的文本！');
+            showEncodeError('请填写要编码的文本。');
             return;
         }
 
@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
             hideEncodeError();
             encodeResult.textContent = base64;
         } catch (err) {
-            showEncodeError('编码失败，请检查输入内容！');
+            showEncodeError('编码失败，请检查输入。');
             encodeResult.textContent = '——';
         }
     }
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // 校验空输入
         if (!base64Text) {
-            showDecodeError('请输入要解码的 Base64 字符串！');
+            showDecodeError('请填写 Base64 字符串。');
             return;
         }
 
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const cleanBase64 = base64Text.replace(/\s/g, '');
         const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
         if (!base64Regex.test(cleanBase64)) {
-            showDecodeError('输入格式错误，Base64 字符串只能包含 A-Z、a-z、0-9、+、/ 和 = 字符！');
+            showDecodeError('格式错误：仅允许 A–Z、a–z、0–9、+、/、=。');
             decodeResult.textContent = '——';
             return;
         }
@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function() {
             hideDecodeError();
             decodeResult.textContent = decoded;
         } catch (err) {
-            showDecodeError('解码失败，请检查 Base64 字符串是否正确！');
+            showDecodeError('解码失败，请核对 Base64。');
             decodeResult.textContent = '——';
         }
     }
