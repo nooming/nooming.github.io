@@ -287,253 +287,116 @@ h1 {
     min-width: 260px;
 }
 
-/* 网址导航区域 - 更醒目的设计（偏冷色） */
-.navigation-banner {
-    background: linear-gradient(135deg, var(--color-theme) 0%, var(--color-theme-deep) 45%, #f5a623 100%);
-    border-radius: 16px;
-    padding: 28px 25px;
-    text-align: center;
-    border: 1px solid var(--line-ins);
-    box-shadow: var(--shadow-ins);
-    transition: all 0.4s ease;
-    position: relative;
-    overflow: hidden;
-}
-        
-.navigation-banner::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-    animation: pulse 3s ease-in-out infinite;
-    pointer-events: none;
-}
-        
-@keyframes pulse {
-    0%, 100% { transform: scale(1); opacity: 0.5; }
-    50% { transform: scale(1.1); opacity: 0.8; }
-}
-        
-.navigation-banner:hover {
-    transform: translateY(-6px) scale(1.02);
-    box-shadow: 0 20px 60px rgba(212, 200, 0, 0.55);
-}
-        
-.navigation-title {
-    color: var(--color-theme-ink);
-    font-size: 1.75rem;
-    font-weight: 800;
-    margin-bottom: 12px;
-    text-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    position: relative;
-    z-index: 1;
-}
-        
-.navigation-desc {
-    color: rgba(26, 29, 34, 0.92);
-    font-size: 1.05rem;
-    margin-bottom: 20px;
-    line-height: 1.5;
-    position: relative;
-    z-index: 1;
-}
-        
-.navigation-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 14px 35px;
-    background-color: var(--color-card);
-    color: var(--color-theme-text-end) !important;
-    border-radius: 50px;
-    font-size: 1.05rem;
-    font-weight: 700;
-    text-decoration: none !important;
-    transition: all 0.3s ease;
-    box-shadow: 0 6px 25px rgba(0,0,0,0.3);
-    position: relative;
-    z-index: 1;
-}
-        
-.navigation-btn::after {
-    content: '→';
-    font-size: 1.3rem;
-    transition: transform 0.3s ease;
-}
-        
-.navigation-btn:hover {
-    transform: scale(1.08) translateY(-3px);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
-    background-color: #f8f9fa;
-}
-        
-.navigation-btn:hover::after {
-    transform: translateX(6px);
-}
-        
-/* 笔记功能区域 - 醒目的设计（偏暖色） */
-.notes-banner {
-    background: linear-gradient(135deg, var(--color-theme) 0%, #ffb347 40%, #f5576c 85%);
-    border-radius: 16px;
-    padding: 28px 25px;
-    text-align: center;
-    border: 1px solid var(--line-ins);
-    box-shadow: var(--shadow-ins);
-    transition: all 0.4s ease;
-    position: relative;
-    overflow: hidden;
-}
-        
-.notes-banner::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-    animation: pulse 3s ease-in-out infinite;
-    pointer-events: none;
-}
-        
-.notes-banner:hover {
-    transform: translateY(-6px) scale(1.02);
-    box-shadow: 0 20px 60px rgba(245, 150, 80, 0.5);
-}
-        
-.notes-title {
-    color: var(--color-theme-ink);
-    font-size: 1.75rem;
-    font-weight: 800;
-    margin-bottom: 12px;
-    text-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    position: relative;
-    z-index: 1;
-}
-        
-.notes-desc {
-    color: rgba(26, 29, 34, 0.92);
-    font-size: 1.05rem;
-    margin-bottom: 20px;
-    line-height: 1.5;
-    position: relative;
-    z-index: 1;
-}
-        
-.notes-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 14px 35px;
-    background-color: var(--color-card);
-    color: #b83226 !important;
-    border-radius: 50px;
-    font-size: 1.05rem;
-    font-weight: 700;
-    text-decoration: none !important;
-    transition: all 0.3s ease;
-    box-shadow: 0 6px 25px rgba(0,0,0,0.3);
-    position: relative;
-    z-index: 1;
-}
-        
-.notes-btn::after {
-    content: '→';
-    font-size: 1.3rem;
-    transition: transform 0.3s ease;
-}
-        
-.notes-btn:hover {
-    transform: scale(1.08) translateY(-3px);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
-    background-color: #f8f9fa;
-}
-        
-.notes-btn:hover::after {
-    transform: translateX(6px);
-}
-
-/* Citywalk 区域 - 独立配色（偏绿蓝色） */
+/* 顶部三张横幅：灰底、白字、黑按钮；#FFFA00 顶条悬停延展（同专题卡片） */
+.navigation-banner,
+.notes-banner,
 .citywalk-banner {
-    background: linear-gradient(135deg, var(--color-theme) 0%, #38f9d7 50%, #00a8cc 100%);
+    background: linear-gradient(165deg, #6d6f7a 0%, #5e606a 45%, #53555e 100%);
     border-radius: 16px;
     padding: 28px 25px;
     text-align: center;
-    border: 1px solid var(--line-ins);
-    box-shadow: var(--shadow-ins);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
     transition: all 0.4s ease;
     position: relative;
     overflow: hidden;
 }
 
+/* 顶条 #FFFA00：与专题卡片顶条一致，悬停时横向延展 */
+.navigation-banner::before,
+.notes-banner::before,
 .citywalk-banner::before {
     content: '';
     position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%);
-    animation: pulse 3s ease-in-out infinite;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #FFFA00;
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 0.4s ease;
     pointer-events: none;
+    z-index: 2;
 }
 
+.navigation-banner:hover::before,
+.notes-banner:hover::before,
+.citywalk-banner:hover::before {
+    transform: scaleX(1);
+}
+
+.navigation-banner:hover,
+.notes-banner:hover,
 .citywalk-banner:hover {
     transform: translateY(-6px) scale(1.02);
-    box-shadow: 0 20px 60px rgba(0, 168, 204, 0.45);
+    box-shadow:
+        0 16px 36px rgba(0, 0, 0, 0.22),
+        0 0 0 1px rgba(255, 255, 255, 0.28);
 }
 
+.navigation-title,
+.notes-title,
 .citywalk-title {
-    color: var(--color-theme-ink);
+    color: #ffffff;
     font-size: 1.75rem;
     font-weight: 800;
     margin-bottom: 12px;
-    text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
     position: relative;
     z-index: 1;
 }
 
+.navigation-desc,
+.notes-desc,
 .citywalk-desc {
-    color: rgba(26, 29, 34, 0.92);
+    color: rgba(255, 255, 255, 0.92);
     font-size: 1.05rem;
     margin-bottom: 20px;
-    line-height: 1.5;
+    line-height: 1.55;
     position: relative;
     z-index: 1;
 }
 
+.navigation-btn,
+.notes-btn,
 .citywalk-btn {
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    padding: 14px 35px;
-    background-color: var(--color-card);
-    color: #0d6e73 !important;
+    padding: 13px 34px;
+    background-color: #0f0f0f;
+    color: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.4);
     border-radius: 50px;
     font-size: 1.05rem;
     font-weight: 700;
     text-decoration: none !important;
     transition: all 0.3s ease;
-    box-shadow: 0 6px 25px rgba(0,0,0,0.3);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.28);
     position: relative;
     z-index: 1;
 }
 
+.navigation-btn::after,
+.notes-btn::after,
 .citywalk-btn::after {
     content: '→';
     font-size: 1.3rem;
     transition: transform 0.3s ease;
 }
 
+.navigation-btn:hover,
+.notes-btn:hover,
 .citywalk-btn:hover {
-    transform: scale(1.08) translateY(-3px);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
-    background-color: #f8f9fa;
+    transform: scale(1.06) translateY(-3px);
+    background-color: #1a1a1a;
+    border-color: rgba(0, 0, 0, 0.5);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.32);
 }
 
+.navigation-btn:hover::after,
+.notes-btn:hover::after,
 .citywalk-btn:hover::after {
     transform: translateX(6px);
 }
@@ -684,14 +547,6 @@ h1 {
     .citywalk-banner {
         padding: 20px 16px;
         overflow: visible;
-    }
-
-    .navigation-banner::before,
-    .notes-banner::before,
-    .citywalk-banner::before {
-        left: 0;
-        right: 0;
-        width: 100%;
     }
 
     .navigation-title,
