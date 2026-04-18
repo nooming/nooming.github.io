@@ -100,10 +100,14 @@ body.proton-page.page-container {
     margin-left: 10px;
 }
 
+/* 相对文档流占位，避免与全站 .page-header 在视口顶部重叠（原先 absolute+top:0 相对视口） */
 .sim-root {
-    position: absolute;
-    top: 0;
+    position: relative;
+    top: auto;
+    left: auto;
     min-width: 800px;
+    min-height: 720px;
+    box-sizing: border-box;
 }
 
 .sim-root .arrow-hint {
@@ -277,7 +281,22 @@ body.proton-page.page-container {
 }
 
 .help-block {
-    margin-top: 600px;
+    margin-top: 28px;
+    margin-bottom: 0;
+    padding: 25px;
+    background: var(--color-card);
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    box-shadow: var(--shadow-card-float);
+    color: var(--color-body);
+}
+
+.help-block h3 {
+    color: var(--gradient-theme-title);
+    margin-top: 0;
+}
+
+body.proton-page.page-container > footer {
+    margin-top: 40px;
 }
 
 .help-block .note-tight {

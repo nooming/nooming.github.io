@@ -5,6 +5,40 @@
     padding: 0;
 }
 
+/* 宽内容横向滚动收在 main 内；底部留白与全站页脚衔接 */
+body.decision-tool-page.page-container .decision-tool-main {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 28px;
+}
+
+body.decision-tool-page.page-container > footer {
+    margin-top: 8px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    clear: both;
+}
+
+body.decision-tool-page.page-container > footer p {
+    max-width: 100%;
+    padding-inline: 12px;
+    box-sizing: border-box;
+    overflow-wrap: break-word;
+}
+
+@media (max-width: 767.98px) {
+    body.decision-tool-page.page-container .decision-tool-main {
+        padding-bottom: 20px;
+    }
+}
+
+/* 转盘区域横向不溢出容器（不再用 !important 覆盖 spin.min 的宽高与 aspect-ratio） */
+body.decision-tool-page .decision-tool-main .wheel-scope-box {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
 /* 多选随机：主卡片内层不再重复浮岛阴影 */
 .quick-choice-page .quick-choice-container {
     background: transparent;
