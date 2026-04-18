@@ -677,12 +677,13 @@ body {
     min-width: 56px;
     width: 56px;
     box-sizing: border-box;
+    border-radius: 10px !important;
 }
 
 .size-preview-dot {
     display: inline-block;
     background-color: #000000;
-    border-radius: 0;
+    border-radius: 50% !important;
     flex-shrink: 0;
 }
 
@@ -693,7 +694,7 @@ body {
     margin-top: 12px;
     background: white;
     border: 1px solid rgba(0, 0, 0, 0.08);
-    border-radius: 0;
+    border-radius: 12px !important;
     padding: 12px;
     display: none;
     flex-wrap: wrap;
@@ -713,7 +714,7 @@ body {
     height: 40px;
     padding: 0;
     border: 2px solid rgba(0, 0, 0, 0.1);
-    border-radius: 0;
+    border-radius: 10px !important;
     background: white;
     cursor: pointer;
     display: flex;
@@ -738,7 +739,7 @@ body {
 .size-dot {
     display: inline-block;
     background-color: #000000;
-    border-radius: 0;
+    border-radius: 50% !important;
     flex-shrink: 0;
 }
 
@@ -987,7 +988,7 @@ body {
     position: absolute;
     width: 10px;
     height: 10px;
-    border-radius: 0;
+    border-radius: 50% !important;
     background-color: white;
     border: 1px solid black;
     pointer-events: none;
