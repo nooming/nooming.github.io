@@ -13,40 +13,6 @@ body.card-game-page.page-container {
     color: #999;
 }
 
-.nav-back-site {
-    display: inline-flex;
-    align-items: center;
-    padding: 7px 14px;
-    border-radius: 0;
-    font-size: 0.9rem;
-    font-weight: 600;
-    text-decoration: none !important;
-    flex-shrink: 0;
-    background: var(--gradient-theme);
-    color: var(--color-theme-ink) !important;
-    box-shadow: var(--shadow-theme);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.nav-back-site:hover {
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-theme-hover);
-}
-
-.nav-back-site--muted {
-    background: linear-gradient(135deg, #1a1a1a 0%, var(--color-theme-secondary) 100%);
-    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.35);
-    color: #fff !important;
-}
-
-.nav-back-site--muted:hover {
-    box-shadow: 0 4px 12px rgba(44, 62, 80, 0.45);
-}
-
-.card-game-page .page-header .header-top .nav-back-site {
-    margin-bottom: 0;
-}
-
 .nopadding {
     padding-left: 0;
     padding-right: 0;

@@ -36,37 +36,6 @@ body.proton-page.page-container {
     }
 }
 
-.back-to-games {
-    display: inline-flex;
-    align-items: center;
-    padding: 9px 18px;
-    border-radius: 0;
-    font-size: 0.95rem;
-    font-weight: 600;
-    text-decoration: none !important;
-    vertical-align: middle;
-    background: var(--gradient-theme);
-    color: var(--color-theme-ink) !important;
-    box-shadow: var(--shadow-theme);
-    margin-right: 0;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.back-to-games:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-theme-hover);
-    background: var(--gradient-theme-reverse);
-}
-
-.back-to-site {
-    background: linear-gradient(135deg, #1a1a1a 0%, var(--color-theme-secondary) 100%);
-    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.35);
-}
-
-.back-to-site:hover {
-    box-shadow: 0 4px 12px rgba(44, 62, 80, 0.45);
-}
-
 .grey {
     color: #999;
     font-weight: normal !important;

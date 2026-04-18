@@ -463,12 +463,17 @@ footer {
 }
 
 @media (max-width: 767.98px) {
+    /* 顶栏：返回上一级 + 返回主页 并排，避免纵向堆叠占高 */
     .page-header .header-top {
-        flex-direction: column;
-        align-items: stretch;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
     }
 
     .page-header .header-top .app-subnav {
+        flex: 1 1 100%;
         margin: 10px 0 0 0;
         justify-content: flex-start;
     }
