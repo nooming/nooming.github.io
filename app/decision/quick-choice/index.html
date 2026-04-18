@@ -22,11 +22,6 @@
         .quick-choice-container {
             max-width: 800px;
             margin: 0 auto;
-            padding: 30px;
-            background: white;
-            border-radius: 0;
-            margin-top: 0 !important;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
         .quick-choice-title {
             font-size: 1.5rem;
@@ -133,44 +128,28 @@
         }
 
         @media (max-width: 767.98px) {
-            .quick-choice-container {
-                padding: 20px 15px !important;
-                margin: 0 auto !important;
-            }
-
             .quick-choice-title {
                 font-size: 1.2rem !important;
             }
         }
-
-        @media (max-width: 480px) {
-            .quick-choice-container {
-                padding: 15px 10px !important;
-            }
-        }
     </style>
 </head>
-<body class="decision-tool-page quick-choice-page">
-<header>
-    <div class="header-left-box">
-        <div class="header-left-content-box">
-            <a href="../">返回上一级</a>
-        </div>
-    </div>
-    <div class="header-center-box">
-        <h1>多选随机</h1>
-    </div>
-    <div class="header-right-box">
-        <div class="header-right-content-box">
-            <nav class="nav-links">
+<body class="page-container quick-choice-page">
+    <div class="page-header">
+        <div class="header-top">
+            <a href="../" class="back-btn">返回上一级</a>
+            <nav class="app-subnav" aria-label="决策工具">
                 <a href="../wheel/">转盘</a>
                 <a href="../coin-flip/">抛硬币</a>
             </nav>
         </div>
+        <div class="section-header section-header--page">
+            <h1>多选随机</h1>
+            <p>每行一项，随机保留一项。<a href="../" class="home-hub-link">决策工具</a></p>
+        </div>
     </div>
-</header>
-<p class="decision-hub-lead">转盘、抛硬币与多选随机。<a href="../" class="home-hub-link">决策工具</a></p>
-<main>
+<main class="decision-tool-main">
+    <div class="app-panel">
     <div class="quick-choice-container">
         <h2 class="quick-choice-title">随机一项</h2>
         
@@ -195,11 +174,12 @@
             <p class="result-text" id="result-text"></p>
         </div>
     </div>
+    </div>
 </main>
 
-<footer>
-    <p>© 2026 个人站点 · 非商用学习记录</p>
-</footer>
+    <footer>
+        <p>© 2026 个人站点 · 非商用学习记录</p>
+    </footer>
 
 <script>
     function makeChoice() {

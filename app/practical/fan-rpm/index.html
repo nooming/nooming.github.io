@@ -15,52 +15,40 @@
   <link rel="shortcut icon" href="../../../assets/icons/favicon.ico" />
 
   <link rel="stylesheet" href="../../../assets/css/common.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
 
   <style>
     .fan-rpm-shell {
-      --bg: #0a0e14;
-      --surface: #121820;
-      --text: #e8edf4;
-      --muted: #7d8a9a;
-      --accent: #3dd6c6;
-      --accent-dim: rgba(61, 214, 198, 0.15);
-      --danger: #ff6b6b;
-      --radius: 14px;
-      --font: "DM Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
       box-sizing: border-box;
       max-width: 520px;
       margin: 0 auto;
-      padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
-        max(20px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font);
-      border-radius: 0;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+      padding: max(4px, env(safe-area-inset-top)) 0 max(8px, env(safe-area-inset-bottom)) 0;
+      color: var(--color-body);
+      font-family: inherit;
       -webkit-tap-highlight-color: transparent;
     }
     .fan-rpm-shell * { box-sizing: border-box; }
     .fan-rpm-shell .sub {
       font-size: 0.85rem;
-      color: var(--muted);
+      color: #666666;
       line-height: 1.45;
       margin: 0 0 16px;
     }
+    .fan-rpm-shell .sub strong {
+      color: var(--gradient-theme-title);
+    }
     .fan-rpm-shell .stage {
       position: relative;
-      background: #000;
+      background: #000000;
       border-radius: 0;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      box-shadow: var(--shadow-ins);
     }
     .fan-rpm-shell .stage-viewport {
       position: relative;
       aspect-ratio: 4 / 3;
       overflow: hidden;
       border-radius: 0;
-      background: #000;
+      background: #000000;
     }
     .fan-rpm-shell .stage-caption {
       margin: 10px 4px 0;
@@ -68,8 +56,7 @@
       text-align: center;
       font-size: 11px;
       line-height: 1.45;
-      color: var(--accent);
-      text-shadow: 0 1px 2px #000;
+      color: #555555;
       word-break: break-word;
     }
     .fan-rpm-shell video {
@@ -102,8 +89,8 @@
     .fan-rpm-shell .ref-marker::after {
       content: "";
       position: absolute;
-      background: var(--accent);
-      box-shadow: 0 0 4px #000;
+      background: #ff4444;
+      box-shadow: 0 0 3px rgba(0, 0, 0, 0.6);
     }
     .fan-rpm-shell .ref-marker::before {
       left: 50%;
@@ -121,9 +108,9 @@
     }
     .fan-rpm-shell .ref-patch-ring {
       position: absolute;
-      border: 1px solid rgba(61, 214, 198, 0.75);
+      border: 2px solid rgba(255, 250, 0, 0.9);
       border-radius: 0;
-      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35) inset;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4) inset;
       pointer-events: none;
       transform: translate(-50%, -50%);
       z-index: 2;
@@ -131,9 +118,9 @@
     .fan-rpm-shell .panel {
       margin-top: 18px;
       padding: 16px;
-      background: var(--surface);
+      background: #fafafa;
       border-radius: 0;
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(0, 0, 0, 0.08);
     }
     .fan-rpm-shell .row {
       display: flex;
@@ -143,43 +130,44 @@
       margin-bottom: 14px;
     }
     .fan-rpm-shell .row:last-child { margin-bottom: 0; }
-    .fan-rpm-shell label { font-size: 0.9rem; color: var(--muted); }
+    .fan-rpm-shell label { font-size: 0.9rem; color: var(--gradient-theme-title); font-weight: 500; }
     .fan-rpm-shell input[type="range"] {
       flex: 1;
-      accent-color: var(--accent);
+      accent-color: var(--color-theme-deep);
     }
     .fan-rpm-shell .value {
       min-width: 2.5rem;
       text-align: right;
       font-variant-numeric: tabular-nums;
       font-weight: 600;
-      color: var(--accent);
+      color: var(--color-theme-secondary);
     }
     .fan-rpm-shell .readout {
       text-align: center;
       padding: 20px 12px;
-      background: var(--accent-dim);
+      background: rgba(255, 250, 0, 0.22);
       border-radius: 0;
       margin-bottom: 14px;
+      border: 1px solid rgba(0, 0, 0, 0.06);
     }
     .fan-rpm-shell .readout .rpm-num {
       font-size: 2.4rem;
       font-weight: 700;
       letter-spacing: -0.03em;
       line-height: 1.1;
+      color: var(--gradient-theme-title);
     }
-    .fan-rpm-shell .readout .unit { font-size: 1rem; font-weight: 500; color: var(--muted); margin-left: 4px; }
+    .fan-rpm-shell .readout .unit { font-size: 1rem; font-weight: 500; color: #666666; margin-left: 4px; }
     .fan-rpm-shell .readout .meta {
       margin-top: 8px;
       font-size: 0.8rem;
-      color: var(--muted);
+      color: #666666;
       line-height: 1.45;
     }
     .fan-rpm-shell .readout .meta-secondary {
       margin-top: 4px;
       font-size: 0.72rem;
-      color: var(--muted);
-      opacity: 0.92;
+      color: #888888;
     }
     .fan-rpm-shell .btn {
       width: 100%;
@@ -189,28 +177,39 @@
       font-size: 1rem;
       font-weight: 600;
       cursor: pointer;
-      background: linear-gradient(145deg, #2ebfaf, var(--accent));
-      color: #041210;
+      background: var(--gradient-theme);
+      color: var(--color-theme-ink);
       margin-bottom: 10px;
+      box-shadow: var(--shadow-theme);
+      transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .fan-rpm-shell .btn:hover:not(:disabled) {
+      background: var(--gradient-theme-reverse);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-theme-hover);
     }
     .fan-rpm-shell .btn:disabled { opacity: 0.45; cursor: not-allowed; }
     .fan-rpm-shell .btn.secondary {
-      background: var(--surface);
-      color: var(--text);
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: #95a5a6;
+      color: #ffffff;
+      box-shadow: none;
+    }
+    .fan-rpm-shell .btn.secondary:hover:not(:disabled) {
+      background: #7f8c8d;
+      transform: translateY(-1px);
     }
     .fan-rpm-shell .hint {
       font-size: 0.78rem;
-      color: var(--muted);
+      color: #666666;
       line-height: 1.5;
       margin-top: 12px;
     }
     .fan-rpm-shell .err {
-      color: var(--danger);
+      color: #e74c3c;
       font-size: 0.85rem;
       margin-top: 8px;
     }
-    .fan-rpm-shell .status { font-size: 0.8rem; color: var(--muted); margin-top: 8px; }
+    .fan-rpm-shell .status { font-size: 0.8rem; color: #888888; margin-top: 8px; }
   </style>
 </head>
 <body class="page-container">
@@ -224,7 +223,7 @@
     </div>
   </div>
 
-  <main class="fan-rpm-shell">
+  <main class="fan-rpm-shell app-panel">
     <p class="sub">
       将<strong>十字对准转轴在画面上的投影</strong>，ROI 内需有<strong>随转动变化的对比度</strong>（扇叶与背景）。对相邻帧灰度做<strong>绝对值帧差</strong>并取 ROI 均值，得到一维时序；凑满缓冲后做 <strong>FFT</strong> 找主频，再按<strong>每转周期数</strong>（通常≈叶片数）换算<strong>轴转速 RPM</strong>。采样率≈帧率，高转速请尽量<strong>60fps</strong>并避免运动模糊。
     </p>

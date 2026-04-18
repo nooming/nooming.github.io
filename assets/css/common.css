@@ -352,7 +352,8 @@ footer {
     }
 
     .page-container .converter,
-    .page-container .generator {
+    .page-container .generator,
+    .page-container .app-panel {
         padding: 20px 18px;
     }
 }
@@ -429,9 +430,58 @@ footer {
     text-decoration: underline;
 }
 
-/* 通用白色卡片容器（用于工具页面） */
+/* 同系列工具页内二级导航（决策三页互链等） */
+.page-header .header-top {
+    justify-content: space-between;
+    align-items: center;
+}
+
+.page-header .header-top .app-subnav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px 14px;
+    margin: 0 0 0 12px;
+    padding: 0;
+    list-style: none;
+}
+
+.page-header .app-subnav a {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-body);
+    text-decoration: none;
+    padding: 4px 2px;
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.page-header .app-subnav a:hover {
+    color: var(--color-theme-secondary);
+    border-bottom-color: var(--color-theme-deep);
+}
+
+@media (max-width: 767.98px) {
+    .page-header .header-top {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .page-header .header-top .app-subnav {
+        margin: 10px 0 0 0;
+        justify-content: flex-start;
+    }
+
+    .page-header .app-subnav a {
+        font-size: 0.85rem;
+    }
+}
+
+/* 通用白色卡片容器（工具页 / 问卷 / 游戏主区等） */
 .page-container .converter,
-.page-container .generator {
+.page-container .generator,
+.page-container .app-panel {
     background: var(--color-card);
     padding: 25px;
     border: 1px solid rgba(0, 0, 0, 0.07);
@@ -636,7 +686,8 @@ footer {
     }
     
     .page-container .converter,
-    .page-container .generator {
+    .page-container .generator,
+    .page-container .app-panel {
         padding: 20px 18px;
     }
 

@@ -20,7 +20,7 @@
     <link href="../assets/css/style.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/decision-shell.css">
     <style>
-        .decision-tool-page .wheel-box {
+        .decision-tool-main .wheel-box {
             margin: 0 !important;
             padding: 0 !important;
             background-color: transparent !important;
@@ -29,15 +29,15 @@
             height: auto !important;
         }
 
-        .decision-tool-page .wheel-scope-box {
+        .decision-tool-main .wheel-scope-box {
             margin-left: 0 !important;
             margin-right: 0 !important;
             padding-left: 0 !important;
             padding-right: 0 !important;
         }
 
-        .decision-tool-page .wheel-panel-operate-change-box,
-        .decision-tool-page .wheel-panel-operate-preset-box {
+        .decision-tool-main .wheel-panel-operate-change-box,
+        .decision-tool-main .wheel-panel-operate-preset-box {
             display: flex !important;
             flex-direction: column !important;
             align-items: center !important;
@@ -46,8 +46,8 @@
             padding: 5px !important;
         }
 
-        .decision-tool-page .wheel-panel-operate-change-box:hover,
-        .decision-tool-page .wheel-panel-operate-preset-box:hover {
+        .decision-tool-main .wheel-panel-operate-change-box:hover,
+        .decision-tool-main .wheel-panel-operate-preset-box:hover {
             background-color: rgba(52, 152, 219, 0.1) !important;
             border-radius: 0;
         }
@@ -64,27 +64,21 @@
     <link rel="preload" href="../assets/js/spin.min.js" as="script">
 
 </head>
-<body class="decision-tool-page">
-<header>
-    <div class="header-left-box">
-        <div class="header-left-content-box">
-            <a href="../">返回上一级</a>
-        </div>
-    </div>
-    <div class="header-center-box">
-        <h1>转盘</h1>
-    </div>
-    <div class="header-right-box">
-        <div class="header-right-content-box">
-            <nav class="nav-links">
+<body class="page-container">
+    <div class="page-header">
+        <div class="header-top">
+            <a href="../" class="back-btn">返回上一级</a>
+            <nav class="app-subnav" aria-label="决策工具">
                 <a href="../coin-flip/">抛硬币</a>
                 <a href="../quick-choice/">多选随机</a>
             </nav>
         </div>
+        <div class="section-header section-header--page">
+            <h1>转盘</h1>
+            <p>可编辑项；预设与历史。<a href="../" class="home-hub-link">决策工具</a></p>
+        </div>
     </div>
-</header>
-<p class="decision-hub-lead">转盘、抛硬币与多选随机。<a href="../" class="home-hub-link">决策工具</a></p>
-<main>
+<main class="decision-tool-main">
     <section id="spin" aria-label="互动转盘工具" class="wheel-box">
         <div class="wheel-scope-box">
             <div class="wheel-scope-left-box">
@@ -211,9 +205,9 @@
 
 </main>
 
-<footer>
-    <p>© 2026 个人站点 · 非商用学习记录</p>
-</footer>
+    <footer>
+        <p>© 2026 个人站点 · 非商用学习记录</p>
+    </footer>
 
 <div class="lucky-modal hidden" id="luckySuccessModal">
     <div class="lucky-modal-content">

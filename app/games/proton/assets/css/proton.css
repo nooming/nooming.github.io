@@ -1,19 +1,21 @@
-body {
-    padding: 52px 20px 20px;
+body.proton-page.page-container {
+    max-width: none;
+    width: 100%;
+    padding: 12px 16px 24px;
     font-size: 16px;
     background: var(--color-canvas);
     font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
 }
 
 @media (min-width: 699px) {
-    body {
-        padding: 52px 75px 40px;
+    body.proton-page.page-container {
+        padding: 12px 20px 32px;
     }
 }
 
 @media (min-width: 1200px) {
-    body {
-        padding: 52px 150px 40px;
+    body.proton-page.page-container {
+        padding: 12px 24px 40px;
     }
 }
 
@@ -32,37 +34,6 @@ body {
     .bodypad {
         padding: 0 150px;
     }
-}
-
-.add-fixed {
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 19;
-    width: 100%;
-    background: rgba(255, 255, 255, 0.97);
-    border-bottom: 1px solid var(--line-ins);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    box-shadow: var(--shadow-ins);
-}
-
-.proton-header-title {
-    position: relative;
-    top: -2.4px;
-    font-size: 30px;
-    color: var(--gradient-theme-title);
-    font-weight: 500;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px 12px;
-}
-
-.proton-title-text {
-    font-size: 1.35rem;
-    font-weight: 700;
-    color: var(--gradient-theme-title);
 }
 
 .back-to-games {
@@ -114,7 +85,11 @@ body {
 
 .proton-toolbar {
     display: flex;
-    color: #bbb;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 6px;
+    margin-bottom: 12px;
+    color: var(--color-body);
 }
 
 .proton-toolbar__cell {

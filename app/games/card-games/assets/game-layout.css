@@ -1,6 +1,9 @@
 /* 独立桌游页：与全站 common.css 色板、字体栈对齐 */
-body {
-    padding: 56px 16px 24px;
+body.card-game-page.page-container {
+    max-width: none;
+    width: 100%;
+    margin: 0 auto;
+    padding: 12px 16px 24px;
     font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
     background: var(--color-canvas);
     color: var(--gradient-theme-title);
@@ -33,47 +36,15 @@ body {
 .nav-back-site--muted {
     background: linear-gradient(135deg, #1a1a1a 0%, var(--color-theme-secondary) 100%);
     box-shadow: 0 2px 8px rgba(44, 62, 80, 0.35);
+    color: #fff !important;
 }
 
 .nav-back-site--muted:hover {
     box-shadow: 0 4px 12px rgba(44, 62, 80, 0.45);
 }
 
-.game-nav-top {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 1030;
-    background: rgba(255, 255, 255, 0.97);
-    border-bottom: 1px solid var(--line-ins);
-    padding: 10px 18px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    flex-wrap: wrap;
-    box-shadow: var(--shadow-ins);
-}
-
-.game-nav-top .game-nav-title {
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: var(--gradient-theme-title);
-}
-
-.game-nav-top a:not(.nav-back-site) {
-    color: #5a6c7d;
-    font-weight: 600;
-    text-decoration: none;
-}
-
-.game-nav-top a:not(.nav-back-site):hover {
-    color: var(--color-theme-text-end);
-    text-decoration: underline;
-}
-
-.game-nav-spacer {
-    height: 52px;
+.card-game-page .page-header .header-top .nav-back-site {
+    margin-bottom: 0;
 }
 
 .nopadding {
@@ -84,15 +55,16 @@ body {
 .api-hint {
     font-size: 12px;
     color: #888;
-    margin-left: auto;
-    max-width: 280px;
-    text-align: right;
     line-height: 1.35;
+    text-align: center;
+    margin: 8px auto 0;
+    max-width: 42rem;
+    display: block;
 }
 
 .api-hint code {
     font-size: 11px;
-    background: #f0f0f0;
+    background: rgba(0, 0, 0, 0.06);
     padding: 1px 4px;
     border-radius: 0;
 }
@@ -167,4 +139,21 @@ body {
     margin: 0 !important;
     width: 700px !important;
     text-align: center;
+}
+
+@media (max-width: 960px) {
+    .bodypad.hearts {
+        position: relative !important;
+        top: 60px !important;
+        left: auto !important;
+        transform: none !important;
+        min-width: auto !important;
+        min-height: auto !important;
+    }
+
+    .hearts-btns,
+    .hearts-btns-down {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
 }

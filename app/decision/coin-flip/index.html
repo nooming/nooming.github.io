@@ -26,16 +26,16 @@
     <link rel="stylesheet" href="../assets/css/decision-shell.css">
     <style>
         /* 覆盖第三方 coin.min.css，保持与全站一致；头部/页脚见 decision-shell.css */
-        body.coin-flip-page.decision-tool-page main {
+        body.page-container.coin-flip-page .decision-tool-main {
             margin: 0;
             padding: 0;
         }
 
-        body.coin-flip-page.decision-tool-page section {
+        body.page-container.coin-flip-page .decision-tool-main section {
             margin: 0;
         }
 
-        body.coin-flip-page.decision-tool-page .coin-box {
+        body.page-container.coin-flip-page .decision-tool-main .coin-box {
             margin: 0;
             padding: 0;
             background-color: transparent;
@@ -44,14 +44,14 @@
             height: auto;
         }
 
-        body.coin-flip-page.decision-tool-page .coin-scope-box {
+        body.page-container.coin-flip-page .decision-tool-main .coin-scope-box {
             margin-left: 0;
             margin-right: 0;
             padding-left: 0;
             padding-right: 0;
         }
 
-        body.coin-flip-page.decision-tool-page .coin-reset-box {
+        body.page-container.coin-flip-page .decision-tool-main .coin-reset-box {
             display: flex;
         }
     </style>
@@ -76,27 +76,21 @@
     <link rel="preload" href="../assets/js/coin.min.js" as="script">
 
 </head>
-<body class="decision-tool-page coin-flip-page">
-<header>
-    <div class="header-left-box">
-        <div class="header-left-content-box">
-            <a href="../">返回上一级</a>
-        </div>
-    </div>
-    <div class="header-center-box">
-        <h1>抛硬币</h1>
-    </div>
-    <div class="header-right-box">
-        <div class="header-right-content-box">
-            <nav class="nav-links">
+<body class="page-container coin-flip-page">
+    <div class="page-header">
+        <div class="header-top">
+            <a href="../" class="back-btn">返回上一级</a>
+            <nav class="app-subnav" aria-label="决策工具">
                 <a href="../wheel/">转盘</a>
                 <a href="../quick-choice/">多选随机</a>
             </nav>
         </div>
+        <div class="section-header section-header--page">
+            <h1>抛硬币</h1>
+            <p>正反面随机；本地统计。<a href="../" class="home-hub-link">决策工具</a></p>
+        </div>
     </div>
-</header>
-<p class="decision-hub-lead">转盘、抛硬币与多选随机。<a href="../" class="home-hub-link">决策工具</a></p>
-<main>
+<main class="decision-tool-main">
     <section id="flip" aria-label="Interactive coin flip tool" class="coin-box">
         <div class="coin-scope-box">
             <div class="coin-flip-box">
@@ -138,9 +132,9 @@
 
 </main>
 
-<footer>
-    <p>© 2026 个人站点 · 非商用学习记录</p>
-</footer>
+    <footer>
+        <p>© 2026 个人站点 · 非商用学习记录</p>
+    </footer>
 
 <!-- 第三方库脚本 -->
 <script defer src="../assets/js/script.min.js"></script>
