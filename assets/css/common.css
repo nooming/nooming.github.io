@@ -319,6 +319,44 @@ footer {
     text-align: center;
 }
 
+/* 实验与工具总览（app/index）：竖条高度随标题块拉伸（Grid 同行，贴紧文字高度） */
+.hub-page-title-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, max-content);
+    justify-content: center;
+    align-items: stretch;
+    column-gap: 12px;
+    width: 100%;
+    max-width: 100%;
+}
+
+.hub-page-title.page-title {
+    grid-column: 2;
+    grid-row: 1;
+    text-align: left;
+    margin-bottom: 0;
+    max-width: min(100%, 22rem);
+}
+
+.hub-vertical-deco {
+    grid-column: 1;
+    grid-row: 1;
+    width: 5px;
+    min-height: 0;
+    border-radius: 3px;
+    background: linear-gradient(
+        180deg,
+        #ff3cac 0%,
+        #ff3cac 24%,
+        #3fe0c5 24%,
+        #3fe0c5 48%,
+        #fffa00 48%,
+        #fffa00 100%
+    );
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    pointer-events: none;
+}
+
 /* 通用白色卡片容器（用于工具页面） */
 .page-container .converter,
 .page-container .generator {
@@ -502,6 +540,15 @@ footer {
     .page-header h1,
     .page-header h2 {
         text-align: center;
+    }
+
+    .hub-page-title-row {
+        column-gap: 10px;
+    }
+
+    .hub-page-title-row .hub-page-title.page-title {
+        max-width: min(100%, calc(100vw - 48px));
+        text-align: left;
     }
     
     .back-to-top {
