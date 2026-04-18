@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#FFFA00">
     <meta name="description" content="围棋：双人或本地 AI。">
     <meta name="keywords" content="围棋,在线游戏,双人对战">
     <meta name="author" content="nooming">
@@ -18,11 +19,6 @@
     <link rel="stylesheet" href="../../../assets/css/common.css">
 
     <style>
-        /* 页面特定样式 - 与首页风格一致 */
-        body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        }
-
         .game-container {
             display: flex;
             flex-direction: column;
@@ -40,47 +36,7 @@
             max-width: 600px;
         }
         
-        /* 页面头部布局 */
-        .page-header {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 15px;
-        }
-        
-        .header-top {
-            display: flex;
-            align-items: center;
-            margin-bottom: 0;
-        }
-        
-        .back-btn {
-            background: var(--gradient-theme);
-            color: white !important;
-            box-shadow: 0 4px 12px rgba(212, 200, 0, 0.35);
-            flex-shrink: 0;
-            font-size: 0.95rem;
-            padding: 9px 18px;
-            margin-bottom: 0 !important;
-        }
-        
-        .back-btn:hover {
-            background: var(--gradient-theme-reverse);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(212, 200, 0, 0.45);
-        }
-        
-        /* 移动端优化 */
         @media (max-width: 767.98px) {
-            .page-header {
-                margin-bottom: 20px;
-            }
-            .header-top {
-                margin-bottom: 0;
-            }
-            .back-btn {
-                font-size: 0.85rem;
-                padding: 7px 14px;
-            }
             .game-info {
                 padding: 20px;
                 border-radius: 0;

@@ -20,14 +20,14 @@ body {
     text-decoration: none !important;
     flex-shrink: 0;
     background: var(--gradient-theme);
-    color: #fff !important;
-    box-shadow: 0 2px 10px rgba(102, 126, 234, 0.35);
+    color: var(--color-theme-ink) !important;
+    box-shadow: var(--shadow-theme);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .nav-back-site:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 14px rgba(102, 126, 234, 0.45);
+    box-shadow: var(--shadow-theme-hover);
 }
 
 .nav-back-site--muted {
@@ -45,14 +45,14 @@ body {
     left: 0;
     right: 0;
     z-index: 1030;
-    background: linear-gradient(135deg, rgba(245, 247, 250, 0.98) 0%, rgba(227, 232, 242, 0.98) 100%);
-    border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+    background: rgba(255, 255, 255, 0.97);
+    border-bottom: 1px solid var(--line-ins);
     padding: 10px 18px;
     display: flex;
     align-items: center;
     gap: 14px;
     flex-wrap: wrap;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, .06);
+    box-shadow: var(--shadow-ins);
 }
 
 .game-nav-top .game-nav-title {

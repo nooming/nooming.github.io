@@ -332,6 +332,31 @@ footer {
     box-shadow: var(--shadow-theme-hover);
 }
 
+/* 子页窄屏：页边距、页头间距与返回按钮（原各页内联合并） */
+@media (max-width: 767.98px) {
+    .page-container {
+        padding: 15px 12px;
+    }
+
+    .page-container .page-header {
+        margin-bottom: 18px;
+    }
+
+    .page-container .header-top {
+        margin-bottom: 0;
+    }
+
+    .page-container .page-header .back-btn {
+        font-size: 0.85rem;
+        padding: 7px 14px;
+    }
+
+    .page-container .converter,
+    .page-container .generator {
+        padding: 20px 18px;
+    }
+}
+
 /* 与首页一致的区块标题：居中主标题 + 黄下划线 + 灰色导语 + 黑粗内链（子目录页 .page-header 内复用） */
 .section-header {
     text-align: center;

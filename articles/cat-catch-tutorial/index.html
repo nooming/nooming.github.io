@@ -29,33 +29,6 @@
             line-height: 1.8;
         }
         
-        /* 页面头部布局 */
-        .page-header {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 15px;
-        }
-        
-        .header-top {
-            display: flex;
-            align-items: center;
-            margin-bottom: 0;
-        }
-        
-        .back-btn {
-            background: var(--gradient-theme);
-            color: white !important;
-            box-shadow: 0 4px 12px rgba(212, 200, 0, 0.3);
-            flex-shrink: 0;
-            margin-bottom: 0 !important;
-        }
-        
-        .back-btn:hover {
-            background: var(--gradient-theme-reverse);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(212, 200, 0, 0.4);
-        }
-        
         .tips-content h3 {
             color: #e67e22;
             margin: 28px 0 16px;
@@ -111,19 +84,6 @@
         /* 返回顶部按钮样式已在 common.css 中定义 */
         
         @media (max-width: 767.98px) {
-            body {
-                padding: 24px 14px;
-            }
-            .page-header {
-                margin-bottom: 15px;
-            }
-            .header-top {
-                margin-bottom: 0;
-            }
-            .back-btn {
-                font-size: 0.85rem;
-                padding: 7px 14px;
-            }
             .tips-content h3 {
                 font-size: 1.15rem;
             }
