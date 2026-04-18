@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#FFFA00">
     <meta name="description" content="全国Citywalk定制路线规划，发现城市之美，支持北京、上海、广州、深圳、成都、杭州、香港、澳门等城市">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚶</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='28' r='12' fill='%23ffffff'/%3E%3Cpath fill='%23ff7e5f' d='M38 48c-4 18-6 38-6 52h12V68h12v32h12c0-16-2-34-6-52-6-4-12-6-18-6s-12 2-18 6z'/%3E%3C/svg%3E">
     <title>全国Citywalk · 定制路线规划</title>
     <script type="text/javascript">
         window._AMapSecurityConfig = {
@@ -33,25 +33,25 @@
     <!-- 分步骤加载动画 -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-card">
-            <div class="loading-title">🚶 正在规划您的专属路线</div>
+            <div class="loading-title">正在规划您的专属路线</div>
             <div class="loading-steps">
                 <div class="loading-step" id="step1">
-                    <span class="step-icon">🗺️</span>
+                    <span class="step-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-map"/></svg></span>
                     <span class="step-text">计算最优路径...</span>
                     <span class="step-status"></span>
                 </div>
                 <div class="loading-step" id="step2">
-                    <span class="step-icon">☕</span>
+                    <span class="step-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-coffee"/></svg></span>
                     <span class="step-text">沿途搜寻好店...</span>
                     <span class="step-status"></span>
                 </div>
                 <div class="loading-step" id="step3">
-                    <span class="step-icon">🚶</span>
+                    <span class="step-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-walk"/></svg></span>
                     <span class="step-text">优化路线顺序...</span>
                     <span class="step-status"></span>
                 </div>
                 <div class="loading-step" id="step4">
-                    <span class="step-icon">✨</span>
+                    <span class="step-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-sparkle"/></svg></span>
                     <span class="step-text">生成精美路线...</span>
                     <span class="step-status"></span>
                 </div>
@@ -64,6 +64,7 @@
     <div class="control-panel">
         <div class="panel-header">
             <h2>
+                <span class="panel-header-walk-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-walk"/></svg></span>
                 <span class="panel-header-title-text">您的Citywalk定制器</span>
             </h2>
         </div>
@@ -71,7 +72,7 @@
             <!-- 城市选择器 -->
             <div class="city-selector" style="margin-bottom: 16px; background: linear-gradient(135deg, var(--primary-light), var(--primary)); padding: 12px; border-radius: var(--radius-md);">
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                    <span style="font-size: 18px;">📍</span>
+                    <span class="cw-inline-ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-pin"/></svg></span>
                     <span style="font-weight: 600; color: white; font-size: 14px;">当前城市</span>
                     <span id="currentCity" style="font-weight: 700; color: white; font-size: 16px;">定位中...</span>
                 </div>
@@ -94,12 +95,12 @@
 
             <!-- 搜索框 -->
             <div class="search-box" style="margin-bottom: 16px;">
-                <input type="text" id="searchInput" placeholder="🔍 搜索地址（输入后回车定位）" style="width: 100%; padding: 12px 16px; border: 2px solid var(--border-light); border-radius: var(--radius-md); font-size: 14px; transition: all 0.3s;">
+                <input type="text" id="searchInput" placeholder="搜索地址（输入后回车定位）" style="width: 100%; padding: 12px 16px; border: 2px solid var(--border-light); border-radius: var(--radius-md); font-size: 14px; transition: all 0.3s;">
             </div>
 
             <!-- 天气卡片 -->
             <div class="weather-card" id="weatherCard" style="cursor: pointer;" title="点击刷新天气">
-                <div class="weather-icon" id="weatherIcon">🌤️</div>
+                <div class="weather-icon" id="weatherIcon" aria-hidden="true"></div>
                 <div class="weather-info">
                     <div class="title" id="weatherTitle">加载中...</div>
                     <div class="desc" id="weatherDesc">正在获取实时天气</div>
@@ -109,18 +110,18 @@
             <!-- 起终点状态 -->
             <div class="status-group">
                 <div class="status-card" id="startCard">
-                    <div class="label">📍 起点</div>
+                    <div class="label status-label-row"><span class="cw-inline-ico cw-inline-ico--muted" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-pin"/></svg></span>起点</div>
                     <div class="value" id="startValue">点击地图选择</div>
                 </div>
                 <div class="status-card" id="endCard">
-                    <div class="label">🏁 终点</div>
+                    <div class="label status-label-row"><span class="cw-inline-ico cw-inline-ico--muted" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-flag"/></svg></span>终点</div>
                     <div class="value" id="endValue">点击地图选择</div>
                 </div>
             </div>
 
             <!-- 使用提示 -->
             <div class="tips-box" style="background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 12px; color: #0369a1;">
-                💡 <strong>操作提示：</strong>点击地图选择起点和终点，或在上方搜索框输入地址
+                <strong>操作提示：</strong>点击地图选择起点和终点，或在上方搜索框输入地址
             </div>
 
             <!-- 筛选条件 -->
@@ -128,13 +129,13 @@
                 <div class="filter-title">路线偏好</div>
                 <div class="poi-type-group">
                     <div class="poi-type-btn active" data-type="无偏好">无偏好</div>
-                    <div class="poi-type-btn" data-type="自然">🌳 自然</div>
-                    <div class="poi-type-btn" data-type="历史">🏛️ 历史</div>
-                    <div class="poi-type-btn" data-type="文创">✨ 文创</div>
-                    <div class="poi-type-btn" data-type="花店">💐 花店</div>
-                    <div class="poi-type-btn" data-type="咖啡">☕ 咖啡</div>
-                    <div class="poi-type-btn" data-type="甜品">🍰 甜品</div>
-                    <div class="poi-type-btn" data-type="烘焙">🥐 烘焙</div>
+                    <div class="poi-type-btn" data-type="自然"><span class="poi-type-ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-tree"/></svg></span>自然</div>
+                    <div class="poi-type-btn" data-type="历史"><span class="poi-type-ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-column"/></svg></span>历史</div>
+                    <div class="poi-type-btn" data-type="文创"><span class="poi-type-ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-sparkle"/></svg></span>文创</div>
+                    <div class="poi-type-btn" data-type="花店"><span class="poi-type-ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-flower"/></svg></span>花店</div>
+                    <div class="poi-type-btn" data-type="咖啡"><span class="poi-type-ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-coffee"/></svg></span>咖啡</div>
+                    <div class="poi-type-btn" data-type="甜品"><span class="poi-type-ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-cake"/></svg></span>甜品</div>
+                    <div class="poi-type-btn" data-type="烘焙"><span class="poi-type-ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-croissant"/></svg></span>烘焙</div>
                 </div>
 
                 <div class="filter-title">计划游玩时间</div>
@@ -158,7 +159,8 @@
 
             <!-- 新增：生成分享图片按钮 -->
             <button class="btn-generate-plan" id="btnShareImage" onclick="generateShareImage()" style="margin-top: 12px; background: var(--gradient-theme); color: var(--color-theme-ink); display: none;">
-                📸 生成朋友圈分享图
+                <span class="btn-share-ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-camera"/></svg></span>
+                生成朋友圈分享图
             </button>
 
             <!-- 结果展示 -->

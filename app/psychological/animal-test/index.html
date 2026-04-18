@@ -64,14 +64,14 @@
         }
         
         h1 {
-            color: #2c3e50;
+            color: var(--gradient-theme-title);
             margin: 0 0 3px 0;
             font-size: 2rem;
             font-weight: 700;
-            background: var(--gradient-theme);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            background: none;
+            -webkit-background-clip: unset;
+            -webkit-text-fill-color: unset;
+            background-clip: unset;
             letter-spacing: -0.5px;
             text-align: center;
         }
@@ -116,7 +116,7 @@
         
         .question {
             font-size: 1.2rem;
-            color: #2c3e50;
+            color: var(--gradient-theme-title);
             margin-bottom: 25px;
             font-weight: 500;
             line-height: 1.6;
@@ -136,7 +136,7 @@
             transition: all 0.3s ease;
             background: white;
             font-size: 1rem;
-            color: #2c3e50;
+            color: var(--color-body);
         }
         
         .option:hover {
@@ -223,8 +223,17 @@
         }
         
         .result-animal {
-            font-size: 4rem;
             margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #e67e22;
+        }
+
+        .result-animal-svg {
+            width: 96px;
+            height: 96px;
+            display: block;
         }
         
         .result-type {
@@ -236,7 +245,7 @@
         
         .result-title {
             font-size: 1.5rem;
-            color: #2c3e50;
+            color: var(--gradient-theme-title);
             margin-bottom: 15px;
         }
         
@@ -256,7 +265,7 @@
         }
         
         .result-traits h3 {
-            color: #2c3e50;
+            color: var(--gradient-theme-title);
             margin-bottom: 10px;
         }
         
@@ -305,8 +314,9 @@
                 font-size: 1.1rem;
             }
             
-            .result-animal {
-                font-size: 3rem;
+            .result-animal-svg {
+                width: 72px;
+                height: 72px;
             }
             
             .result-type {
@@ -385,49 +395,49 @@
         // 动物类型和描述
         const animalTypes = {
             lion: {
-                emoji: "🦁",
+                iconId: "a-lion",
                 name: "狮子",
                 description: "你是一个天生的领导者，自信、果断、有强烈的目标感。你善于组织和管理，喜欢掌控局面，追求成功和成就。你直接、坦率，不畏惧挑战，但有时可能显得过于强势。",
                 traits: ["领导力强", "自信果断", "目标导向", "直接坦率", "勇于挑战"]
             },
             eagle: {
-                emoji: "🦅",
+                iconId: "a-eagle",
                 name: "老鹰",
                 description: "你是一个远见卓识的人，独立、自信、追求自由。你善于从高处看问题，有强烈的目标感和执行力。你喜欢挑战和冒险，但有时可能显得过于独立和疏离。",
                 traits: ["远见卓识", "独立自信", "追求自由", "执行力强", "喜欢挑战"]
             },
             dolphin: {
-                emoji: "🐬",
+                iconId: "a-dolphin",
                 name: "海豚",
                 description: "你是一个聪明、友好、社交能力强的人。你善于沟通，富有创造力，喜欢与他人合作。你乐观、灵活，适应能力强，但有时可能缺乏专注和深度。",
                 traits: ["聪明友好", "社交能力强", "富有创造力", "乐观灵活", "适应能力强"]
             },
             bear: {
-                emoji: "🐻",
+                iconId: "a-bear",
                 name: "熊",
                 description: "你是一个稳重、可靠、有耐心的人。你重视稳定和安全，善于保护他人，有强烈的责任感。你温和、包容，但有时可能显得过于保守和缺乏灵活性。",
                 traits: ["稳重可靠", "有耐心", "重视稳定", "保护他人", "责任感强"]
             },
             wolf: {
-                emoji: "🐺",
+                iconId: "a-wolf",
                 name: "狼",
                 description: "你是一个忠诚、合作、有团队精神的人。你重视关系和归属感，善于与他人合作，有强烈的集体意识。你聪明、适应能力强，但有时可能缺乏独立性。",
                 traits: ["忠诚合作", "团队精神", "重视关系", "集体意识", "适应能力强"]
             },
             fox: {
-                emoji: "🦊",
+                iconId: "a-fox",
                 name: "狐狸",
                 description: "你是一个聪明、灵活、适应能力强的人。你善于观察和分析，能够快速适应环境变化。你机智、有创造力，但有时可能显得过于谨慎和多疑。",
                 traits: ["聪明灵活", "适应能力强", "善于观察", "机智有创造力", "谨慎"]
             },
             cat: {
-                emoji: "🐱",
+                iconId: "a-cat",
                 name: "猫",
                 description: "你是一个独立、优雅、有自己节奏的人。你享受自由和独处，有自己的想法和原则。你灵活、适应能力强，但有时可能显得过于独立和难以捉摸。",
                 traits: ["独立优雅", "享受自由", "有自己的节奏", "灵活适应", "难以捉摸"]
             },
             rabbit: {
-                emoji: "🐰",
+                iconId: "a-rabbit",
                 name: "兔子",
                 description: "你是一个温和、敏感、富有创造力的人。你重视和谐和美感，善于观察细节，有强烈的直觉。你友好、合作，但有时可能显得过于敏感和缺乏自信。",
                 traits: ["温和敏感", "富有创造力", "重视和谐", "善于观察", "友好合作"]
@@ -601,7 +611,9 @@
             document.querySelector('.progress-bar').style.display = 'none';
             document.querySelector('.progress-text').style.display = 'none';
             
-            document.getElementById('result-animal').textContent = result.emoji;
+            const animalSprite = '../../../assets/icons/ui/animal-sprite.svg';
+            document.getElementById('result-animal').innerHTML =
+                `<svg xmlns="http://www.w3.org/2000/svg" class="result-animal-svg" viewBox="0 0 24 24" role="img" aria-label="${result.name}图示"><use href="${animalSprite}#${result.iconId}"/></svg>`;
             document.getElementById('result-type').textContent = result.name;
             document.getElementById('result-description').textContent = result.description;
             

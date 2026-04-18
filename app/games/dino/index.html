@@ -50,9 +50,32 @@
             box-shadow: 0 6px 20px rgba(212, 200, 0, 0.4);
         }
         
-        h1 {
-            color: #fff;
+        .game-title-row {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
             margin: 0 0 10px 0;
+        }
+
+        .game-title-row .game-title-svg {
+            display: flex;
+            align-items: center;
+            color: #fff;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
+        }
+
+        .game-title-row .game-title-svg svg {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: block;
+        }
+
+        h1,
+        .game-title-text {
+            color: #fff;
+            margin: 0;
             font-size: 2.8rem;
             font-weight: 800;
             text-shadow: 2px 2px 8px rgba(0,0,0,0.2);
@@ -182,7 +205,10 @@
 <body class="offline">
     <div class="game-header">
         <a href="../" class="back-btn">返回上一级</a>
-        <h1>🦖 谷歌小恐龙游戏</h1>
+        <h1 class="game-title-row">
+            <span class="game-title-svg" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="../../../assets/icons/ui/hub-sprite.svg#i-dino"/></svg></span>
+            <span class="game-title-text">谷歌小恐龙游戏</span>
+        </h1>
     </div>
 
     <div class="game-wrapper">

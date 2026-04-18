@@ -2,22 +2,31 @@
 
 :root {
     --color-theme: #FFFA00;
+    /* 次要主题：结构线、标题与黄底衬字 */
+    --color-theme-secondary: #000000;
+    --line-ins: rgba(0, 0, 0, 0.12);
     /* 多色横幅等装饰用，非「纯 #FFFA00」填充 */
     --color-theme-deep: #d4c800;
     --color-theme-hover: #ebe300;
-    --color-theme-ink: #1a1d22;
-    --color-theme-text-end: #5c5400;
-    --color-feature-title: #5c5400;
+    --color-theme-ink: #000000;
+    --color-theme-text-end: #000000;
+    --color-feature-title: #000000;
+    /* 正文：略浅于纯黑，保证可读 */
+    --color-body: rgba(0, 0, 0, 0.72);
     /* 纯主题黄区域：纯色，无亮→暗渐变 */
     --gradient-theme: #FFFA00;
     --gradient-theme-reverse: #ebe300;
     --gradient-theme-h: #FFFA00;
-    /* 大标题字色（实色，ins 极简） */
-    --gradient-theme-title: #5c5400;
+    /* 大标题字色（ins 极简） */
+    --gradient-theme-title: #000000;
     --shadow-theme: 0 4px 12px rgba(212, 200, 0, 0.35);
     --shadow-theme-hover: 0 6px 20px rgba(212, 200, 0, 0.45);
     --shadow-theme-strong: 0 6px 30px rgba(212, 200, 0, 0.5);
     --shadow-tool: 0 6px 20px rgba(212, 200, 0, 0.4);
+    --shadow-ins: 0 1px 0 rgba(0, 0, 0, 0.06);
+    /* 页面底与卡片：底略灰、卡片纯白，便于区分层次 */
+    --color-canvas: #e8e8ea;
+    --color-card: #ffffff;
 }
 
 /* 全局重置 */
@@ -30,8 +39,8 @@
 /* 基础页面样式 */
 body {
     font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
-    background-color: #f8f9fa;
-    color: #2c3e50;
+    background-color: var(--color-canvas);
+    color: var(--color-body);
     line-height: 1.6;
 }
 
@@ -39,29 +48,30 @@ body {
 .back-btn {
     display: inline-block;
     padding: 9px 18px;
-    background-color: #34495e;
-    color: white !important;
+    background-color: var(--color-theme-secondary);
+    color: #fff !important;
     border-radius: 8px;
     text-decoration: none !important;
     margin-bottom: 20px;
     font-weight: 500;
     font-size: 0.95rem;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: var(--shadow-ins);
 }
 
 .back-btn:hover {
-    background-color: #2c3e50;
+    background-color: #1a1a1a;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
 /* 容器样式 */
 .container {
-    background: white;
+    background: var(--color-card);
     border-radius: 12px;
     padding: 35px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    border: 1px solid var(--line-ins);
+    box-shadow: var(--shadow-ins);
 }
 
 /* 页脚样式 */
@@ -70,7 +80,7 @@ footer {
     margin-top: 60px;
     padding-top: 20px;
     color: #95a5a6;
-    border-top: 1px solid #ecf0f1;
+    border-top: 1px solid var(--line-ins);
     font-size: 0.9rem;
 }
 
@@ -79,8 +89,8 @@ footer {
     position: fixed;
     top: 20px;
     right: 20px;
-    background-color: #2c3e50;
-    color: white;
+    background-color: var(--color-theme-secondary);
+    color: #fff;
     padding: 12px 24px;
     border-radius: 6px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
@@ -115,19 +125,20 @@ footer {
 
 /* 通用内容区块容器 */
 .section {
-    background: white;
+    background: var(--color-card);
     border-radius: 14px;
     padding: 25px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 1px solid var(--line-ins);
+    box-shadow: var(--shadow-ins);
     margin-bottom: 30px;
 }
 
 /* 通用区块标题 */
 .section-title {
-    color: #2c3e50;
+    color: var(--gradient-theme-title);
     margin-bottom: 25px;
     padding-bottom: 12px;
-    border-bottom: 1px solid #ecf0f1;
+    border-bottom: 1px solid var(--line-ins);
     font-size: 1.5rem;
     font-weight: 600;
 }
@@ -147,12 +158,12 @@ footer {
 
 /* 通用功能卡片样式 */
 .feature-card {
-    border: none;
+    border: 1px solid var(--line-ins);
     border-radius: 14px;
     padding: 22px;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    background: white;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    background: var(--color-card);
+    box-shadow: var(--shadow-ins);
     position: relative;
     overflow: hidden;
 }
@@ -175,7 +186,7 @@ footer {
 
 .feature-card:hover {
     transform: translateY(-6px) scale(1.02);
-    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .feature-title {
@@ -236,7 +247,7 @@ footer {
     max-width: 1200px;
     margin: 0 auto;
     padding: 25px 20px;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background: var(--color-canvas);
     min-height: 100vh;
 }
 
@@ -311,10 +322,11 @@ footer {
 /* 通用白色卡片容器（用于工具页面） */
 .page-container .converter,
 .page-container .generator {
-    background: white;
+    background: var(--color-card);
     border-radius: 16px;
     padding: 25px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 1px solid var(--line-ins);
+    box-shadow: var(--shadow-ins);
     margin-top: 0;
 }
 
@@ -369,9 +381,10 @@ footer {
     margin-top: 40px;
     padding: 20px;
     color: #7f8c8d;
-    background: white;
+    background: var(--color-card);
     border-radius: 14px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 1px solid var(--line-ins);
+    box-shadow: var(--shadow-ins);
 }
 
 .page-container footer p {
@@ -382,7 +395,7 @@ footer {
 
 .page-container footer p span {
     font-weight: 600;
-    color: #2c3e50;
+    color: var(--color-theme-secondary);
 }
 
 .page-container footer p span:last-child {
@@ -425,12 +438,23 @@ footer {
     max-width: 42rem;
 }
 
-/* 卡片图标 */
+/* 卡片图标（内联 SVG 或 sprite <use>，不依赖 emoji 字体） */
 .card-icon {
-    font-size: 2.5rem;
-    display: inline-block;
-    line-height: 1;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
+    color: rgba(0, 0, 0, 0.78);
+    line-height: 0;
+}
+
+.card-icon > svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    overflow: visible;
 }
 
 /* 特色标签 */
@@ -495,7 +519,8 @@ footer {
     }
     
     .card-icon {
-        font-size: 2rem;
+        width: 2rem;
+        height: 2rem;
     }
     
     .card-icon-title {

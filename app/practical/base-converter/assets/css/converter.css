@@ -3,9 +3,9 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     padding: 25px 20px;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background: var(--color-canvas);
     min-height: 100vh;
-    color: #34495e;
+    color: var(--color-body);
 }
 
 h1 {
@@ -37,10 +37,11 @@ h1 {
 
 /* 进制转换器整体样式 */
 .converter {
-    background-color: white;
+    background-color: var(--color-card);
     padding: 25px;
     border-radius: 14px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--line-ins);
+    box-shadow: var(--shadow-ins);
 }
 
 /* 输入区域样式 */
@@ -51,7 +52,7 @@ h1 {
 .input-group label {
     display: block;
     margin-bottom: 8px;
-    color: #2c3e50;
+    color: var(--gradient-theme-title);
     font-weight: bold;
 }
 
@@ -142,7 +143,7 @@ button {
 }
 
 .result-item span:last-child {
-    color: #2c3e50;
+    color: var(--gradient-theme-title);
     font-family: "Consolas", monospace;
     font-size: 14px;
 }

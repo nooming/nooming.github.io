@@ -2,8 +2,8 @@
 body {
     padding: 56px 16px 24px;
     font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
-    background: linear-gradient(135deg, #f5f7fa 0%, #eef2f7 55%, #fff 100%);
-    color: #2c3e50;
+    background: var(--color-canvas);
+    color: var(--gradient-theme-title);
 }
 
 .grey {
@@ -31,7 +31,7 @@ body {
 }
 
 .nav-back-site--muted {
-    background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+    background: linear-gradient(135deg, #1a1a1a 0%, var(--color-theme-secondary) 100%);
     box-shadow: 0 2px 8px rgba(44, 62, 80, 0.35);
 }
 
@@ -58,7 +58,7 @@ body {
 .game-nav-top .game-nav-title {
     font-size: 1.05rem;
     font-weight: 700;
-    color: #2c3e50;
+    color: var(--gradient-theme-title);
     background: var(--gradient-theme);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;

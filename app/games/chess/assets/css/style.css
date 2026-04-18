@@ -2,7 +2,7 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     padding: 25px 20px;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background: var(--color-canvas);
     min-height: 100vh;
 }
 
@@ -22,7 +22,7 @@ h1 {
     display: inline-block;
     margin-bottom: 20px;
     padding: 9px 18px;
-    background-color: #34495e;
+    background-color: var(--color-theme-secondary);
     color: white !important;
     border-radius: 8px;
     text-decoration: none !important;
@@ -33,7 +33,7 @@ h1 {
 }
 
 .back-btn:hover {
-    background-color: #2c3e50;
+    background-color: #1a1a1a;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
@@ -47,7 +47,7 @@ h1 {
 }
 
 .game-info {
-    background: white;
+    background: var(--color-card);
     border-radius: 14px;
     padding: 25px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
@@ -72,7 +72,7 @@ h1 {
 .mode-btn {
     padding: 8px 16px;
     border: 2px solid var(--color-theme-deep);
-    background: white;
+    background: var(--color-card);
     color: var(--color-theme-text-end);
     border-radius: 6px;
     cursor: pointer;
@@ -118,7 +118,7 @@ h1 {
 .difficulty-btn {
     padding: 6px 14px;
     border: 2px solid #27ae60;
-    background: white;
+    background: var(--color-card);
     color: #27ae60;
     border-radius: 6px;
     cursor: pointer;
@@ -169,12 +169,12 @@ h1 {
     text-align: center;
     font-size: 18px;
     font-weight: 600;
-    color: #2c3e50;
+    color: var(--gradient-theme-title);
     margin: 10px 0;
 }
 
 .board-container {
-    background: white;
+    background: var(--color-card);
     border-radius: 12px;
     padding: 20px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
@@ -182,7 +182,7 @@ h1 {
 }
 
 #board {
-    border: 2px solid #2c3e50;
+    border: 2px solid var(--color-theme-secondary);
     display: block;
     cursor: pointer;
     background: #deb887;

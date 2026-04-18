@@ -9,7 +9,7 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
     height: 100vh;
     overflow: hidden;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background: var(--color-canvas);
 }
 
 .app {
@@ -327,7 +327,7 @@ body {
     cursor: pointer;
     transition: all 0.2s ease;
     gap: 6px;
-    background: #ffffff;
+    background: var(--color-card);
     border: 1px solid rgba(0, 0, 0, 0.05);
     white-space: nowrap;
 }
@@ -402,7 +402,7 @@ body {
 }
 
 .btn-create-draw {
-    background: white;
+    background: var(--color-card);
     border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
@@ -413,7 +413,7 @@ body {
 
 .edit-input {
     flex: 1;
-    background-color: #ffffff;
+    background-color: var(--color-card);
     border: 2px solid var(--color-theme);
     color: #333333;
     padding: 8px 12px;
@@ -475,19 +475,26 @@ body {
     justify-content: center;
 }
 
+.btn-icon-small svg {
+    width: 14px;
+    height: 14px;
+    display: block;
+    pointer-events: none;
+}
+
 /* 编辑器 */
 .editor {
     flex: 1;
     display: flex;
     flex-direction: column;
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    background: linear-gradient(135deg, var(--color-card) 0%, #f8f9fa 100%);
     overflow: hidden;
 }
 
 .editor.empty {
     justify-content: center;
     align-items: center;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background: var(--color-canvas);
 }
 
 .empty-editor {
@@ -565,7 +572,7 @@ body {
 }
 
 .toolbar-btn:hover {
-    background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
+    background: linear-gradient(135deg, var(--color-canvas) 0%, var(--color-card) 100%);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
@@ -793,7 +800,7 @@ body {
     border-color: var(--color-theme);
     box-shadow: 0 4px 12px rgba(212, 200, 0, 0.2);
     transform: scale(1.1);
-    background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
+    background: linear-gradient(135deg, var(--color-canvas) 0%, var(--color-card) 100%);
 }
 
 .align-option-btn.active {
@@ -956,7 +963,7 @@ body {
     flex: 1;
     overflow: hidden;
     position: relative;
-    background: linear-gradient(135deg, #fafafa 0%, #ffffff 100%);
+    background: linear-gradient(135deg, var(--color-canvas) 0%, var(--color-card) 100%);
     transition: all 0.3s ease;
 }
 
@@ -1673,6 +1680,12 @@ body {
 .find-close {
     font-size: 16px;
     font-weight: bold;
+}
+
+.find-close svg {
+    width: 14px;
+    height: 14px;
+    display: block;
 }
 
 .find-results {

@@ -7,7 +7,7 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     padding: 25px 20px;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background: var(--color-canvas);
     min-height: 100vh;
 }
         
@@ -16,9 +16,10 @@ header {
     text-align: center;
     margin-bottom: 35px;
     padding: 25px 25px;
-    background: white;
+    background: var(--color-card);
     border-radius: 16px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    border: 1px solid var(--line-ins);
+    box-shadow: var(--shadow-ins);
     position: relative;
     overflow: hidden;
 }
@@ -53,7 +54,7 @@ h1 {
 }
         
 .github-link {
-    color: var(--color-theme-text-end);
+    color: rgba(0, 0, 0, 0.88);
     text-decoration: none;
     font-weight: 600;
     transition: all 0.3s ease;
@@ -63,7 +64,7 @@ h1 {
 }
         
 .github-link:hover {
-    color: #3d3700;
+    color: var(--color-theme-secondary);
     background-color: #fffde7;
     transform: translateY(-2px);
 }
@@ -82,7 +83,7 @@ h1 {
 .section-header h2 {
     font-size: 1.7rem;
     font-weight: 700;
-    color: #2c3e50;
+    color: var(--color-theme-secondary);
     margin-bottom: 6px;
     position: relative;
     display: inline-block;
@@ -129,12 +130,12 @@ h1 {
         
 /* 卡片样式 - 更现代的设计 */
 .tips-card, .feature-card {
-    border: none;
+    border: 1px solid var(--line-ins);
     border-radius: 14px;
     padding: 22px;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    background: white;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    background: var(--color-card);
+    box-shadow: var(--shadow-ins);
     position: relative;
     overflow: hidden;
 }
@@ -157,7 +158,7 @@ h1 {
         
 .tips-card:hover, .feature-card:hover {
     transform: translateY(-6px) scale(1.02);
-    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
         
 /* 卡片图标和标题容器 */
@@ -168,12 +169,10 @@ h1 {
     margin-bottom: 10px;
 }
         
-/* 卡片图标 */
+/* 卡片图标（尺寸由 common.css 定义，首页略紧凑） */
 .card-icon {
-    font-size: 2rem;
-    display: inline-block;
-    line-height: 1;
-    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
 }
         
 /* 卡片标题与标签 */
@@ -294,7 +293,8 @@ h1 {
     border-radius: 16px;
     padding: 28px 25px;
     text-align: center;
-    box-shadow: 0 15px 50px rgba(212, 200, 0, 0.45);
+    border: 1px solid var(--line-ins);
+    box-shadow: var(--shadow-ins);
     transition: all 0.4s ease;
     position: relative;
     overflow: hidden;
@@ -346,7 +346,7 @@ h1 {
     align-items: center;
     gap: 10px;
     padding: 14px 35px;
-    background-color: white;
+    background-color: var(--color-card);
     color: var(--color-theme-text-end) !important;
     border-radius: 50px;
     font-size: 1.05rem;
@@ -380,7 +380,8 @@ h1 {
     border-radius: 16px;
     padding: 28px 25px;
     text-align: center;
-    box-shadow: 0 15px 50px rgba(245, 180, 60, 0.45);
+    border: 1px solid var(--line-ins);
+    box-shadow: var(--shadow-ins);
     transition: all 0.4s ease;
     position: relative;
     overflow: hidden;
@@ -427,7 +428,7 @@ h1 {
     align-items: center;
     gap: 10px;
     padding: 14px 35px;
-    background-color: white;
+    background-color: var(--color-card);
     color: #b83226 !important;
     border-radius: 50px;
     font-size: 1.05rem;
@@ -461,7 +462,8 @@ h1 {
     border-radius: 16px;
     padding: 28px 25px;
     text-align: center;
-    box-shadow: 0 15px 50px rgba(0, 168, 204, 0.35);
+    border: 1px solid var(--line-ins);
+    box-shadow: var(--shadow-ins);
     transition: all 0.4s ease;
     position: relative;
     overflow: hidden;
@@ -508,7 +510,7 @@ h1 {
     align-items: center;
     gap: 10px;
     padding: 14px 35px;
-    background-color: white;
+    background-color: var(--color-card);
     color: #0d6e73 !important;
     border-radius: 50px;
     font-size: 1.05rem;
@@ -542,7 +544,7 @@ h1 {
 @media (max-width: 767.98px) {
     body {
         padding: 15px 12px;
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        background: var(--color-canvas);
     }
             
     header {
@@ -589,7 +591,8 @@ h1 {
     }
             
     .card-icon {
-        font-size: 1.8rem;
+        width: 1.75rem;
+        height: 1.75rem;
     }
             
     .card-icon-title {
@@ -723,6 +726,6 @@ h1 {
     white-space: nowrap;
 }
 .home-hub-link:hover {
-    color: #3d3700;
+    color: var(--color-theme-secondary);
     text-decoration: underline;
 }

@@ -70,14 +70,14 @@
         }
         
         h1 {
-            color: #2c3e50;
+            color: var(--gradient-theme-title);
             margin: 0 0 3px 0;
             font-size: 2rem;
             font-weight: 700;
-            background: var(--gradient-theme);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            background: none;
+            -webkit-background-clip: unset;
+            -webkit-text-fill-color: unset;
+            background-clip: unset;
             letter-spacing: -0.5px;
             text-align: center;
         }
@@ -226,7 +226,7 @@
             text-align: center;
             font-size: 18px;
             font-weight: 600;
-            color: #2c3e50;
+            color: var(--gradient-theme-title);
             margin: 10px 0;
         }
 
@@ -247,7 +247,7 @@
         }
 
         #board {
-            border: 2px solid #2c3e50;
+            border: 2px solid var(--color-theme-secondary);
             display: block;
             background: #deb887;
             cursor: pointer;
@@ -345,7 +345,7 @@
             ctx.fillStyle = '#deb887';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            ctx.strokeStyle = '#2c3e50';
+            ctx.strokeStyle = '#000000';
             ctx.lineWidth = 1;
 
             // 绘制网格线
@@ -363,7 +363,7 @@
 
             // 绘制天元和星位（19路标准位置：4-4, 4-10, 4-16, 10-4, 10-10, 10-16, 16-4, 16-10, 16-16）
             const starPositions = [4, 10, 16];
-            ctx.fillStyle = '#2c3e50';
+            ctx.fillStyle = '#000000';
             starPositions.forEach(x => {
                 starPositions.forEach(y => {
                     ctx.beginPath();
@@ -451,7 +451,7 @@
                 ctx.fillStyle = '#deb887';
                 ctx.fillRect(x - CELL_SIZE * 0.5, y - CELL_SIZE * 0.5, CELL_SIZE, CELL_SIZE);
                 // 重绘网格线
-                ctx.strokeStyle = '#2c3e50';
+                ctx.strokeStyle = '#000000';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
                 ctx.moveTo((c + 1) * CELL_SIZE, (r + 0.5) * CELL_SIZE);

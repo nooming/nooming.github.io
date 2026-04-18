@@ -3,9 +3,9 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     padding: 25px 20px;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background: var(--color-canvas);
     min-height: 100vh;
-    color: #34495e;
+    color: var(--color-body);
 }
 
 h1 {
@@ -36,10 +36,11 @@ h1 {
 
 /* 二维码生成器整体样式 */
 .generator {
-    background-color: white;
+    background-color: var(--color-card);
     padding: 25px;
     border-radius: 14px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--line-ins);
+    box-shadow: var(--shadow-ins);
 }
 
 .gen-section {
@@ -60,7 +61,7 @@ h1 {
 .input-group label {
     display: block;
     margin-bottom: 8px;
-    color: #2c3e50;
+    color: var(--gradient-theme-title);
     font-weight: bold;
 }
 
@@ -99,7 +100,7 @@ textarea:focus {
 
 .settings-group h3 {
     margin: 0 0 15px 0;
-    color: #2c3e50;
+    color: var(--gradient-theme-title);
     font-size: 1.1rem;
 }
 
@@ -233,7 +234,7 @@ button {
 /* 识别区域样式 */
 .decode-title {
     font-size: 1.2rem;
-    color: #2c3e50;
+    color: var(--gradient-theme-title);
     margin: 0 0 8px 0;
 }
 
@@ -347,7 +348,7 @@ button {
 .decode-result-content {
     margin: 0;
     padding: 10px;
-    background-color: #fff;
+    background-color: var(--color-card);
     border-radius: 4px;
     border: 1px solid #e0e0e0;
     font-size: 13px;

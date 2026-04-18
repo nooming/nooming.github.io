@@ -1,5 +1,7 @@
 // ========== 手写笔记 · 列表与工具栏渲染 ==========
 
+const NOTES_UI_SPRITE = '../../assets/icons/ui/hub-sprite.svg';
+
 // 渲染单个页面列表项
 function renderPageListItem(page, panelType) {
     const isActive = state.activePageId === page.id;
@@ -42,10 +44,10 @@ function renderPageListItem(page, panelType) {
             </span>
             <button class="btn-icon-small" 
                 onclick="event.stopPropagation(); editingPageId = '${page.id}'; render();" 
-                title="重命名">✏️</button>
+                title="重命名"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" focusable="false" aria-hidden="true"><use href="${NOTES_UI_SPRITE}#i-pencil"/></svg></button>
             <button class="btn-icon-small" 
                 onclick="event.stopPropagation(); deletePage('${page.id}')" 
-                title="删除页面">🗑️</button>
+                title="删除页面"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" focusable="false" aria-hidden="true"><use href="${NOTES_UI_SPRITE}#i-trash"/></svg></button>
         </div>
     `;
 }
@@ -314,7 +316,7 @@ function generateEditorContentHTML(pageType, activePage) {
                         onkeydown="handleFindKeydown(event)">
                     <button class="find-btn" onclick="findPrevious()" title="上一个">▲</button>
                     <button class="find-btn" onclick="findNext()" title="下一个">▼</button>
-                    <button class="find-btn find-close" onclick="toggleFindPanel()" title="关闭">✕</button>
+                    <button class="find-btn find-close" onclick="toggleFindPanel()" title="关闭"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" focusable="false" aria-hidden="true"><use href="${NOTES_UI_SPRITE}#i-close"/></svg></button>
                     <span class="find-results" id="findResults"></span>
                 </div>
                 <div class="text-editor-wrapper">
