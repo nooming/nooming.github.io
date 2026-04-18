@@ -86,5 +86,5 @@ let resizeStartBounds = null; // 缩放起始边界
 let resizeStartX = 0; // 缩放起始X
 let resizeStartY = 0; // 缩放起始Y
 
-// 工具函数已移至 utils.js
+// 工具函数已移至 notes-utils.js
 

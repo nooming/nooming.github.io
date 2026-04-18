@@ -522,7 +522,7 @@ function toggleSidebar() {
     updateSidebarVisibility();
 }
 
-// 工具函数已移至 utils.js
+// 工具函数已移至 notes-utils.js
 
 // 更新侧边栏可见性
 function updateSidebarVisibility() {

@@ -1,5 +1,16 @@
 # 个人主页更新日志
 
+## v1.7
+
+### 结构调整
+- **小游戏资源**：`tools/games/dino/` 的页面样式与主脚本迁至 `assets/css/`、`assets/js/`；`tools/games/proton/` 的 `proton.css`、`proton.js` 迁至 `assets/css/`、`assets/js/`（页面 URL 未变，`sitemap.xml` 无需改动）。
+- **桌游**：保留 `texas.html` / `uno.html` / `hearts.html` 多入口以维持外链与收录；在 `tools/games/card-games/README.md` 中说明例外约定。
+- **手写笔记**：`notes/js/utils.js` 重命名为 **`notes/js/notes-utils.js`**，与全站 **`common/js/utils.js`** 区分，避免同名混淆。
+- **清理**：删除空的 `tools/practical/recite/` 与 `tools/study/`（含空 `recite/`）占位目录。
+
+### 文档
+- `docs/README.md`：补充「前端目录约定」、新增页面检查清单，并更新项目结构树中与上述变更一致的描述。
+
 ## v1.6
 
 ### 新增功能

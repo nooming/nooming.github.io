@@ -1,5 +1,5 @@
 // ========== 手写笔记 · 入口与全局事件 ==========
-// 通用工具见 utils.js
+// 笔记域工具见 notes-utils.js
 
 // 点击外部关闭面板
 document.addEventListener('click', (e) => {

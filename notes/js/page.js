@@ -594,5 +594,5 @@ function highlightSelectedText() {
     }
 }
 
-// 工具函数已移至 utils.js
+// 工具函数已移至 notes-utils.js
 

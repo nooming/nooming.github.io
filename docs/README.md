@@ -102,7 +102,7 @@
 │       ├── render.js           # 渲染逻辑
 │       ├── state.js            # 状态管理
 │       ├── storage.js          # 本地存储
-│       └── utils.js            # 工具函数
+│       └── notes-utils.js      # 笔记域专用工具（避免与 common/js/utils.js 同名）
 ├── tools/                      # 工具集合
 │   ├── index.html              # 四类工具总览入口
 │   ├── decision/               # 选择辅助工具
@@ -130,7 +130,7 @@
 │       ├── gomoku/            # 五子棋
 │       ├── go/                # 围棋
 │       ├── chess/             # 中国象棋
-│       ├── dino/              # 谷歌小恐龙
+│       ├── dino/              # 谷歌小恐龙（index.html；assets/css、assets/js、素材子目录）
 │       ├── card-games/        # 桌游（德州 / UNO / 红心）
 │       │   ├── index.html
 │       │   ├── texas.html
@@ -139,8 +139,11 @@
 │       │   └── assets/
 │       └── proton/            # 质子世界物理演示
 │           ├── index.html
-│           ├── proton.css
-│           └── proton.js
+│           └── assets/
+│               ├── css/
+│               │   └── proton.css
+│               └── js/
+│                   └── proton.js
 ├── cuisine/                    # 城市漫步 · Citywalk 定制器（前端）
 │   ├── index.html              # Citywalk 前端页面
 │   └── app.js                  # 前端逻辑（API 指向 Zeabur 后端）
@@ -151,6 +154,19 @@
 ├── sitemap.xml
 └── robots.txt
 ```
+
+## 前端目录约定
+
+- **`tools/games/` 下各小游戏**：静态资源优先放在 **`assets/css/`**、**`assets/js/`**、**`assets/img/`**（可按需增删子目录），页面入口统一为 **`index.html`**，便于与「仅 HTML + 散落 css/js」的异构布局区分。
+- **例外 — `tools/games/card-games/`**：为保持已收录与外链稳定的 URL，德州 / UNO / 红心仍使用 **`texas.html` / `uno.html` / `hearts.html`** 多入口，与合集 `index.html` 并列；共享脚本与样式集中在同目录 **`assets/`**。详见该目录下的 `README.md`。
+- **全站公共脚本**：通用 Toast、剪贴板、防抖、返回顶部等仅在 **`common/js/utils.js`**；手写笔记专用逻辑在 **`notes/js/notes-utils.js`**，二者勿混用文件名。
+- **其他 `tools/` 二级分类**（如 `practical`、`decision`）：已采用「每工具一子目录 + 自有 `css/` `js/`」的，可保持现状；新建工具时优先在同一分类内沿用已有风格，避免同分类混用多种布局。
+
+## 新增可访问页面时的检查清单
+
+1. 新增或修改 **`index.html`（或其它入口 HTML）** 后，视情况更新上级索引页的入口链接（如 `tools/games/index.html`）。
+2. 若页面应被搜索引擎发现，在 **[`sitemap.xml`](../sitemap.xml)** 中增加或更新对应 `<loc>`（注意与 GitHub Pages 实际路径一致）。
+3. 若页面需要全站 Toast / 返回顶部等，引入 **`common/js/utils.js`**（路径层级按目录深度写 `../../` 等）。
 
 ## 使用说明
 
@@ -163,7 +179,7 @@
 
 ## 更新记录
 
-各版本功能与结构调整见 [CHANGELOG.md](CHANGELOG.md)（当前最新为 v1.6）。
+各版本功能与结构调整见 [CHANGELOG.md](CHANGELOG.md)（当前最新为 v1.7）。
 
 ## 许可证
 
