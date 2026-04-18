@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#FFFA00">
-    <meta name="description" content="常用站分类：AI、工具、开发、学习、娱乐。">
-    <meta name="keywords" content="网址导航,网站导航,实用网站,学习网站,游戏网站,工具网站">
+    <meta name="description" content="常用外链按主题收好：工具、AI、开发、学习与视频，点开就走。">
+    <meta name="keywords" content="网址导航,网站导航,实用网站,学习网站,工具网站,AI">
     <meta name="author" content="nooming">
 
     <!-- Open Graph / 社交分享 -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="网址导航 - 精选实用网站集合">
-    <meta property="og:description" content="AI、工具、开发、学习、娱乐外链索引。">
+    <meta property="og:title" content="网址导航 · 常用站收藏">
+    <meta property="og:description" content="工具、AI、开发、学习与视频，随手检索。">
 
     <!-- Favicon -->
     <link rel="apple-touch-icon" sizes="180x180" href="../../assets/icons/apple-touch-icon.png">
@@ -22,224 +22,78 @@
 
     <!-- 公共样式 -->
     <link rel="stylesheet" href="../../assets/css/common.css">
-
-    <style>
-        /* 页面特定样式 - 通用样式已提取到 common.css */
-        
-        /* 分类标题 */
-        .category-title {
-            color: var(--gradient-theme-title);
-            margin: 32px 0 16px 0;
-            font-size: 1.4rem;
-            font-weight: 700;
-            padding-bottom: 10px;
-            border-bottom: 2px solid var(--line-ins);
-            position: relative;
-        }
-        
-        .category-title:first-of-type {
-            margin-top: 0;
-        }
-        
-        .category-title::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            width: 60px;
-            height: 3px;
-            background: var(--gradient-theme-h);
-            border-radius: 0;
-        }
-        
-        /* 网站卡片网格 */
-        .sites-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-        
-        @media (min-width: 1024px) {
-            .sites-grid {
-                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-                gap: 18px;
-            }
-        }
-        
-        /* 网站卡片 */
-        .site-card {
-            background: var(--color-card);
-            border: 1px solid rgba(0, 0, 0, 0.07);
-            border-radius: 0;
-            padding: 18px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-            text-decoration: none;
-            color: inherit;
-            display: block;
-            box-shadow: var(--shadow-ins);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .site-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background: var(--gradient-theme-h);
-            transform: scaleX(0);
-            transform-origin: left;
-            transition: transform 0.3s ease;
-        }
-        
-        .site-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-card-float-hover);
-            border-color: rgba(0, 0, 0, 0.1);
-        }
-        
-        .site-card:hover::before {
-            transform: scaleX(1);
-        }
-        
-        .site-card-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        
-        .site-icon {
-            width: 28px;
-            height: 28px;
-            border-radius: 0;
-            margin-right: 12px;
-            flex-shrink: 0;
-            object-fit: contain;
-            background: #f5f5f5;
-            padding: 2px;
-            transition: transform 0.3s ease;
-        }
-        
-        .site-card:hover .site-icon {
-            transform: scale(1.1);
-        }
-        
-        .site-name {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--gradient-theme-title);
-            margin: 0;
-            flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            line-height: 1.4;
-        }
-        
-        .site-desc {
-            font-size: 0.75rem;
-            color: #7f8c8d;
-            margin: 6px 0 4px 0;
-            line-height: 1.4;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .site-url {
-            font-size: 0.8rem;
-            color: #95a5a6;
-            margin: 0;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            line-height: 1.3;
-            transition: color 0.3s ease;
-        }
-        
-        .site-card:hover .site-url {
-            color: var(--color-theme-text-end);
-        }
-        
-        /* 返回顶部按钮样式已在 common.css 中定义 */
-        
-        /* 移动端优化 */
-        @media (max-width: 767.98px) {
-            h1 {
-                font-size: 1.5rem;
-                white-space: normal;
-                max-width: 60%;
-                text-align: center;
-            }
-            
-            .back-btn {
-                padding: 9px 18px;
-                font-size: 0.9rem;
-            }
-            
-            .category-title {
-                font-size: 1.2rem;
-                margin: 28px 0 14px 0;
-            }
-            
-            .sites-grid {
-                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-                gap: 12px;
-            }
-            
-            .site-card {
-                padding: 16px;
-                border-radius: 0;
-            }
-            
-            .site-icon {
-                width: 24px;
-                height: 24px;
-                margin-right: 10px;
-            }
-            
-            .site-name {
-                font-size: 0.95rem;
-            }
-            
-            .site-desc {
-                font-size: 0.7rem;
-                margin: 5px 0 3px 0;
-            }
-            
-            .site-url {
-                font-size: 0.75rem;
-            }
-            
-        }
-    </style>
+    <link rel="stylesheet" href="assets/css/navigation.css">
 </head>
 <body class="page-container">
     <!-- 页面头部 -->
     <div class="page-header">
         <div class="header-top">
-            <a href="../../index.html" class="back-btn">返回上一级</a>
             <a href="../../index.html" class="back-btn">返回主页</a>
         </div>
         <div class="section-header section-header--page">
             <h1>网址导航</h1>
-            <p>外链索引，按类分组。</p>
+            <p>挑个分类，想去的站一秒跳转。</p>
         </div>
     </div>
 
     <main>
         <div class="app-panel">
-        <!-- AI大模型/Chat -->
-        <h2 class="category-title">AI大模型/Chat</h2>
+        <!-- 工具 -->
+        <h2 class="category-title">工具</h2>
         <div class="sites-grid">
-            <!-- 国外AI模型 -->
+            <a href="https://excalidraw.com/" target="_blank" rel="noopener noreferrer" class="site-card">
+                <div class="site-card-header">
+                    <img src="https://excalidraw.com/favicon.ico" alt="Excalidraw" class="site-icon" onerror="this.style.display='none'">
+                    <h3 class="site-name">Excalidraw</h3>
+                </div>
+                <p class="site-desc">白板随手画，可协作</p>
+                <p class="site-url">excalidraw.com</p>
+            </a>
+            <a href="https://tinypng.com/" target="_blank" rel="noopener noreferrer" class="site-card">
+                <div class="site-card-header">
+                    <img src="https://tinypng.com/favicon.ico" alt="TinyPNG" class="site-icon" onerror="this.style.display='none'">
+                    <h3 class="site-name">TinyPNG</h3>
+                </div>
+                <p class="site-desc">PNG / JPEG 压一压更小</p>
+                <p class="site-url">tinypng.com</p>
+            </a>
+            <a href="https://graph.baidu.com/pcpage/index?tpl_from=pc" target="_blank" rel="noopener noreferrer" class="site-card">
+                <div class="site-card-header">
+                    <img src="https://graph.baidu.com/favicon.ico" alt="百度识图" class="site-icon" onerror="this.style.display='none'">
+                    <h3 class="site-name">百度识图</h3>
+                </div>
+                <p class="site-desc">以图搜图</p>
+                <p class="site-url">graph.baidu.com</p>
+            </a>
+            <a href="https://www.ilovepdf.com/zh-cn" target="_blank" rel="noopener noreferrer" class="site-card">
+                <div class="site-card-header">
+                    <img src="https://www.ilovepdf.com/favicon.ico" alt="iLovePDF" class="site-icon" onerror="this.style.display='none'">
+                    <h3 class="site-name">iLovePDF</h3>
+                </div>
+                <p class="site-desc">PDF 合并、分割、转换</p>
+                <p class="site-url">www.ilovepdf.com</p>
+            </a>
+            <a href="https://doc2x.noedgeai.com/" target="_blank" rel="noopener noreferrer" class="site-card">
+                <div class="site-card-header">
+                    <img src="https://doc2x.noedgeai.com/favicon.ico" alt="Doc2X" class="site-icon" onerror="this.style.display='none'">
+                    <h3 class="site-name">Doc2X</h3>
+                </div>
+                <p class="site-desc">文档格式转换</p>
+                <p class="site-url">doc2x.noedgeai.com</p>
+            </a>
+            <a href="https://emojipedia.org/zh" target="_blank" rel="noopener noreferrer" class="site-card">
+                <div class="site-card-header">
+                    <img src="https://emojipedia.org/favicon.ico" alt="表情图标百科" class="site-icon" onerror="this.style.display='none'">
+                    <h3 class="site-name">表情图标百科</h3>
+                </div>
+                <p class="site-desc">Emoji 含义与用法</p>
+                <p class="site-url">emojipedia.org</p>
+            </a>
+        </div>
+
+        <!-- AI / 对话 -->
+        <h2 class="category-title">AI / 对话</h2>
+        <div class="sites-grid">
             <a href="https://chat.openai.com/" target="_blank" rel="noopener noreferrer" class="site-card">
                 <div class="site-card-header">
                     <img src="https://chat.openai.com/favicon.ico" alt="ChatGPT" class="site-icon" onerror="this.style.display='none'">
@@ -264,8 +118,6 @@
                 <p class="site-desc">Gemini 网页入口</p>
                 <p class="site-url">2233.ai/gemini</p>
             </a>
-            <!-- 国内AI模型 -->
-            
             <a href="https://www.doubao.com/" target="_blank" rel="noopener noreferrer" class="site-card">
                 <div class="site-card-header">
                     <img src="https://www.doubao.com/favicon.ico" alt="豆包" class="site-icon" onerror="this.style.display='none'">
@@ -284,61 +136,8 @@
             </a>
         </div>
 
-        <!-- 工具/实用 -->
-        <h2 class="category-title">工具/实用</h2>
-        <div class="sites-grid">
-            <a href="https://excalidraw.com/" target="_blank" rel="noopener noreferrer" class="site-card">
-                <div class="site-card-header">
-                    <img src="https://excalidraw.com/favicon.ico" alt="Excalidraw" class="site-icon" onerror="this.style.display='none'">
-                    <h3 class="site-name">Excalidraw</h3>
-                </div>
-                <p class="site-desc">手绘白板，可协作</p>
-                <p class="site-url">excalidraw.com</p>
-            </a>
-            <a href="https://graph.baidu.com/pcpage/index?tpl_from=pc" target="_blank" rel="noopener noreferrer" class="site-card">
-                <div class="site-card-header">
-                    <img src="https://graph.baidu.com/favicon.ico" alt="百度识图" class="site-icon" onerror="this.style.display='none'">
-                    <h3 class="site-name">百度识图</h3>
-                </div>
-                <p class="site-desc">以图搜图</p>
-                <p class="site-url">graph.baidu.com</p>
-            </a>
-            <a href="https://www.ilovepdf.com/zh-cn" target="_blank" rel="noopener noreferrer" class="site-card">
-                <div class="site-card-header">
-                    <img src="https://www.ilovepdf.com/favicon.ico" alt="iLovePDF" class="site-icon" onerror="this.style.display='none'">
-                    <h3 class="site-name">iLovePDF</h3>
-                </div>
-                <p class="site-desc">PDF 合并、分割、转换</p>
-                <p class="site-url">www.ilovepdf.com</p>
-            </a>
-            <a href="https://tinypng.com/" target="_blank" rel="noopener noreferrer" class="site-card">
-                <div class="site-card-header">
-                    <img src="https://tinypng.com/favicon.ico" alt="TinyPNG" class="site-icon" onerror="this.style.display='none'">
-                    <h3 class="site-name">TinyPNG</h3>
-                </div>
-                <p class="site-desc">PNG / JPEG 压缩</p>
-                <p class="site-url">tinypng.com</p>
-            </a>
-            <a href="https://doc2x.noedgeai.com/" target="_blank" rel="noopener noreferrer" class="site-card">
-                <div class="site-card-header">
-                    <img src="https://doc2x.noedgeai.com/favicon.ico" alt="Doc2X" class="site-icon" onerror="this.style.display='none'">
-                    <h3 class="site-name">Doc2X</h3>
-                </div>
-                <p class="site-desc">文档格式转换</p>
-                <p class="site-url">doc2x.noedgeai.com</p>
-            </a>
-            <a href="https://emojipedia.org/zh" target="_blank" rel="noopener noreferrer" class="site-card">
-                <div class="site-card-header">
-                    <img src="https://emojipedia.org/favicon.ico" alt="表情图标百科" class="site-icon" onerror="this.style.display='none'">
-                    <h3 class="site-name">表情图标百科</h3>
-                </div>
-                <p class="site-desc">Emoji 含义与用法</p>
-                <p class="site-url">emojipedia.org</p>
-            </a>
-        </div>
-
-        <!-- 开发/编程 -->
-        <h2 class="category-title">开发/编程</h2>
+        <!-- 开发 -->
+        <h2 class="category-title">开发</h2>
         <div class="sites-grid">
             <a href="https://github.com/" target="_blank" rel="noopener noreferrer" class="site-card">
                 <div class="site-card-header">
@@ -358,10 +157,9 @@
             </a>
         </div>
 
-        <!-- 学习/教育 -->
-        <h2 class="category-title">学习/教育</h2>
+        <!-- 学习 -->
+        <h2 class="category-title">学习</h2>
         <div class="sites-grid">
-            
             <a href="https://www.desmos.com/calculator?lang=zh-CN" target="_blank" rel="noopener noreferrer" class="site-card">
                 <div class="site-card-header">
                     <img src="https://www.desmos.com/favicon.ico" alt="Desmos" class="site-icon" onerror="this.style.display='none'">
@@ -396,8 +194,8 @@
             </a>
         </div>
 
-        <!-- 视频/娱乐 -->
-        <h2 class="category-title">视频/娱乐</h2>
+        <!-- 视频 -->
+        <h2 class="category-title">视频</h2>
         <div class="sites-grid">
             <a href="https://www.bilibili.com/" target="_blank" rel="noopener noreferrer" class="site-card">
                 <div class="site-card-header">
@@ -439,12 +237,8 @@
         <p>© 2026 个人站点 · 非商用学习记录</p>
     </footer>
 
-    <!-- 返回顶部按钮 -->
     <button class="back-to-top" id="backToTop" aria-label="返回顶部">↑</button>
 
     <script src="../../assets/js/utils.js" defer></script>
-    
-    <!-- 返回顶部功能已在 assets/js/utils.js 中自动初始化 -->
 </body>
 </html>
-

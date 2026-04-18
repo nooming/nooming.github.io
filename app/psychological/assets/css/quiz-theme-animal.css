@@ -1,0 +1,86 @@
+/* ========== 动物塑测试 · 主题覆盖 ========== */
+
+.option:hover {
+    border-color: #e74c3c;
+    background: #fef0f0;
+    transform: translateX(5px);
+}
+
+.option.selected {
+    border-color: #e74c3c;
+    background: #e74c3c;
+    color: white;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #e74c3c, #c0392b);
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.btn-primary {
+    background: #e74c3c;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #c0392b;
+}
+
+.result-animal {
+    margin: 20px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #e67e22;
+}
+
+.result-animal-svg {
+    width: 96px;
+    height: 96px;
+    display: block;
+}
+
+.result-type {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #e74c3c;
+    margin: 20px 0;
+}
+
+.result-traits {
+    margin-top: 20px;
+    text-align: left;
+}
+
+.result-traits h3 {
+    color: var(--gradient-theme-title);
+    margin-bottom: 10px;
+}
+
+.result-traits ul {
+    list-style: none;
+    padding: 0;
+}
+
+.result-traits li {
+    padding: 8px 0;
+    color: #7f8c8d;
+    border-bottom: 1px solid #ecf0f1;
+}
+
+.result-traits li:last-child {
+    border-bottom: none;
+}
+
+@media (max-width: 767.98px) {
+    .result-animal-svg {
+        width: 72px;
+        height: 72px;
+    }
+
+    .result-type {
+        font-size: 1.5rem;
+    }
+}

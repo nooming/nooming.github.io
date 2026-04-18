@@ -1,3 +1,6 @@
+        // Toast：全站 assets/js/utils.js（Citywalk 默认略长显示）
+        const cwToast = (message, type = 'info', duration = 3000) => window.showToast(message, type, duration);
+
         // ========== Citywalk 前端 · 配置与全局状态 ==========
         // 全局变量
         let map = null;
@@ -10,7 +13,6 @@
         let infoWindow = null;
         let selectedPoiType = "无偏好";
         let routeData = null;
-        let debounceTimer = null;
         let liveWeatherData = null;
         let liveWeatherForCity = null;
         let currentTheme = null;
@@ -96,11 +98,6 @@
 
         // 页面加载时设置随机主题
         setRandomTheme();
-
-        // 地图加载失败处理
-        function mapLoadError() {
-            showToast("地图加载失败，请刷新");
-        }
 
         // ========== 天气（获取 / 刷新 / 渲染） ==========
         /**
@@ -292,7 +289,7 @@
             const cityInput = document.getElementById('cityInput');
             const city = cityInput.value.trim();
             if (!city) {
-                showToast('请填写城市名');
+                cwToast('请填写城市名', 'error');
                 return;
             }
             quickSwitchCity(city);
@@ -301,7 +298,7 @@
         // 快速切换城市
         async function quickSwitchCity(city) {
             if (!city || !city.trim()) {
-                showToast('城市名无效');
+                cwToast('城市名无效', 'error');
                 return;
             }
             
@@ -316,7 +313,7 @@
             }
             
             // 未知城市，使用高德地理编码获取坐标
-            showToast(`定位中：${cityName}`);
+            cwToast(`定位中：${cityName}`);
             
             try {
                 const coords = await geocodeCity(cityName);
@@ -325,11 +322,11 @@
                     currentCityCenter = coords;
                     applyCitySwitch(currentCity, currentCityCenter);
                 } else {
-                    showToast(`未找到城市：${cityName}`);
+                    cwToast(`未找到城市：${cityName}`, 'error');
                 }
             } catch (e) {
                 console.error('城市定位失败：', e);
-                showToast(`定位失败：${cityName}`);
+                cwToast(`定位失败：${cityName}`, 'error');
             }
         }
         
@@ -375,13 +372,13 @@
             // 重置路线选择
             resetSelection();
             
-            showToast(`已切换：${cityName}`);
+            cwToast(`已切换：${cityName}`, 'success');
         }
 
         // 初始化地图
         function initMap() {
             if (!window.AMap) {
-                showToast("地图加载失败，检查网络或 Key");
+                cwToast("地图加载失败，检查网络或 Key", 'error');
                 return;
             }
 
@@ -425,21 +422,9 @@
 
                 console.log("地图初始化成功");
             } catch (e) {
-                showToast(`地图初始化失败：${e.message}`);
+                cwToast(`地图初始化失败：${e.message}`, 'error');
                 console.error("地图初始化错误：", e);
             }
-        }
-
-        // 显示提示框（防抖）
-        function showToast(message, duration = 3000) {
-            clearTimeout(debounceTimer);
-            const toast = document.getElementById('errorToast');
-            toast.textContent = message;
-            toast.style.display = 'block';
-
-            debounceTimer = setTimeout(() => {
-                toast.style.display = 'none';
-            }, duration);
         }
 
         // ========== 路线选择与 POI 标记 ==========
@@ -664,7 +649,7 @@
         // 生成路线
         function generateRoute() {
             if (!startPoint || !endPoint) {
-                showToast("先选起终点");
+                cwToast("先选起终点", 'error');
                 return;
             }
 
@@ -672,7 +657,7 @@
             let planTime = parseInt(planTimeSlider.value, 10);
 
             if (isNaN(planTime) || planTime < 30 || planTime > 180) {
-                showToast("计划时长须在 30–180 分钟");
+                cwToast("计划时长须在 30–180 分钟", 'error');
                 return;
             }
 
@@ -719,7 +704,7 @@
             .then(data => {
                 hideLoadingSteps();
                 if (!data.success) {
-                    showToast(`规划失败：${data.message || '未知错误'}`);
+                    cwToast(`规划失败：${data.message || '未知错误'}`, 'error');
                     return;
                 }
 
@@ -821,7 +806,7 @@
                 } else {
                     errorMsg = `请求失败：${error.message}`;
                 }
-                showToast(errorMsg);
+                cwToast(errorMsg, 'error');
                 console.error('路线规划错误：', error);
             });
         }
@@ -830,7 +815,7 @@
         // 生成更贴心的文字方案
         function generatePlanText() {
             if (!routeData || !routeData.success) {
-                showToast("请先生成路线");
+                cwToast("请先生成路线", 'error');
                 return;
             }
 
@@ -908,7 +893,7 @@ ${poiText}
             try {
                 if (navigator.clipboard && window.isSecureContext) {
                     navigator.clipboard.writeText(planText).then(() => {
-                        showToast("文字方案已复制");
+                        cwToast("文字方案已复制", 'success');
                     }).catch(err => {
                         throw err;
                     });
@@ -920,27 +905,27 @@ ${poiText}
                     textArea.select();
                     document.execCommand('copy');
                     document.body.removeChild(textArea);
-                    showToast("文字方案已复制");
+                    cwToast("文字方案已复制", 'success');
                 }
             } catch (err) {
                 console.error('复制失败：', err);
-                showToast("复制失败，请手动复制弹窗内文字");
+                cwToast("复制失败，请手动复制弹窗内文字", 'error');
             }
         }
 
 // 生成分享长图（使用浏览器原生截图API截取地图）
 async function generateShareImage() {
     if (!routeData || !routeData.success) {
-        showToast("请先生成路线");
+        cwToast("请先生成路线", 'error');
         return;
     }
 
-    showToast("截屏中…");
+    cwToast("截屏中…");
 
     // ========== 第一步：使用屏幕共享API截取地图 ==========
     let mapImageUrl = null;
     try {
-        showToast("请选择要导出的地图区域");
+        cwToast("请选择要导出的地图区域");
         
         // 请求屏幕共享
         const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -951,7 +936,7 @@ async function generateShareImage() {
             audio: false
         });
         
-        showToast("截屏中…");
+        cwToast("截屏中…");
         
         // 创建视频元素捕获画面
         const video = document.createElement('video');
@@ -977,13 +962,13 @@ async function generateShareImage() {
         
         // 转换为图片URL
         mapImageUrl = canvas.toDataURL('image/png', 0.9);
-        showToast("截屏完成，合成中…");
+        cwToast("截屏完成，合成中…");
     } catch (e) {
         console.warn('屏幕共享取消或失败:', e);
         if (e.name === 'NotAllowedError') {
-            showToast("已取消共享，使用默认背景");
+            cwToast("已取消共享，使用默认背景");
         } else {
-            showToast("截图失败，使用默认背景");
+            cwToast("截图失败，使用默认背景", 'error');
         }
     }
 
@@ -1189,14 +1174,14 @@ async function generateShareImage() {
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
             
-            showToast("长图已生成");
+            cwToast("长图已生成", 'success');
         }, 'image/png', 0.95);
         
         document.body.removeChild(shareCard);
     } catch (err) {
         console.error('生成图片失败:', err);
         document.body.removeChild(shareCard);
-        showToast("导出图片失败，请重试");
+        cwToast("导出图片失败，请重试", 'error');
     }
 }
 
@@ -1304,11 +1289,11 @@ function showCustomModal(content) {
         // 搜索地址（使用PlaceSearch支持模糊搜索）
         function searchAddress(keyword) {
             if (!window.AMap) {
-                showToast("地图未就绪");
+                cwToast("地图未就绪", 'error');
                 return;
             }
 
-            showToast(`搜索中：${keyword}`);
+            cwToast(`搜索中：${keyword}`);
 
             // 先尝试使用 PlaceSearch 进行POI搜索（支持模糊匹配）
             AMap.plugin('AMap.PlaceSearch', function() {
@@ -1347,7 +1332,7 @@ function showCustomModal(content) {
                         });
                         infoWindow.open(map, [poi.location.lng, poi.location.lat]);
                         
-                        showToast(`已找到「${poi.name}」，请在地图选起终点`);
+                        cwToast(`已找到「${poi.name}」，请在地图选起终点`, 'success');
                         
                         // 3秒后清除标记和信息窗
                         setTimeout(() => {
@@ -1385,14 +1370,14 @@ function showCustomModal(content) {
                         map.setCenter([location.lng, location.lat]);
                         map.setZoom(17);
                         
-                        showToast("已定位，请在地图选起终点");
+                        cwToast("已定位，请在地图选起终点", 'success');
                         
                         // 3秒后清除标记
                         setTimeout(() => {
                             map.remove(marker);
                         }, 3000);
                     } else {
-                        showToast("未找到地点，请换关键词");
+                        cwToast("未找到地点，请换关键词", 'error');
                     }
                 });
             });

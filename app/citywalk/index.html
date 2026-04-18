@@ -15,6 +15,12 @@
             securityJsCode: 'dd98c8e83161c0d87e596a17f2d29750'
         }
     </script>
+    <script src="../../assets/js/utils.js"></script>
+    <script>
+        function mapLoadError() {
+            showToast('地图加载失败，请刷新重试', 'error', 4000);
+        }
+    </script>
     <script src="https://webapi.amap.com/maps?v=2.0&key=4ade0b9a9942f8c1d5b470525887a258&plugin=AMap.Marker,AMap.InfoWindow,AMap.Weather" async defer onerror="mapLoadError()"></script>
     <link rel="stylesheet" href="../../assets/css/common.css">
     <link rel="stylesheet" href="assets/css/styles.css">
@@ -57,8 +63,6 @@
             </div>
         </div>
     </div>
-
-    <div class="error-toast" id="errorToast"></div>
 
     <div class="control-panel">
         <div class="panel-header">
@@ -182,15 +186,6 @@
         </div>
     </div>
 
-    <script>
-        function mapLoadError() {
-            var toast = document.getElementById('errorToast');
-            if (toast) {
-                toast.textContent = '地图加载失败，请刷新重试';
-                toast.style.display = 'block';
-            }
-        }
-    </script>
     <script src="assets/js/app.js"></script>
 </body>
 </html>

@@ -24,6 +24,9 @@
     <link as="style" href="../assets/css/style.min.css" rel="preload">
     <link href="../assets/css/style.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/decision-shell.css">
+    <!-- 第三方库样式 -->
+    <link rel="preload" href="../assets/css/coin.min.css" as="style">
+    <link href="../assets/css/coin.min.css" rel="stylesheet">
     <style>
         /* 覆盖第三方 coin.min.css，保持与全站一致；头部/页脚见 decision-shell.css */
         body.page-container.coin-flip-page .decision-tool-main {
@@ -54,12 +57,7 @@
         body.page-container.coin-flip-page .decision-tool-main .coin-reset-box {
             display: flex;
         }
-    </style>
 
-    <!-- 第三方库样式 -->
-    <link rel="preload" href="../assets/css/coin.min.css" as="style">
-    <link href="../assets/css/coin.min.css" rel="stylesheet">
-    <style>
         /* 抛硬币：主硬币、正反面与底部「最近结果」小圆块保持圆形（全站直角的例外） */
         body.coin-flip-page .coin-flip-scope-box,
         body.coin-flip-page .coin,

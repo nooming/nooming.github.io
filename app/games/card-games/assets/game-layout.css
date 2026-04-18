@@ -6,7 +6,18 @@ html:has(body.card-game-page) {
 body.card-game-page.page-container {
     font-size: 16px;
     line-height: 1.6;
-    padding-bottom: 72px;
+    padding-bottom: 16px;
+}
+
+body.card-game-page.page-container > footer.site-footer {
+    margin-top: 0.5rem;
+    position: relative;
+    z-index: 2;
+}
+
+/* 离开等按钮：fixed 在右下角，压在牌桌滚动内容之上 */
+body.card-game-page .chat {
+    z-index: 3;
 }
 
 .grey {
@@ -19,49 +30,58 @@ body.card-game-page.page-container {
 }
 
 .card-game-page .list-all {
-    margin-bottom: 14px;
+    margin-bottom: 8px;
 }
 
 .myToast {
     font-family: inherit;
 }
 
-/* 牌桌垂直中心：略低于视口中线，为全站 .page-header 留出空间（原 56% 易与页头重叠） */
-.card-game-page {
-    --card-game-stage-top: clamp(57%, 58vh, 62%);
+/*
+ * 牌桌与装饰层：相对定位舞台，随页面滚动；装饰叠在牌桌之下。
+ * min-height 与牌面+底栏按钮（约 560px + 一行操作）对齐，避免 760px 在页脚前留出大块空带。
+ */
+.card-game-stage {
+    position: relative;
+    width: 760px;
+    max-width: 100%;
+    margin: 0 auto 0;
+    min-height: 640px;
 }
 
-/* 统一牌桌舞台：居中显示，附属元素跟随牌桌移动 */
-.decor {
-    position: fixed !important;
-    left: 50% !important;
-    top: var(--card-game-stage-top) !important;
-    transform: translate(-50%, -50%) !important;
+.card-game-stage .decor,
+.card-game-stage .tutor-svg-2 {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.card-game-stage .decor {
     width: 600px !important;
-    max-width: 90vw;
-    pointer-events: none;
+    max-width: 90%;
 }
 
-.tutor-svg-2 {
-    position: fixed !important;
-    left: 50% !important;
-    top: var(--card-game-stage-top) !important;
-    transform: translate(-50%, -50%) !important;
+.card-game-stage .tutor-svg-2 {
     width: 500px !important;
-    pointer-events: none;
+    max-width: 85%;
 }
 
 .bodypad.uno,
 .bodypad.texas,
 .bodypad.hearts {
-    position: fixed !important;
-    left: 50% !important;
-    top: var(--card-game-stage-top) !important;
-    transform: translate(-50%, -50%) !important;
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
     width: 760px !important;
-    min-width: 760px !important;
-    min-height: 760px !important;
-    z-index: 0 !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    min-height: 640px !important;
+    margin: 0 auto !important;
+    z-index: 1;
 }
 
 .bodypad.uno .uno-svg,
@@ -100,18 +120,29 @@ body.card-game-page.page-container {
 }
 
 @media (max-width: 960px) {
-    .bodypad.hearts {
-        position: relative !important;
-        top: 0 !important;
-        margin-top: 20px !important;
-        left: auto !important;
-        transform: none !important;
-        min-width: auto !important;
-        min-height: auto !important;
+    .card-game-stage {
+        width: 100%;
+        min-height: auto;
+        margin-bottom: 0;
     }
 
-    .hearts-btns,
-    .hearts-btns-down {
+    .bodypad.uno,
+    .bodypad.texas,
+    .bodypad.hearts {
+        min-width: 0 !important;
+        min-height: auto !important;
+        width: 100% !important;
+        margin-top: 0 !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+
+    .bodypad.uno .uno-btns,
+    .bodypad.uno .uno-btns-down,
+    .bodypad.texas .texas-btns,
+    .bodypad.texas .texas-btns-down,
+    .bodypad.hearts .hearts-btns,
+    .bodypad.hearts .hearts-btns-down {
         margin-left: 0 !important;
         width: 100% !important;
     }

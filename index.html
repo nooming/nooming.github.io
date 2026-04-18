@@ -1,181 +1,398 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
+
 <head>
+
     <meta charset="UTF-8">
+
     <title>个人主页</title>
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
     <meta name="theme-color" content="#FFFA00">
-    <meta name="description" content="个人站点：工具与专题（开发者工具、扩展、停车实验）、进制与音频转换、二维码、风扇转速、转盘等。">
-    <meta name="keywords" content="在线工具,进制转换,音频转换,风扇转速,选择转盘,学习工具,实用工具">
+
+    <meta name="description" content="个人站点：专题长文、实践实验、实用工具与随机决策，还有棋类桌游。GitHub Pages 静态页，打开即用。">
+
+    <meta name="keywords" content="在线工具,进制转换,Citywalk,决策转盘,桌游,专题,停车优化">
+
     <meta name="author" content="nooming">
+
     
+
     <!-- Open Graph / Facebook -->
+
     <meta property="og:type" content="website">
-    <meta property="og:title" content="个人主页 · 工具与专题">
-    <meta property="og:description" content="工具与专题合集：文章与可操作的浏览器内实验。">
+
+    <meta property="og:title" content="个人主页 · 专题 · 实践 · 工具">
+
+    <meta property="og:description" content="长文慢慢读，小工具随手用；决策交给运气，棋类桌游换换脑子。">
+
     <meta property="og:url" content="https://nooming.github.io/">
+
     <meta property="og:image" content="https://nooming.github.io/assets/icons/android-chrome-512x512.png">
+
     <meta property="og:site_name" content="nooming">
+
     
+
     <!-- Twitter Card -->
+
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="个人主页 · 工具与专题">
-    <meta name="twitter:description" content="工具与专题合集：文章与可操作的浏览器内实验。">
+
+    <meta name="twitter:title" content="个人主页 · 专题 · 实践 · 工具">
+
+    <meta name="twitter:description" content="长文慢慢读，小工具随手用；决策交给运气，棋类桌游换换脑子。">
+
     <meta name="twitter:image" content="https://nooming.github.io/assets/icons/android-chrome-512x512.png">
+
     
+
     <!-- Canonical URL -->
+
     <link rel="canonical" href="https://nooming.github.io/">
+
     
+
     <!-- Favicon（根页用相对路径，file:// 双击预览时仍能命中仓库内资源；部署到站点根时与「/assets/icons/…」等价） -->
+
     <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
+
     <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png">
+
     <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png">
+
     <link rel="manifest" href="assets/icons/site.webmanifest">
+
     <link rel="shortcut icon" href="assets/icons/favicon.ico">
+
     
+
     <!-- 公共样式 -->
+
     <link rel="stylesheet" href="assets/css/common.css">
+
     <link rel="stylesheet" href="assets/css/home.css">
+
     
+
     <!-- 结构化数据 (JSON-LD) -->
+
     <script type="application/ld+json">
+
     {
+
         "@context": "https://schema.org",
+
         "@type": "WebSite",
+
         "name": "nooming 个人站点",
+
         "url": "https://nooming.github.io/",
-        "description": "个人站点：实用工具与专题实践（文章与互动实验）；进制与音频转换、风扇转速、转盘等。",
+
+        "description": "专题与实践、实用工具、随机决策与棋类桌游；个人学习与记录站点。",
+
         "author": {
+
             "@type": "Person",
+
             "name": "nooming",
+
             "url": "https://github.com/nooming"
+
         },
+
         "potentialAction": {
+
             "@type": "SearchAction",
+
             "target": "https://nooming.github.io/?q={search_term_string}",
+
             "query-input": "required name=search_term_string"
+
         }
+
     }
+
     </script>
+
 </head>
+
 <body>
+
     <header>
+
         <h1>个人主页</h1>
+
         <p class="intro">
+
             GitHub Pages · GitHub：<a href="https://github.com/nooming" target="_blank" rel="noopener noreferrer" class="github-link">nooming</a>
+
         </p>
-        <p class="intro">笔记与工具 · 专题长文 · 浏览器内小实验</p>
+
+        <p class="intro">笔记、专题、实践、小工具与一点随机性。</p>
+
     </header>
 
-    <!-- 顶部三张横幅：网址导航 / 手写笔记 / Citywalk -->
+
+
+    <!-- 顶部三张横幅：Citywalk / 网址导航 / 手写笔记 -->
+
     <div class="top-banners">
-        <!-- 网址导航 - 醒目区域 -->
-        <div class="navigation-banner">
-            <h2 class="navigation-title">网址导航</h2>
-            <p class="navigation-desc">学习、娱乐、游戏、工具等链接，按类整理。</p>
-            <a href="app/navigation/" class="navigation-btn">进入</a>
-        </div>
 
-        <!-- 笔记功能 - 醒目区域 -->
-        <div class="notes-banner">
-            <h2 class="notes-title">手写笔记</h2>
-            <p class="notes-desc">手写与文字，多页；数据存本地浏览器。</p>
-            <a href="app/notes/" class="notes-btn">进入</a>
-        </div>
+        <!-- Citywalk -->
 
-        <!-- Citywalk 工具 - 醒目区域 -->
         <div class="citywalk-banner">
-            <h2 class="citywalk-title">全国 Citywalk 定制</h2>
-            <p class="citywalk-desc">多城步行路线：地图点选或搜索起终点，偏好与时长；天气、打卡与导出长图。</p>
+
+            <h2 class="citywalk-title">Citywalk 路线</h2>
+
+            <p class="citywalk-desc">多城散步，地图点一点；偏好、时长、天气和长图分享一次搞定。</p>
+
             <a href="app/citywalk/" class="citywalk-btn">进入</a>
+
         </div>
+
+
+
+        <!-- 网址导航 -->
+
+        <div class="navigation-banner">
+
+            <h2 class="navigation-title">网址导航</h2>
+
+            <p class="navigation-desc">常用站按主题收好：工具、AI、开发、学习与视频。</p>
+
+            <a href="app/navigation/" class="navigation-btn">进入</a>
+
+        </div>
+
+
+
+        <!-- 手写笔记 -->
+
+        <div class="notes-banner">
+
+            <h2 class="notes-title">手写笔记</h2>
+
+            <p class="notes-desc">手绘与打字，多页笔记本，内容只留在本机。</p>
+
+            <a href="app/notes/" class="notes-btn">进入</a>
+
+        </div>
+
     </div>
 
-    <!-- 专题区块：文章导读 + 可互动实验 -->
-    <section class="section">
+
+
+    <!-- 专题：长文与操作笔记 -->
+
+    <section class="section" id="topics">
+
         <div class="section-header">
-            <h2>专题与实践</h2>
-            <p>长文与可操作的实验页。</p>
+
+            <h2>专题</h2>
+
+            <p>长文配步骤，适合静下心来跟做。</p>
+
         </div>
-        <div class="tips-cards">
+
+        <div class="tips-cards tips-cards--pair">
+
             <div class="tips-card">
+
                 <div class="card-icon-title">
+
                     <span class="card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/ui/hub-sprite.svg#i-wrench"/></svg></span>
+
                     <h3 class="tips-title">浏览器开发者工具实战</h3>
+
                 </div>
-                <p>用 Network、Console 等分析资源；八步操作与限制说明。</p>
+
+                <p>Network、Console 看懂资源从哪来；八步上手与边界提示。</p>
+
                 <a href="articles/crawler-experience/" class="tips-btn">阅读</a>
+
             </div>
+
             <div class="tips-card">
+
                 <div class="card-icon-title">
+
                     <span class="card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/ui/hub-sprite.svg#i-cat"/></svg></span>
+
                     <h3 class="tips-title">猫抓扩展使用笔记</h3>
+
                 </div>
-                <p>安装 Cat Catch，抓取页面音视频资源；按步骤操作。</p>
+
+                <p>装好 Cat Catch，按步骤把页面里的音视频抓下来。</p>
+
                 <a href="articles/cat-catch-tutorial/" class="tips-btn">阅读</a>
+
             </div>
-            <div class="tips-card">
-                <div class="card-icon-title">
-                    <span class="card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/ui/hub-sprite.svg#i-parking"/></svg></span>
-                    <h3 class="tips-title">小区停车分配优化实验</h3>
-                </div>
-                <p>平面图上编辑入口、楼与车位；匈牙利或 PSO；总时间与路径可视化。</p>
-                <a href="articles/parking-pso/" class="tips-btn">打开</a>
-            </div>
+
         </div>
+
     </section>
+
+
+
+    <!-- 实践：浏览器内可交互实验与可视化 -->
+
+    <section class="section" id="practice">
+
+        <div class="section-header">
+
+            <h2>实践</h2>
+
+            <p>在画布上改参数，看路线与粒子怎么跟着变。</p>
+
+        </div>
+
+        <div class="tips-cards tips-cards--pair">
+
+            <div class="tips-card">
+
+                <div class="card-icon-title">
+
+                    <span class="card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/ui/hub-sprite.svg#i-parking"/></svg></span>
+
+                    <h3 class="tips-title">小区停车分配优化实验</h3>
+
+                </div>
+
+                <p>在平面图画入口、楼和车位；匈牙利或 PSO，总路程一眼看清。</p>
+
+                <a href="app/parking-pso/" class="tips-btn">打开</a>
+
+            </div>
+
+            <div class="tips-card">
+
+                <div class="card-icon-title">
+
+                    <span class="card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/ui/hub-sprite.svg#i-atom"/></svg></span>
+
+                    <h3 class="tips-title">质子世界</h3>
+
+                </div>
+
+                <p>带电粒子在电场、磁场和阻力里飞；边界和倍率你来调。</p>
+
+                <a href="app/games/proton/" class="tips-btn">进入</a>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
 
     <!-- 工具区块：多个功能卡片，桌面端两列布局 -->
+
     <section class="section">
+
         <div class="section-header">
+
             <h2>实用工具</h2>
-            <p>在线小工具合集。</p>
+
+            <p>换算、随手测、帮你拍板，再加几局小游戏。</p>
+
         </div>
+
         <div class="features">
+
             <div class="feature-card">
+
                 <div class="card-icon-title">
-                    <span class="card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/ui/hub-sprite.svg#i-target"/></svg></span>
-                    <h3 class="feature-title">选择辅助工具</h3>
-                </div>
-                <p>包含：转盘 · 抛硬币 · 多选随机</p>
-                <p class="feature-desc">转盘、硬币、多选随机。</p>
-                <a href="app/decision/" class="tool-btn">进入</a>
-            </div>
-            <div class="feature-card">
-                <div class="card-icon-title">
-                    <span class="card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/ui/hub-sprite.svg#i-brain"/></svg></span>
-                    <h3 class="feature-title">心理测试工具</h3>
-                </div>
-                <p>包含：MBTI 性格测试 · 动物塑测试</p>
-                <p class="feature-desc">MBTI、动物塑等轻量问卷。</p>
-                <a href="app/psychological/" class="tool-btn">进入</a>
-            </div>
-            <div class="feature-card">
-                <div class="card-icon-title">
+
                     <span class="card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/ui/hub-sprite.svg#i-gear"/></svg></span>
-                    <h3 class="feature-title">实用工具</h3>
+
+                    <h3 class="feature-title">换算与媒体</h3>
+
                 </div>
-                <p>包含：音频转换 · 进制转换 · Base64 编解码 · 二维码生成与识别 · 风扇转速估算</p>
-                <p class="feature-desc">音频与进制、Base64、二维码、风扇转速等。</p>
+
+                <p>音频转码、进制、Base64、二维码、风扇转速估算。</p>
+
+                <p class="feature-desc">从转码到二维码，日常够用就好。</p>
+
                 <a href="app/practical/" class="tool-btn">进入</a>
+
             </div>
+
             <div class="feature-card">
+
                 <div class="card-icon-title">
-                    <span class="card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/ui/hub-sprite.svg#i-gamepad"/></svg></span>
-                    <h3 class="feature-title">小游戏</h3>
+
+                    <span class="card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/ui/hub-sprite.svg#i-target"/></svg></span>
+
+                    <h3 class="feature-title">决策</h3>
+
                 </div>
-                <p>包含：五子棋 · 围棋 · 中国象棋 · 谷歌小恐龙 · 桌游（德州 / UNO / 红心）· 质子世界</p>
-                <p class="feature-desc">棋类、桌游、小恐龙、质子演示；单机或本地对战视游戏而定。</p>
-                <a href="app/games/" class="tool-btn">进入</a>
+
+                <p>转盘、抛硬币、多选随机。</p>
+
+                <p class="feature-desc">本地随机，不登录不留痕。</p>
+
+                <a href="app/decision/" class="tool-btn">进入</a>
+
             </div>
+
+            <div class="feature-card">
+
+                <div class="card-icon-title">
+
+                    <span class="card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/ui/hub-sprite.svg#i-gamepad"/></svg></span>
+
+                    <h3 class="feature-title">棋类与桌游</h3>
+
+                </div>
+
+                <p>棋类合集、小恐龙、德州 / UNO / 红心。</p>
+
+                <p class="feature-desc">单机或本地 AI；粒子场演示在首页「实践」。</p>
+
+                <a href="app/games/" class="tool-btn">进入</a>
+
+            </div>
+
+            <div class="feature-card">
+
+                <div class="card-icon-title">
+
+                    <span class="card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/ui/hub-sprite.svg#i-brain"/></svg></span>
+
+                    <h3 class="feature-title">心理测试</h3>
+
+                </div>
+
+                <p>MBTI、动物塑等轻量问卷。</p>
+
+                <p class="feature-desc">图一乐；结果只存在本机。</p>
+
+                <a href="app/psychological/" class="tool-btn">进入</a>
+
+            </div>
+
         </div>
+
     </section>
 
+
+
     <footer class="site-footer" role="contentinfo">
+
         <p>© 2026 个人站点 · 非商用学习记录</p>
+
     </footer>
 
+
+
     <button class="back-to-top" id="backToTop" aria-label="返回顶部">↑</button>
+
     <script src="assets/js/utils.js" defer></script>
+
 </body>
+
 </html>
+

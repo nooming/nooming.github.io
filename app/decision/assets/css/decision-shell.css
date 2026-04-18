@@ -1,18 +1,54 @@
 /* 决策工具子页：与全站 page-container 衔接；转盘/抛硬币第三方布局的轻量重置 */
 
+/* 第三方 style.min 在 body,html 上 scrollbar-width:none + ::-webkit-scrollbar{display:none}，易误以为不能滚 */
+html:has(body.decision-tool-page) {
+    scrollbar-width: thin;
+}
+
+html:has(body.decision-tool-page)::-webkit-scrollbar,
+body.decision-tool-page.page-container::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+    display: block;
+}
+
+body.decision-tool-page.page-container {
+    scrollbar-width: thin;
+    overscroll-behavior-y: auto;
+}
+
 .page-container .decision-tool-main {
     margin: 0;
     padding: 0;
 }
 
-/* 宽内容横向滚动收在 main 内；底部留白与全站页脚衔接 */
+/*
+ * style.min 里 main 为 display:flex + 横向 padding；若再给 main overflow-x:auto，
+ * 纵向会被算成 auto，主区变成独立滚动层，整页常无法上下滑。
+ * 横向溢出改由内层 .wheel-box / .coin-box 承接。
+ */
 body.decision-tool-page.page-container .decision-tool-main {
-    overflow-x: auto;
+    display: block !important;
+    justify-content: initial !important;
+    flex-wrap: initial !important;
+    margin-top: 0 !important;
+    overflow-x: visible;
+    overflow-y: visible;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: 28px;
+    padding-bottom: 12px;
 }
 
+/*
+ * 第三方 style.min 含 footer{height:128px;display:flex;…}，会命中本站 footer.site-footer，
+ * 把版权条压成固定高度、flex 排版错乱。common 的 footer.site-footer 已负责外观，此处只抵消冲突项。
+ */
 body.decision-tool-page.page-container > footer.site-footer {
+    height: auto !important;
+    min-height: 0 !important;
+    display: block !important;
+    align-items: unset !important;
+    justify-content: unset !important;
+    flex: none !important;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
@@ -28,7 +64,7 @@ body.decision-tool-page.page-container > footer.site-footer p {
 
 @media (max-width: 767.98px) {
     body.decision-tool-page.page-container .decision-tool-main {
-        padding-bottom: 20px;
+        padding-bottom: 12px;
     }
 }
 
@@ -36,6 +72,46 @@ body.decision-tool-page.page-container > footer.site-footer p {
 body.decision-tool-page .decision-tool-main .wheel-scope-box {
     max-width: 100%;
     box-sizing: border-box;
+}
+
+/*
+ * 转盘：spin.min 里 .wheel-box 使用 aspect-ratio:1200/680，而 .wheel-scope-box 仅 520px 高，
+ * 且 align-items:center，会在转盘块上下各留出大块空白；决策子页改为随内容高度、顶对齐。
+ */
+body.decision-tool-page .decision-tool-main .wheel-box {
+    margin-top: 0;
+    margin-bottom: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    aspect-ratio: unset !important;
+    height: auto !important;
+    min-height: 0 !important;
+    align-items: flex-start !important;
+}
+
+/* 抛硬币：coin.min 固定宽；主区不再 overflow-x 时在此横向滚动 */
+body.decision-tool-page .decision-tool-main .coin-box {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* 抛硬币：coin.min 在 scope / 翻转区 / 信息区上的纵向间距，在子页略收紧 */
+body.decision-tool-page .decision-tool-main .coin-scope-box {
+    padding-bottom: 10px;
+}
+
+body.decision-tool-page .decision-tool-main .coin-flip-box {
+    margin-top: 12px;
+}
+
+body.decision-tool-page .decision-tool-main .coin-info-box {
+    margin-top: 12px;
+}
+
+body.decision-tool-page .decision-tool-main .coin-info-recent-box {
+    margin-top: 12px;
 }
 
 /* 多选随机：主卡片内层不再重复浮岛阴影 */

@@ -296,7 +296,7 @@
     <body class="page-container card-game-page">
         <div class="page-header">
             <div class="header-top">
-                <a href="../../" class="back-btn">返回上一级</a>
+                <a href="../" class="back-btn">返回上一级</a>
                 <a href="../../../../index.html" class="back-btn">返回主页</a>
             </div>
             <div class="section-header section-header--page">
@@ -304,7 +304,6 @@
                 <p>与本地 AI 对局；含规则教程。</p>
             </div>
         </div>
-        <svg class="decor" viewBox="0 0 500 500" style="position: absolute;width:600px;"> </svg>
         <div class="tutor" style="display: none;"> </div>
         <div class="list-all col-md-6 nopadding">
             <ul class="list list-unstyled list-table"></ul>
@@ -312,7 +311,9 @@
             <button class="btn btn-default" onclick="startTutor();"><span class="glyphicon glyphicon-book"></span> 规则教程</button>
         </div>
 
-        <svg class="tutor-svg-2" viewBox="0 0 500 500" style="position:absolute;width:500px;z-index: -1;"> </svg>
+        <div class="card-game-stage">
+        <svg class="decor" viewBox="0 0 500 500" style="width:600px;"> </svg>
+        <svg class="tutor-svg-2" viewBox="0 0 500 500" style="width:500px;"> </svg>
         <div class="bodypad texas">
             <!-- <button class="btn btn-default"><span class="glyphicon glyphicon-arrow-left"></span>返回</button> -->
             <svg class="texas-svg" viewBox="0 0 500 500" style="position:absolute;width:500px;"> </svg>
@@ -320,6 +321,7 @@
             <!-- <svg class="texas-svg-down" viewBox="0 0 500 500" style="position:absolute;transform:rotate3d(1,0,0,70deg) translateY(290px)"> </svg> -->
             <div class="texas-btns" style="position:absolute;margin-top:240px;margin-left:200px;"></div>
             <div class="texas-btns-down" style="position:absolute;margin-top:520px;margin-left:-100px;width:700px;text-align:center;white-space: nowrap;"></div>
+        </div>
         </div>
         <div class="chat" style="position: fixed;bottom:15px;right:15px;display: none;">
             <button class="btn-exit btn btn-default" onclick="$(this).hasClass('btn-danger')?(socket?(socket.send('closing'),socket.close()):endTutor()):$(this).addClass('btn-danger')"><span class="glyphicon glyphicon-log-out"></span> 离开</button>

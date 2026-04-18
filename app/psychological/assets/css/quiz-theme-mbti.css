@@ -1,0 +1,42 @@
+/* ========== MBTI 测试 · 主题覆盖 ========== */
+
+.option:hover {
+    border-color: var(--color-theme-deep);
+    background: #fffde7;
+    transform: translateX(5px);
+}
+
+.option.selected {
+    border-color: var(--color-theme-deep);
+    background: var(--gradient-theme);
+    color: var(--color-theme-ink);
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--gradient-theme-h);
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.btn-primary {
+    background: var(--gradient-theme);
+    color: var(--color-theme-ink);
+}
+
+.btn-primary:hover {
+    background: var(--gradient-theme-reverse);
+}
+
+.result-type {
+    font-size: 3rem;
+    font-weight: bold;
+    color: var(--color-theme-text-end);
+    margin: 20px 0;
+}
+
+@media (max-width: 767.98px) {
+    .result-type {
+        font-size: 2rem;
+    }
+}
