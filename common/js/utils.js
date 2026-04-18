@@ -1,4 +1,4 @@
-// ========== 全站公共工具（Toast、剪贴板、防抖、返回顶部等；与 notes/js/notes-utils.js 分工不同） ==========
+// ========== 全站公共工具（Toast、剪贴板、防抖、返回顶部等；与 apps/notes/assets/js/notes-utils.js 分工不同） ==========
 
 /**
  * 显示 Toast 提示消息

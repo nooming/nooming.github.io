@@ -46,7 +46,7 @@
 - **全国多城路线规划**：可切换城市（含热门城市快捷入口），选择起点和终点后，自动规划适合步行游玩的路线，并推荐沿途打卡点（咖啡、甜品、文创等）
 - **地图交互体验**：基于高德地图 Web SDK，支持在地图上点击选择起终点、查看每个 POI 的详细信息
 - **智能游玩文案与分享图**：一键生成贴心的游玩文字攻略，并支持生成朋友圈分享长图
-- **后端服务说明**：前端页面位于 `cuisine/`。路线规划 Flask 源码与部署以仓库 **`noomings_backend`** 中的 `citywalk.py` 为唯一维护副本（`cuisine/` 目录不再重复存放该文件，避免双份漂移）。生产环境 API 基址为 `https://noomings-backend.zeabur.app`（与 `cuisine/app.js` 中 `API_BASE_URL` 一致）
+- **后端服务说明**：前端页面位于 **`apps/citywalk/`**。路线规划 Flask 源码与部署以仓库 **`noomings_backend`** 中的 `citywalk.py` 为唯一维护副本。生产环境 API 基址为 `https://noomings-backend.zeabur.app`（与 `apps/citywalk/app.js` 中 `API_BASE_URL` 一致）
 
 ### 🎮 小游戏
 - **索引页**：[`tools/games/`](../tools/games/) 汇总棋类、小恐龙、桌游与质子世界等
@@ -80,29 +80,41 @@
 
 ## 项目结构
 
+以下为仓库**顶层与常用子目录**示意，未穷尽列举各工具内的全部静态资源；路径模板与新增页面约定见 **[SITE-CONVENTIONS.md](SITE-CONVENTIONS.md)**，桌游合集另有 **[../tools/games/card-games/README.md](../tools/games/card-games/README.md)**。
+
 ```
 ├── index.html                  # 主页（样式见 common/css/home.css）
+├── 404.html                    # 自定义 404 页面
+├── CNAME                       # GitHub Pages 自定义域名
 ├── docs/                       # 文档目录
-│   ├── README.md              # 项目说明文档
-│   └── CHANGELOG.md           # 更新日志
+│   ├── README.md               # 项目说明文档
+│   ├── CHANGELOG.md            # 更新日志
+│   ├── SITE-CONVENTIONS.md     # 路径与目录模板约定
+│   └── BUILD-OPTIONAL.md       # 可选静态构建规划（未默认启用）
 ├── articles/                   # 专题与实践（长文 + 互动实验）
-│   ├── index.html             # 专题索引
-│   ├── cat-catch-tutorial/    # 猫抓扩展教程
-│   │   └── cat-catch.zip      # 猫抓扩展源码压缩包
-│   ├── crawler-experience/    # 浏览器开发者工具实战
-│   └── parking-pso/           # 小区停车分配优化（前端，API 见 Zeabur /api/*）
-├── navigation/                 # 网址导航
-├── notes/                      # 手写笔记
-│   ├── index.html              # 笔记主页面
-│   ├── styles.css              # 笔记样式
-│   └── js/                     # 笔记功能脚本
-│       ├── app.js              # 应用主逻辑
-│       ├── canvas.js           # 画布绘图功能
-│       ├── page.js             # 页面管理
-│       ├── render.js           # 渲染逻辑
-│       ├── state.js            # 状态管理
-│       ├── storage.js          # 本地存储
-│       └── notes-utils.js      # 笔记域专用工具（避免与 common/js/utils.js 同名）
+│   ├── index.html              # 专题索引
+│   ├── cat-catch-tutorial/     # 猫抓扩展教程
+│   │   ├── index.html          # 教程页入口
+│   │   └── cat-catch.zip       # 猫抓扩展源码压缩包
+│   ├── crawler-experience/     # 浏览器开发者工具实战
+│   │   └── index.html          # 专题页入口
+│   └── parking-pso/            # 小区停车分配优化（API 见 Zeabur /api/*）
+│       ├── index.html          # 页面入口
+│       └── assets/             # 页面脚本与样式
+│           ├── js/app.js
+│           └── css/style.css
+├── apps/                       # 独立多页应用（导航 / 笔记 / Citywalk）
+│   ├── navigation/
+│   │   └── index.html          # 网址导航入口
+│   ├── notes/                  # 手写笔记
+│   │   ├── index.html
+│   │   └── assets/
+│   │       ├── css/styles.css
+│   │       └── js/             # app、canvas、page、render、state、storage、notes-utils
+│   └── citywalk/               # 城市漫步 · Citywalk（地图全屏）
+│       ├── index.html
+│       ├── app.js
+│       └── styles.css          # 页面样式（与 index 同级）
 ├── tools/                      # 工具集合
 │   ├── index.html              # 四类工具总览入口
 │   ├── decision/               # 选择辅助工具
@@ -116,40 +128,41 @@
 │   │       └── index.html
 │   ├── psychological/          # 心理测试
 │   │   ├── index.html
-│   │   ├── mbti-test/         # MBTI性格测试
-│   │   └── animal-test/       # 动物塑测试
-│   ├── practical/             # 实用工具
-│   │   ├── index.html         # 实用工具合集首页
-│   │   ├── audio-converter/   # 音频格式转换器
-│   │   ├── base-converter/    # 进制转换器
-│   │   ├── base64-converter/  # Base64 编解码器
-│   │   ├── qr-code-generator/ # 二维码生成与识别
-│   │   └── fan-rpm/           # 风扇转速估算
-│   └── games/                 # 小游戏
-│       ├── index.html         # 小游戏合集入口
-│       ├── gomoku/            # 五子棋
-│       ├── go/                # 围棋
-│       ├── chess/             # 中国象棋
-│       ├── dino/              # 谷歌小恐龙（index.html；assets/css、assets/js、素材子目录）
-│       ├── card-games/        # 桌游（德州 / UNO / 红心）
-│       │   ├── index.html
-│       │   ├── texas.html
-│       │   ├── uno.html
-│       │   ├── hearts.html
-│       │   └── assets/
-│       └── proton/            # 质子世界物理演示
+│   │   ├── mbti-test/          # MBTI 性格测试
+│   │   └── animal-test/        # 动物塑测试
+│   ├── practical/              # 实用工具
+│   │   ├── index.html          # 实用工具合集首页
+│   │   ├── audio-converter/    # 音频格式转换器
+│   │   ├── base-converter/     # 进制转换器（页面资源见 assets/css、assets/js）
+│   │   ├── base64-converter/   # Base64 编解码器
+│   │   ├── qr-code-generator/  # 二维码生成与识别
+│   │   └── fan-rpm/            # 风扇转速估算
+│   └── games/                  # 小游戏
+│       ├── index.html          # 小游戏合集入口
+│       ├── gomoku/             # 五子棋
+│       ├── go/                 # 围棋
+│       ├── chess/              # 中国象棋
+│       ├── dino/               # 谷歌小恐龙（index.html；assets/css、assets/js、素材子目录）
+│       ├── card-games/         # 桌游（德州 / UNO / 红心）
+│       │   ├── index.html      # 合集入口
+│       │   ├── README.md       # 该目录 URL 与资源约定
+│       │   ├── texas/
+│       │   │   └── index.html  # 德州扑克正式入口
+│       │   ├── uno/
+│       │   │   └── index.html  # UNO 正式入口
+│       │   ├── hearts/
+│       │   │   └── index.html  # 红心大战正式入口
+│       │   └── assets/         # 共享脚本与样式等
+│       └── proton/             # 质子世界物理演示
 │           ├── index.html
 │           └── assets/
 │               ├── css/
 │               │   └── proton.css
 │               └── js/
 │                   └── proton.js
-├── cuisine/                    # 城市漫步 · Citywalk 定制器（前端）
-│   ├── index.html              # Citywalk 前端页面
-│   └── app.js                  # 前端逻辑（API 指向 Zeabur 后端）
 ├── common/                     # 公共资源
-│   ├── css/                   # 公共样式（含 home.css 主页专用）
-│   └── js/                    # 公共脚本
+│   ├── css/                    # 公共样式（含 home.css 主页专用）
+│   └── js/                     # 公共脚本
 ├── favicon-io/                 # 网站图标
 ├── sitemap.xml
 └── robots.txt
@@ -157,21 +170,24 @@
 
 ## 前端目录约定
 
+更完整的说明见 **[SITE-CONVENTIONS.md](SITE-CONVENTIONS.md)**（`common` / `favicon-io` 的相对引用方式、新工具目录模板、本地预览注意点）。
+
 - **`tools/games/` 下各小游戏**：静态资源优先放在 **`assets/css/`**、**`assets/js/`**、**`assets/img/`**（可按需增删子目录），页面入口统一为 **`index.html`**，便于与「仅 HTML + 散落 css/js」的异构布局区分。
-- **例外 — `tools/games/card-games/`**：为保持已收录与外链稳定的 URL，德州 / UNO / 红心仍使用 **`texas.html` / `uno.html` / `hearts.html`** 多入口，与合集 `index.html` 并列；共享脚本与样式集中在同目录 **`assets/`**。详见该目录下的 `README.md`。
-- **全站公共脚本**：通用 Toast、剪贴板、防抖、返回顶部等仅在 **`common/js/utils.js`**；手写笔记专用逻辑在 **`notes/js/notes-utils.js`**，二者勿混用文件名。
-- **其他 `tools/` 二级分类**（如 `practical`、`decision`）：已采用「每工具一子目录 + 自有 `css/` `js/`」的，可保持现状；新建工具时优先在同一分类内沿用已有风格，避免同分类混用多种布局。
+- **`tools/games/card-games/`**：德州 / UNO / 红心入口为 **`texas/`、`uno/`、`hearts/`**（各目录 `index.html`）。共享脚本与样式在同目录 **`assets/`**。详见该目录下的 `README.md`。
+- **全站公共脚本**：通用 Toast、剪贴板、防抖、返回顶部等仅在 **`common/js/utils.js`**；手写笔记专用逻辑在 **`apps/notes/assets/js/notes-utils.js`**，二者勿混用文件名。
+- **`tools/practical/`**：进制、Base64、二维码等工具的页面脚本与样式放在各子目录 **`assets/js/`**、**`assets/css/`**；音频转换、风扇转速等以单页内联或仅依赖 **`common/`**（由页面写 `../` 链回到站根）为主。
+- **其他 `tools/` 二级分类**（如 `decision`）：已采用 **`assets/`** 或与历史页并存的，新建工具时优先 **`assets/`** 模板，避免同分类混用多种布局。
 
 ## 新增可访问页面时的检查清单
 
 1. 新增或修改 **`index.html`（或其它入口 HTML）** 后，视情况更新上级索引页的入口链接（如 `tools/games/index.html`）。
 2. 若页面应被搜索引擎发现，在 **[`sitemap.xml`](../sitemap.xml)** 中增加或更新对应 `<loc>`（注意与 GitHub Pages 实际路径一致）。
-3. 若页面需要全站 Toast / 返回顶部等，引入 **`common/js/utils.js`**（路径层级按目录深度写 `../../` 等）。
+3. 若页面需要全站 Toast / 返回顶部等，从当前 HTML 所在目录写回到 **`common/js/utils.js`**（与引入 `common.css` 时相同的 `../` 深度）。
 
 ## 使用说明
 
-1. 直接在浏览器中打开 `index.html` 即可访问
-2. 或通过 GitHub Pages 部署后访问
+1. 推荐通过 **GitHub Pages** 或本地 **HTTP 静态服务**（如 VS Code Live Server）访问站点根；各页已用 **`../` 链** 引用 **`common/`**、**`favicon-io/`**，在 `file://` 下也可加载公共资源（部分浏览器对 manifest 仍可能限制）。
+2. 更细的路径规则见 [SITE-CONVENTIONS.md](SITE-CONVENTIONS.md)。
 
 ## 部署
 
@@ -179,7 +195,7 @@
 
 ## 更新记录
 
-各版本功能与结构调整见 [CHANGELOG.md](CHANGELOG.md)（当前最新为 v1.7）。
+各版本功能与结构调整见 [CHANGELOG.md](CHANGELOG.md)（当前最新为 v1.9）。
 
 ## 许可证
 

@@ -1,10 +1,31 @@
 # 个人主页更新日志
 
+## v1.9
+
+### 结构调整
+- **桌游旧链**：已移除 **`tools/games/card-games/`** 根目录下的 **`texas.html` / `uno.html` / `hearts.html`** 重定向页；请一律使用 **`texas/`、`uno/`、`hearts/`** 目录入口。
+- **独立应用目录**：新增 **`apps/`**，将网址导航、手写笔记、Citywalk 分别置于 **`apps/navigation/`**、**`apps/notes/`**、**`apps/citywalk/`**（原顶层 `navigation/`、`notes/`、`cuisine/` 迁入；Citywalk 对外路径由 `cuisine/` 更名为语义清晰的 **`citywalk`**）。
+- **静态资源模板**：`tools/practical` 中带独立 `js/`、`css/` 子目录的工具改为 **`assets/js/`**、**`assets/css/`**；**`apps/notes/`** 与 **`articles/parking-pso/`** 的页面脚本与样式迁入各自 **`assets/`**。
+- **站点地图与主页入口**：**`sitemap.xml`** 与根 **`index.html`** 横幅链接已更新为上述新 URL。
+
+### 文档
+- **`docs/README.md`**、**`docs/SITE-CONVENTIONS.md`** 中的项目结构说明与例外约定已与当前目录一致。
+
+## v1.8
+
+### 结构调整
+- **全站公共资源路径**：各页对 **`common/`**、**`favicon-io/`** 的引用统一为根相对（如 **`/common/css/common.css`**、**`/favicon-io/favicon.ico`**），减少深层目录下 `../../../` 维护成本；**`favicon-io/site.webmanifest`** 内图标改为 **`/favicon-io/...`**。
+- **桌游 URL**：德州 / UNO / 红心正式入口迁至 **`tools/games/card-games/texas/`**、**`uno/`**、**`hearts/`**（各目录 `index.html`）；**`sitemap.xml`** 与合集 **`card-games/index.html`** 入口已改为新路径。（此后曾短期保留根目录 **`texas.html` / `uno.html` / `hearts.html`** 作旧链重定向，已在后续版本中移除。）
+
+### 文档
+- 新增 **`docs/SITE-CONVENTIONS.md`**（路径与目录模板）、**`docs/BUILD-OPTIONAL.md`**（可选 Eleventy / 脚本构建规划）。
+- **`docs/README.md`**、**`tools/games/card-games/README.md`** 与项目结构树已随上述约定更新。
+
 ## v1.7
 
 ### 结构调整
 - **小游戏资源**：`tools/games/dino/` 的页面样式与主脚本迁至 `assets/css/`、`assets/js/`；`tools/games/proton/` 的 `proton.css`、`proton.js` 迁至 `assets/css/`、`assets/js/`（页面 URL 未变，`sitemap.xml` 无需改动）。
-- **桌游**：保留 `texas.html` / `uno.html` / `hearts.html` 多入口以维持外链与收录；在 `tools/games/card-games/README.md` 中说明例外约定。
+- **桌游**（v1.8 已演进为目录入口 + 旧 `.html` 重定向；此处保留 v1.7 当时说明）：曾以多入口 `texas.html` / `uno.html` / `hearts.html` 维持外链；README 中说明例外约定。
 - **手写笔记**：`notes/js/utils.js` 重命名为 **`notes/js/notes-utils.js`**，与全站 **`common/js/utils.js`** 区分，避免同名混淆。
 - **清理**：删除空的 `tools/practical/recite/` 与 `tools/study/`（含空 `recite/`）占位目录。
 

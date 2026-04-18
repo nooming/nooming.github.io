@@ -24,7 +24,7 @@
     <!-- Canonical URL -->
     <link rel="canonical" href="https://nooming.github.io/">
     
-    <!-- Favicon -->
+    <!-- Favicon（根页用相对路径，file:// 双击预览时仍能命中仓库内资源；部署到站点根时与「/favicon-io/…」等价） -->
     <link rel="apple-touch-icon" sizes="180x180" href="favicon-io/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-io/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-io/favicon-16x16.png">
@@ -71,21 +71,21 @@
         <div class="navigation-banner">
             <h2 class="navigation-title">🌐 网址导航</h2>
             <p class="navigation-desc">精选实用网站集合，包含学习、娱乐、游戏、工具等各类网站导航，一站式解决你的需求</p>
-            <a href="navigation/" class="navigation-btn">立即探索</a>
+            <a href="apps/navigation/" class="navigation-btn">立即探索</a>
         </div>
 
         <!-- 笔记功能 - 醒目区域 -->
         <div class="notes-banner">
             <h2 class="notes-title">📝 手写笔记</h2>
             <p class="notes-desc">支持手写绘图和文本编辑的在线笔记工具，随时记录想法，支持多页面管理，数据自动保存到本地</p>
-            <a href="notes/" class="notes-btn">开始记录</a>
+            <a href="apps/notes/" class="notes-btn">开始记录</a>
         </div>
 
         <!-- Citywalk 工具 - 醒目区域 -->
         <div class="citywalk-banner">
             <h2 class="citywalk-title">🚶 全国 Citywalk 定制</h2>
             <p class="citywalk-desc">全国多城可选，地图点选或搜索起终点，按偏好与时长规划步行路线；沿途打卡、本地天气、文字攻略与分享长图</p>
-            <a href="cuisine/" class="citywalk-btn">开启城市漫步</a>
+            <a href="apps/citywalk/" class="citywalk-btn">开启城市漫步</a>
         </div>
     </div>
 
@@ -176,12 +176,7 @@
         </p>
     </footer>
 
-    <!-- 返回顶部按钮 -->
     <button class="back-to-top" id="backToTop" aria-label="返回顶部">↑</button>
-
-    <!-- 公共工具函数 -->
     <script src="common/js/utils.js" defer></script>
-    
-    <!-- 返回顶部功能已在 common/js/utils.js 中自动初始化 -->
 </body>
 </html>

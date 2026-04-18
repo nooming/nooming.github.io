@@ -1705,6 +1705,12 @@ body {
     }
 }
 
+/* 全站 Toast（common.css）在笔记顶区略下移 */
+body .toast {
+    top: 72px;
+    right: 28px;
+}
+
 /* 撤销/重做按钮 */
 .undo-redo-controls {
     position: fixed;

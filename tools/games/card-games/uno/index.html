@@ -8,32 +8,29 @@
 
         <title>UNO</title>
         <meta name="description" content="经典 UNO 在线对战本地 AI，含规则教程与选色、功能牌。">
-        <link rel="canonical" href="https://nooming.github.io/tools/games/card-games/uno.html">
+        <link rel="canonical" href="https://nooming.github.io/tools/games/card-games/uno/">
         <meta property="og:type" content="website">
         <meta property="og:title" content="UNO - 桌游">
         <meta property="og:description" content="经典 UNO 与本地 AI 对战，支持规则教程。">
-        <meta property="og:url" content="https://nooming.github.io/tools/games/card-games/uno.html">
-        <link rel="apple-touch-icon" sizes="180x180" href="../../../favicon-io/apple-touch-icon.png">
-        <link rel="icon" type="image/png" sizes="32x32" href="../../../favicon-io/favicon-32x32.png">
-        <link rel="icon" type="image/png" sizes="16x16" href="../../../favicon-io/favicon-16x16.png">
-        <link rel="manifest" href="../../../favicon-io/site.webmanifest">
-        <link rel="shortcut icon" href="../../../favicon-io/favicon.ico">
+        <meta property="og:url" content="https://nooming.github.io/tools/games/card-games/uno/">
+        <link rel="apple-touch-icon" sizes="180x180" href="../../../../favicon-io/apple-touch-icon.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="../../../../favicon-io/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="../../../../favicon-io/favicon-16x16.png">
+        <link rel="manifest" href="../../../../favicon-io/site.webmanifest">
+        <link rel="shortcut icon" href="../../../../favicon-io/favicon.ico">
 
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css">
         <script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
-        <script src="assets/stub-sso.js"></script>
+        <script src="../assets/stub-sso.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"></script>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css">
         <script src="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js"></script>
-        <link rel="stylesheet" href="assets/game-layout.css">
+        <link rel="stylesheet" href="../assets/game-layout.css">
 
-        <script src="assets/common/ui-buttons.js"></script>
-        <script src="assets/common/tutorial-shell.js"></script>
-        <script src="assets/tutor-uno.js"></script>
-        <script src="assets/uno.js"></script>
-        <!-- <link href="https://fonts.loli.net/css2?family=Noto+Serif+SC:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet"> -->
-
-        <!-- <script id="MathJax-script" src="https://cdn.bootcss.com/mathjax/3.2.0/es5/tex-chtml.js"></script> -->
+        <script src="../assets/common/ui-buttons.js"></script>
+        <script src="../assets/common/tutorial-shell.js"></script>
+        <script src="../assets/tutor-uno.js"></script>
+        <script src="../assets/uno.js"></script>
         <script>
             const AI_ONLY_MODE = true
             $(() => {
@@ -247,7 +244,6 @@
                     $('.person-ready').remove()
                     $('.person-unready').css('display', 'block')
                 }, 100)
-                // $('.uno-svg-down').html(str)
             }
             function getButton(type, text, onclick, glyph = 0, onmouseenter = 0, onmouseleave = 0, onmousedown = 0, glyph2 = 0) {
                 return `<button class="btn btn-${type}" onclick="${onclick}" ${onmouseenter ? `onmouseenter="${onmouseenter}" ontouchstart="${onmouseenter}"` : ''} ${onmouseleave ? `onmouseleave="${onmouseleave}"` : ''} ${onmousedown ? `onmousedown="${onmousedown}"` : ''}>${glyph ? `<span class="glyphicon glyphicon-${glyph}"></span> ` : ''}${text}${glyph2 ? ` <span class="glyphicon glyphicon-${glyph2}"></span>` : ''}</button>`
@@ -267,7 +263,6 @@
                 }
                 return str
             }
-            function drawAfkButtons() {}
             function drawButtons(msg = '') {
                 let str = '', str2 = msg
                 $('.cards-rect').attr('fill', '#ddd').attr('onmouseenter', '').attr('onmouseleave', '').attr('onclick', '').css('cursor', '')
@@ -329,10 +324,7 @@
                 $('.uno-btns-down').html(str2)
                 $('.btn-up').addClass('disabled')
             }
-            function drawAlert() {}
             let socket = null
-            function connectTable() {}
-            function newTable() {}
             function listTables() {
                 let str = '', ar = '', arr = drawUnoAll()
                 str += `<defs><path id="ban" fill="white" d="M20.46 11.992v-.059a8.24 8.24 0 0 0-1.376-4.571l.019.031l-11.757 11.74a8.26 8.26 0 0 0 4.606 1.388h.026h-.001h.029a8.2 8.2 0 0 0 3.321-.699l-.052.021c3.074-1.315 5.188-4.314 5.188-7.807v-.045v.002zM4.884 16.654L16.657 4.897a8.1 8.1 0 0 0-4.607-1.42h-.074h.004h-.064a8.26 8.26 0 0 0-4.231 1.159l.038-.021C5.179 6.125 3.5 8.859 3.5 11.984c0 1.736.518 3.352 1.408 4.7l-.02-.032zm19.066-4.662v.035c0 1.678-.35 3.273-.981 4.718l.03-.076c-1.842 4.36-6.082 7.363-11.024 7.363S2.793 21.028.981 16.747l-.029-.078C.351 15.29.001 13.684.001 11.995S.351 8.7.982 7.244l-.03.077C2.794 2.961 7.034-.042 11.976-.042s9.182 3.004 10.994 7.285l.029.078a11.6 11.6 0 0 1 .952 4.631v.041v-.002z"/>
@@ -382,7 +374,6 @@
                 }
                 $('.decor').html(str)
             }
-            function enter() {}
         </script>
         <style>
             .person-ready {
@@ -437,12 +428,12 @@
 
     <body>
         <nav class="game-nav-top">
-            <a href="../../../" class="nav-back-site nav-back-site--muted">← 站点首页</a>
-            <a href="../" class="nav-back-site">小游戏合集</a>
+            <a href="../../../../" class="nav-back-site nav-back-site--muted">← 站点首页</a>
+            <a href="../../" class="nav-back-site">小游戏合集</a>
             <span class="game-nav-title">UNO</span>
-            <a href="./index.html">桌游目录</a>
-            <a href="./texas.html">德州扑克</a>
-            <a href="./hearts.html">红心大战</a>
+            <a href="../index.html">桌游目录</a>
+            <a href="../texas/">德州扑克</a>
+            <a href="../hearts/">红心大战</a>
             <span class="api-hint">模式：本地 AI 对战 · 昵称 <code>?nick=名字</code></span>
         </nav>
         <div class="game-nav-spacer" aria-hidden="true"></div>
@@ -456,10 +447,8 @@
         </div>
 
         <div class="bodypad uno" style="position: absolute;top:130px;min-width: 100vw;min-height:800px;z-index: -1;">
-            <!-- <button class="btn btn-default"><span class="glyphicon glyphicon-arrow-left"></span>返回</button> -->
             <svg class="uno-svg" viewBox="0 0 500 500" style="position:absolute;width:500px;"> </svg>
             <svg class="tutor-svg" viewBox="0 0 500 500" style="position:absolute;width:500px;display:none"> </svg>
-            <!-- <svg class="uno-svg-down" viewBox="0 0 500 500" style="position:absolute;transform:rotate3d(1,0,0,70deg) translateY(290px)"> </svg> -->
             <div class="uno-btns" style="position:absolute;margin-top:230px;margin-left:200px;"></div>
             <div class="uno-btns-down" style="position:absolute;margin-top:520px;margin-left:-100px;width:700px;text-align:center;white-space: nowrap;"></div>
         </div>

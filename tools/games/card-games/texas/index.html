@@ -8,32 +8,29 @@
 
         <title>德州扑克</title>
         <meta name="description" content="与本地 AI 进行德州扑克对局，内含规则教程。">
-        <link rel="canonical" href="https://nooming.github.io/tools/games/card-games/texas.html">
+        <link rel="canonical" href="https://nooming.github.io/tools/games/card-games/texas/">
         <meta property="og:type" content="website">
         <meta property="og:title" content="德州扑克 - 桌游">
         <meta property="og:description" content="本地 AI 德州扑克，含规则教程。">
-        <meta property="og:url" content="https://nooming.github.io/tools/games/card-games/texas.html">
-        <link rel="apple-touch-icon" sizes="180x180" href="../../../favicon-io/apple-touch-icon.png">
-        <link rel="icon" type="image/png" sizes="32x32" href="../../../favicon-io/favicon-32x32.png">
-        <link rel="icon" type="image/png" sizes="16x16" href="../../../favicon-io/favicon-16x16.png">
-        <link rel="manifest" href="../../../favicon-io/site.webmanifest">
-        <link rel="shortcut icon" href="../../../favicon-io/favicon.ico">
+        <meta property="og:url" content="https://nooming.github.io/tools/games/card-games/texas/">
+        <link rel="apple-touch-icon" sizes="180x180" href="../../../../favicon-io/apple-touch-icon.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="../../../../favicon-io/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="../../../../favicon-io/favicon-16x16.png">
+        <link rel="manifest" href="../../../../favicon-io/site.webmanifest">
+        <link rel="shortcut icon" href="../../../../favicon-io/favicon.ico">
 
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css">
         <script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
-        <script src="assets/stub-sso.js"></script>
+        <script src="../assets/stub-sso.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"></script>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css">
         <script src="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js"></script>
-        <link rel="stylesheet" href="assets/game-layout.css">
+        <link rel="stylesheet" href="../assets/game-layout.css">
 
-        <script src="assets/common/ui-buttons.js"></script>
-        <script src="assets/common/tutorial-shell.js"></script>
-        <script src="assets/tutor-texas.js"></script>
-        <script src="assets/texas.js"></script>
-        <!-- <link href="https://fonts.loli.net/css2?family=Noto+Serif+SC:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet"> -->
-
-        <!-- <script id="MathJax-script" src="https://cdn.bootcss.com/mathjax/3.2.0/es5/tex-chtml.js"></script> -->
+        <script src="../assets/common/ui-buttons.js"></script>
+        <script src="../assets/common/tutorial-shell.js"></script>
+        <script src="../assets/tutor-texas.js"></script>
+        <script src="../assets/texas.js"></script>
         <script>
             const AI_ONLY_MODE = true
             $(() => {
@@ -181,7 +178,6 @@
                 }
                 return str
             }
-            function drawAfkButtons() {}
             function drawButtons(msg = '') {
                 let str = '', str2 = msg
                 if (cur.cash[cur.you] <= cur.bb && tt) {
@@ -210,7 +206,6 @@
                 $('.texas-btns').html(str)
                 $('.texas-btns-down').html(str2)
             }
-            function drawAlert() {}
             function procHover(k, id) {
                 if (k[0] == 'up') {
                     $(`.line-${id},.line-${id}-red`).hide()
@@ -227,8 +222,6 @@
                 }
             }
             let socket = null
-            function connectTable() {}
-            function newTable() {}
             function listTables() {
                 let str = '', ar = '', arr = drawTexasAll()
                 str += `<defs><path id="heart" fill="red" d="m12 21.35l-1.45-1.32C5.4 15.36 2 12.27 2 8.5C2 5.41 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.08C13.09 3.81 14.76 3 16.5 3C19.58 3 22 5.41 22 8.5c0 3.77-3.4 6.86-8.55 11.53z"/>
@@ -267,7 +260,6 @@
                 }
                 $('.decor').html(str)
             }
-            function enter() {}
         </script>
         <style>
             .btn-up {
@@ -302,12 +294,12 @@
 
     <body>
         <nav class="game-nav-top">
-            <a href="../../../" class="nav-back-site nav-back-site--muted">← 站点首页</a>
-            <a href="../" class="nav-back-site">小游戏合集</a>
+            <a href="../../../../" class="nav-back-site nav-back-site--muted">← 站点首页</a>
+            <a href="../../" class="nav-back-site">小游戏合集</a>
             <span class="game-nav-title">德州扑克</span>
-            <a href="./index.html">桌游目录</a>
-            <a href="./uno.html">UNO</a>
-            <a href="./hearts.html">红心大战</a>
+            <a href="../index.html">桌游目录</a>
+            <a href="../uno/">UNO</a>
+            <a href="../hearts/">红心大战</a>
             <span class="api-hint">模式：本地 AI 对战 · 昵称 <code>?nick=名字</code></span>
         </nav>
         <div class="game-nav-spacer" aria-hidden="true"></div>

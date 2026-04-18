@@ -239,7 +239,7 @@ function copyText() {
         
         if (textToCopy) {
             navigator.clipboard.writeText(textToCopy).then(() => {
-                showToast('文本已复制到剪贴板');
+                showToast('文本已复制到剪贴板', 'success');
             }).catch(() => {
                 // 降级方案
                 const textarea = document.createElement('textarea');
@@ -248,10 +248,10 @@ function copyText() {
                 textarea.select();
                 document.execCommand('copy');
                 document.body.removeChild(textarea);
-                showToast('文本已复制到剪贴板');
+                showToast('文本已复制到剪贴板', 'success');
             });
         } else {
-            showToast('没有可复制的内容');
+            showToast('没有可复制的内容', 'error');
         }
     }
 }
@@ -559,7 +559,7 @@ function highlightSelectedText() {
     
     const selection = window.getSelection();
     if (!selection?.rangeCount || selection.isCollapsed) {
-        showToast('请先选中要高亮的文本');
+        showToast('请先选中要高亮的文本', 'error');
         return;
     }
     
@@ -569,7 +569,7 @@ function highlightSelectedText() {
         container = container.parentNode;
     }
     if (!textEditor.contains(container)) {
-        showToast('请选中编辑器内的文本');
+        showToast('请选中编辑器内的文本', 'error');
         return;
     }
     
@@ -590,7 +590,7 @@ function highlightSelectedText() {
         textEditor.focus();
     } catch (e) {
         console.error('高亮文本失败:', e);
-        showToast('高亮失败，请重试');
+        showToast('高亮失败，请重试', 'error');
     }
 }
 

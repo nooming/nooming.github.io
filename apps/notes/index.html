@@ -10,14 +10,15 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     
     <!-- Favicon -->
-    <link rel="apple-touch-icon" sizes="180x180" href="../favicon-io/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="../favicon-io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../favicon-io/favicon-16x16.png">
-    <link rel="manifest" href="../favicon-io/site.webmanifest">
-    <link rel="shortcut icon" href="../favicon-io/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="../../favicon-io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../favicon-io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../favicon-io/favicon-16x16.png">
+    <link rel="manifest" href="../../favicon-io/site.webmanifest">
+    <link rel="shortcut icon" href="../../favicon-io/favicon.ico">
     
     <title>手写笔记</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../../common/css/common.css">
+    <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
     <div class="app">
@@ -26,7 +27,7 @@
             <div class="sidebar-header">
                 <button class="btn-toggle-sidebar" onclick="toggleSidebar()" title="隐藏侧边栏">◀</button>
             </div>
-            <a href="../" class="btn-back-home" title="返回主页">
+            <a href="../../index.html" class="btn-back-home" title="返回主页">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><g stroke-width="1.5"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l-2 0l9 -9l9 9l-2 0"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7"/><path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6"/></g></svg>
             </a>
             <div class="page-picker-wrapper">
@@ -105,13 +106,14 @@
         });
     </script>
     <!-- 按依赖顺序引入模块 -->
-    <script src="js/notes-utils.js"></script>
-    <script src="js/state.js"></script>
-    <script src="js/storage.js"></script>
-    <script src="js/page.js"></script>
-    <script src="js/canvas.js"></script>
-    <script src="js/render.js"></script>
-    <script src="js/app.js"></script>
+    <script src="../../common/js/utils.js"></script>
+    <script src="assets/js/notes-utils.js"></script>
+    <script src="assets/js/state.js"></script>
+    <script src="assets/js/storage.js"></script>
+    <script src="assets/js/page.js"></script>
+    <script src="assets/js/canvas.js"></script>
+    <script src="assets/js/render.js"></script>
+    <script src="assets/js/app.js"></script>
 </body>
 </html>
 
