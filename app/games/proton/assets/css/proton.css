@@ -1,22 +1,11 @@
+/* 与全站子页一致：边距/最大宽度由 common .page-container 控制；抵消 Bootstrap html 62.5% */
+html:has(body.proton-page) {
+    font-size: 100%;
+}
+
 body.proton-page.page-container {
-    max-width: none;
-    width: 100%;
-    padding: 12px 16px 24px;
     font-size: 16px;
-    background: var(--color-canvas);
-    font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
-}
-
-@media (min-width: 699px) {
-    body.proton-page.page-container {
-        padding: 12px 20px 32px;
-    }
-}
-
-@media (min-width: 1200px) {
-    body.proton-page.page-container {
-        padding: 12px 24px 40px;
-    }
+    line-height: 1.6;
 }
 
 .bodypad {
@@ -57,7 +46,7 @@ body.proton-page.page-container {
     flex-wrap: wrap;
     align-items: center;
     margin-top: 6px;
-    margin-bottom: 12px;
+    margin-bottom: 4px;
     color: var(--color-body);
 }
 
@@ -69,18 +58,24 @@ body.proton-page.page-container {
     margin-left: 10px;
 }
 
+.proton-toolbar__speed {
+    margin-left: auto;
+    align-self: center;
+    font-weight: 600;
+    color: var(--gradient-theme-title);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    padding-left: 12px;
+}
+
 /* 相对文档流占位，避免与全站 .page-header 在视口顶部重叠（原先 absolute+top:0 相对视口） */
 .sim-root {
     position: relative;
     top: auto;
     left: auto;
     min-width: 800px;
-    min-height: 720px;
+    min-height: 600px;
     box-sizing: border-box;
-}
-
-.sim-root .arrow-hint {
-    display: inline-block;
 }
 
 .rm-e,
@@ -90,11 +85,11 @@ body.proton-page.page-container {
 }
 
 .rm-e {
-    margin-top: 320px;
+    margin-top: 200px;
 }
 
 .rm-b {
-    margin-top: 540px;
+    margin-top: 420px;
 }
 
 .rm-e .key-hint,
@@ -108,7 +103,7 @@ body.proton-page.page-container {
     display: inline-block;
     position: absolute;
     margin-left: -38px;
-    margin-top: 435px;
+    margin-top: 315px;
     line-height: 1;
     color: #bbb;
 }
@@ -117,7 +112,7 @@ body.proton-page.page-container {
     display: inline-block;
     position: absolute;
     margin-left: 15px;
-    margin-top: 265px;
+    margin-top: 145px;
     color: #27c63a;
     width: 50px;
 }
@@ -126,7 +121,7 @@ body.proton-page.page-container {
     display: inline-block;
     position: absolute;
     margin-left: 15px;
-    margin-top: 610px;
+    margin-top: 490px;
     color: #4d70c2;
     width: 50px;
 }
@@ -141,22 +136,22 @@ body.proton-page.page-container {
 }
 
 .guide-line--b {
-    margin-top: 555px;
+    margin-top: 435px;
 }
 
 .guide-line--te {
-    margin-top: 287px;
+    margin-top: 167px;
 }
 
 .guide-line--le {
-    margin-top: 355px;
+    margin-top: 235px;
 }
 
 .m-div {
     background: var(--color-card);
     border: 2px solid #ddd;
     position: absolute;
-    top: 200px;
+    top: 80px;
     margin-left: 120px;
     height: 500px;
     width: 500px;
@@ -165,7 +160,7 @@ body.proton-page.page-container {
 .f-div {
     border: 2px solid #ddd;
     position: absolute;
-    top: 400px;
+    top: 280px;
     height: 100px;
     margin-left: 0;
     width: 100px;
@@ -233,12 +228,12 @@ body.proton-page.page-container {
 
 .e-div {
     border: 2px solid #a2eabc;
-    top: 290px;
+    top: 170px;
 }
 
 .b-div {
     border: 2px solid #b8c0e8;
-    top: 510px;
+    top: 390px;
 }
 
 .cursor-dot {
@@ -262,10 +257,6 @@ body.proton-page.page-container {
 .help-block h3 {
     color: var(--gradient-theme-title);
     margin-top: 0;
-}
-
-body.proton-page.page-container > footer {
-    margin-top: 40px;
 }
 
 .help-block .note-tight {

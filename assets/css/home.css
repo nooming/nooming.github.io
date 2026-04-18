@@ -438,7 +438,7 @@ h1 {
         line-height: 1.3;
     }
             
-    footer {
+    footer.site-footer {
         margin-top: 30px;
         padding: 16px;
         font-size: 0.85rem;

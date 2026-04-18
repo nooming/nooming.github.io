@@ -43,20 +43,6 @@
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
-    <url>
-        <loc>https://nooming.github.io/articles/</loc>
-        <lastmod>2026-04-18</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.85</priority>
-    </url>
-    
-    <!-- 工具总览 -->
-    <url>
-        <loc>https://nooming.github.io/app/</loc>
-        <lastmod>2026-04-18</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.85</priority>
-    </url>
     
     <!-- Citywalk 前端 -->
     <url>

@@ -86,16 +86,39 @@ body {
     box-shadow: var(--shadow-card-float);
 }
 
-/* 页脚样式（根首页等未包在 .page-container 内时仍用浮岛白底） */
-footer {
+/* 全站统一页脚：白底卡片、细边框与阴影、居中 #888 字（子目录与根页共用） */
+footer.site-footer {
+    display: block;
     text-align: center;
-    margin-top: 60px;
-    padding: 20px;
-    color: #7f8c8d;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin-top: 48px;
+    margin-bottom: 0;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 22px 24px;
+    color: #888888;
     font-size: 0.9rem;
+    line-height: 1.65;
+    font-weight: 400;
     background: var(--color-card);
     border: 1px solid rgba(0, 0, 0, 0.07);
     box-shadow: var(--shadow-card-float);
+}
+
+footer.site-footer p {
+    margin: 0;
+    color: inherit;
+    font-weight: 400;
+}
+
+@media (max-width: 767.98px) {
+    footer.site-footer {
+        padding: 18px 16px;
+        font-size: 0.85rem;
+        margin-top: 36px;
+    }
 }
 
 /* Toast 提示样式 */
@@ -536,34 +559,6 @@ footer {
 
 .back-to-top:active {
     transform: translateY(-2px);
-}
-
-/* 通用页脚样式（用于首页） */
-.page-container footer {
-    text-align: center;
-    margin-top: 40px;
-    padding: 20px;
-    color: #7f8c8d;
-    background: var(--color-card);
-    border: 1px solid rgba(0, 0, 0, 0.07);
-    box-shadow: var(--shadow-card-float);
-}
-
-.page-container footer p {
-    margin: 0;
-    font-size: 0.9rem;
-    line-height: 1.6;
-}
-
-.page-container footer p span {
-    font-weight: 600;
-    color: var(--color-theme-secondary);
-}
-
-.page-container footer p span:last-child {
-    font-size: 0.85rem;
-    font-weight: normal;
-    color: #7f8c8d;
 }
 
 /* ============================================

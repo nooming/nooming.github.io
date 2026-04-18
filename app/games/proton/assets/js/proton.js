@@ -108,7 +108,7 @@ let delay = 0
                     }
                     $('.m-svg').html(str)
                     $('.cursor').css('margin-left', `${250 + 100}px`)
-                        .css('margin-top', `${247 + 200}px`)
+                        .css('margin-top', `${247 + 80}px`)
                     $('.cursor').css('border-color', `#333`)
                 }
                 else {
@@ -136,9 +136,9 @@ let delay = 0
                     vbx -= vbx * 0.1 * t, vby -= vby * 0.1 * t
                     $('.m-div')
                         .css('margin-left', `${120 + cbx}px`)
-                        .css('top', `${200 + cby}px`)
+                        .css('top', `${80 + cby}px`)
                     $('.cursor').css('margin-left', `${x + 100}px`)
-                        .css('margin-top', `${y + 200}px`)
+                        .css('margin-top', `${y + 80}px`)
                     if (x < lx || x > rx || y < ly || y > ry) $('.cursor').css('border-color', `red`)
                     else $('.cursor').css('border-color', `#333`)
 
@@ -153,20 +153,20 @@ let delay = 0
                     vex -= vex * 0.1 * t, vey -= vey * 0.1 * t
                 }
                 $('.E-div').css('margin-left', `${cex}px`)
-                $('.E-div').css('top', `${290 + cey}px`)
+                $('.E-div').css('top', `${170 + cey}px`)
                 if (fleft) {
                     cfx += vfx * t, cfy += vfy * t
                     vfx -= cfx * 0.1 * t, vfy -= cfy * 0.1 * t
                     vfx -= vfx * 0.1 * t, vfy -= vfy * 0.1 * t
                 }
                 $('.f-div').css('margin-left', `${cfx}px`)
-                $('.f-div').css('top', `${400 + cfy}px`)
+                $('.f-div').css('top', `${280 + cfy}px`)
                 if (bleft) {
                     cb += vb * t
                     vb -= cb * 0.1 * t
                     vb -= vb * 0.1 * t
                 }
-                $('.B-div').css('top', `${510 + cb}px`)
+                $('.B-div').css('top', `${390 + cb}px`)
             }
             function setforce(e, leave = 0) {
                 if (delay) return
@@ -247,8 +247,8 @@ let delay = 0
                 }
                 if (set) tb = b
                 if (b) {
-                    if (b > 0) $('.lB').css('margin-top', '560px').css('height', `${b / 0.02}px`)
-                    else $('.lB').css('margin-top', `${560 + b / 0.02}px`).css('height', `${-b / 0.02}px`)
+                    if (b > 0) $('.lB').css('margin-top', '440px').css('height', `${b / 0.02}px`)
+                    else $('.lB').css('margin-top', `${440 + b / 0.02}px`).css('height', `${-b / 0.02}px`)
                     $('.lB').css('border-color', '#4d70c2')
                     let str = ''
                     let dd = Math.abs(5 / b) + 0.1
@@ -281,7 +281,7 @@ let delay = 0
             function setMiddle() {
                 $('.m-div')
                     .css('margin-left', `${120}px`)
-                    .css('top', `${200}px`)
+                    .css('top', `${80}px`)
                     .css('border-color', '#ddd')
                 while (x < lx) x += (rx - lx)
                 while (x > rx) x -= (rx - lx)

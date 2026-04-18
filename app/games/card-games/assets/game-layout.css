@@ -1,12 +1,12 @@
-/* 独立桌游页：与全站 common.css 色板、字体栈对齐 */
+/* 独立桌游页：顶栏与全站子页一致（沿用 common .page-container，不收窄边距/全宽） */
+html:has(body.card-game-page) {
+    font-size: 100%;
+}
+
 body.card-game-page.page-container {
-    max-width: none;
-    width: 100%;
-    margin: 0 auto;
-    padding: 12px 16px 24px;
-    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
-    background: var(--color-canvas);
-    color: var(--gradient-theme-title);
+    font-size: 16px;
+    line-height: 1.6;
+    padding-bottom: 72px;
 }
 
 .grey {
