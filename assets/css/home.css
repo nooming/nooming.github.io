@@ -287,7 +287,7 @@ h1 {
     min-width: 260px;
 }
 
-/* 顶部三张横幅：灰底、白字、黑按钮；#FFFA00 顶条悬停延展（同专题卡片） */
+/* 顶部三张横幅：灰底、白字、黑按钮；顶常驻三色平涂彩条（粉 / 青绿 / #FFFA00） */
 .navigation-banner,
 .notes-banner,
 .citywalk-banner {
@@ -302,7 +302,7 @@ h1 {
     overflow: hidden;
 }
 
-/* 顶条 #FFFA00：与专题卡片顶条一致，悬停时横向延展 */
+/* 顶彩条：平涂三色硬边，约 20% / 20% / 60%（与参考图一致，纯 CSS） */
 .navigation-banner::before,
 .notes-banner::before,
 .citywalk-banner::before {
@@ -312,18 +312,18 @@ h1 {
     left: 0;
     right: 0;
     height: 3px;
-    background: #FFFA00;
-    transform: scaleX(0);
-    transform-origin: center;
-    transition: transform 0.4s ease;
+    border-radius: 16px 16px 0 0;
+    background: linear-gradient(
+        90deg,
+        #ff3cac 0%,
+        #ff3cac 20%,
+        #3fe0c5 20%,
+        #3fe0c5 40%,
+        #fffa00 40%,
+        #fffa00 100%
+    );
     pointer-events: none;
     z-index: 2;
-}
-
-.navigation-banner:hover::before,
-.notes-banner:hover::before,
-.citywalk-banner:hover::before {
-    transform: scaleX(1);
 }
 
 .navigation-banner:hover,
