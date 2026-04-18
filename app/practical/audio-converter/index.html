@@ -56,35 +56,6 @@
             box-shadow: 0 6px 20px rgba(212, 200, 0, 0.4);
         }
         
-        h1 {
-            color: var(--gradient-theme-title);
-            margin: 0;
-            font-size: 2rem;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            text-align: center;
-        }
-        
-        .page-header h2 {
-            color: var(--gradient-theme-title);
-            margin: 0 0 3px 0;
-            font-size: 2rem;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            text-align: center;
-            padding-bottom: 0;
-            border-bottom: none;
-        }
-        
-        h2 {
-            color: var(--color-theme-text-end);
-            margin-bottom: 25px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #ecf0f1;
-            font-size: 1.6rem;
-            font-weight: 600;
-        }
-        
         @media (max-width: 767.98px) {
             body {
                 padding: 15px 12px;
@@ -92,25 +63,19 @@
             .header-top {
                 margin-bottom: 0;
             }
-            h1 {
-                font-size: 1.5rem;
-            }
-            .page-header h2 {
-                font-size: 1.5rem;
-            }
             .back-btn {
                 font-size: 0.85rem;
                 padding: 7px 14px;
             }
             .converter {
                 padding: 20px 18px;
-                border-radius: 14px;
+                border-radius: 0;
             }
         }
         
         .converter {
             background: white;
-            border-radius: 16px;
+            border-radius: 0;
             padding: 25px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
             margin-top: 0;
@@ -124,7 +89,7 @@
             margin: 20px 0;
             padding: 25px;
             border: 2px dashed #ecf0f1;
-            border-radius: 8px;
+            border-radius: 0;
             text-align: center;
             transition: border-color 0.2s;
         }
@@ -139,7 +104,7 @@
             padding: 10px 20px;
             background: var(--gradient-theme);
             color: var(--color-theme-ink);
-            border-radius: 6px;
+            border-radius: 0;
             cursor: pointer;
             font-weight: 500;
         }
@@ -153,7 +118,7 @@
         .format-select select {
             padding: 10px 15px;
             border: 1px solid #bdc3c7;
-            border-radius: 6px;
+            border-radius: 0;
             font-size: 1rem;
             min-width: 150px;
         }
@@ -162,7 +127,7 @@
             background: var(--gradient-theme);
             color: var(--color-theme-ink);
             border: none;
-            border-radius: 8px;
+            border-radius: 0;
             font-size: 1rem;
             font-weight: 500;
             cursor: pointer;
@@ -179,7 +144,10 @@
         <div class="header-top">
             <a href="../" class="back-btn">返回上一级</a>
         </div>
-        <h2>音频格式转换器</h2>
+        <div class="section-header section-header--page">
+            <h1>音频格式转换器</h1>
+            <p>上传音频并选择 MP3 或 WAV 目标格式，在浏览器内完成转换。<a href="../" class="home-hub-link">进入实用工具合集</a></p>
+        </div>
     </div>
     <div class="converter">
         <div class="tool-content">
@@ -260,7 +228,7 @@
                 // 创建下载链接
                 resultDiv.innerHTML = `
                     <p style="color: #27ae60;">转换成功！</p>
-                    <a href="${url}" download="${fileName}" style="display: inline-block; padding: 10px 20px; background-color: #27ae60; color: white; border-radius: 6px; text-decoration: none; margin-top: 10px;">下载 ${formatName} 文件</a>
+                    <a href="${url}" download="${fileName}" style="display: inline-block; padding: 10px 20px; background-color: #27ae60; color: white; border-radius: 0; text-decoration: none; margin-top: 10px;">下载 ${formatName} 文件</a>
                 `;
             } catch (error) {
                 resultDiv.innerHTML = `<p style="color: #e74c3c;">转换失败：${error.message}</p>`;

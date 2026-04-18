@@ -53,18 +53,9 @@
             box-shadow: 0 6px 20px rgba(212, 200, 0, 0.4);
         }
         
-        h1 {
-            color: var(--gradient-theme-title);
-            margin: 0 0 3px 0;
-            font-size: 2rem;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            text-align: center;
-        }
-        
         .converter {
             background: white;
-            border-radius: 16px;
+            border-radius: 0;
             padding: 25px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
             margin-top: 0;
@@ -77,16 +68,13 @@
             .header-top {
                 margin-bottom: 0;
             }
-            h1 {
-                font-size: 1.5rem;
-            }
             .back-btn {
                 font-size: 0.85rem;
                 padding: 7px 14px;
             }
             .converter {
                 padding: 20px 18px;
-                border-radius: 14px;
+                border-radius: 0;
             }
         }
     </style>
@@ -97,7 +85,10 @@
         <div class="header-top">
             <a href="../" class="back-btn">返回上一级</a>
         </div>
-        <h1 class="page-title">Base64 编码解码器</h1>
+        <div class="section-header section-header--page">
+            <h1>Base64 编码解码器</h1>
+            <p>在文本与 Base64 之间互转，适合接口调试与学习。<a href="../" class="home-hub-link">进入实用工具合集</a></p>
+        </div>
     </div>
 
     <div class="converter">

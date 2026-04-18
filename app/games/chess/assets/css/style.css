@@ -24,7 +24,7 @@ h1 {
     padding: 9px 18px;
     background-color: var(--color-theme-secondary);
     color: white !important;
-    border-radius: 8px;
+    border-radius: 0;
     text-decoration: none !important;
     font-weight: 500;
     font-size: 0.95rem;
@@ -48,7 +48,7 @@ h1 {
 
 .game-info {
     background: var(--color-card);
-    border-radius: 14px;
+    border-radius: 0;
     padding: 25px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     width: 100%;
@@ -74,7 +74,7 @@ h1 {
     border: 2px solid var(--color-theme-deep);
     background: var(--color-card);
     color: var(--color-theme-text-end);
-    border-radius: 6px;
+    border-radius: 0;
     cursor: pointer;
     font-size: 14px;
     transition: all 0.2s;
@@ -120,7 +120,7 @@ h1 {
     border: 2px solid #27ae60;
     background: var(--color-card);
     color: #27ae60;
-    border-radius: 6px;
+    border-radius: 0;
     cursor: pointer;
     font-size: 13px;
     transition: all 0.2s;
@@ -142,7 +142,7 @@ h1 {
     background: #e74c3c;
     color: white;
     border: none;
-    border-radius: 6px;
+    border-radius: 0;
     cursor: pointer;
     font-size: 14px;
     transition: background 0.2s;
@@ -175,7 +175,7 @@ h1 {
 
 .board-container {
     background: var(--color-card);
-    border-radius: 12px;
+    border-radius: 0;
     padding: 20px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     display: inline-block;
@@ -202,7 +202,7 @@ h1 {
     
     .game-info {
         padding: 20px;
-        border-radius: 12px;
+        border-radius: 0;
     }
     
     .board-container {

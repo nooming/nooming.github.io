@@ -163,7 +163,7 @@ function generateColorPickerHTML() {
     return `
         <div class="color-picker-wrapper">
             <button class="toolbar-btn color-trigger" onclick="toggleColorPanel(event)" title="选择颜色">
-                <span style="display: inline-block; width: 20px; height: 20px; background-color: ${currentColor}; border: 1px solid #ddd; border-radius: 3px; vertical-align: middle;"></span>
+                <span style="display: inline-block; width: 20px; height: 20px; background-color: ${currentColor}; border: 1px solid #ddd; border-radius: 0; vertical-align: middle;"></span>
             </button>
             <div class="color-presets-panel ${colorPanelOpen ? 'open' : ''}">
                 ${colorButtons}
@@ -224,7 +224,7 @@ function generateSelectionColorPickerHTML() {
     return `
         <div class="selection-color-picker-wrapper">
             <button class="toolbar-btn selection-color-trigger" onclick="toggleSelectionColorPanel(event)" title="更改选中内容颜色">
-                <span style="display: inline-block; width: 20px; height: 20px; background-color: ${currentColor}; border: 1px solid #ddd; border-radius: 3px; vertical-align: middle;"></span>
+                <span style="display: inline-block; width: 20px; height: 20px; background-color: ${currentColor}; border: 1px solid #ddd; border-radius: 0; vertical-align: middle;"></span>
             </button>
             <div class="selection-color-presets-panel" id="selectionColorPanel">
                 ${colorButtons}

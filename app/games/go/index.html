@@ -33,7 +33,7 @@
 
         .game-info {
             background: white;
-            border-radius: 14px;
+            border-radius: 0;
             padding: 25px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
             width: 100%;
@@ -69,19 +69,6 @@
             box-shadow: 0 6px 20px rgba(212, 200, 0, 0.45);
         }
         
-        h1 {
-            color: var(--gradient-theme-title);
-            margin: 0 0 3px 0;
-            font-size: 2rem;
-            font-weight: 700;
-            background: none;
-            -webkit-background-clip: unset;
-            -webkit-text-fill-color: unset;
-            background-clip: unset;
-            letter-spacing: -0.5px;
-            text-align: center;
-        }
-        
         /* 移动端优化 */
         @media (max-width: 767.98px) {
             .page-header {
@@ -90,16 +77,13 @@
             .header-top {
                 margin-bottom: 0;
             }
-            h1 {
-                font-size: 1.5rem;
-            }
             .back-btn {
                 font-size: 0.85rem;
                 padding: 7px 14px;
             }
             .game-info {
                 padding: 20px;
-                border-radius: 12px;
+                border-radius: 0;
             }
         }
 
@@ -122,7 +106,7 @@
             border: 2px solid var(--color-theme-deep);
             background: white;
             color: var(--color-theme-text-end);
-            border-radius: 6px;
+            border-radius: 0;
             cursor: pointer;
             font-size: 14px;
             transition: all 0.2s;
@@ -144,7 +128,7 @@
             background: #e74c3c;
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 0;
             cursor: pointer;
             font-size: 14px;
             transition: background 0.2s;
@@ -205,7 +189,7 @@
             border: 2px solid #27ae60;
             background: white;
             color: #27ae60;
-            border-radius: 6px;
+            border-radius: 0;
             cursor: pointer;
             font-size: 13px;
             transition: all 0.2s;
@@ -240,7 +224,7 @@
 
         .board-container {
             background: white;
-            border-radius: 12px;
+            border-radius: 0;
             padding: 20px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
             display: inline-block;
@@ -255,7 +239,7 @@
 
         .stone {
             position: absolute;
-            border-radius: 50%;
+            border-radius: 0;
             pointer-events: none;
         }
 
@@ -284,7 +268,10 @@
         <div class="header-top">
             <a href="../" class="back-btn">返回上一级</a>
         </div>
-        <h1 class="page-title">围棋</h1>
+        <div class="section-header section-header--page">
+            <h1>围棋</h1>
+            <p>标准围棋规则，双人对战或单机 AI，含弃权与悔棋。<a href="../" class="home-hub-link">进入小游戏合集</a></p>
+        </div>
     </div>
 
     <div class="game-container">

@@ -58,6 +58,17 @@
     <!-- 第三方库样式 -->
     <link rel="preload" href="../assets/css/coin.min.css" as="style">
     <link href="../assets/css/coin.min.css" rel="stylesheet">
+    <style>
+        /* 抛硬币：主硬币、正反面与底部「最近结果」小圆块保持圆形（全站直角的例外） */
+        body.coin-flip-page .coin-flip-scope-box,
+        body.coin-flip-page .coin,
+        body.coin-flip-page .coin-face,
+        body.coin-flip-page .heads,
+        body.coin-flip-page .tails,
+        body.coin-flip-page .coin-recent-item {
+            border-radius: 50% !important;
+        }
+    </style>
 
     <!-- 第三方库脚本 -->
     <link rel="preload" href="../assets/js/script.min.js" as="script">

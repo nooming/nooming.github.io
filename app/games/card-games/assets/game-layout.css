@@ -14,7 +14,7 @@ body {
     display: inline-flex;
     align-items: center;
     padding: 7px 14px;
-    border-radius: 8px;
+    border-radius: 0;
     font-size: 0.9rem;
     font-weight: 600;
     text-decoration: none !important;
@@ -94,7 +94,7 @@ body {
     font-size: 11px;
     background: #f0f0f0;
     padding: 1px 4px;
-    border-radius: 3px;
+    border-radius: 0;
 }
 
 .myToast {

@@ -57,18 +57,9 @@
         
         .game-info {
             background: white;
-            border-radius: 16px;
+            border-radius: 0;
             padding: 25px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        }
-        
-        h1 {
-            color: var(--gradient-theme-title);
-            margin: 0 0 20px 0;
-            font-size: 2rem;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            text-align: center;
         }
         
         @media (max-width: 767.98px) {
@@ -78,16 +69,13 @@
             .header-top {
                 margin-bottom: 0;
             }
-            h1 {
-                font-size: 1.5rem;
-            }
             .back-btn {
                 font-size: 0.85rem;
                 padding: 7px 14px;
             }
             .game-info {
                 padding: 20px 18px;
-                border-radius: 14px;
+                border-radius: 0;
             }
         }
     </style>
@@ -98,7 +86,10 @@
         <div class="header-top">
             <a href="../" class="back-btn">返回上一级</a>
         </div>
-        <h1>中国象棋</h1>
+        <div class="section-header section-header--page">
+            <h1>中国象棋</h1>
+            <p>本地双人对战或与 AI 对局，支持悔棋与规则提示。<a href="../" class="home-hub-link">进入小游戏合集</a></p>
+        </div>
     </div>
 
     <div class="game-container">

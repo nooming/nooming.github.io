@@ -48,7 +48,7 @@ body {
     padding: 10px 18px;
     border: none;
     background: var(--gradient-theme);
-    border-radius: 12px;
+    border-radius: 0;
     cursor: pointer;
     font-size: 13px;
     font-weight: 600;
@@ -70,7 +70,7 @@ body {
     padding: 10px 18px;
     border: 1px solid rgba(0, 0, 0, 0.1);
     background: white;
-    border-radius: 12px;
+    border-radius: 0;
     cursor: pointer;
     font-size: 13px;
     font-weight: 600;
@@ -102,7 +102,7 @@ body {
     color: var(--color-theme-ink);
     border: none;
     padding: 10px 18px;
-    border-radius: 12px;
+    border-radius: 0;
     cursor: pointer;
     font-size: 13px;
     font-weight: 600;
@@ -169,7 +169,7 @@ body {
     padding: 10px 18px;
     border: 1px solid rgba(0, 0, 0, 0.1);
     background: white;
-    border-radius: 12px;
+    border-radius: 0;
     cursor: pointer;
     font-size: 13px;
     font-weight: 600;
@@ -190,7 +190,7 @@ body {
     padding: 10px 18px;
     border: 1px solid rgba(0, 0, 0, 0.1);
     background: white;
-    border-radius: 12px;
+    border-radius: 0;
     cursor: pointer;
     font-size: 13px;
     font-weight: 600;
@@ -219,7 +219,7 @@ body {
     padding: 10px 18px;
     border: 1px solid rgba(0, 0, 0, 0.1);
     background: white;
-    border-radius: 12px;
+    border-radius: 0;
     cursor: pointer;
     font-size: 13px;
     font-weight: 600;
@@ -275,7 +275,7 @@ body {
     padding: 10px 18px;
     border: 1px solid rgba(0, 0, 0, 0.1);
     background: white;
-    border-radius: 12px;
+    border-radius: 0;
     cursor: pointer;
     font-size: 13px;
     font-weight: 600;
@@ -303,7 +303,7 @@ body {
     margin-left: 8px;
     background: white;
     border: 1px solid rgba(0, 0, 0, 0.08);
-    border-radius: 12px;
+    border-radius: 0;
     padding: 8px;
     display: none;
     flex-direction: column;
@@ -323,7 +323,7 @@ body {
     display: flex;
     align-items: center;
     padding: 6px 10px;
-    border-radius: 8px;
+    border-radius: 0;
     cursor: pointer;
     transition: all 0.2s ease;
     gap: 6px;
@@ -364,7 +364,7 @@ body {
     font-size: 12px;
     opacity: 1;
     transition: all 0.3s ease;
-    border-radius: 6px;
+    border-radius: 0;
     width: auto;
     height: auto;
     flex-shrink: 0;
@@ -417,7 +417,7 @@ body {
     border: 2px solid var(--color-theme);
     color: #333333;
     padding: 8px 12px;
-    border-radius: 10px;
+    border-radius: 0;
     font-size: 14px;
     outline: none;
     box-shadow: 0 2px 8px rgba(212, 200, 0, 0.2);
@@ -439,7 +439,7 @@ body {
     height: 20px;
     cursor: pointer;
     accent-color: var(--color-theme);
-    border-radius: 6px;
+    border-radius: 0;
     order: 2;
     flex-shrink: 0;
 }
@@ -467,7 +467,7 @@ body {
     font-size: 13px;
     opacity: 0;
     transition: all 0.3s ease;
-    border-radius: 8px;
+    border-radius: 0;
     width: 26px;
     height: 26px;
     display: flex;
@@ -503,7 +503,7 @@ body {
     padding: 40px;
     background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(10px);
-    border-radius: 24px;
+    border-radius: 0;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
@@ -559,7 +559,7 @@ body {
     padding: 10px 18px;
     border: 1px solid rgba(0, 0, 0, 0.1);
     background: white;
-    border-radius: 12px;
+    border-radius: 0;
     cursor: pointer;
     font-size: 13px;
     font-weight: 600;
@@ -598,7 +598,7 @@ body {
     margin-top: 12px;
     background: white;
     border: 1px solid rgba(0, 0, 0, 0.08);
-    border-radius: 16px;
+    border-radius: 0;
     padding: 12px;
     display: none;
     flex-wrap: wrap;
@@ -617,7 +617,7 @@ body {
     width: 36px;
     height: 36px;
     border: 3px solid rgba(0, 0, 0, 0.1);
-    border-radius: 12px;
+    border-radius: 0;
     cursor: pointer;
     padding: 0;
     transition: all 0.3s ease;
@@ -642,7 +642,7 @@ body {
     margin-top: 12px;
     background: white;
     border: 1px solid rgba(0, 0, 0, 0.08);
-    border-radius: 16px;
+    border-radius: 0;
     padding: 12px;
     display: none;
     flex-wrap: wrap;
@@ -682,7 +682,7 @@ body {
 .size-preview-dot {
     display: inline-block;
     background-color: #000000;
-    border-radius: 50%;
+    border-radius: 0;
     flex-shrink: 0;
 }
 
@@ -693,7 +693,7 @@ body {
     margin-top: 12px;
     background: white;
     border: 1px solid rgba(0, 0, 0, 0.08);
-    border-radius: 16px;
+    border-radius: 0;
     padding: 12px;
     display: none;
     flex-wrap: wrap;
@@ -713,7 +713,7 @@ body {
     height: 40px;
     padding: 0;
     border: 2px solid rgba(0, 0, 0, 0.1);
-    border-radius: 12px;
+    border-radius: 0;
     background: white;
     cursor: pointer;
     display: flex;
@@ -738,7 +738,7 @@ body {
 .size-dot {
     display: inline-block;
     background-color: #000000;
-    border-radius: 50%;
+    border-radius: 0;
     flex-shrink: 0;
 }
 
@@ -763,7 +763,7 @@ body {
     margin-top: 12px;
     background: white;
     border: 1px solid rgba(0, 0, 0, 0.08);
-    border-radius: 16px;
+    border-radius: 0;
     padding: 12px;
     display: none;
     flex-direction: row;
@@ -783,7 +783,7 @@ body {
     width: 40px;
     height: 40px;
     border: 2px solid rgba(0, 0, 0, 0.1);
-    border-radius: 12px;
+    border-radius: 0;
     background: white;
     cursor: pointer;
     display: flex;
@@ -836,7 +836,7 @@ body {
     width: 14px;
     height: 2px;
     background-color: currentColor;
-    border-radius: 1px;
+    border-radius: 0;
 }
 
 .align-icon-left::after {
@@ -847,7 +847,7 @@ body {
     width: 10px;
     height: 2px;
     background-color: currentColor;
-    border-radius: 1px;
+    border-radius: 0;
 }
 
 /* 居中图标 - 三条居中对齐的横线（长度递减） */
@@ -872,7 +872,7 @@ body {
     width: 14px;
     height: 2px;
     background-color: currentColor;
-    border-radius: 1px;
+    border-radius: 0;
 }
 
 .align-icon-center::after {
@@ -883,7 +883,7 @@ body {
     width: 10px;
     height: 2px;
     background-color: currentColor;
-    border-radius: 1px;
+    border-radius: 0;
 }
 
 /* 右对齐图标 - 三条右对齐的横线（长度递减） */
@@ -907,7 +907,7 @@ body {
     width: 14px;
     height: 2px;
     background-color: currentColor;
-    border-radius: 1px;
+    border-radius: 0;
 }
 
 .align-icon-right::after {
@@ -918,7 +918,7 @@ body {
     width: 10px;
     height: 2px;
     background-color: currentColor;
-    border-radius: 1px;
+    border-radius: 0;
 }
 
 /* 激活状态下的图标颜色 */
@@ -987,7 +987,7 @@ body {
     position: absolute;
     width: 10px;
     height: 10px;
-    border-radius: 50%;
+    border-radius: 0;
     background-color: white;
     border: 1px solid black;
     pointer-events: none;
@@ -1460,7 +1460,7 @@ body {
     background-color: #ffeb3b; /* 黄色背景 */
     color: #333333; /* 保持原文字颜色 */
     padding: 2px 0; /* 只设置上下内边距，左右不设置，保持字符间距 */
-    border-radius: 2px; /* 圆角 */
+    border-radius: 0; /* 圆角 */
     display: inline; /* 确保是行内元素 */
     box-decoration-break: clone; /* 确保每行独立渲染，保持视觉效果 */
     -webkit-box-decoration-break: clone; /* WebKit浏览器支持 */
@@ -1508,12 +1508,12 @@ body {
 
 .sidebar-content::-webkit-scrollbar-thumb {
     background: var(--gradient-theme);
-    border-radius: 4px;
+    border-radius: 0;
 }
 
 .sidebar-content::-webkit-scrollbar-track {
     background: #f5f5f5;
-    border-radius: 4px;
+    border-radius: 0;
 }
 
 
@@ -1549,7 +1549,7 @@ body {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(20px);
     padding: 12px 20px;
-    border-radius: 16px;
+    border-radius: 0;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
     border: 1px solid rgba(255, 255, 255, 0.3);
     flex-wrap: wrap;
@@ -1624,7 +1624,7 @@ body {
     gap: 8px;
     background: white;
     border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 12px;
+    border-radius: 0;
     padding: 10px 16px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
     z-index: 101;
@@ -1637,7 +1637,7 @@ body {
 
 .find-input {
     border: 2px solid rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
+    border-radius: 0;
     padding: 8px 12px;
     font-size: 14px;
     outline: none;
@@ -1654,7 +1654,7 @@ body {
     padding: 8px 12px;
     border: 1px solid rgba(0, 0, 0, 0.1);
     background: white;
-    border-radius: 8px;
+    border-radius: 0;
     cursor: pointer;
     font-size: 14px;
     transition: all 0.3s ease;
@@ -1730,7 +1730,7 @@ body .toast {
     gap: 0;
     z-index: 100;
     background: rgba(240, 240, 240, 0.9);
-    border-radius: 8px;
+    border-radius: 0;
     padding: 4px;
     backdrop-filter: blur(10px);
 }
@@ -1740,7 +1740,7 @@ body .toast {
     height: 40px;
     border: none;
     background: transparent;
-    border-radius: 6px;
+    border-radius: 0;
     cursor: pointer;
     display: flex;
     align-items: center;

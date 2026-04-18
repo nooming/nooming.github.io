@@ -580,7 +580,7 @@
                     style: {
                         'background': `linear-gradient(135deg, ${themeColor}, ${themeLightColor})`,
                         'color': 'white',
-                        'border-radius': '14px',
+                        'border-radius': '0',
                         'min-width': '28px',
                         'height': '28px',
                         'text-align': 'center',
@@ -603,7 +603,7 @@
                         content: `
                             <div style="padding: 16px; font-size: 14px; min-width: 200px; font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;">
                                 <h4 style="margin: 0 0 12px 0; color: #1e293b; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                                    <span style="background: linear-gradient(135deg, #ff7e5f, #feb47b); color: white; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px;">${index+1}</span>
+                                    <span style="background: linear-gradient(135deg, #ff7e5f, #feb47b); color: white; width: 24px; height: 24px; border-radius: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 12px;">${index+1}</span>
                                     ${poi.name}
                                 </h4>
                                 <p style="margin: 8px 0; color: #64748b; display: flex; align-items: center; gap: 6px;">
@@ -1092,7 +1092,7 @@ async function generateShareImage() {
         showPois.forEach((poi, index) => {
             const poiName = (poi.name || '未知').slice(0, 6);
             poisHtml += `
-                <div style="background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(255,255,255,0.9)); border-radius: 20px; padding: 8px 14px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.5); backdrop-filter: blur(10px);">
+                <div style="background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(255,255,255,0.9)); border-radius: 0; padding: 8px 14px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.5); backdrop-filter: blur(10px);">
                     <span style="display:inline-flex;filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));">${pinSvgShare}</span>
                     <span style="font-size: 11px; color: #2d3748; font-weight: 600; letter-spacing: 0.3px;">${poiName}</span>
                 </div>
@@ -1100,7 +1100,7 @@ async function generateShareImage() {
         });
         if (poiCount > 4) {
             poisHtml += `
-                <div style="background: linear-gradient(135deg, ${theme.primary}, ${theme.secondary}); border-radius: 20px; padding: 8px 14px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.3);">
+                <div style="background: linear-gradient(135deg, ${theme.primary}, ${theme.secondary}); border-radius: 0; padding: 8px 14px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.3);">
                     <span style="font-size: 12px; color: white; font-weight: 700;">+${poiCount - 4}</span>
                 </div>
             `;
@@ -1148,13 +1148,13 @@ async function generateShareImage() {
         
         <!-- 右侧竖排文案区 -->
         <div style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); writing-mode: vertical-rl; text-orientation: upright; z-index: 10;">
-            <div style="font-size: 13px; color: white; font-weight: 700; text-shadow: 0 2px 8px rgba(0,0,0,0.4); letter-spacing: 4px; padding: 12px 8px; background: linear-gradient(180deg, ${theme.primary}cc, ${theme.secondary}aa); border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            <div style="font-size: 13px; color: white; font-weight: 700; text-shadow: 0 2px 8px rgba(0,0,0,0.4); letter-spacing: 4px; padding: 12px 8px; background: linear-gradient(180deg, ${theme.primary}cc, ${theme.secondary}aa); border-radius: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
                 ${randomSlogan}
             </div>
         </div>
         
         <!-- 底部信息区 - 毛玻璃卡片样式 -->
-        <div style="position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); width: calc(100% - 32px); max-width: 360px; padding: 20px; box-sizing: border-box; background: rgba(255,255,255,0.25); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 24px; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.3);">
+        <div style="position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); width: calc(100% - 32px); max-width: 360px; padding: 20px; box-sizing: border-box; background: rgba(255,255,255,0.25); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 0; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.3);">
             <!-- 数据统计 -->
             <div style="display: flex; justify-content: space-around; margin-bottom: 16px;">
                 <div style="text-align: center; flex: 1;">
@@ -1235,7 +1235,7 @@ function showCustomModal(content) {
     const modalContent = document.createElement('div');
     modalContent.style.cssText = `
         background: white;
-        border-radius: 10px;
+        border-radius: 0;
         padding: 20px;
         width: 90%;
         max-width: 600px;
@@ -1257,7 +1257,7 @@ function showCustomModal(content) {
         background: #2563eb;
         color: white;
         border: none;
-        border-radius: 5px;
+        border-radius: 0;
         cursor: pointer;
         font-size: 14px;
         display: block;

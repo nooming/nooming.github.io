@@ -68,7 +68,7 @@ body {
     display: inline-flex;
     align-items: center;
     padding: 7px 14px;
-    border-radius: 8px;
+    border-radius: 0;
     font-size: 0.9rem;
     font-weight: 600;
     text-decoration: none !important;

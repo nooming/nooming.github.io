@@ -25,7 +25,7 @@
             padding: 4px 10px;
             background: rgba(255,255,255,0.25);
             color: white;
-            border-radius: 12px;
+            border-radius: 0;
             font-size: 11px;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -71,7 +71,7 @@
 
         .loading-card {
             background: white;
-            border-radius: var(--radius-lg);
+            border-radius: 0;
             padding: 32px 40px;
             box-shadow: var(--shadow-lg);
             text-align: center;
@@ -160,7 +160,7 @@
             height: 12px;
             border: 2px solid var(--primary);
             border-top-color: transparent;
-            border-radius: 50%;
+            border-radius: 0;
             animation: spin 0.8s linear infinite;
         }
 
@@ -177,7 +177,7 @@
             background: linear-gradient(135deg, #ef4444, #f87171);
             color: white;
             padding: 12px 24px;
-            border-radius: var(--radius-md);
+            border-radius: 0;
             z-index: 1000;
             display: none;
             font-size: 14px;
@@ -201,7 +201,7 @@
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-radius: var(--radius-lg);
+            border-radius: 0;
             box-shadow: var(--shadow-lg);
             z-index: 100;
             overflow: hidden;
@@ -256,7 +256,7 @@
             left: 16px;
             width: 40px;
             height: 40px;
-            border-radius: 999px;
+            border-radius: 0;
             border: none;
             background: rgba(15, 23, 42, 0.82);
             color: #ffffff;
@@ -307,12 +307,12 @@
 
         .panel-body::-webkit-scrollbar-track {
             background: var(--bg-light);
-            border-radius: 3px;
+            border-radius: 0;
         }
 
         .panel-body::-webkit-scrollbar-thumb {
             background: linear-gradient(180deg, var(--primary-light), var(--primary));
-            border-radius: 3px;
+            border-radius: 0;
         }
 
         .panel-body::-webkit-scrollbar-thumb:hover {
@@ -322,7 +322,7 @@
         /* 天气卡片 - 渐变背景 */
         .weather-card {
             background: var(--gradient-theme);
-            border-radius: var(--radius-md);
+            border-radius: 0;
             padding: 16px 20px;
             margin-bottom: 20px;
             display: flex;
@@ -382,7 +382,7 @@
             padding: 14px 16px;
             background: var(--bg-light);
             border: 2px solid var(--border-light);
-            border-radius: var(--radius-md);
+            border-radius: 0;
             transition: var(--transition);
             cursor: pointer;
         }
@@ -462,7 +462,7 @@
             width: 3px;
             height: 14px;
             background: linear-gradient(180deg, var(--primary), var(--primary-light));
-            border-radius: 2px;
+            border-radius: 0;
         }
 
         /* POI类型按钮组 */
@@ -476,7 +476,7 @@
         .poi-type-btn {
             padding: 8px 14px;
             border: 1.5px solid var(--border-light);
-            border-radius: 20px;
+            border-radius: 0;
             font-size: 13px;
             cursor: pointer;
             background: white;
@@ -528,7 +528,7 @@
             flex: 1;
             padding: 12px 16px;
             border: 2px solid var(--border-light);
-            border-radius: var(--radius-md);
+            border-radius: 0;
             font-size: 15px;
             font-weight: 500;
             color: var(--text-dark);
@@ -559,7 +559,7 @@
             flex: 1;
             padding: 12px 16px;
             border: none;
-            border-radius: var(--radius-md);
+            border-radius: 0;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
@@ -600,7 +600,7 @@
             width: 100%;
             padding: 12px 16px;
             border: none;
-            border-radius: var(--radius-md);
+            border-radius: 0;
             background: linear-gradient(135deg, #3b82f6, #60a5fa);
             color: white;
             font-size: 14px;
@@ -676,7 +676,7 @@
             padding: 10px 14px;
             margin: 8px 0;
             background: var(--bg-light);
-            border-radius: var(--radius-sm);
+            border-radius: 0;
             font-size: 14px;
         }
 
@@ -705,12 +705,12 @@
 
         .poi-list::-webkit-scrollbar-track {
             background: var(--bg-light);
-            border-radius: 2px;
+            border-radius: 0;
         }
 
         .poi-list::-webkit-scrollbar-thumb {
             background: var(--border-light);
-            border-radius: 2px;
+            border-radius: 0;
         }
 
         .poi-item {
@@ -718,7 +718,7 @@
             font-size: 13px;
             color: var(--text-medium);
             cursor: pointer;
-            border-radius: var(--radius-sm);
+            border-radius: 0;
             margin-bottom: 6px;
             background: white;
             border: 1px solid var(--border-light);
@@ -745,7 +745,7 @@
             height: 22px;
             background: linear-gradient(135deg, var(--primary), var(--primary-light));
             color: white;
-            border-radius: 50%;
+            border-radius: 0;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -767,7 +767,7 @@
                 height: auto;
                 /* 默认只显示头部，让用户看到更多地图 */
                 max-height: none;
-                border-radius: 20px 20px 0 0;
+                border-radius: 0;
                 box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
                 border: none;
                 border-top: 1px solid rgba(255,255,255,0.8);
@@ -778,7 +778,7 @@
 
             .panel-header {
                 padding: 24px 20px 16px 20px;
-                border-radius: 20px 20px 0 0;
+                border-radius: 0;
                 /* 增加拖动区域 */
                 position: relative;
                 cursor: grab;
@@ -844,7 +844,7 @@
                 width: 36px;
                 height: 4px;
                 background: rgba(255,255,255,0.6);
-                border-radius: 2px;
+                border-radius: 0;
                 pointer-events: none;
                 transition: width 0.2s ease, background 0.2s ease;
             }
@@ -1035,7 +1035,7 @@
                 left: auto;
                 top: 10px;
                 bottom: auto;
-                border-radius: 16px;
+                border-radius: 0;
             }
         }
 

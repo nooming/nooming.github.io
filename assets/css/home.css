@@ -59,7 +59,7 @@ h1 {
     font-weight: 600;
     transition: all 0.3s ease;
     padding: 4px 8px;
-    border-radius: 6px;
+    border-radius: 0;
     display: inline-block;
 }
         
@@ -69,51 +69,8 @@ h1 {
     transform: translateY(-2px);
 }
         
-/* 首页区块：外层透明；区块标题区透明底（仅字+黄线），卡片仍为浮岛白底 */
-.section {
-    margin-bottom: 30px;
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    padding: 0;
-}
+/* 首页区块标题样式见 common.css（.section-header） */
 
-.section-header {
-    text-align: center;
-    margin-bottom: 22px;
-    padding: 22px 24px 24px;
-    background: transparent;
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
-}
-        
-.section-header h2 {
-    font-size: 1.7rem;
-    font-weight: 700;
-    color: var(--color-theme-secondary);
-    margin-bottom: 6px;
-    position: relative;
-    display: inline-block;
-}
-        
-.section-header h2::after {
-    content: '';
-    position: absolute;
-    bottom: -6px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 50px;
-    height: 3px;
-    background: var(--color-theme);
-}
-        
-.section-header p {
-    color: #7f8c8d;
-    font-size: 0.95rem;
-    margin-top: 10px;
-}
-        
 /* 心得与功能卡片布局 */
 .tips-cards, .features {
     display: grid;
@@ -136,45 +93,8 @@ h1 {
     }
 }
         
-/* 卡片样式 - 更现代的设计 */
-.tips-card, .feature-card {
-    border: 1px solid rgba(0, 0, 0, 0.07);
-    border-radius: 16px;
-    padding: 22px;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    background: var(--color-card);
-    box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.9) inset,
-        0 18px 46px rgba(0, 0, 0, 0.09),
-        0 6px 16px rgba(0, 0, 0, 0.05);
-    position: relative;
-    overflow: hidden;
-}
-        
-.tips-card::before, .feature-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: var(--color-theme);
-    transform: scaleX(0);
-    transition: transform 0.4s ease;
-}
-        
-.tips-card:hover::before, .feature-card:hover::before {
-    transform: scaleX(1);
-}
-        
-.tips-card:hover, .feature-card:hover {
-    transform: translateY(-6px) scale(1.02);
-    box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.92) inset,
-        0 24px 56px rgba(0, 0, 0, 0.11),
-        0 8px 22px rgba(0, 0, 0, 0.06);
-}
-        
+/* 卡片浮岛与顶条动画见 common.css（.tips-card / .feature-card） */
+
 /* 卡片图标和标题容器 */
 .card-icon-title {
     display: flex;
@@ -206,13 +126,8 @@ h1 {
     color: var(--color-feature-title);
 }
         
-.tips-card p, .feature-card p {
-    color: #5a6c7d;
-    line-height: 1.6;
-    font-size: 0.95rem;
-    margin-bottom: 6px;
-}
-        
+/* 卡片正文色与字号见 common.css */
+
 /* 卡片描述文字样式 */
 .feature-card p.feature-desc {
     color: #95a5a6;
@@ -223,7 +138,7 @@ h1 {
 .tips-tag, .feature-tag {
     display: inline-block;
     padding: 6px 14px;
-    border-radius: 20px;
+    border-radius: 0;
     font-size: 0.85rem;
     margin-bottom: 15px;
     font-weight: 600;
@@ -245,7 +160,7 @@ h1 {
     align-items: center;
     gap: 8px;
     padding: 11px 22px;
-    border-radius: 10px;
+    border-radius: 0;
     font-size: 0.95rem;
     text-decoration: none !important;
     margin-top: 14px;
@@ -306,7 +221,7 @@ h1 {
 .notes-banner,
 .citywalk-banner {
     background: linear-gradient(165deg, #6d6f7a 0%, #5e606a 45%, #53555e 100%);
-    border-radius: 14px;
+    border-radius: 0;
     padding: 20px 20px 20px 30px;
     text-align: center;
     border: 1px solid rgba(0, 0, 0, 0.1);
@@ -330,7 +245,7 @@ h1 {
     right: auto;
     width: 3px;
     height: auto;
-    border-radius: 14px 0 0 14px;
+    border-radius: 0;
     background: linear-gradient(
         180deg,
         #ff3cac 0%,
@@ -387,7 +302,7 @@ h1 {
     background-color: #0f0f0f;
     color: #ffffff !important;
     border: 1px solid rgba(0, 0, 0, 0.4);
-    border-radius: 50px;
+    border-radius: 0;
     font-size: 0.9rem;
     font-weight: 700;
     text-decoration: none !important;
@@ -444,35 +359,8 @@ h1 {
         margin: 6px 0;
     }
             
-    .section {
-        padding: 0;
-        margin-bottom: 20px;
-        background: transparent;
-        border: none;
-        box-shadow: none;
-    }
-
-    .section-header {
-        margin-bottom: 18px;
-        padding: 18px 16px 20px;
-    }
-            
-    .section-header h2 {
-        font-size: 1.4rem;
-    }
-            
-    .section-header p {
-        font-size: 0.9rem;
-        margin-top: 8px;
-    }
-            
     .tips-cards, .features {
         gap: 14px;
-    }
-            
-    .tips-card, .feature-card {
-        padding: 18px;
-        border-radius: 12px;
     }
             
     .card-icon {
@@ -487,12 +375,6 @@ h1 {
             
     .tips-title, .feature-title {
         font-size: 1.15rem;
-    }
-            
-    .tips-card p, .feature-card p {
-        font-size: 0.9rem;
-        line-height: 1.5;
-        margin-bottom: 4px;
     }
             
     .tips-btn, .tool-btn {
@@ -516,14 +398,14 @@ h1 {
     .notes-banner,
     .citywalk-banner {
         padding: 16px 16px 16px 28px;
-        border-radius: 12px;
+        border-radius: 0;
         overflow: visible;
     }
 
     .navigation-banner::before,
     .notes-banner::before,
     .citywalk-banner::before {
-        border-radius: 12px 0 0 12px;
+        border-radius: 0;
     }
             
     .navigation-title,
@@ -574,14 +456,14 @@ h1 {
     .notes-banner,
     .citywalk-banner {
         padding: 14px 14px 14px 26px;
-        border-radius: 12px;
+        border-radius: 0;
         overflow: visible;
     }
 
     .navigation-banner::before,
     .notes-banner::before,
     .citywalk-banner::before {
-        border-radius: 12px 0 0 12px;
+        border-radius: 0;
     }
 
     .navigation-title,
@@ -605,17 +487,4 @@ h1 {
         padding: 9px 14px;
         font-size: 0.85rem;
     }
-}
-
-/* 专题 / 工具枢纽内链（根 index 区块说明） */
-.home-hub-link {
-    margin-left: 0.35em;
-    color: var(--color-theme-text-end);
-    font-weight: 600;
-    text-decoration: none;
-    white-space: nowrap;
-}
-.home-hub-link:hover {
-    color: var(--color-theme-secondary);
-    text-decoration: underline;
 }

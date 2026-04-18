@@ -24,9 +24,18 @@
     --shadow-theme-strong: 0 6px 30px rgba(212, 200, 0, 0.5);
     --shadow-tool: 0 6px 20px rgba(212, 200, 0, 0.4);
     --shadow-ins: 0 1px 0 rgba(0, 0, 0, 0.06);
-    /* 页面底与卡片：底略灰、卡片纯白，便于区分层次 */
-    --color-canvas: #e8e8ea;
+    /* 页面底：与首页一致纯白画布；卡片仍为白 */
+    --color-canvas: #ffffff;
     --color-card: #ffffff;
+    /* 首页「浮岛」卡片阴影（枢纽页 .feature-card 等复用） */
+    --shadow-card-float:
+        0 1px 0 rgba(255, 255, 255, 0.9) inset,
+        0 18px 46px rgba(0, 0, 0, 0.09),
+        0 6px 16px rgba(0, 0, 0, 0.05);
+    --shadow-card-float-hover:
+        0 1px 0 rgba(255, 255, 255, 0.92) inset,
+        0 24px 56px rgba(0, 0, 0, 0.11),
+        0 8px 22px rgba(0, 0, 0, 0.06);
 }
 
 /* 全局重置 */
@@ -36,12 +45,17 @@
     box-sizing: border-box;
 }
 
+html {
+    overflow-x: hidden;
+}
+
 /* 基础页面样式 */
 body {
     font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
     background-color: var(--color-canvas);
     color: var(--color-body);
     line-height: 1.6;
+    overflow-x: hidden;
 }
 
 /* 返回主页按钮 - 统一样式 */
@@ -50,7 +64,6 @@ body {
     padding: 9px 18px;
     background-color: var(--color-theme-secondary);
     color: #fff !important;
-    border-radius: 8px;
     text-decoration: none !important;
     margin-bottom: 20px;
     font-weight: 500;
@@ -68,20 +81,21 @@ body {
 /* 容器样式 */
 .container {
     background: var(--color-card);
-    border-radius: 12px;
     padding: 35px;
-    border: 1px solid var(--line-ins);
-    box-shadow: var(--shadow-ins);
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    box-shadow: var(--shadow-card-float);
 }
 
-/* 页脚样式 */
+/* 页脚样式（根首页等未包在 .page-container 内时仍用浮岛白底） */
 footer {
     text-align: center;
     margin-top: 60px;
-    padding-top: 20px;
-    color: #95a5a6;
-    border-top: 1px solid var(--line-ins);
+    padding: 20px;
+    color: #7f8c8d;
     font-size: 0.9rem;
+    background: var(--color-card);
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    box-shadow: var(--shadow-card-float);
 }
 
 /* Toast 提示样式 */
@@ -92,7 +106,6 @@ footer {
     background-color: var(--color-theme-secondary);
     color: #fff;
     padding: 12px 24px;
-    border-radius: 6px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     z-index: 10000;
     opacity: 0;
@@ -123,14 +136,13 @@ footer {
    通用布局与卡片样式（首页 & 工具页共享）
    ============================================ */
 
-/* 通用内容区块容器 */
+/* 通用内容区块容器（与首页一致：外层透明，卡片各自浮岛） */
 .section {
-    background: var(--color-card);
-    border-radius: 14px;
-    padding: 25px;
-    border: 1px solid var(--line-ins);
-    box-shadow: var(--shadow-ins);
     margin-bottom: 30px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
 }
 
 /* 通用区块标题 */
@@ -156,37 +168,40 @@ footer {
     }
 }
 
-/* 通用功能卡片样式 */
-.feature-card {
-    border: 1px solid var(--line-ins);
-    border-radius: 14px;
+/* 通用功能卡片样式（与首页 tips-card 同级的浮岛阴影） */
+.feature-card,
+.tips-card {
+    border: 1px solid rgba(0, 0, 0, 0.07);
     padding: 22px;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     background: var(--color-card);
-    box-shadow: var(--shadow-ins);
+    box-shadow: var(--shadow-card-float);
     position: relative;
     overflow: hidden;
 }
 
-.feature-card::before {
+.feature-card::before,
+.tips-card::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     height: 4px;
-    background: var(--gradient-theme-h);
+    background: var(--color-theme);
     transform: scaleX(0);
     transition: transform 0.4s ease;
 }
 
-.feature-card:hover::before {
+.feature-card:hover::before,
+.tips-card:hover::before {
     transform: scaleX(1);
 }
 
-.feature-card:hover {
+.feature-card:hover,
+.tips-card:hover {
     transform: translateY(-6px) scale(1.02);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-card-float-hover);
 }
 
 .feature-title {
@@ -197,7 +212,8 @@ footer {
     line-height: 1.3;
 }
 
-.feature-card p {
+.feature-card p,
+.tips-card p {
     font-size: 0.95rem;
     color: #5a6c7d;
     line-height: 1.6;
@@ -210,7 +226,6 @@ footer {
     align-items: center;
     gap: 8px;
     padding: 11px 22px;
-    border-radius: 10px;
     font-size: 0.95rem;
     text-decoration: none !important;
     margin-top: 14px;
@@ -247,11 +262,11 @@ footer {
     max-width: 1200px;
     margin: 0 auto;
     padding: 25px 20px;
-    background: var(--color-canvas);
+    background: transparent;
     min-height: 100vh;
 }
 
-/* 标准页面标题样式 */
+/* 标准页面标题样式（局部旧页；枢纽页请用 .section-header） */
 .page-title {
     color: var(--gradient-theme-title);
     margin-bottom: 3px;
@@ -262,17 +277,20 @@ footer {
     -webkit-text-fill-color: unset;
     background-clip: unset;
     letter-spacing: -0.5px;
+    text-align: center;
 }
 
 /* ============================================
    页面头部布局样式
    ============================================ */
 
-/* 页面头部布局 */
+/* 页面头部布局（顶黄线仅在根首页 home.css 的 header，子页不显示） */
 .page-header {
     display: flex;
     flex-direction: column;
     margin-bottom: 15px;
+    position: relative;
+    padding-top: 0;
 }
 
 .header-top {
@@ -314,57 +332,85 @@ footer {
     box-shadow: var(--shadow-theme-hover);
 }
 
-/* 通用页面标题居中样式 */
-.page-title {
+/* 与首页一致的区块标题：居中主标题 + 黄下划线 + 灰色导语 + 黑粗内链（子目录页 .page-header 内复用） */
+.section-header {
+    text-align: center;
+    margin-bottom: 0;
+    padding: 14px 16px 6px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    width: 100%;
+}
+
+.section-header--page {
+    padding-top: 10px;
+    margin-bottom: 4px;
+}
+
+/* 首页等：区块内标题与下方卡片网格的间距 */
+.section > .section-header:first-child {
+    margin-bottom: 18px;
+}
+
+.section-header h1,
+.section-header h2 {
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: #000000;
+    margin: 0 0 0 0;
+    padding: 0 0 12px 0;
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+    line-height: 1.25;
+    letter-spacing: -0.3px;
     text-align: center;
 }
 
-/* 实验与工具总览（app/index）：竖条高度随标题块拉伸（Grid 同行，贴紧文字高度） */
-.hub-page-title-row {
-    display: grid;
-    grid-template-columns: auto minmax(0, max-content);
-    justify-content: center;
-    align-items: stretch;
-    column-gap: 12px;
-    width: 100%;
-    max-width: 100%;
+.section-header h1::after,
+.section-header h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 52px;
+    height: 4px;
+    background: var(--color-theme);
 }
 
-.hub-page-title.page-title {
-    grid-column: 2;
-    grid-row: 1;
-    text-align: left;
-    margin-bottom: 0;
-    max-width: min(100%, 22rem);
+.section-header p {
+    color: #666666;
+    font-size: 0.95rem;
+    font-weight: 400;
+    line-height: 1.65;
+    margin: 14px auto 0;
+    max-width: 42rem;
 }
 
-.hub-vertical-deco {
-    grid-column: 1;
-    grid-row: 1;
-    width: 5px;
-    min-height: 0;
-    border-radius: 3px;
-    background: linear-gradient(
-        180deg,
-        #ff3cac 0%,
-        #ff3cac 24%,
-        #3fe0c5 24%,
-        #3fe0c5 48%,
-        #fffa00 48%,
-        #fffa00 100%
-    );
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-    pointer-events: none;
+.section-header p a,
+.home-hub-link {
+    margin-left: 0.35em;
+    color: #000000;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.section-header p a:hover,
+.home-hub-link:hover {
+    color: var(--color-theme-secondary);
+    text-decoration: underline;
 }
 
 /* 通用白色卡片容器（用于工具页面） */
 .page-container .converter,
 .page-container .generator {
     background: var(--color-card);
-    border-radius: 16px;
     padding: 25px;
-    border: 1px solid var(--line-ins);
-    box-shadow: var(--shadow-ins);
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    box-shadow: var(--shadow-card-float);
     margin-top: 0;
 }
 
@@ -381,7 +427,6 @@ footer {
     background: var(--gradient-theme);
     color: var(--color-theme-ink);
     border: none;
-    border-radius: 50%;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -420,9 +465,8 @@ footer {
     padding: 20px;
     color: #7f8c8d;
     background: var(--color-card);
-    border-radius: 14px;
-    border: 1px solid var(--line-ins);
-    box-shadow: var(--shadow-ins);
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    box-shadow: var(--shadow-card-float);
 }
 
 .page-container footer p {
@@ -499,7 +543,6 @@ footer {
 .feature-tag {
     display: inline-block;
     padding: 4px 12px;
-    border-radius: 12px;
     font-size: 0.8rem;
     margin-bottom: 12px;
     font-weight: 600;
@@ -542,13 +585,21 @@ footer {
         text-align: center;
     }
 
-    .hub-page-title-row {
-        column-gap: 10px;
+    .section-header h1,
+    .section-header h2 {
+        font-size: 1.45rem;
+        padding-bottom: 10px;
     }
 
-    .hub-page-title-row .hub-page-title.page-title {
-        max-width: min(100%, calc(100vw - 48px));
-        text-align: left;
+    .section-header h1::after,
+    .section-header h2::after {
+        width: 44px;
+        height: 3px;
+    }
+
+    .section-header p {
+        font-size: 0.9rem;
+        margin-top: 12px;
     }
     
     .back-to-top {
@@ -562,7 +613,18 @@ footer {
     .page-container .converter,
     .page-container .generator {
         padding: 20px 18px;
-        border-radius: 14px;
+    }
+
+    .feature-card,
+    .tips-card {
+        padding: 18px;
+    }
+
+    .feature-card p,
+    .tips-card p {
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin-bottom: 4px;
     }
     
     .card-icon {
@@ -579,7 +641,7 @@ footer {
     }
 }
 
-/* ins 风：全局直角（覆盖各子页局部圆角） */
+/* ins 风：全局直角（覆盖各子页局部圆角与内联样式） */
 *, *::before, *::after {
     border-radius: 0 !important;
 }

@@ -38,7 +38,7 @@
       background: var(--bg);
       color: var(--text);
       font-family: var(--font);
-      border-radius: 16px;
+      border-radius: 0;
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
       -webkit-tap-highlight-color: transparent;
     }
@@ -52,14 +52,14 @@
     .fan-rpm-shell .stage {
       position: relative;
       background: #000;
-      border-radius: var(--radius);
+      border-radius: 0;
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
     }
     .fan-rpm-shell .stage-viewport {
       position: relative;
       aspect-ratio: 4 / 3;
       overflow: hidden;
-      border-radius: var(--radius);
+      border-radius: 0;
       background: #000;
     }
     .fan-rpm-shell .stage-caption {
@@ -122,7 +122,7 @@
     .fan-rpm-shell .ref-patch-ring {
       position: absolute;
       border: 1px solid rgba(61, 214, 198, 0.75);
-      border-radius: 4px;
+      border-radius: 0;
       box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35) inset;
       pointer-events: none;
       transform: translate(-50%, -50%);
@@ -132,7 +132,7 @@
       margin-top: 18px;
       padding: 16px;
       background: var(--surface);
-      border-radius: var(--radius);
+      border-radius: 0;
       border: 1px solid rgba(255, 255, 255, 0.06);
     }
     .fan-rpm-shell .row {
@@ -159,7 +159,7 @@
       text-align: center;
       padding: 20px 12px;
       background: var(--accent-dim);
-      border-radius: var(--radius);
+      border-radius: 0;
       margin-bottom: 14px;
     }
     .fan-rpm-shell .readout .rpm-num {
@@ -185,7 +185,7 @@
       width: 100%;
       padding: 14px 18px;
       border: none;
-      border-radius: 12px;
+      border-radius: 0;
       font-size: 1rem;
       font-weight: 600;
       cursor: pointer;
@@ -218,7 +218,10 @@
     <div class="header-top">
       <a href="../" class="back-btn">返回上一级</a>
     </div>
-    <h1 class="page-title">帧差频谱测转速</h1>
+    <div class="section-header section-header--page">
+      <h1>帧差频谱测转速</h1>
+      <p>用摄像头取帧差与 FFT 估算转轴 RPM，适合风扇等周期运动。<a href="../" class="home-hub-link">进入实用工具合集</a></p>
+    </div>
   </div>
 
   <main class="fan-rpm-shell">

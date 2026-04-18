@@ -39,7 +39,7 @@ h1 {
 .converter {
     background-color: var(--color-card);
     padding: 25px;
-    border-radius: 14px;
+    border-radius: 0;
     border: 1px solid var(--line-ins);
     box-shadow: var(--shadow-ins);
 }
@@ -64,7 +64,7 @@ h1 {
 select, input[type="text"] {
     padding: 10px;
     border: 1px solid #ddd;
-    border-radius: 5px;
+    border-radius: 0;
     flex: 1;
     font-family: "Microsoft YaHei", sans-serif;
     font-size: 14px;
@@ -92,7 +92,7 @@ input[type="text"] {
 button {
     padding: 10px 20px;
     border: none;
-    border-radius: 5px;
+    border-radius: 0;
     cursor: pointer;
     font-family: "Microsoft YaHei", sans-serif;
     font-size: 14px;
