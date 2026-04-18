@@ -55,7 +55,7 @@
         }
         .input-section textarea:focus {
             outline: none;
-            border-color: #3498db;
+            border-color: var(--color-theme-deep);
         }
         .input-hint {
             font-size: 0.85rem;
@@ -82,9 +82,9 @@
             transition: all 0.2s;
         }
         .preset-btn:hover {
-            background-color: #3498db;
-            color: white;
-            border-color: #3498db;
+            background: var(--gradient-theme);
+            color: var(--color-theme-ink);
+            border-color: var(--color-theme-deep);
         }
         .button-section {
             text-align: center;
@@ -92,17 +92,17 @@
         }
         .choice-btn {
             padding: 12px 40px;
-            background-color: #3498db;
-            color: white;
+            background: var(--gradient-theme);
+            color: var(--color-theme-ink);
             border: none;
             border-radius: 8px;
             font-size: 1.1rem;
             font-weight: 500;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: background 0.3s;
         }
         .choice-btn:hover {
-            background-color: #2980b9;
+            background: var(--gradient-theme-reverse);
         }
         .choice-btn:active {
             transform: scale(0.98);

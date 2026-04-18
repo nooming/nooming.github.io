@@ -30,18 +30,18 @@ header::before {
     left: 0;
     right: 0;
     height: 5px;
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    background: var(--color-theme);
 }
         
 h1 {
-    color: #2c3e50;
+    color: var(--gradient-theme-title);
     margin-bottom: 12px;
     font-size: 2rem;
     font-weight: 700;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    background: none;
+    -webkit-background-clip: unset;
+    -webkit-text-fill-color: unset;
+    background-clip: unset;
     letter-spacing: -0.5px;
 }
         
@@ -53,7 +53,7 @@ h1 {
 }
         
 .github-link {
-    color: #667eea;
+    color: var(--color-theme-text-end);
     text-decoration: none;
     font-weight: 600;
     transition: all 0.3s ease;
@@ -63,8 +63,8 @@ h1 {
 }
         
 .github-link:hover {
-    color: #764ba2;
-    background-color: #f0f4ff;
+    color: #3d3700;
+    background-color: #fffde7;
     transform: translateY(-2px);
 }
         
@@ -96,8 +96,7 @@ h1 {
     transform: translateX(-50%);
     width: 50px;
     height: 3px;
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-    border-radius: 2px;
+    background: var(--color-theme);
 }
         
 .section-header p {
@@ -147,7 +146,7 @@ h1 {
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    background: var(--color-theme);
     transform: scaleX(0);
     transition: transform 0.4s ease;
 }
@@ -191,7 +190,7 @@ h1 {
 }
         
 .feature-title {
-    color: #3498db;
+    color: var(--color-feature-title);
 }
         
 .tips-card p, .feature-card p {
@@ -237,7 +236,7 @@ h1 {
     font-size: 0.95rem;
     text-decoration: none !important;
     margin-top: 14px;
-    color: white !important;
+    color: var(--color-theme-ink) !important;
     font-weight: 600;
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
@@ -255,6 +254,7 @@ h1 {
 }
         
 .tips-btn {
+    color: #fff !important;
     background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
 }
         
@@ -265,13 +265,14 @@ h1 {
 }
         
 .tool-btn {
-    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: var(--color-theme-ink) !important;
+    background: var(--gradient-theme);
 }
         
 .tool-btn:hover {
-    background: linear-gradient(135deg, #2980b9 0%, #21618c 100%);
+    background: var(--gradient-theme-reverse);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+    box-shadow: var(--shadow-tool);
 }
         
 /* 顶部三张横幅公共容器（桌面端同一行） */
@@ -289,11 +290,11 @@ h1 {
 
 /* 网址导航区域 - 更醒目的设计（偏冷色） */
 .navigation-banner {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #4facfe 100%);
+    background: linear-gradient(135deg, var(--color-theme) 0%, var(--color-theme-deep) 45%, #f5a623 100%);
     border-radius: 16px;
     padding: 28px 25px;
     text-align: center;
-    box-shadow: 0 15px 50px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 15px 50px rgba(212, 200, 0, 0.45);
     transition: all 0.4s ease;
     position: relative;
     overflow: hidden;
@@ -318,11 +319,11 @@ h1 {
         
 .navigation-banner:hover {
     transform: translateY(-6px) scale(1.02);
-    box-shadow: 0 20px 60px rgba(102, 126, 234, 0.5);
+    box-shadow: 0 20px 60px rgba(212, 200, 0, 0.55);
 }
         
 .navigation-title {
-    color: white;
+    color: var(--color-theme-ink);
     font-size: 1.75rem;
     font-weight: 800;
     margin-bottom: 12px;
@@ -332,7 +333,7 @@ h1 {
 }
         
 .navigation-desc {
-    color: rgba(255, 255, 255, 0.98);
+    color: rgba(26, 29, 34, 0.92);
     font-size: 1.05rem;
     margin-bottom: 20px;
     line-height: 1.5;
@@ -346,7 +347,7 @@ h1 {
     gap: 10px;
     padding: 14px 35px;
     background-color: white;
-    color: #667eea !important;
+    color: var(--color-theme-text-end) !important;
     border-radius: 50px;
     font-size: 1.05rem;
     font-weight: 700;
@@ -375,11 +376,11 @@ h1 {
         
 /* 笔记功能区域 - 醒目的设计（偏暖色） */
 .notes-banner {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #ff9a9e 100%);
+    background: linear-gradient(135deg, var(--color-theme) 0%, #ffb347 40%, #f5576c 85%);
     border-radius: 16px;
     padding: 28px 25px;
     text-align: center;
-    box-shadow: 0 15px 50px rgba(245, 87, 108, 0.4);
+    box-shadow: 0 15px 50px rgba(245, 180, 60, 0.45);
     transition: all 0.4s ease;
     position: relative;
     overflow: hidden;
@@ -399,11 +400,11 @@ h1 {
         
 .notes-banner:hover {
     transform: translateY(-6px) scale(1.02);
-    box-shadow: 0 20px 60px rgba(245, 87, 108, 0.5);
+    box-shadow: 0 20px 60px rgba(245, 150, 80, 0.5);
 }
         
 .notes-title {
-    color: white;
+    color: var(--color-theme-ink);
     font-size: 1.75rem;
     font-weight: 800;
     margin-bottom: 12px;
@@ -413,7 +414,7 @@ h1 {
 }
         
 .notes-desc {
-    color: rgba(255, 255, 255, 0.98);
+    color: rgba(26, 29, 34, 0.92);
     font-size: 1.05rem;
     margin-bottom: 20px;
     line-height: 1.5;
@@ -427,7 +428,7 @@ h1 {
     gap: 10px;
     padding: 14px 35px;
     background-color: white;
-    color: #f5576c !important;
+    color: #b83226 !important;
     border-radius: 50px;
     font-size: 1.05rem;
     font-weight: 700;
@@ -456,11 +457,11 @@ h1 {
 
 /* Citywalk 区域 - 独立配色（偏绿蓝色） */
 .citywalk-banner {
-    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 45%, #00c9ff 100%);
+    background: linear-gradient(135deg, var(--color-theme) 0%, #38f9d7 50%, #00a8cc 100%);
     border-radius: 16px;
     padding: 28px 25px;
     text-align: center;
-    box-shadow: 0 15px 50px rgba(56, 249, 215, 0.4);
+    box-shadow: 0 15px 50px rgba(0, 168, 204, 0.35);
     transition: all 0.4s ease;
     position: relative;
     overflow: hidden;
@@ -480,11 +481,11 @@ h1 {
 
 .citywalk-banner:hover {
     transform: translateY(-6px) scale(1.02);
-    box-shadow: 0 20px 60px rgba(56, 249, 215, 0.5);
+    box-shadow: 0 20px 60px rgba(0, 168, 204, 0.45);
 }
 
 .citywalk-title {
-    color: white;
+    color: var(--color-theme-ink);
     font-size: 1.75rem;
     font-weight: 800;
     margin-bottom: 12px;
@@ -494,7 +495,7 @@ h1 {
 }
 
 .citywalk-desc {
-    color: rgba(255, 255, 255, 0.98);
+    color: rgba(26, 29, 34, 0.92);
     font-size: 1.05rem;
     margin-bottom: 20px;
     line-height: 1.5;
@@ -508,7 +509,7 @@ h1 {
     gap: 10px;
     padding: 14px 35px;
     background-color: white;
-    color: #16a085 !important;
+    color: #0d6e73 !important;
     border-radius: 50px;
     font-size: 1.05rem;
     font-weight: 700;
@@ -716,12 +717,12 @@ h1 {
 /* 专题 / 工具枢纽内链（根 index 区块说明） */
 .home-hub-link {
     margin-left: 0.35em;
-    color: #667eea;
+    color: var(--color-theme-text-end);
     font-weight: 600;
     text-decoration: none;
     white-space: nowrap;
 }
 .home-hub-link:hover {
-    color: #764ba2;
+    color: #3d3700;
     text-decoration: underline;
 }

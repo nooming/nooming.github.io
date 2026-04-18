@@ -54,9 +54,9 @@
         }
         
         .back-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--gradient-theme);
             color: white !important;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 4px 12px rgba(212, 200, 0, 0.35);
             flex-shrink: 0;
             font-size: 0.95rem;
             padding: 9px 18px;
@@ -64,9 +64,9 @@
         }
         
         .back-btn:hover {
-            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            background: var(--gradient-theme-reverse);
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 6px 20px rgba(212, 200, 0, 0.45);
         }
         
         h1 {
@@ -74,7 +74,7 @@
             margin: 0 0 3px 0;
             font-size: 2rem;
             font-weight: 700;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--gradient-theme);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -119,9 +119,9 @@
 
         .mode-btn {
             padding: 8px 16px;
-            border: 2px solid #3498db;
+            border: 2px solid var(--color-theme-deep);
             background: white;
-            color: #3498db;
+            color: var(--color-theme-text-end);
             border-radius: 6px;
             cursor: pointer;
             font-size: 14px;
@@ -129,14 +129,14 @@
         }
 
         .mode-btn.active {
-            background: #3498db;
-            color: white;
+            background: var(--color-theme);
+            color: var(--color-theme-ink);
         }
 
         .mode-btn:hover {
-            background: #2980b9;
-            color: white;
-            border-color: #2980b9;
+            background: var(--color-theme-deep);
+            color: var(--color-theme-ink);
+            border-color: var(--color-theme-deep);
         }
 
         .reset-btn, .pass-btn, .undo-btn {

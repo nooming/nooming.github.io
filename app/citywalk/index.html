@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#ff7e5f">
+    <meta name="theme-color" content="#FFFA00">
     <meta name="description" content="全国Citywalk定制路线规划，发现城市之美，支持北京、上海、广州、深圳、成都、杭州、香港、澳门等城市">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚶</text></svg>">
     <title>全国Citywalk · 定制路线规划</title>
@@ -16,6 +16,7 @@
         }
     </script>
     <script src="https://webapi.amap.com/maps?v=2.0&key=4ade0b9a9942f8c1d5b470525887a258&plugin=AMap.Marker,AMap.InfoWindow,AMap.Weather" async defer onerror="mapLoadError()"></script>
+    <link rel="stylesheet" href="../../assets/css/common.css">
     <link rel="stylesheet" href="assets/css/styles.css">
     
     <!-- 引入 html2canvas 用于生成分享图片 -->
@@ -156,7 +157,7 @@
             <button class="btn-generate-plan" id="btnGeneratePlan" onclick="generatePlanText()">生成游玩文字方案</button>
 
             <!-- 新增：生成分享图片按钮 -->
-            <button class="btn-generate-plan" id="btnShareImage" onclick="generateShareImage()" style="margin-top: 12px; background: linear-gradient(135deg, #667eea, #764ba2); display: none;">
+            <button class="btn-generate-plan" id="btnShareImage" onclick="generateShareImage()" style="margin-top: 12px; background: var(--gradient-theme); color: var(--color-theme-ink); display: none;">
                 📸 生成朋友圈分享图
             </button>
 

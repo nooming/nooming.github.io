@@ -47,10 +47,11 @@
 .decision-tool-page .header-center-box h1 {
     font-size: 1.4rem !important;
     font-weight: 700 !important;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    -webkit-background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
-    background-clip: text !important;
+    color: var(--gradient-theme-title) !important;
+    background: none !important;
+    -webkit-background-clip: unset !important;
+    -webkit-text-fill-color: unset !important;
+    background-clip: unset !important;
     letter-spacing: -0.5px !important;
     white-space: nowrap !important;
     margin: 0 0 3px 0 !important;
@@ -75,26 +76,26 @@
 
 .decision-tool-page .nav-links a:hover {
     background-color: transparent !important;
-    border-bottom-color: #3498db !important;
-    color: #3498db !important;
+    border-bottom-color: var(--color-theme-deep) !important;
+    color: var(--color-theme-text-end) !important;
 }
 
 .decision-tool-page .header-left-content-box a {
     padding: 9px 18px !important;
     border-radius: 10px !important;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    color: white !important;
+    background: var(--gradient-theme) !important;
+    color: var(--color-theme-ink) !important;
     text-decoration: none !important;
     font-weight: 500 !important;
     transition: all 0.3s ease !important;
     display: inline-block !important;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
+    box-shadow: var(--shadow-theme) !important;
 }
 
 .decision-tool-page .header-left-content-box a:hover {
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%) !important;
+    background: var(--gradient-theme-reverse) !important;
     transform: translateY(-2px) !important;
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
+    box-shadow: var(--shadow-theme-hover) !important;
     border-bottom: none !important;
 }
 

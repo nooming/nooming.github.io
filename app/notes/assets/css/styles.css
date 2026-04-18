@@ -47,23 +47,23 @@ body {
 .btn-toggle-sidebar {
     padding: 10px 18px;
     border: none;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--gradient-theme);
     border-radius: 12px;
     cursor: pointer;
     font-size: 13px;
     font-weight: 600;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-    color: white;
+    box-shadow: 0 2px 8px rgba(212, 200, 0, 0.3);
+    color: var(--color-theme-ink);
     flex-shrink: 0;
     width: auto;
     height: auto;
 }
 
 .btn-toggle-sidebar:hover {
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    background: var(--gradient-theme-reverse);
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 6px 16px rgba(212, 200, 0, 0.4);
 }
 
 .btn-back-home {
@@ -98,15 +98,15 @@ body {
     left: 28px;
     top: 20px;
     z-index: 999;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: var(--gradient-theme);
+    color: var(--color-theme-ink);
     border: none;
     padding: 10px 18px;
     border-radius: 12px;
     cursor: pointer;
     font-size: 13px;
     font-weight: 600;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 2px 8px rgba(212, 200, 0, 0.3);
     transition: all 0.3s ease;
     opacity: 0;
     pointer-events: none;
@@ -123,9 +123,9 @@ body {
 }
 
 .sidebar-toggle-btn:hover {
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    background: var(--gradient-theme-reverse);
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 6px 16px rgba(212, 200, 0, 0.4);
 }
 
 .sidebar-header {
@@ -243,17 +243,17 @@ body {
 
 .btn-create-draw.active,
 .btn-create-text.active {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--gradient-theme);
     border: none;
-    color: white;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    color: var(--color-theme-ink);
+    box-shadow: 0 2px 8px rgba(212, 200, 0, 0.3);
 }
 
 .btn-create-draw.active:hover,
 .btn-create-text.active:hover {
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    background: var(--gradient-theme-reverse);
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 6px 16px rgba(212, 200, 0, 0.4);
 }
 
 .page-picker-wrapper {
@@ -414,13 +414,13 @@ body {
 .edit-input {
     flex: 1;
     background-color: #ffffff;
-    border: 2px solid #667eea;
+    border: 2px solid var(--color-theme);
     color: #333333;
     padding: 8px 12px;
     border-radius: 10px;
     font-size: 14px;
     outline: none;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+    box-shadow: 0 2px 8px rgba(212, 200, 0, 0.2);
 }
 
 
@@ -438,7 +438,7 @@ body {
     width: 20px;
     height: 20px;
     cursor: pointer;
-    accent-color: #667eea;
+    accent-color: var(--color-theme);
     border-radius: 6px;
     order: 2;
     flex-shrink: 0;
@@ -503,7 +503,7 @@ body {
 .empty-editor h2 {
     font-size: 24px;
     margin-bottom: 12px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--gradient-theme);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -571,10 +571,10 @@ body {
 }
 
 .toolbar-btn.active {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: var(--gradient-theme);
+    color: var(--color-theme-ink);
     border-color: transparent;
-    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 16px rgba(212, 200, 0, 0.3);
 }
 
 .color-picker-wrapper {
@@ -622,8 +622,8 @@ body {
 
 .color-btn:hover {
     transform: scale(1.15) rotate(5deg);
-    border-color: #667eea;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    border-color: var(--color-theme);
+    box-shadow: 0 4px 12px rgba(212, 200, 0, 0.3);
 }
 
 /* 选择工具颜色面板 */
@@ -654,9 +654,9 @@ body {
 }
 
 .color-btn.active {
-    border-color: #667eea;
+    border-color: var(--color-theme);
     border-width: 4px;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2), 0 4px 12px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 0 0 3px rgba(212, 200, 0, 0.2), 0 4px 12px rgba(212, 200, 0, 0.3);
     transform: scale(1.1);
 }
 
@@ -720,15 +720,15 @@ body {
 }
 
 .size-option-btn:hover {
-    border-color: #667eea;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    border-color: var(--color-theme);
+    box-shadow: 0 4px 12px rgba(212, 200, 0, 0.2);
     transform: scale(1.1);
 }
 
 .size-option-btn.active {
-    border-color: #667eea;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    border-color: var(--color-theme);
+    background: var(--gradient-theme);
+    box-shadow: 0 4px 12px rgba(212, 200, 0, 0.3);
 }
 
 .size-dot {
@@ -739,7 +739,7 @@ body {
 }
 
 .size-option-btn.active .size-dot {
-    background-color: #ffffff;
+    background-color: var(--color-theme-ink);
 }
 
 .align-picker-wrapper {
@@ -790,17 +790,17 @@ body {
 }
 
 .align-option-btn:hover {
-    border-color: #667eea;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    border-color: var(--color-theme);
+    box-shadow: 0 4px 12px rgba(212, 200, 0, 0.2);
     transform: scale(1.1);
     background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
 }
 
 .align-option-btn.active {
-    border-color: #667eea;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    border-color: var(--color-theme);
+    background: var(--gradient-theme);
+    color: var(--color-theme-ink);
+    box-shadow: 0 4px 12px rgba(212, 200, 0, 0.3);
 }
 
 /* OneNote 风格的对齐图标 */
@@ -1056,7 +1056,7 @@ body {
 
     /* 按钮触摸反馈优化 */
     button {
-        -webkit-tap-highlight-color: rgba(102, 126, 234, 0.2);
+        -webkit-tap-highlight-color: rgba(212, 200, 0, 0.2);
         touch-action: manipulation;
     }
 
@@ -1503,7 +1503,7 @@ body {
 }
 
 .sidebar-content::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--gradient-theme);
     border-radius: 4px;
 }
 
@@ -1584,20 +1584,20 @@ body {
 }
 
 .btn-hide-toolbar {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: var(--gradient-theme);
+    color: var(--color-theme-ink);
     border: none;
 }
 
 .btn-hide-toolbar:hover {
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    background: var(--gradient-theme-reverse);
 }
 
 .btn-toggle-toolbar {
     padding: 10px 18px !important;
     min-width: auto;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: var(--gradient-theme);
+    color: var(--color-theme-ink);
     border: none;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     font-size: 13px;
@@ -1605,9 +1605,9 @@ body {
 }
 
 .btn-toggle-toolbar:hover {
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    background: var(--gradient-theme-reverse);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 6px 20px rgba(212, 200, 0, 0.4);
 }
 
 /* 查找面板 */
@@ -1642,8 +1642,8 @@ body {
 }
 
 .find-input:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: var(--color-theme);
+    box-shadow: 0 0 0 3px rgba(212, 200, 0, 0.1);
 }
 
 .find-btn {
@@ -1663,11 +1663,11 @@ body {
 }
 
 .find-btn:hover {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: var(--gradient-theme);
+    color: var(--color-theme-ink);
     border-color: transparent;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 12px rgba(212, 200, 0, 0.3);
 }
 
 .find-close {

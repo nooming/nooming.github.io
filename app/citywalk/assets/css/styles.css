@@ -290,7 +290,7 @@
 
         /* 天气卡片 - 渐变背景 */
         .weather-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--gradient-theme);
             border-radius: var(--radius-md);
             padding: 16px 20px;
             margin-bottom: 20px;

@@ -7,14 +7,14 @@ body {
 }
 
 h1 {
-    color: #2c3e50;
+    color: var(--gradient-theme-title);
     margin-bottom: 20px;
     font-size: 2rem;
     font-weight: 700;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    background: none;
+    -webkit-background-clip: unset;
+    -webkit-text-fill-color: unset;
+    background-clip: unset;
     letter-spacing: -0.5px;
 }
 
@@ -71,9 +71,9 @@ h1 {
 
 .mode-btn {
     padding: 8px 16px;
-    border: 2px solid #3498db;
+    border: 2px solid var(--color-theme-deep);
     background: white;
-    color: #3498db;
+    color: var(--color-theme-text-end);
     border-radius: 6px;
     cursor: pointer;
     font-size: 14px;
@@ -81,14 +81,14 @@ h1 {
 }
 
 .mode-btn.active {
-    background: #3498db;
-    color: white;
+    background: var(--color-theme);
+    color: var(--color-theme-ink);
 }
 
 .mode-btn:hover {
-    background: #2980b9;
-    color: white;
-    border-color: #2980b9;
+    background: var(--color-theme-deep);
+    color: var(--color-theme-ink);
+    border-color: var(--color-theme-deep);
 }
 
 .difficulty-selector {

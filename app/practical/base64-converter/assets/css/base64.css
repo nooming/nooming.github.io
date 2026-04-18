@@ -9,14 +9,14 @@ body {
 }
 
 h1 {
-    color: #2c3e50;
+    color: var(--gradient-theme-title);
     margin-bottom: 20px;
     font-size: 2rem;
     font-weight: 700;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    background: none;
+    -webkit-background-clip: unset;
+    -webkit-text-fill-color: unset;
+    background-clip: unset;
     letter-spacing: -0.5px;
 }
 
@@ -68,7 +68,7 @@ textarea {
 
 textarea:focus {
     outline: none;
-    border-color: #2980b9;
+    border-color: var(--color-theme-deep);
 }
 
 /* 错误提示样式 */
@@ -97,12 +97,12 @@ button {
 }
 
 .convert-btn {
-    background-color: #2980b9;
-    color: white;
+    background: var(--gradient-theme);
+    color: var(--color-theme-ink);
 }
 
 .convert-btn:hover {
-    background-color: #1f618d;
+    background: var(--gradient-theme-reverse);
 }
 
 .clear-btn {

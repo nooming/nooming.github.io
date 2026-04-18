@@ -57,7 +57,7 @@
             margin: 0 0 3px 0;
             font-size: 2rem;
             font-weight: 700;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--gradient-theme);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -129,15 +129,15 @@
         }
         
         .option:hover {
-            border-color: #3498db;
-            background: #e8f4fd;
+            border-color: var(--color-theme-deep);
+            background: #fffde7;
             transform: translateX(5px);
         }
         
         .option.selected {
-            border-color: #3498db;
-            background: #3498db;
-            color: white;
+            border-color: var(--color-theme-deep);
+            background: var(--gradient-theme);
+            color: var(--color-theme-ink);
         }
         
         .progress-bar {
@@ -151,7 +151,7 @@
         
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #3498db, #2980b9);
+            background: var(--gradient-theme-h);
             transition: width 0.3s ease;
             width: 0%;
         }
@@ -180,12 +180,12 @@
         }
         
         .btn-primary {
-            background: #3498db;
-            color: white;
+            background: var(--gradient-theme);
+            color: var(--color-theme-ink);
         }
         
         .btn-primary:hover {
-            background: #2980b9;
+            background: var(--gradient-theme-reverse);
         }
         
         .btn-secondary {
@@ -214,7 +214,7 @@
         .result-type {
             font-size: 3rem;
             font-weight: bold;
-            color: #3498db;
+            color: var(--color-theme-text-end);
             margin: 20px 0;
         }
         

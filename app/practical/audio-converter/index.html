@@ -41,9 +41,9 @@
         }
         
         .back-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--gradient-theme);
             color: white !important;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 4px 12px rgba(212, 200, 0, 0.3);
             flex-shrink: 0;
             font-size: 0.95rem;
             padding: 9px 18px;
@@ -51,9 +51,9 @@
         }
         
         .back-btn:hover {
-            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            background: var(--gradient-theme-reverse);
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 6px 20px rgba(212, 200, 0, 0.4);
         }
         
         h1 {
@@ -61,7 +61,7 @@
             margin: 0;
             font-size: 2rem;
             font-weight: 700;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--gradient-theme);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -74,7 +74,7 @@
             margin: 0 0 3px 0;
             font-size: 2rem;
             font-weight: 700;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--gradient-theme);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -85,7 +85,7 @@
         }
         
         h2 {
-            color: #3498db;
+            color: var(--color-theme-text-end);
             margin-bottom: 25px;
             padding-bottom: 12px;
             border-bottom: 1px solid #ecf0f1;
@@ -137,7 +137,7 @@
             transition: border-color 0.2s;
         }
         .file-upload:hover {
-            border-color: #3498db;
+            border-color: var(--color-theme-deep);
         }
         .file-upload input {
             display: none;
@@ -145,8 +145,8 @@
         .upload-btn {
             display: inline-block;
             padding: 10px 20px;
-            background-color: #3498db;
-            color: white;
+            background: var(--gradient-theme);
+            color: var(--color-theme-ink);
             border-radius: 6px;
             cursor: pointer;
             font-weight: 500;
@@ -167,17 +167,17 @@
         }
         .convert-btn {
             padding: 12px 25px;
-            background-color: #3498db;
-            color: white;
+            background: var(--gradient-theme);
+            color: var(--color-theme-ink);
             border: none;
             border-radius: 8px;
             font-size: 1rem;
             font-weight: 500;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: background 0.2s;
         }
         .convert-btn:hover {
-            background-color: #2980b9;
+            background: var(--gradient-theme-reverse);
         }
     </style>
 </head>
@@ -239,7 +239,7 @@
 
             const file = fileInput.files[0];
             const targetFormat = formatSelect.value;
-            resultDiv.innerHTML = '<p style="color: #3498db;">正在转换，请稍候...</p>';
+            resultDiv.innerHTML = '<p style="color: var(--color-theme-text-end);">正在转换，请稍候...</p>';
 
             try {
                 // 读取音频文件

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#FFFA00">
     <meta name="description" content="页面未找到 - 404错误">
     <title>404 - 页面未找到</title>
     
@@ -40,10 +41,11 @@
         .error-code {
             font-size: 8rem;
             font-weight: 800;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: var(--gradient-theme-title);
+            background: none;
+            -webkit-background-clip: unset;
+            -webkit-text-fill-color: unset;
+            background-clip: unset;
             margin-bottom: 20px;
             line-height: 1;
         }
@@ -83,23 +85,23 @@
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white !important;
+            background: var(--gradient-theme);
+            color: var(--color-theme-ink) !important;
         }
         
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: var(--shadow-tool);
         }
         
         .btn-secondary {
             background: white;
-            color: #667eea !important;
-            border: 2px solid #667eea;
+            color: var(--color-theme-text-end) !important;
+            border: 2px solid var(--color-theme-deep);
         }
         
         .btn-secondary:hover {
-            background: #f0f4ff;
+            background: #fffde7;
             transform: translateY(-2px);
         }
         

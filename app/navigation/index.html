@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#FFFA00">
     <meta name="description" content="网址导航 - 精选实用网站集合，包含学习、娱乐、游戏、工具等各类网站导航">
     <meta name="keywords" content="网址导航,网站导航,实用网站,学习网站,游戏网站,工具网站">
     <meta name="author" content="nooming">
@@ -47,7 +48,7 @@
             left: 0;
             width: 60px;
             height: 3px;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            background: var(--gradient-theme-h);
             border-radius: 2px;
         }
         
@@ -89,7 +90,7 @@
             left: 0;
             width: 100%;
             height: 3px;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            background: var(--gradient-theme-h);
             transform: scaleX(0);
             transform-origin: left;
             transition: transform 0.3s ease;
@@ -97,8 +98,8 @@
         
         .site-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 12px 28px rgba(102, 126, 234, 0.15);
-            border-color: #667eea;
+            box-shadow: 0 12px 28px rgba(212, 200, 0, 0.15);
+            border-color: var(--color-theme);
         }
         
         .site-card:hover::before {
@@ -164,7 +165,7 @@
         }
         
         .site-card:hover .site-url {
-            color: #667eea;
+            color: var(--color-theme-text-end);
         }
         
         /* 返回顶部按钮样式已在 common.css 中定义 */
