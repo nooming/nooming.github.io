@@ -1,0 +1,313 @@
+body {
+    padding: 52px 20px 20px;
+    font-size: 16px;
+    background: #fff;
+    font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+}
+
+@media (min-width: 699px) {
+    body {
+        padding: 52px 75px 40px;
+    }
+}
+
+@media (min-width: 1200px) {
+    body {
+        padding: 52px 150px 40px;
+    }
+}
+
+.bodypad {
+    padding: 0 20px;
+    transition-duration: 300ms;
+}
+
+@media (min-width: 699px) {
+    .bodypad {
+        padding: 0 75px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .bodypad {
+        padding: 0 150px;
+    }
+}
+
+.add-fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 19;
+    width: 100%;
+    background: linear-gradient(135deg, rgba(245, 247, 250, 0.97) 0%, rgba(195, 207, 226, 0.95) 100%);
+    border-bottom: 1px solid rgba(102, 126, 234, 0.25);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.proton-header-title {
+    position: relative;
+    top: -2.4px;
+    font-size: 30px;
+    color: #2c3e50;
+    font-weight: 500;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 12px;
+}
+
+.proton-title-text {
+    font-size: 1.35rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.back-to-games {
+    display: inline-flex;
+    align-items: center;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none !important;
+    vertical-align: middle;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff !important;
+    box-shadow: 0 2px 10px rgba(102, 126, 234, 0.35);
+    margin-right: 0;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.back-to-games:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(102, 126, 234, 0.45);
+}
+
+.back-to-site {
+    background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.35);
+}
+
+.back-to-site:hover {
+    box-shadow: 0 4px 12px rgba(44, 62, 80, 0.45);
+}
+
+.grey {
+    color: #999;
+    font-weight: normal !important;
+}
+
+.greyer {
+    color: #bbb;
+}
+
+.proton-toolbar .btn {
+    font-size: 16px;
+    text-align: right;
+    position: relative;
+    top: -1px;
+}
+
+.proton-toolbar {
+    display: flex;
+    color: #bbb;
+}
+
+.proton-toolbar__cell {
+    text-align: center;
+}
+
+.proton-toolbar__cell--gap {
+    margin-left: 10px;
+}
+
+.sim-root {
+    position: absolute;
+    top: 0;
+    min-width: 800px;
+}
+
+.sim-root .arrow-hint {
+    display: inline-block;
+}
+
+.rm-e,
+.rm-b {
+    position: absolute;
+    margin-left: -45px;
+}
+
+.rm-e {
+    margin-top: 320px;
+}
+
+.rm-b {
+    margin-top: 540px;
+}
+
+.rm-e .key-hint,
+.rm-b .key-hint {
+    position: absolute;
+    left: -30px;
+    top: 3px;
+}
+
+.label-force {
+    display: inline-block;
+    position: absolute;
+    margin-left: -38px;
+    margin-top: 435px;
+    line-height: 1;
+    color: #bbb;
+}
+
+.label-e {
+    display: inline-block;
+    position: absolute;
+    margin-left: 15px;
+    margin-top: 265px;
+    color: #27c63a;
+    width: 50px;
+}
+
+.label-b {
+    display: inline-block;
+    position: absolute;
+    margin-left: 15px;
+    margin-top: 610px;
+    color: #4d70c2;
+    width: 50px;
+}
+
+.guide-line {
+    display: inline-block;
+    position: absolute;
+    margin-left: -20px;
+    height: 0;
+    width: 0;
+    border: 1px solid transparent;
+}
+
+.guide-line--b {
+    margin-top: 555px;
+}
+
+.guide-line--te {
+    margin-top: 287px;
+}
+
+.guide-line--le {
+    margin-top: 355px;
+}
+
+.m-div {
+    background: #fff;
+    border: 2px solid #ddd;
+    position: absolute;
+    top: 200px;
+    margin-left: 120px;
+    height: 500px;
+    width: 500px;
+}
+
+.f-div {
+    border: 2px solid #ddd;
+    position: absolute;
+    top: 400px;
+    height: 100px;
+    margin-left: 0;
+    width: 100px;
+    overflow: hidden;
+}
+
+.f-div .axis-dot {
+    margin-top: 46px;
+    margin-left: 45px;
+    height: 0;
+    width: 0;
+    border: 3px solid #333;
+    pointer-events: none;
+}
+
+.bounder,
+.forcer,
+.dragger {
+    position: absolute;
+    pointer-events: none;
+    transition-duration: 10ms;
+}
+
+.bounder {
+    margin-top: 45px;
+    margin-left: 45px;
+    height: 0;
+    width: 0;
+    border: 3px solid #f00;
+    z-index: -1;
+}
+
+.forcer {
+    margin-top: -5px;
+    margin-left: 45px;
+    height: 0;
+    width: 0;
+    border: 3px solid #333;
+}
+
+.dragger {
+    margin-top: 45px;
+    margin-left: 45px;
+    height: 0;
+    width: 0;
+    border: 3px solid #333;
+}
+
+.dragger .glyphicon {
+    transform: translate(-8.6px, -5px);
+    transform-origin: 0 -4px;
+}
+
+.g-svg-wrap {
+    margin-top: -50px;
+}
+
+.e-div,
+.b-div {
+    position: absolute;
+    height: 100px;
+    width: 100px;
+    cursor: pointer;
+}
+
+.e-div {
+    border: 2px solid #a2eabc;
+    top: 290px;
+}
+
+.b-div {
+    border: 2px solid #b8c0e8;
+    top: 510px;
+}
+
+.cursor-dot {
+    height: 0;
+    width: 0;
+    border: 3px solid #f00;
+    transition-duration: 10ms;
+    position: absolute;
+}
+
+.help-block {
+    margin-top: 600px;
+}
+
+.help-block .note-tight {
+    display: block;
+    margin-top: -10px;
+    margin-bottom: 10px;
+}

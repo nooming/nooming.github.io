@@ -1,5 +1,22 @@
 # 个人主页更新日志
 
+## v1.6
+
+### 新增功能
+- 工具总览：新增 tools/index.html，集中链向选择辅助、心理测试、实用工具、小游戏四类合集
+- 专题索引：新增 articles/index.html，汇总开发者工具实战、猫抓教学、停车分配互动实验等专题入口
+- 主页：在「专题与实践」「实用工具」模块增加指向上述索引页的链接
+
+### 界面优化
+- 主页专属样式迁至 common/css/home.css，与子页共用 common.css 的搭配方式一致
+- 质子世界与桌游单页（UNO、德州扑克、红心大战）顶栏配色、返回链与全站一致，并补充 canonical 与 Open Graph；桌游合集页增加返回站点首页入口
+
+### 功能调整
+- 站点地图：修正抛硬币、快速选择的路径（不再错误嵌套在 wheel 下），并补充 tools/、articles/、cuisine/、风扇转速工具等条目
+- 清理：移除 tools/practical/fan-rpm 下无站内入口的 windmill-test 测试页
+- Citywalk 后端：删除 cuisine 中与 noomings_backend 重复的 citywalk.py，路线规划 Flask 以后端仓库为唯一维护副本（说明见 docs/README.md）
+- 文档：docs/README.md 项目结构与功能说明已与当前仓库同步
+
 ## v1.5
 
 ### 新增功能

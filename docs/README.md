@@ -20,6 +20,7 @@
 - **批量操作**：支持批量选择和删除页面，方便管理大量笔记
 
 ### 📚 专题与实践
+- **索引页**：[`articles/`](../articles/) 汇总所有专题入口
 - **浏览器开发者工具实战**：详细讲解如何使用浏览器自带的开发者工具（Network面板、Console等）分析并获取网页资源，包含8个步骤的实战操作指南和技术限制说明
 - **猫抓扩展保姆级教学**：从安装到实际抓取视频/音频资源，手把手演示如何使用猫抓（Cat Catch）浏览器扩展，适合零基础用户快速上手
 - **小区停车分配优化（互动页）**：在 `articles/parking-pso/` 编辑虚拟小区平面图，精确最优或 PSO 优化车辆→车位分配，依赖已部署后端 `/api/default` 与 `/api/optimize`
@@ -34,22 +35,28 @@
 - **动物塑测试**：通过20道问题，发现你的动物性格，了解自己的行为模式和性格特征，找到与你最匹配的动物形象
 
 ### 🔧 实用工具
+- **索引页**：[`tools/practical/`](../tools/practical/) 汇总音频、进制、Base64、二维码、风扇转速等工具
 - **音频格式转换器**：支持各种音频格式转换为 MP3 或 WAV，MP3 适合压缩体积，WAV 保持无损音质
 - **进制转换器**：支持二进制、八进制、十进制、十六进制互转，附带进制计算说明与示例，适合编程学习
 - **Base64 编解码器**：快速进行 Base64 编码和解码操作，支持文本和文件处理
 - **二维码生成与识别**：生成自定义样式的二维码，支持文本、链接等内容，并可识别上传的二维码图片
+- **风扇转速估算**：根据叶片视觉暂留估算转速的实用小工具
 
 ### 🚶 城市漫步 · Citywalk 定制器
 - **全国多城路线规划**：可切换城市（含热门城市快捷入口），选择起点和终点后，自动规划适合步行游玩的路线，并推荐沿途打卡点（咖啡、甜品、文创等）
 - **地图交互体验**：基于高德地图 Web SDK，支持在地图上点击选择起终点、查看每个 POI 的详细信息
 - **智能游玩文案与分享图**：一键生成贴心的游玩文字攻略，并支持生成朋友圈分享长图
-- **后端服务说明**：前端页面位于 `cuisine/`，通过调用部署在云端的 Flask 接口 `/plan` 获取路线数据，本仓库仅包含前端代码；生产环境 API 基址为 `https://noomings-backend.zeabur.app`（与 `cuisine/app.js` 中 `API_BASE_URL` 一致）
+- **后端服务说明**：前端页面位于 `cuisine/`。路线规划 Flask 源码与部署以仓库 **`noomings_backend`** 中的 `citywalk.py` 为唯一维护副本（`cuisine/` 目录不再重复存放该文件，避免双份漂移）。生产环境 API 基址为 `https://noomings-backend.zeabur.app`（与 `cuisine/app.js` 中 `API_BASE_URL` 一致）
 
 ### 🎮 小游戏
-- **五子棋**：经典五子棋游戏，支持单人对战 AI 或双人对战，多种难度选择
-- **围棋**：传统围棋游戏，体验经典棋类对弈
-- **中国象棋**：中国象棋游戏，支持人机对战
-- **谷歌小恐龙**：经典跑酷小游戏，挑战你的反应速度
+- **索引页**：[`tools/games/`](../tools/games/) 汇总棋类、小恐龙、桌游与质子世界等
+- **五子棋 / 围棋 / 中国象棋**：支持单人对战 AI 或双人对战（因游戏而异）
+- **谷歌小恐龙**：经典跑酷小游戏
+- **桌游合集**（`tools/games/card-games/`）：德州扑克、UNO、红心大战，本地 AI 对战
+- **质子世界**（`tools/games/proton/`）：带电粒子在电场、磁场与阻力下的平面可视化模拟
+
+### 🧰 工具总览
+- **[`tools/index.html`](../tools/)**：四类工具（决策、心理、实用、游戏）的统一入口，便于从深层子页返回时快速跳转
 
 ## 技术栈
 
@@ -74,14 +81,15 @@
 ## 项目结构
 
 ```
-├── index.html                  # 主页
+├── index.html                  # 主页（样式见 common/css/home.css）
 ├── docs/                       # 文档目录
 │   ├── README.md              # 项目说明文档
 │   └── CHANGELOG.md           # 更新日志
 ├── articles/                   # 专题与实践（长文 + 互动实验）
+│   ├── index.html             # 专题索引
 │   ├── cat-catch-tutorial/    # 猫抓扩展教程
 │   │   └── cat-catch.zip      # 猫抓扩展源码压缩包
-│   ├── crawler-experience/     # 浏览器开发者工具实战
+│   ├── crawler-experience/    # 浏览器开发者工具实战
 │   └── parking-pso/           # 小区停车分配优化（前端，API 见 Zeabur /api/*）
 ├── navigation/                 # 网址导航
 ├── notes/                      # 手写笔记
@@ -96,6 +104,7 @@
 │       ├── storage.js          # 本地存储
 │       └── utils.js            # 工具函数
 ├── tools/                      # 工具集合
+│   ├── index.html              # 四类工具总览入口
 │   ├── decision/               # 选择辅助工具
 │   │   ├── index.html          # 选择辅助工具合集首页
 │   │   ├── assets/             # 共享资源（CSS、JS）
@@ -106,25 +115,41 @@
 │   │   └── quick-choice/       # 快速选择
 │   │       └── index.html
 │   ├── psychological/          # 心理测试
+│   │   ├── index.html
 │   │   ├── mbti-test/         # MBTI性格测试
 │   │   └── animal-test/       # 动物塑测试
 │   ├── practical/             # 实用工具
+│   │   ├── index.html         # 实用工具合集首页
 │   │   ├── audio-converter/   # 音频格式转换器
 │   │   ├── base-converter/    # 进制转换器
 │   │   ├── base64-converter/  # Base64 编解码器
-│   │   └── qr-code-generator/ # 二维码生成与识别
+│   │   ├── qr-code-generator/ # 二维码生成与识别
+│   │   └── fan-rpm/           # 风扇转速估算
 │   └── games/                 # 小游戏
+│       ├── index.html         # 小游戏合集入口
 │       ├── gomoku/            # 五子棋
 │       ├── go/                # 围棋
 │       ├── chess/             # 中国象棋
-│       └── dino/              # 谷歌小恐龙
-├── cuisine/                    # 城市漫步 · Citywalk 定制器
+│       ├── dino/              # 谷歌小恐龙
+│       ├── card-games/        # 桌游（德州 / UNO / 红心）
+│       │   ├── index.html
+│       │   ├── texas.html
+│       │   ├── uno.html
+│       │   ├── hearts.html
+│       │   └── assets/
+│       └── proton/            # 质子世界物理演示
+│           ├── index.html
+│           ├── proton.css
+│           └── proton.js
+├── cuisine/                    # 城市漫步 · Citywalk 定制器（前端）
 │   ├── index.html              # Citywalk 前端页面
-│   └── citywalk.py             # 路线规划 Flask 后端（部署到云端使用）
+│   └── app.js                  # 前端逻辑（API 指向 Zeabur 后端）
 ├── common/                     # 公共资源
-│   ├── css/                   # 公共样式
+│   ├── css/                   # 公共样式（含 home.css 主页专用）
 │   └── js/                    # 公共脚本
-└── favicon-io/                 # 网站图标
+├── favicon-io/                 # 网站图标
+├── sitemap.xml
+└── robots.txt
 ```
 
 ## 使用说明
@@ -136,6 +161,10 @@
 
 本项目已配置为 GitHub Pages，可直接在 GitHub 仓库设置中启用 Pages 功能。
 
+## 更新记录
+
+各版本功能与结构调整见 [CHANGELOG.md](CHANGELOG.md)（当前最新为 v1.6）。
+
 ## 许可证
 
 © 2025 个人学习网站 | 仅用于学习交流，请勿用于商业用途
@@ -143,4 +172,3 @@
 ## 作者
 
 nooming - [GitHub](https://github.com/nooming)
-
