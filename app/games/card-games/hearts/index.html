@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width">
+
+        <title>红心大战</title>
+        <meta name="description" content="传统红心大战与本地 AI 同台，尽量避免红心与黑桃 Q。">
+        <link rel="canonical" href="https://nooming.github.io/app/games/card-games/hearts/">
+        <meta property="og:type" content="website">
+        <meta property="og:title" content="红心大战 - 桌游">
+        <meta property="og:description" content="红心大战本地 AI 对战，含规则教程。">
+        <meta property="og:url" content="https://nooming.github.io/app/games/card-games/hearts/">
+        <link rel="apple-touch-icon" sizes="180x180" href="../../../../assets/icons/apple-touch-icon.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="../../../../assets/icons/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="../../../../assets/icons/favicon-16x16.png">
+        <link rel="manifest" href="../../../../assets/icons/site.webmanifest">
+        <link rel="shortcut icon" href="../../../../assets/icons/favicon.ico">
+
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"></script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js"></script>
+        <link rel="stylesheet" href="../assets/game-layout.css">
+
+        <script src="../assets/common/ui-buttons.js"></script>
+        <script src="../assets/common/tutorial-shell.js"></script>
+        <script src="../assets/tutor-hearts.js"></script>
+        <script src="../assets/hearts.js" defer></script>
+
+        <style>
+            body {
+                background: #fff;
+                color: #333;
+            }
+
+            .list-table li:last-child {
+                border-bottom: none;
+            }
+
+            .list-table .text-muted {
+                cursor: default;
+            }
+
+            .hearts-svg {
+                width: 500px;
+            }
+
+            .card-face {
+                cursor: pointer;
+                transition: transform 0.18s ease;
+                transform-box: fill-box;
+                transform-origin: center;
+            }
+
+            .card-face[data-selected="true"] {
+                transform: translate3d(0, -12px, 0) scale(1.02);
+            }
+
+            .card-face[data-disabled="true"] {
+                cursor: not-allowed;
+            }
+
+            .card-face.card-back {
+                cursor: default;
+            }
+
+            .hearts-btns .btn {
+                margin: 0 4px 6px;
+            }
+
+            .hearts-btns-down {
+                color: #555;
+                line-height: 1.6;
+            }
+
+            .hearts-alert {
+                border: 1px dashed #999;
+                padding: 8px 12px;
+                margin-bottom: 10px;
+                border-radius: 6px;
+                background: #fafafa;
+            }
+
+            .person-ready {
+                fill: #d9534f;
+                font-weight: 600;
+            }
+
+            .person-unready {
+                transition: opacity 0.2s ease;
+            }
+
+            @keyframes blink {
+                0% {
+                    fill: #333;
+                }
+
+                100% {
+                    fill: #ddd;
+                }
+            }
+
+            .blink {
+                animation: blink 0.8s infinite cubic-bezier(0.17, -1.01, 0.76, 1.87);
+                -webkit-animation: blink 0.8s infinite cubic-bezier(0.17, -1.01, 0.76, 1.87);
+            }
+
+            .blink-fast {
+                animation: blink 0.2s infinite cubic-bezier(0.17, -1.01, 0.76, 1.87);
+                -webkit-animation: blink 0.2s infinite cubic-bezier(0.17, -1.01, 0.76, 1.87);
+            }
+
+
+            @media (max-width: 960px) {
+                .bodypad.hearts {
+                    position: relative;
+                    top: 60px;
+                    min-width: auto;
+                    min-height: auto;
+                }
+
+                .hearts-btns,
+                .hearts-btns-down {
+                    margin-left: 0 !important;
+                    width: 100% !important;
+                }
+            }
+        </style>
+    </head>
+
+    <body>
+        <nav class="game-nav-top">
+            <a href="../../../../" class="nav-back-site nav-back-site--muted">← 站点首页</a>
+            <a href="../../" class="nav-back-site">小游戏合集</a>
+            <span class="game-nav-title">红心大战</span>
+            <a href="../index.html">桌游目录</a>
+            <a href="../texas/">德州扑克</a>
+            <a href="../uno/">UNO</a>
+            <span class="api-hint">模式：本地 AI 对战 · 昵称 <code>?nick=名字</code></span>
+        </nav>
+        <div class="game-nav-spacer" aria-hidden="true"></div>
+        <svg class="decor" viewBox="0 0 500 500" style="position: absolute;width:600px;"> </svg>
+        <div class="tutor" style="display: none;"> </div>
+
+        <div class="list-all col-md-6 nopadding">
+            <ul class="list list-unstyled list-table"></ul>
+            <div class="btn-group" style="margin-bottom: 10px;">
+                <button class="btn btn-default btn-start-ai"><span class="glyphicon glyphicon-knight"></span> 开始 AI 对战</button>
+                <button class="btn btn-default" onclick="startTutor();"><span class="glyphicon glyphicon-book"></span> 规则教程</button>
+            </div>
+        </div>
+
+        <svg class="tutor-svg-2" viewBox="0 0 500 500" style="position:absolute;width:500px;z-index: -1;"> </svg>
+        <div class="bodypad hearts" style="position: absolute;top:130px;min-width: 800px;min-height:800px;z-index: -1;">
+            <svg class="hearts-svg" viewBox="0 0 500 500" style="position:absolute;width:500px;"> </svg>
+            <svg class="tutor-svg" viewBox="0 0 500 500" style="position:absolute;width:500px;display:none"> </svg>
+            <div class="hearts-btns" style="position:absolute;margin-top:240px;margin-left:200px;"></div>
+            <div class="hearts-btns-down" style="position:absolute;margin-top:520px;margin-left:-100px;width:700px;text-align:center;white-space: nowrap;"></div>
+        </div>
+
+        <div class="chat" style="position: fixed;bottom:15px;right:15px;display: none;">
+            <button class="btn-exit btn btn-default" onclick="$(this).hasClass('btn-danger')?(socket?(socket.send('closing'),socket.close()):endTutor()):$(this).addClass('btn-danger')"><span class="glyphicon glyphicon-log-out"></span> 离开</button>
+        </div>
+    </body>
+
+</html>

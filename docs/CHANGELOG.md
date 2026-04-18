@@ -1,5 +1,14 @@
 # 个人主页更新日志
 
+## v2.1
+
+### 结构调整
+- **`assets/` 全站静态**：原根目录 **`common/`**（全站 CSS/JS）与 **`favicon-io/`**（图标与 **`site.webmanifest`**）合并为 **`assets/css/`**、**`assets/js/`**、**`assets/icons/`**；各页相对链、**`sitemap.xml`**、canonical / og:url 与根 **`index.html`** 已更新。
+- **一级目录 `labs/` → `app/`**：互动工具与实验对外路径由 **`/labs/…`** 改为 **`/app/…`**；仓库内目录已重命名，站内互链与文档中的路径说明已同步。
+
+### 文档
+- **`docs/SITE-CONVENTIONS.md`**、**`docs/README.md`**、**`docs/BUILD-OPTIONAL.md`**、**`app/games/card-games/README.md`** 已反映上述约定。
+
 ## v2.0
 
 ### 结构调整

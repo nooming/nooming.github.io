@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>快速选择 - 在线随机选择工具</title>
+    <meta name="description" content="快速输入选项，立即获得随机选择结果，无需复杂设置，适合快速决策场景。">
+
+    <link rel="apple-touch-icon" sizes="180x180" href="../../../assets/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../../assets/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../../assets/icons/favicon-16x16.png">
+    <link rel="manifest" href="../../../assets/icons/site.webmanifest">
+    <link rel="shortcut icon" href="../../../assets/icons/favicon.ico">
+
+    <link rel="stylesheet" href="../../../assets/css/common.css">
+    <link as="style" href="../assets/css/style.min.css" rel="preload">
+    <link href="../assets/css/style.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/decision-shell.css">
+    <style>
+        /* 快速选择工具样式 */
+        .quick-choice-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 30px;
+            background: white;
+            border-radius: 12px;
+            margin-top: 0 !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .quick-choice-title {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .input-section {
+            margin-bottom: 25px;
+        }
+        .input-section label {
+            display: block;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        .input-section textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+        .input-section textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        .input-hint {
+            font-size: 0.85rem;
+            color: #95a5a6;
+            margin-top: 8px;
+        }
+        .preset-section {
+            margin-bottom: 20px;
+        }
+        .preset-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .preset-btn {
+            padding: 8px 16px;
+            background-color: #ecf0f1;
+            color: #2c3e50;
+            border: 1px solid #bdc3c7;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .preset-btn:hover {
+            background-color: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        .button-section {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .choice-btn {
+            padding: 12px 40px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .choice-btn:hover {
+            background-color: #2980b9;
+        }
+        .choice-btn:active {
+            transform: scale(0.98);
+        }
+        .result-section {
+            margin-top: 30px;
+            padding: 25px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            text-align: center;
+            min-height: 100px;
+            display: none;
+        }
+        .result-section.show {
+            display: block;
+        }
+        .result-label {
+            font-size: 0.9rem;
+            color: #95a5a6;
+            margin-bottom: 10px;
+        }
+        .result-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        @media (max-width: 767.98px) {
+            .quick-choice-container {
+                padding: 20px 15px !important;
+                margin: 0 auto !important;
+            }
+
+            .quick-choice-title {
+                font-size: 1.2rem !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .quick-choice-container {
+                padding: 15px 10px !important;
+            }
+        }
+    </style>
+</head>
+<body class="decision-tool-page quick-choice-page">
+<header>
+    <div class="header-left-box">
+        <div class="header-left-content-box">
+            <a href="../">返回上一级</a>
+        </div>
+    </div>
+    <div class="header-center-box">
+        <h1>快速选择</h1>
+    </div>
+    <div class="header-right-box">
+        <div class="header-right-content-box">
+            <nav class="nav-links">
+                <a href="../wheel/">转盘</a>
+                <a href="../coin-flip/">抛硬币</a>
+            </nav>
+        </div>
+    </div>
+</header>
+<main>
+    <div class="quick-choice-container">
+        <h2 class="quick-choice-title">快速随机选择</h2>
+        
+        <div class="input-section">
+            <label for="options-input">请输入选项（每行一个）：</label>
+            <textarea id="options-input" placeholder="选项1&#10;选项2&#10;选项3&#10;..."></textarea>
+            <div class="input-hint">每行输入一个选项，系统会随机选择一个结果</div>
+        </div>
+
+        <div class="preset-section">
+            <div class="preset-buttons">
+                <button class="preset-btn" id="preset-abcd-btn">选ABCD</button>
+            </div>
+        </div>
+
+        <div class="button-section">
+            <button class="choice-btn" id="choice-btn">开始选择</button>
+        </div>
+
+        <div class="result-section" id="result-section">
+            <div class="result-label">选择结果：</div>
+            <p class="result-text" id="result-text"></p>
+        </div>
+    </div>
+</main>
+
+<footer>
+    <p>© 2025 个人学习网站 | 仅用于学习交流，请勿用于商业用途</p>
+</footer>
+
+<script>
+    function makeChoice() {
+        const input = document.getElementById('options-input');
+        const resultSection = document.getElementById('result-section');
+        const resultText = document.getElementById('result-text');
+        
+        const inputValue = input.value.trim();
+        
+        if (!inputValue) {
+            if (typeof showToast === 'function') {
+                showToast('请输入至少一个选项！', 'error');
+            } else {
+                alert('请输入至少一个选项！');
+            }
+            return;
+        }
+        
+        // 按换行符分割选项，过滤空行
+        const options = inputValue.split('\n')
+            .map(opt => opt.trim())
+            .filter(opt => opt.length > 0);
+        
+        if (options.length === 0) {
+            if (typeof showToast === 'function') {
+                showToast('请输入至少一个选项！', 'error');
+            } else {
+                alert('请输入至少一个选项！');
+            }
+            return;
+        }
+        
+        // 随机选择一个选项
+        const randomIndex = Math.floor(Math.random() * options.length);
+        const selectedOption = options[randomIndex];
+        
+        // 显示结果
+        resultText.textContent = selectedOption;
+        resultSection.classList.add('show');
+        
+        // 添加动画效果
+        resultSection.style.animation = 'none';
+        setTimeout(() => {
+            resultSection.style.animation = 'fadeIn 0.5s ease-in';
+        }, 10);
+    }
+    
+    // 添加CSS动画
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // 加载预设
+    function loadPreset(presetName) {
+        const input = document.getElementById('options-input');
+        
+        if (presetName === 'ABCD') {
+            input.value = 'A\nB\nC\nD';
+        }
+        
+        // 聚焦到输入框
+        input.focus();
+    }
+    
+    // 绑定事件
+    document.addEventListener('DOMContentLoaded', function() {
+        const choiceBtn = document.getElementById('choice-btn');
+        const presetBtn = document.getElementById('preset-abcd-btn');
+        const input = document.getElementById('options-input');
+        
+        if (choiceBtn) {
+            choiceBtn.addEventListener('click', makeChoice);
+        }
+        
+        if (presetBtn) {
+            presetBtn.addEventListener('click', function() {
+                loadPreset('ABCD');
+            });
+        }
+        
+        // 支持回车键快速选择（Ctrl+Enter）
+        if (input) {
+            input.addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === 'Enter') {
+                    makeChoice();
+                }
+            });
+        }
+    });
+    </script>
+    
+    <!-- 公共工具函数 -->
+    <script src="../../../assets/js/utils.js" defer></script>
+</body>
+</html>
+

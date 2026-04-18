@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="description" content="用手机摄像头对准旋转扇叶，在 ROI 内对相邻帧灰度做帧差，累积时域信号后 FFT 找主频，换算轴转速（RPM）。十字为转轴投影。" />
+  <meta name="keywords" content="风扇转速,RPM,帧差,FFT,转频,摄像头" />
+  <meta name="theme-color" content="#0a0e14" />
+  <title>帧差频谱测转速</title>
+
+  <link rel="apple-touch-icon" sizes="180x180" href="../../../assets/icons/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="../../../assets/icons/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="../../../assets/icons/favicon-16x16.png" />
+  <link rel="manifest" href="../../../assets/icons/site.webmanifest" />
+  <link rel="shortcut icon" href="../../../assets/icons/favicon.ico" />
+
+  <link rel="stylesheet" href="../../../assets/css/common.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    .fan-rpm-shell {
+      --bg: #0a0e14;
+      --surface: #121820;
+      --text: #e8edf4;
+      --muted: #7d8a9a;
+      --accent: #3dd6c6;
+      --accent-dim: rgba(61, 214, 198, 0.15);
+      --danger: #ff6b6b;
+      --radius: 14px;
+      --font: "DM Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+      box-sizing: border-box;
+      max-width: 520px;
+      margin: 0 auto;
+      padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+        max(20px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      border-radius: 16px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .fan-rpm-shell * { box-sizing: border-box; }
+    .fan-rpm-shell .sub {
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.45;
+      margin: 0 0 16px;
+    }
+    .fan-rpm-shell .stage {
+      position: relative;
+      background: #000;
+      border-radius: var(--radius);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+    }
+    .fan-rpm-shell .stage-viewport {
+      position: relative;
+      aspect-ratio: 4 / 3;
+      overflow: hidden;
+      border-radius: var(--radius);
+      background: #000;
+    }
+    .fan-rpm-shell .stage-caption {
+      margin: 10px 4px 0;
+      padding-bottom: 2px;
+      text-align: center;
+      font-size: 11px;
+      line-height: 1.45;
+      color: var(--accent);
+      text-shadow: 0 1px 2px #000;
+      word-break: break-word;
+    }
+    .fan-rpm-shell video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .fan-rpm-shell canvas { display: none; }
+    .fan-rpm-shell .ref-tap-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      display: none;
+      cursor: crosshair;
+      touch-action: none;
+    }
+    .fan-rpm-shell .ref-tap-layer.active { display: block; }
+    .fan-rpm-shell .ref-marker {
+      position: absolute;
+      z-index: 3;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      width: 22px;
+      height: 22px;
+      margin-left: 0;
+      margin-top: 0;
+    }
+    .fan-rpm-shell .ref-marker::before,
+    .fan-rpm-shell .ref-marker::after {
+      content: "";
+      position: absolute;
+      background: var(--accent);
+      box-shadow: 0 0 4px #000;
+    }
+    .fan-rpm-shell .ref-marker::before {
+      left: 50%;
+      top: 0;
+      width: 2px;
+      height: 100%;
+      transform: translateX(-50%);
+    }
+    .fan-rpm-shell .ref-marker::after {
+      top: 50%;
+      left: 0;
+      height: 2px;
+      width: 100%;
+      transform: translateY(-50%);
+    }
+    .fan-rpm-shell .ref-patch-ring {
+      position: absolute;
+      border: 1px solid rgba(61, 214, 198, 0.75);
+      border-radius: 4px;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35) inset;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+    }
+    .fan-rpm-shell .panel {
+      margin-top: 18px;
+      padding: 16px;
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .fan-rpm-shell .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .fan-rpm-shell .row:last-child { margin-bottom: 0; }
+    .fan-rpm-shell label { font-size: 0.9rem; color: var(--muted); }
+    .fan-rpm-shell input[type="range"] {
+      flex: 1;
+      accent-color: var(--accent);
+    }
+    .fan-rpm-shell .value {
+      min-width: 2.5rem;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      color: var(--accent);
+    }
+    .fan-rpm-shell .readout {
+      text-align: center;
+      padding: 20px 12px;
+      background: var(--accent-dim);
+      border-radius: var(--radius);
+      margin-bottom: 14px;
+    }
+    .fan-rpm-shell .readout .rpm-num {
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+    .fan-rpm-shell .readout .unit { font-size: 1rem; font-weight: 500; color: var(--muted); margin-left: 4px; }
+    .fan-rpm-shell .readout .meta {
+      margin-top: 8px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .fan-rpm-shell .readout .meta-secondary {
+      margin-top: 4px;
+      font-size: 0.72rem;
+      color: var(--muted);
+      opacity: 0.92;
+    }
+    .fan-rpm-shell .btn {
+      width: 100%;
+      padding: 14px 18px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: linear-gradient(145deg, #2ebfaf, var(--accent));
+      color: #041210;
+      margin-bottom: 10px;
+    }
+    .fan-rpm-shell .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .fan-rpm-shell .btn.secondary {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .fan-rpm-shell .hint {
+      font-size: 0.78rem;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-top: 12px;
+    }
+    .fan-rpm-shell .err {
+      color: var(--danger);
+      font-size: 0.85rem;
+      margin-top: 8px;
+    }
+    .fan-rpm-shell .status { font-size: 0.8rem; color: var(--muted); margin-top: 8px; }
+  </style>
+</head>
+<body class="page-container">
+  <div class="page-header">
+    <div class="header-top">
+      <a href="../" class="back-btn">返回上一级</a>
+    </div>
+    <h1 class="page-title">帧差频谱测转速</h1>
+  </div>
+
+  <main class="fan-rpm-shell">
+    <p class="sub">
+      将<strong>十字对准转轴在画面上的投影</strong>，ROI 内需有<strong>随转动变化的对比度</strong>（扇叶与背景）。对相邻帧灰度做<strong>绝对值帧差</strong>并取 ROI 均值，得到一维时序；凑满缓冲后做 <strong>FFT</strong> 找主频，再按<strong>每转周期数</strong>（通常≈叶片数）换算<strong>轴转速 RPM</strong>。采样率≈帧率，高转速请尽量<strong>60fps</strong>并避免运动模糊。
+    </p>
+
+    <div class="stage">
+      <div class="stage-viewport" id="stageViewport">
+        <video id="video" playsinline muted></video>
+        <div id="refPatchRing" class="ref-patch-ring" aria-hidden="true"></div>
+        <div id="refMarker" class="ref-marker" aria-hidden="true"></div>
+        <div id="refTapLayer" class="ref-tap-layer" aria-hidden="true"></div>
+      </div>
+      <p class="stage-caption" id="stageCaption">点「点选转轴」后在画面上点击：十字为转轴投影</p>
+    </div>
+    <canvas id="work"></canvas>
+
+    <div class="panel">
+      <div class="readout">
+        <span class="rpm-num" id="rpmDisplay">—</span><span class="unit">RPM</span>
+        <div class="meta">
+          置信度 <strong id="confOut">—</strong> · 转频 <strong id="hzOut">—</strong> Hz
+        </div>
+        <div class="meta-secondary">
+          帧差缓冲 <strong id="fftInfoOut">—</strong> · 谱峰 bin <strong id="ptsOut">—</strong>
+        </div>
+      </div>
+      <div class="row">
+        <label for="smooth">读数平滑</label>
+        <input type="range" id="smooth" min="1" max="12" value="5" step="1" />
+        <span class="value" id="smoothVal">5</span>
+      </div>
+      <div class="row">
+        <label for="patchSize">ROI 边长 (px)</label>
+        <input type="range" id="patchSize" min="15" max="31" value="21" step="2" />
+        <span class="value" id="patchVal">21</span>
+      </div>
+      <div class="row">
+        <label for="bladeCycles">每转周期数</label>
+        <input type="range" id="bladeCycles" min="1" max="12" value="3" step="1" />
+        <span class="value" id="bladeCyclesVal">3</span>
+      </div>
+      <button type="button" class="btn secondary" id="pickRefBtn" disabled>点选转轴投影</button>
+      <button type="button" class="btn" id="startBtn">开启摄像头并开始</button>
+      <button type="button" class="btn secondary" id="stopBtn" disabled>停止</button>
+      <p class="hint">
+        <strong>帧差</strong>即相邻帧对应像素灰度差的绝对值在 ROI 内取平均；其包络随扇叶扫过呈周期性。<strong>每转周期数</strong>若与真实不符，读数会按比例错（可对照已知转速调节）。对称扇叶有时主频为 2×叶片数，可把该值改为 6、8 等试试。读数平滑为对 RPM 的滑动平均。
+      </p>
+      <p class="err" id="errBox" hidden></p>
+      <p class="status" id="status"></p>
+    </div>
+  </main>
+
+  <script>
+(function () {
+  const video = document.getElementById("video");
+  const canvas = document.getElementById("work");
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  const startBtn = document.getElementById("startBtn");
+  const stopBtn = document.getElementById("stopBtn");
+  const smoothEl = document.getElementById("smooth");
+  const smoothVal = document.getElementById("smoothVal");
+  const rpmDisplay = document.getElementById("rpmDisplay");
+  const confOut = document.getElementById("confOut");
+  const hzOut = document.getElementById("hzOut");
+  const fftInfoOut = document.getElementById("fftInfoOut");
+  const ptsOut = document.getElementById("ptsOut");
+  const errBox = document.getElementById("errBox");
+  const statusEl = document.getElementById("status");
+  const refTapLayer = document.getElementById("refTapLayer");
+  const refMarker = document.getElementById("refMarker");
+  const refPatchRing = document.getElementById("refPatchRing");
+  const pickRefBtn = document.getElementById("pickRefBtn");
+  const patchSizeEl = document.getElementById("patchSize");
+  const patchValEl = document.getElementById("patchVal");
+  const bladeCyclesEl = document.getElementById("bladeCycles");
+  const bladeCyclesValEl = document.getElementById("bladeCyclesVal");
+  const stageCaption = document.getElementById("stageCaption");
+
+  let refNx = 0.5;
+  let refNy = 0.5;
+  let refUserPlaced = false;
+  let refPickMode = false;
+
+  let stream = null;
+  let running = false;
+  let rafId = 0;
+  let vfcHandle = 0;
+  let lastFrameTime = 0;
+  /** 上一帧 ROI 灰度，与当前帧同尺寸 */
+  let prevGray = null;
+  let prevPs = 0;
+  let measuredFps = 30;
+
+  /** 最近若干帧瞬时 RPM，用于滑动平均 */
+  const rpmHistory = [];
+  let lastGoodRpm = null;
+  let lastGoodHz = null;
+  let lastGoodConfText = null;
+  let spectralFailStreak = 0;
+  const SPECTRAL_FAIL_STREAK_CLEAR = 15;
+
+  /** FFT 长度（须为 2 的幂） */
+  const FFT_SIZE = 256;
+  /** 帧差缓冲（环形，时间顺序由 copyDiffSequential 还原） */
+  const diffRing = new Float32Array(FFT_SIZE);
+  let diffWrite = 0;
+  let diffFilled = 0;
+  const fftRe = new Float32Array(FFT_SIZE);
+  const fftIm = new Float32Array(FFT_SIZE);
+  const winScratch = new Float32Array(FFT_SIZE);
+  /** 谱峰相对邻域均值的倍数下限 */
+  const PEAK_SNR_MIN = 2.2;
+
+  function getCoverMapping(videoEl, vw, vh) {
+    const r = videoEl.getBoundingClientRect();
+    const dw = r.width;
+    const dh = r.height;
+    const videoRatio = vw / vh;
+    const boxRatio = dw / dh;
+    if (boxRatio > videoRatio) {
+      const scale = dh / vh;
+      const offsetX = (dw - vw * scale) / 2;
+      return { scale, offsetX, offsetY: 0 };
+    }
+    const scale = dw / vw;
+    const offsetY = (dh - vh * scale) / 2;
+    return { scale, offsetX: 0, offsetY };
+  }
+
+  function clientToVideoPx(clientX, clientY, videoEl, vw, vh) {
+    const r = videoEl.getBoundingClientRect();
+    const relX = clientX - r.left;
+    const relY = clientY - r.top;
+    const m = getCoverMapping(videoEl, vw, vh);
+    const px = (relX - m.offsetX) / m.scale;
+    const py = (relY - m.offsetY) / m.scale;
+    return {
+      x: Math.max(0, Math.min(vw - 1, Math.round(px))),
+      y: Math.max(0, Math.min(vh - 1, Math.round(py))),
+    };
+  }
+
+  function videoPxToLayerPx(videoEl, vw, vh, px, py) {
+    const m = getCoverMapping(videoEl, vw, vh);
+    return {
+      left: m.offsetX + px * m.scale,
+      top: m.offsetY + py * m.scale,
+    };
+  }
+
+  function getPatchSideOdd() {
+    let ps = parseInt(patchSizeEl.value, 10) || 21;
+    if (ps % 2 === 0) ps += 1;
+    return Math.max(15, Math.min(31, ps));
+  }
+
+  function updateRefMarkers() {
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+    if (!vw || !vh || !running) {
+      refMarker.style.visibility = "hidden";
+      refPatchRing.style.visibility = "hidden";
+      return;
+    }
+    const cx = refUserPlaced ? refNx * (vw - 1) : 0.5 * (vw - 1);
+    const cy = refUserPlaced ? refNy * (vh - 1) : 0.5 * (vh - 1);
+    const pos = videoPxToLayerPx(video, vw, vh, cx, cy);
+    refMarker.style.left = pos.left + "px";
+    refMarker.style.top = pos.top + "px";
+    refMarker.style.visibility = "visible";
+    const ps = getPatchSideOdd();
+    const m = getCoverMapping(video, vw, vh);
+    const disp = ps * m.scale;
+    refPatchRing.style.width = disp + "px";
+    refPatchRing.style.height = disp + "px";
+    refPatchRing.style.left = pos.left + "px";
+    refPatchRing.style.top = pos.top + "px";
+    refPatchRing.style.visibility = "visible";
+  }
+
+  function setErr(msg) {
+    if (msg) {
+      errBox.hidden = false;
+      errBox.textContent = msg;
+    } else {
+      errBox.hidden = true;
+    }
+  }
+
+  function effectiveFpsFromTimes(dtMs) {
+    if (dtMs > 0 && dtMs < 500) {
+      const f = 1000 / dtMs;
+      measuredFps = measuredFps * 0.85 + f * 0.15;
+    }
+    return Math.min(120, Math.max(8, measuredFps));
+  }
+
+  function resetDiffBuffer() {
+    diffWrite = 0;
+    diffFilled = 0;
+  }
+
+  function pushDiffSample(x) {
+    diffRing[diffWrite] = x;
+    diffWrite = (diffWrite + 1) % FFT_SIZE;
+    if (diffFilled < FFT_SIZE) diffFilled++;
+  }
+
+  /** Cooley–Tukey FFT，re/im 同长度 2 的幂 */
+  function fftInPlace(re, im) {
+    const n = re.length;
+    let j = 0;
+    for (let i = 1; i < n; i++) {
+      let bit = n >> 1;
+      for (; j & bit; bit >>= 1) j ^= bit;
+      j ^= bit;
+      if (i < j) {
+        let t = re[i];
+        re[i] = re[j];
+        re[j] = t;
+        t = im[i];
+        im[i] = im[j];
+        im[j] = t;
+      }
+    }
+    for (let len = 2; len <= n; len <<= 1) {
+      const ang = (-2 * Math.PI) / len;
+      const wlen = Math.cos(ang);
+      const wleni = Math.sin(ang);
+      for (let i = 0; i < n; i += len) {
+        let w = 1;
+        let wi = 0;
+        for (let k = 0; k < len >> 1; k++) {
+          const u = i + k;
+          const v = u + (len >> 1);
+          const tr = re[v] * w - im[v] * wi;
+          const ti = re[v] * wi + im[v] * w;
+          re[v] = re[u] - tr;
+          im[v] = im[u] - ti;
+          re[u] += tr;
+          im[u] += ti;
+          const nw = w * wlen - wi * wleni;
+          wi = w * wleni + wi * wlen;
+          w = nw;
+        }
+      }
+    }
+  }
+
+  function meanAbsDiff(prev, curr, n) {
+    let s = 0;
+    for (let i = 0; i < n; i++) s += Math.abs(curr[i] - prev[i]);
+    return s / n;
+  }
+
+  /**
+   * 从帧差环形缓冲取满 FFT_SIZE 点后做加窗 FFT，找主频并换算轴转速。
+   * peakHz 为帧差信号的调制频率；轴转频 Hz = peakHz / cyclesPerRev。
+   */
+  function estimateRpmFromFrameDiff(fsHz) {
+    if (diffFilled < FFT_SIZE || !Number.isFinite(fsHz) || fsHz < 8) return null;
+
+    let sum = 0;
+    for (let i = 0; i < FFT_SIZE; i++) {
+      const v = diffRing[(diffWrite + i) % FFT_SIZE];
+      winScratch[i] = v;
+      sum += v;
+    }
+    const mean = sum / FFT_SIZE;
+    for (let i = 0; i < FFT_SIZE; i++) {
+      const w =
+        0.5 * (1 - Math.cos((2 * Math.PI * i) / Math.max(1, FFT_SIZE - 1)));
+      winScratch[i] = (winScratch[i] - mean) * w;
+    }
+
+    for (let i = 0; i < FFT_SIZE; i++) {
+      fftRe[i] = winScratch[i];
+      fftIm[i] = 0;
+    }
+    fftInPlace(fftRe, fftIm);
+
+    const half = FFT_SIZE >> 1;
+    const mags = new Float32Array(half);
+    for (let k = 0; k < half; k++) {
+      mags[k] = Math.hypot(fftRe[k], fftIm[k]);
+    }
+
+    let peakK = 1;
+    let peakMag = mags[1];
+    for (let k = 2; k < half - 1; k++) {
+      if (mags[k] > peakMag) {
+        peakMag = mags[k];
+        peakK = k;
+      }
+    }
+
+    let medSum = 0;
+    let medCnt = 0;
+    for (let k = 1; k < half - 1; k++) {
+      if (k === peakK) continue;
+      medSum += mags[k];
+      medCnt++;
+    }
+    const med = medCnt > 0 ? medSum / medCnt : 0;
+    const snr = med > 1e-9 ? peakMag / med : 0;
+    if (snr < PEAK_SNR_MIN) return null;
+
+    const peakHz = (peakK * fsHz) / FFT_SIZE;
+    const cyclesPerRev = Math.max(1, parseInt(bladeCyclesEl.value, 10) || 3);
+    const fRotHz = peakHz / cyclesPerRev;
+    const rpmRaw = fRotHz * 60;
+
+    if (!Number.isFinite(rpmRaw) || rpmRaw < 0.5 || rpmRaw > 200000) return null;
+    if (peakHz < 0.08 || peakHz > 0.48 * fsHz) return null;
+
+    const conf = Math.max(0, Math.min(1, (snr - PEAK_SNR_MIN) / 4));
+
+    return {
+      rpmRaw,
+      fRotHz,
+      peakHz,
+      peakK,
+      snr,
+      confidence: conf,
+    };
+  }
+
+  function applyRpmSmoothing(rawRpm) {
+    const cap = parseInt(smoothEl.value, 10) || 5;
+    rpmHistory.push(rawRpm);
+    while (rpmHistory.length > cap) rpmHistory.shift();
+    let s = 0;
+    for (let i = 0; i < rpmHistory.length; i++) s += rpmHistory[i];
+    return s / rpmHistory.length;
+  }
+
+  function processFrame(now) {
+    const w = video.videoWidth;
+    const h = video.videoHeight;
+    if (!w || !h) return;
+
+    canvas.width = w;
+    canvas.height = h;
+    ctx.drawImage(video, 0, 0, w, h);
+
+    const ps = getPatchSideOdd();
+    const half = (ps - 1) >> 1;
+    const cx = Math.round(refUserPlaced ? refNx * (w - 1) : 0.5 * (w - 1));
+    const cy = Math.round(refUserPlaced ? refNy * (h - 1) : 0.5 * (h - 1));
+    const x0 = Math.max(0, Math.min(w - ps, cx - half));
+    const y0 = Math.max(0, Math.min(h - ps, cy - half));
+
+    const img = ctx.getImageData(x0, y0, ps, ps);
+    const d = img.data;
+    const n = ps * ps;
+    const gray = new Float32Array(n);
+    for (let i = 0, p = 0; i < n; i++, p += 4) {
+      gray[i] = 0.299 * d[p] + 0.587 * d[p + 1] + 0.114 * d[p + 2];
+    }
+
+    updateRefMarkers();
+
+    const dt = lastFrameTime ? (now - lastFrameTime) / 1000 : 0;
+    lastFrameTime = now;
+    effectiveFpsFromTimes(dt * 1000);
+
+    fftInfoOut.textContent = FFT_SIZE + " 点 · " + diffFilled + "/" + FFT_SIZE;
+
+    if (!prevGray || prevPs !== ps || prevGray.length !== n) {
+      prevGray = gray;
+      prevPs = ps;
+      resetDiffBuffer();
+      statusEl.textContent = "已采集上一帧，下一帧开始帧差…";
+      return;
+    }
+
+    if (dt < 0.004 || dt > 0.35) {
+      prevGray = gray;
+      return;
+    }
+
+    const mad = meanAbsDiff(prevGray, gray, n);
+    prevGray = gray;
+    pushDiffSample(mad);
+
+    if (diffFilled < FFT_SIZE) {
+      ptsOut.textContent = "—";
+      statusEl.textContent =
+        "收集中… " + diffFilled + "/" + FFT_SIZE + " 帧（帧差均值 → FFT）";
+      return;
+    }
+
+    const spec = estimateRpmFromFrameDiff(measuredFps);
+
+    if (!spec) {
+      spectralFailStreak++;
+      ptsOut.textContent = "—";
+      if (
+        spectralFailStreak < SPECTRAL_FAIL_STREAK_CLEAR &&
+        lastGoodRpm !== null &&
+        lastGoodHz !== null
+      ) {
+        rpmDisplay.textContent = lastGoodRpm.toLocaleString("zh-CN");
+        hzOut.textContent = lastGoodHz.toFixed(2);
+        confOut.textContent = lastGoodConfText || "—";
+        statusEl.textContent =
+          "本帧谱不可靠 · " +
+          spectralFailStreak +
+          "/" +
+          SPECTRAL_FAIL_STREAK_CLEAR +
+          " 后清空";
+      } else {
+        rpmDisplay.textContent = "—";
+        hzOut.textContent = "—";
+        confOut.textContent = "低";
+        statusEl.textContent =
+          "无法估计：请对准 ROI、调节「每转周期数」、提高对比度或帧率。";
+      }
+      return;
+    }
+
+    spectralFailStreak = 0;
+    ptsOut.textContent = String(spec.peakK);
+
+    const rpmSm = applyRpmSmoothing(spec.rpmRaw);
+    const fRotHz = spec.fRotHz;
+    const confPct = Math.min(99, Math.round(spec.confidence * 100));
+    const confText = confPct + "%";
+
+    rpmDisplay.textContent = Math.round(rpmSm).toLocaleString("zh-CN");
+    hzOut.textContent = fRotHz.toFixed(2);
+    confOut.textContent = confText;
+
+    lastGoodRpm = Math.round(rpmSm);
+    lastGoodHz = fRotHz;
+    lastGoodConfText = confText;
+
+    statusEl.textContent =
+      "约 " +
+      measuredFps.toFixed(0) +
+      " fps · 帧差 + FFT · 谱峰 " +
+      spec.peakHz.toFixed(2) +
+      " Hz（已平滑）";
+  }
+
+  function sampleFrame(now) {
+    if (!running) return;
+
+    if (video.readyState < 2) {
+      if (video.requestVideoFrameCallback) {
+        vfcHandle = video.requestVideoFrameCallback(sampleFrame);
+      } else {
+        rafId = requestAnimationFrame(sampleFrame);
+      }
+      return;
+    }
+
+    const w = video.videoWidth;
+    const h = video.videoHeight;
+    if (!w || !h) {
+      if (video.requestVideoFrameCallback) {
+        vfcHandle = video.requestVideoFrameCallback(sampleFrame);
+      } else {
+        rafId = requestAnimationFrame(sampleFrame);
+      }
+      return;
+    }
+
+    const dtSkip = lastFrameTime ? now - lastFrameTime : 0;
+    const minGap = video.requestVideoFrameCallback ? 0 : 28;
+    if (lastFrameTime && dtSkip < minGap) {
+      if (video.requestVideoFrameCallback) {
+        vfcHandle = video.requestVideoFrameCallback(sampleFrame);
+      } else {
+        rafId = requestAnimationFrame(sampleFrame);
+      }
+      return;
+    }
+
+    processFrame(now);
+
+    if (video.requestVideoFrameCallback) {
+      vfcHandle = video.requestVideoFrameCallback(sampleFrame);
+    } else {
+      rafId = requestAnimationFrame(sampleFrame);
+    }
+  }
+
+  async function start() {
+    setErr("");
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          frameRate: { ideal: 60, max: 60 },
+        },
+        audio: false,
+      });
+    } catch (e) {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false,
+        });
+      } catch (e2) {
+        setErr("无法打开摄像头：" + (e2.message || "请检查权限与 HTTPS/本地环境。"));
+        return;
+      }
+    }
+
+    video.srcObject = stream;
+    video.playsInline = true;
+    video.muted = true;
+    await video.play();
+
+    running = true;
+    lastFrameTime = 0;
+    prevGray = null;
+    prevPs = 0;
+    resetDiffBuffer();
+    rpmHistory.length = 0;
+    lastGoodRpm = null;
+    lastGoodHz = null;
+    lastGoodConfText = null;
+    spectralFailStreak = 0;
+    refUserPlaced = false;
+    refNx = 0.5;
+    refNy = 0.5;
+    refPickMode = false;
+    refTapLayer.classList.remove("active");
+    pickRefBtn.textContent = "点选转轴投影";
+    pickRefBtn.disabled = false;
+    startBtn.disabled = true;
+    stopBtn.disabled = false;
+    statusEl.textContent = "分析中…";
+    ptsOut.textContent = "—";
+
+    if (video.videoWidth && video.videoHeight) updateRefMarkers();
+
+    const track = stream.getVideoTracks()[0];
+    const settings = track.getSettings?.() || {};
+    if (settings.frameRate) measuredFps = settings.frameRate;
+
+    const onMeta = () => {
+      updateRefMarkers();
+      video.removeEventListener("loadedmetadata", onMeta);
+    };
+    video.addEventListener("loadedmetadata", onMeta);
+
+    if (video.requestVideoFrameCallback) {
+      vfcHandle = video.requestVideoFrameCallback(sampleFrame);
+    } else {
+      rafId = requestAnimationFrame(sampleFrame);
+    }
+  }
+
+  function stop() {
+    running = false;
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = 0;
+    if (video.cancelVideoFrameCallback && vfcHandle) {
+      try {
+        video.cancelVideoFrameCallback(vfcHandle);
+      } catch (_) {}
+    }
+    vfcHandle = 0;
+    if (stream) {
+      stream.getTracks().forEach((t) => t.stop());
+      stream = null;
+    }
+    video.srcObject = null;
+    pickRefBtn.disabled = true;
+    refPickMode = false;
+    refTapLayer.classList.remove("active");
+    refMarker.style.visibility = "hidden";
+    refPatchRing.style.visibility = "hidden";
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+    rpmDisplay.textContent = "—";
+    confOut.textContent = "—";
+    hzOut.textContent = "—";
+    ptsOut.textContent = "—";
+    statusEl.textContent = "已停止";
+    prevGray = null;
+    rpmHistory.length = 0;
+    lastGoodRpm = null;
+    lastGoodHz = null;
+    lastGoodConfText = null;
+    spectralFailStreak = 0;
+  }
+
+  smoothEl.addEventListener("input", () => {
+    smoothVal.textContent = smoothEl.value;
+    rpmHistory.length = 0;
+  });
+
+  patchSizeEl.addEventListener("input", () => {
+    patchValEl.textContent = patchSizeEl.value;
+    if (running) {
+      prevGray = null;
+      prevPs = 0;
+      resetDiffBuffer();
+      rpmHistory.length = 0;
+      lastGoodRpm = null;
+      lastGoodHz = null;
+      lastGoodConfText = null;
+      spectralFailStreak = 0;
+      if (video.videoWidth && video.videoHeight) updateRefMarkers();
+    }
+  });
+
+  bladeCyclesEl.addEventListener("input", () => {
+    bladeCyclesValEl.textContent = bladeCyclesEl.value;
+    rpmHistory.length = 0;
+  });
+
+  function toggleRefPickMode() {
+    if (!running) return;
+    refPickMode = !refPickMode;
+    refTapLayer.classList.toggle("active", refPickMode);
+    refTapLayer.setAttribute("aria-hidden", refPickMode ? "false" : "true");
+    pickRefBtn.textContent = refPickMode ? "点击画面完成" : "点选转轴投影";
+    stageCaption.textContent = refPickMode
+      ? "点击转轴在画面上的投影（轮毂中心）"
+      : "点「点选转轴」后在画面上点击";
+  }
+
+  function onRefPointerDown(e) {
+    if (!refPickMode || !running) return;
+    e.preventDefault();
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+    if (!vw || !vh) return;
+    const p = clientToVideoPx(e.clientX, e.clientY, video, vw, vh);
+    refNx = p.x / Math.max(1, vw - 1);
+    refNy = p.y / Math.max(1, vh - 1);
+    refUserPlaced = true;
+    refPickMode = false;
+    refTapLayer.classList.remove("active");
+    refTapLayer.setAttribute("aria-hidden", "true");
+    pickRefBtn.textContent = "点选转轴投影";
+    stageCaption.textContent = "已设置转轴投影 · 可再次点选修改";
+    prevGray = null;
+    prevPs = 0;
+    resetDiffBuffer();
+    rpmHistory.length = 0;
+    updateRefMarkers();
+  }
+
+  pickRefBtn.addEventListener("click", toggleRefPickMode);
+  refTapLayer.addEventListener("pointerdown", onRefPointerDown);
+
+  window.addEventListener("resize", () => {
+    if (running) updateRefMarkers();
+  });
+
+  startBtn.addEventListener("click", start);
+  stopBtn.addEventListener("click", stop);
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && running) stop();
+  });
+})();
+  </script>
+</body>
+</html>

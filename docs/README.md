@@ -35,7 +35,7 @@
 - **动物塑测试**：通过20道问题，发现你的动物性格，了解自己的行为模式和性格特征，找到与你最匹配的动物形象
 
 ### 🔧 实用工具
-- **索引页**：[`labs/practical/`](../labs/practical/) 汇总音频、进制、Base64、二维码、风扇转速等工具
+- **索引页**：[`app/practical/`](../app/practical/) 汇总音频、进制、Base64、二维码、风扇转速等工具
 - **音频格式转换器**：支持各种音频格式转换为 MP3 或 WAV，MP3 适合压缩体积，WAV 保持无损音质
 - **进制转换器**：支持二进制、八进制、十进制、十六进制互转，附带进制计算说明与示例，适合编程学习
 - **Base64 编解码器**：快速进行 Base64 编码和解码操作，支持文本和文件处理
@@ -46,17 +46,17 @@
 - **全国多城路线规划**：可切换城市（含热门城市快捷入口），选择起点和终点后，自动规划适合步行游玩的路线，并推荐沿途打卡点（咖啡、甜品、文创等）
 - **地图交互体验**：基于高德地图 Web SDK，支持在地图上点击选择起终点、查看每个 POI 的详细信息
 - **智能游玩文案与分享图**：一键生成贴心的游玩文字攻略，并支持生成朋友圈分享长图
-- **后端服务说明**：前端页面位于 **`labs/citywalk/`**。路线规划 Flask 源码与部署以仓库 **`noomings_backend`** 中的 `citywalk.py` 为唯一维护副本。生产环境 API 基址为 `https://noomings-backend.zeabur.app`（与 `labs/citywalk/assets/js/app.js` 中 `API_BASE_URL` 一致）
+- **后端服务说明**：前端页面位于 **`app/citywalk/`**。路线规划 Flask 源码与部署以仓库 **`noomings_backend`** 中的 `citywalk.py` 为唯一维护副本。生产环境 API 基址为 `https://noomings-backend.zeabur.app`（与 `app/citywalk/assets/js/app.js` 中 `API_BASE_URL` 一致）
 
 ### 🎮 小游戏
-- **索引页**：[`labs/games/`](../labs/games/) 汇总棋类、小恐龙、桌游与质子世界等
+- **索引页**：[`app/games/`](../app/games/) 汇总棋类、小恐龙、桌游与质子世界等
 - **五子棋 / 围棋 / 中国象棋**：支持单人对战 AI 或双人对战（因游戏而异）
 - **谷歌小恐龙**：经典跑酷小游戏
-- **桌游合集**（`labs/games/card-games/`）：德州扑克、UNO、红心大战，本地 AI 对战
-- **质子世界**（`labs/games/proton/`）：带电粒子在电场、磁场与阻力下的平面可视化模拟
+- **桌游合集**（`app/games/card-games/`）：德州扑克、UNO、红心大战，本地 AI 对战
+- **质子世界**（`app/games/proton/`）：带电粒子在电场、磁场与阻力下的平面可视化模拟
 
 ### 🧰 实验与工具总览
-- **[`labs/index.html`](../labs/)**：决策、心理测试、实用工具与小游戏等分类的统一入口，便于从深层子页返回时快速跳转
+- **[`app/index.html`](../app/)**：决策、心理测试、实用工具与小游戏等分类的统一入口，便于从深层子页返回时快速跳转
 
 ## 技术栈
 
@@ -80,10 +80,10 @@
 
 ## 项目结构
 
-以下为仓库**顶层与常用子目录**示意，未穷尽列举各工具内的全部静态资源；路径模板与新增页面约定见 **[SITE-CONVENTIONS.md](SITE-CONVENTIONS.md)**，桌游合集另有 **[../labs/games/card-games/README.md](../labs/games/card-games/README.md)**。
+以下为仓库**顶层与常用子目录**示意，未穷尽列举各工具内的全部静态资源；路径模板与新增页面约定见 **[SITE-CONVENTIONS.md](SITE-CONVENTIONS.md)**，桌游合集另有 **[../app/games/card-games/README.md](../app/games/card-games/README.md)**。
 
 ```
-├── index.html                  # 主页（样式见 common/css/home.css）
+├── index.html                  # 主页（样式见 assets/css/home.css）
 ├── 404.html                    # 自定义 404 页面
 ├── CNAME                       # GitHub Pages 自定义域名
 ├── docs/                       # 文档目录
@@ -103,7 +103,11 @@
 │       └── assets/             # 页面脚本与样式
 │           ├── js/app.js
 │           └── css/style.css
-├── labs/                       # 实验与工具（原 apps + tools：导航 / 笔记 / Citywalk / 决策 / 心理 / 实用 / 游戏）
+├── assets/                     # 全站静态：CSS、JS、favicon 与 site.webmanifest
+│   ├── css/                    # common.css、home.css 等
+│   ├── js/                     # utils.js 等
+│   └── icons/                  # 站点图标（原 favicon-io）
+├── app/                        # 实验与工具（原 apps + tools：导航 / 笔记 / Citywalk / 决策 / 心理 / 实用 / 游戏）
 │   ├── index.html              # 分类总览入口
 │   ├── navigation/
 │   │   └── index.html          # 网址导航入口
@@ -150,33 +154,29 @@
 │           └── assets/
 │               ├── css/proton.css
 │               └── js/proton.js
-├── common/                     # 公共资源
-│   ├── css/                    # 公共样式（含 home.css 主页专用）
-│   └── js/                     # 公共脚本
-├── favicon-io/                 # 网站图标
 ├── sitemap.xml
 └── robots.txt
 ```
 
 ## 前端目录约定
 
-更完整的说明见 **[SITE-CONVENTIONS.md](SITE-CONVENTIONS.md)**（`common` / `favicon-io` 的相对引用方式、新工具目录模板、本地预览注意点）。
+更完整的说明见 **[SITE-CONVENTIONS.md](SITE-CONVENTIONS.md)**（根级 **`assets/`** 与各页目录下 **`assets/`** 的分工、相对引用方式、本地预览注意点）。
 
-- **`labs/games/` 下各小游戏**：静态资源优先放在 **`assets/css/`**、**`assets/js/`**、**`assets/img/`**（可按需增删子目录），页面入口统一为 **`index.html`**，便于与「仅 HTML + 散落 css/js」的异构布局区分。
-- **`labs/games/card-games/`**：德州 / UNO / 红心入口为 **`texas/`、`uno/`、`hearts/`**（各目录 `index.html`）。共享脚本与样式在同目录 **`assets/`**。详见该目录下的 `README.md`。
-- **全站公共脚本**：通用 Toast、剪贴板、防抖、返回顶部等仅在 **`common/js/utils.js`**；手写笔记专用逻辑在 **`labs/notes/assets/js/notes-utils.js`**，二者勿混用文件名。
-- **`labs/practical/`**：进制、Base64、二维码等工具的页面脚本与样式放在各子目录 **`assets/js/`**、**`assets/css/`**；音频转换、风扇转速等以单页内联或仅依赖 **`common/`**（由页面写 `../` 链回到站根）为主。
-- **其他 `labs/` 二级分类**（如 `decision`）：已采用 **`assets/`** 或与历史页并存的，新建页面时优先 **`assets/`** 模板，避免同分类混用多种布局。
+- **`app/games/` 下各小游戏**：页面内静态资源优先放在各游戏目录的 **`assets/css/`**、**`assets/js/`**、**`assets/img/`**（可按需增删子目录），页面入口统一为 **`index.html`**，便于与「仅 HTML + 散落 css/js」的异构布局区分。
+- **`app/games/card-games/`**：德州 / UNO / 红心入口为 **`texas/`、`uno/`、`hearts/`**（各目录 `index.html`）。共享脚本与样式在同目录 **`assets/`**（含 **`assets/common/`** 子模块）。详见该目录下的 `README.md`。
+- **全站公共脚本**：通用 Toast、剪贴板、防抖、返回顶部等仅在根 **`assets/js/utils.js`**；手写笔记专用逻辑在 **`app/notes/assets/js/notes-utils.js`**，二者勿混用文件名。
+- **`app/practical/`**：进制、Base64、二维码等工具的页面脚本与样式放在各子目录 **`assets/js/`**、**`assets/css/`**；音频转换、风扇转速等以单页内联或依赖根 **`assets/css/common.css`** / **`assets/js/utils.js`**（由页面写 `../` 链回到站根）为主。
+- **其他 `app/` 二级分类**（如 `decision`）：已采用 **`assets/`** 或与历史页并存的，新建页面时优先 **`assets/`** 模板，避免同分类混用多种布局。
 
 ## 新增可访问页面时的检查清单
 
-1. 新增或修改 **`index.html`（或其它入口 HTML）** 后，视情况更新上级索引页的入口链接（如 `labs/games/index.html`）。
+1. 新增或修改 **`index.html`（或其它入口 HTML）** 后，视情况更新上级索引页的入口链接（如 `app/games/index.html`）。
 2. 若页面应被搜索引擎发现，在 **[`sitemap.xml`](../sitemap.xml)** 中增加或更新对应 `<loc>`（注意与 GitHub Pages 实际路径一致）。
-3. 若页面需要全站 Toast / 返回顶部等，从当前 HTML 所在目录写回到 **`common/js/utils.js`**（与引入 `common.css` 时相同的 `../` 深度）。
+3. 若页面需要全站 Toast / 返回顶部等，从当前 HTML 所在目录写回到 **`assets/js/utils.js`**（与引入 **`assets/css/common.css`** 时相同的 `../` 深度）。
 
 ## 使用说明
 
-1. 推荐通过 **GitHub Pages** 或本地 **HTTP 静态服务**（如 VS Code Live Server）访问站点根；各页已用 **`../` 链** 引用 **`common/`**、**`favicon-io/`**，在 `file://` 下也可加载公共资源（部分浏览器对 manifest 仍可能限制）。
+1. 推荐通过 **GitHub Pages** 或本地 **HTTP 静态服务**（如 VS Code Live Server）访问站点根；各页已用 **`../` 链** 引用根 **`assets/css/`**、**`assets/js/`**、**`assets/icons/`**，在 `file://` 下也可加载公共资源（部分浏览器对 manifest 仍可能限制）。
 2. 更细的路径规则见 [SITE-CONVENTIONS.md](SITE-CONVENTIONS.md)。
 
 ## 部署
@@ -185,7 +185,7 @@
 
 ## 更新记录
 
-各版本功能与结构调整见 [CHANGELOG.md](CHANGELOG.md)（当前最新为 v2.0）。
+各版本功能与结构调整见 [CHANGELOG.md](CHANGELOG.md)（当前最新为 v2.1）。
 
 ## 许可证
 

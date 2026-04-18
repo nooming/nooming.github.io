@@ -1,0 +1,488 @@
+/* ========== 全站公共样式 ========== */
+
+/* 全局重置 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* 基础页面样式 */
+body {
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    background-color: #f8f9fa;
+    color: #2c3e50;
+    line-height: 1.6;
+}
+
+/* 返回主页按钮 - 统一样式 */
+.back-btn {
+    display: inline-block;
+    padding: 9px 18px;
+    background-color: #34495e;
+    color: white !important;
+    border-radius: 8px;
+    text-decoration: none !important;
+    margin-bottom: 20px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.back-btn:hover {
+    background-color: #2c3e50;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* 容器样式 */
+.container {
+    background: white;
+    border-radius: 12px;
+    padding: 35px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+/* 页脚样式 */
+footer {
+    text-align: center;
+    margin-top: 60px;
+    padding-top: 20px;
+    color: #95a5a6;
+    border-top: 1px solid #ecf0f1;
+    font-size: 0.9rem;
+}
+
+/* Toast 提示样式 */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #2c3e50;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 10000;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: opacity 0.3s, transform 0.3s;
+    font-size: 14px;
+    max-width: 300px;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast.success {
+    background-color: #27ae60;
+}
+
+.toast.error {
+    background-color: #e74c3c;
+}
+
+.toast.info {
+    background-color: #3498db;
+}
+
+/* ============================================
+   通用布局与卡片样式（首页 & 工具页共享）
+   ============================================ */
+
+/* 通用内容区块容器 */
+.section {
+    background: white;
+    border-radius: 14px;
+    padding: 25px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    margin-bottom: 30px;
+}
+
+/* 通用区块标题 */
+.section-title {
+    color: #2c3e50;
+    margin-bottom: 25px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #ecf0f1;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+/* 通用功能列表布局 */
+.features {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 18px;
+}
+
+@media (min-width: 768px) {
+    .features {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* 通用功能卡片样式 */
+.feature-card {
+    border: none;
+    border-radius: 14px;
+    padding: 22px;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    background: white;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+.feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    transform: scaleX(0);
+    transition: transform 0.4s ease;
+}
+
+.feature-card:hover::before {
+    transform: scaleX(1);
+}
+
+.feature-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+}
+
+.feature-title {
+    margin-bottom: 10px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #3498db;
+    line-height: 1.3;
+}
+
+.feature-card p {
+    font-size: 0.95rem;
+    color: #5a6c7d;
+    line-height: 1.6;
+    margin-bottom: 6px;
+}
+
+/* 通用工具按钮 */
+.tool-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 22px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    text-decoration: none !important;
+    margin-top: 14px;
+    color: white !important;
+    font-weight: 600;
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.tool-btn::after {
+    content: '→';
+    transition: transform 0.3s ease;
+}
+
+.tool-btn:hover::after {
+    transform: translateX(4px);
+}
+
+.tool-btn:hover {
+    background: linear-gradient(135deg, #2980b9 0%, #21618c 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+}
+
+/* ============================================
+   通用页面布局样式
+   ============================================ */
+
+/* 标准页面容器 */
+.page-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 25px 20px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+}
+
+/* 标准页面标题样式 */
+.page-title {
+    color: #2c3e50;
+    margin-bottom: 3px;
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.5px;
+}
+
+/* ============================================
+   页面头部布局样式
+   ============================================ */
+
+/* 页面头部布局 */
+.page-header {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
+
+.header-top {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 0;
+}
+
+/* 增强版返回按钮样式（支持渐变背景） */
+.back-btn.gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    margin-bottom: 0 !important;
+}
+
+.back-btn.gradient:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* 通用渐变返回按钮样式（用于工具页面） */
+.page-header .back-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    flex-shrink: 0;
+    font-size: 0.95rem;
+    padding: 9px 18px;
+    margin-bottom: 0 !important;
+}
+
+.page-header .back-btn:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* 通用页面标题居中样式 */
+.page-title {
+    text-align: center;
+}
+
+/* 通用白色卡片容器（用于工具页面） */
+.page-container .converter,
+.page-container .generator {
+    background: white;
+    border-radius: 16px;
+    padding: 25px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    margin-top: 0;
+}
+
+/* ============================================
+   返回顶部按钮样式
+   ============================================ */
+
+.back-to-top {
+    position: fixed;
+    bottom: 30px;
+    right: 70px;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+    transition: all 0.3s ease;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    pointer-events: none;
+}
+
+.back-to-top.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.back-to-top:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: translateY(-5px);
+    box-shadow: 0 6px 30px rgba(102, 126, 234, 0.6);
+}
+
+.back-to-top:active {
+    transform: translateY(-2px);
+}
+
+/* 通用页脚样式（用于首页） */
+.page-container footer {
+    text-align: center;
+    margin-top: 40px;
+    padding: 20px;
+    color: #7f8c8d;
+    background: white;
+    border-radius: 14px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.page-container footer p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.page-container footer p span {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.page-container footer p span:last-child {
+    font-size: 0.85rem;
+    font-weight: normal;
+    color: #7f8c8d;
+}
+
+/* ============================================
+   卡片图标和标题样式（工具页面通用）
+   ============================================ */
+
+/* 卡片图标和标题容器 */
+.card-icon-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+/* 合集卡片内标题：与通用 .feature-title 区分，避免与图标行重复下边距 */
+.card-icon-title .feature-title {
+    margin: 0;
+    display: inline-block;
+}
+
+/* 实验与工具总览等页面的导语 */
+.hub-intro {
+    color: #5a6c7d;
+    line-height: 1.65;
+    margin: 0 0 1.5rem 0;
+}
+
+/* 专题与实践列表页导语 */
+.articles-lead {
+    color: #5a6c7d;
+    line-height: 1.65;
+    margin: 0 auto 1.5rem;
+    text-align: center;
+    max-width: 42rem;
+}
+
+/* 卡片图标 */
+.card-icon {
+    font-size: 2.5rem;
+    display: inline-block;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+/* 特色标签 */
+.feature-tag {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    margin-bottom: 12px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #a8e6cf 0%, #88d8a3 100%);
+    color: #00b894;
+}
+
+/* 移动端优化 */
+@media (max-width: 767.98px) {
+    .page-container {
+        padding: 15px 12px;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+        margin-bottom: 3px;
+        white-space: normal;
+        max-width: 60%;
+        text-align: center;
+    }
+    
+    .back-btn {
+        margin-bottom: 15px;
+        padding: 7px 14px;
+        font-size: 0.85rem;
+    }
+    
+    .page-header {
+        margin-bottom: 20px;
+        align-items: center;
+    }
+    
+    .page-header .back-btn {
+        font-size: 0.85rem;
+        padding: 7px 14px;
+    }
+    
+    .page-header h1,
+    .page-header h2 {
+        text-align: center;
+    }
+    
+    .back-to-top {
+        width: 45px;
+        height: 45px;
+        bottom: 20px;
+        right: 70px;
+        font-size: 20px;
+    }
+    
+    .page-container .converter,
+    .page-container .generator {
+        padding: 20px 18px;
+        border-radius: 14px;
+    }
+    
+    .card-icon {
+        font-size: 2rem;
+    }
+    
+    .card-icon-title {
+        gap: 8px;
+    }
+    
+    .feature-title {
+        font-size: 1.1rem;
+    }
+}
+

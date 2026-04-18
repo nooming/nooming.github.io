@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>质子世界 - 小游戏</title>
+    <meta name="description" content="平面内带电粒子在匀强电场、匀强磁场与阻力下的可视化运动模拟。">
+    <meta name="author" content="nooming">
+    <link rel="canonical" href="https://nooming.github.io/app/games/proton/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="质子世界 - 带电粒子场模拟">
+    <meta property="og:description" content="平面内带电粒子在匀强电场、匀强磁场与阻力下的可视化运动模拟。">
+    <meta property="og:url" content="https://nooming.github.io/app/games/proton/">
+    <link rel="apple-touch-icon" sizes="180x180" href="../../../assets/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../../assets/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../../assets/icons/favicon-16x16.png">
+    <link rel="manifest" href="../../../assets/icons/site.webmanifest">
+    <link rel="shortcut icon" href="../../../assets/icons/favicon.ico">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../../assets/css/common.css">
+    <link rel="stylesheet" href="assets/css/proton.css">
+</head>
+<body>
+    <div class="add-fixed">
+        <div class="bodypad proton-header-title">
+            <a href="../../../" class="back-to-games back-to-site">站点首页</a>
+            <a href="../" class="back-to-games">← 小游戏合集</a>
+            <span class="proton-title-text">质子世界</span>
+        </div>
+    </div>
+
+    <span class="v pull-right greyer"></span>
+
+    <div class="proton-toolbar">
+        <span class="proton-toolbar__cell">
+            <button type="button" class="spf btn btn-default btn-primary" onclick="$(this).toggleClass('btn-primary');$(this).hasClass('btn-primary')?$('.dragger').show():$('.dragger').hide();isfr=$(this).hasClass('btn-primary')">阻力</button><br> [F]
+        </span>
+        <span class="proton-toolbar__cell proton-toolbar__cell--gap">
+            <button type="button" class="sps btn btn-default" onclick="$(this).toggleClass('btn-primary');bound=!bound;setMiddle();drawBound()">边界</button><br> [S]
+        </span>
+        <span class="proton-toolbar__cell proton-toolbar__cell--gap">
+            <div class="btn-group">
+                <button type="button" class="sp1 btn btn-default" onclick="$(this).addClass('btn-primary').siblings().removeClass('btn-primary');t=0"><span class="glyphicon glyphicon-pause"></span></button>
+                <button type="button" class="sp2 btn btn-default" onclick="$(this).addClass('btn-primary').siblings().removeClass('btn-primary');t=0.1">0.1x</button>
+                <button type="button" class="sp3 btn btn-default" onclick="$(this).addClass('btn-primary').siblings().removeClass('btn-primary');t=0.5">0.5x</button>
+                <button type="button" class="sp4 btn btn-default btn-primary" onclick="$(this).addClass('btn-primary').siblings().removeClass('btn-primary');t=1"><span class="glyphicon glyphicon-play"></span></button>
+            </div><br> [1~4]
+        </span>
+    </div>
+    <br>
+
+    <div class="bodypad sim-root">
+        <span class="arrow-hint" aria-hidden="true">&#10230;</span>
+        <button type="button" class="rmE rm-e btn btn-sm btn-default" onclick="setE(0,1)"><span class="grey key-hint">[E]</span><span class="glyphicon glyphicon-remove"></span></button>
+        <button type="button" class="rmB rm-b btn btn-sm btn-default" onclick="setB(0,1)"><span class="grey key-hint">[B]</span><span class="glyphicon glyphicon-remove"></span></button>
+        <span class="label-force">受<br>力</span>
+        <span class="label-e">电场</span>
+        <span class="label-b">磁场</span>
+        <span class="lB guide-line guide-line--b" aria-hidden="true"></span>
+        <span class="tE guide-line guide-line--te" aria-hidden="true"></span>
+        <span class="lE guide-line guide-line--le" aria-hidden="true"></span>
+
+        <div class="m-div">
+            <svg class="m-svg" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+
+        <div class="f-div" onmousemove="setforce(event)" onmouseleave="setforce(0,1)">
+            <div class="axis-dot"></div>
+            <div class="bounder"></div>
+            <div class="forcer"></div>
+            <div class="dragger"><span class="glyphicon glyphicon-arrow-down"></span></div>
+            <svg class="g-svg g-svg-wrap" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+
+        <div class="e-div E-div" onmousemove="setE(event)" onmouseleave="setE(0,0,1)" onclick="setE(event,1)">
+            <svg class="E-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+        <div class="b-div B-div" onmousemove="setB(event)" onmouseleave="setB(0,0,1)" onclick="setB(event,1)">
+            <svg class="B-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+        <span class="cursor cursor-dot"></span>
+    </div>
+
+    <div class="help-block bodypad">
+        <h3>说明</h3>
+        <p>鼠标在框中点击，可设置 <span style="color:#27c63a">电场</span> 和 <span style="color:#4d70c2">磁场</span>，也可在受力图中临时施加一个力。<br>
+            设置 <span style="color:#27c63a">电场</span>、<span style="color:#4d70c2">磁场</span> 后，可点击 <span class="glyphicon glyphicon-remove"></span> 或用快捷键 <span style="color:#27c63a">[E]</span>、<span style="color:#4d70c2">[B]</span> 取消。<br>
+            目前仅支持平面内的匀强电场和垂直于平面的匀强磁场。
+        </p>
+        <p>[S] 键开启边界，越过边界后粒子会被反弹。由于技术困难，边界与磁场同时开启时，能量可能不守恒。</p>
+        <p>[F] 键切换阻力，包含静摩擦和滑动摩擦。</p>
+        <small class="grey note-tight">*你也可以按住 [F] 键大力刹车，从而快速达到平衡状态。</small>
+        <p>[1-4] 键调节模拟速率。</p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"></script>
+    <script src="assets/js/proton.js"></script>
+</body>
+</html>
