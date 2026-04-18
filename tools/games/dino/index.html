@@ -181,7 +181,7 @@
 </head>
 <body class="offline">
     <div class="game-header">
-        <a href="#" class="back-btn" id="backBtn">返回上一级</a>
+        <a href="../" class="back-btn">返回上一级</a>
         <h1>🦖 谷歌小恐龙游戏</h1>
     </div>
 
@@ -205,37 +205,6 @@
     </div>
 
     <script src="assets/js/index.js"></script>
-
-    <script>
-        // 返回按钮处理 - 支持移动端
-        (function() {
-            var backBtn = document.getElementById('backBtn');
-            if (backBtn) {
-                // 阻止默认行为
-                backBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    
-                    // 尝试使用history.back()，如果有历史记录
-                    if (window.history.length > 1) {
-                        window.history.back();
-                    } else {
-                        // 如果没有历史记录，使用href跳转
-                        window.location.href = '../';
-                    }
-                }, false);
-                
-                // 移动端触摸反馈优化
-                backBtn.addEventListener('touchstart', function() {
-                    this.style.transform = 'scale(0.95)';
-                }, { passive: true });
-                
-                backBtn.addEventListener('touchend', function() {
-                    this.style.transform = '';
-                }, { passive: true });
-            }
-        })();
-
-    </script>
 
     <script src="../../../common/js/utils.js" defer></script>
 </body>
