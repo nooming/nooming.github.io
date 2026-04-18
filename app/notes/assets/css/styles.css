@@ -510,10 +510,7 @@ body {
 .empty-editor h2 {
     font-size: 24px;
     margin-bottom: 12px;
-    background: var(--gradient-theme);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--gradient-theme-title);
     font-weight: 700;
 }
 
