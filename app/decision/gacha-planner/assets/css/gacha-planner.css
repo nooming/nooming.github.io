@@ -1,0 +1,167 @@
+/* ========== 终末地抽卡规划 ========== */
+
+.gacha-planner {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.gp-card {
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    background: #ffffff;
+    padding: 18px;
+}
+
+.gp-card h2 {
+    margin: 0 0 10px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #000000;
+    letter-spacing: -0.01em;
+}
+
+.gp-col-title {
+    margin: 0 0 12px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: #000000;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.gp-note {
+    font-size: 0.78rem;
+    color: #666666;
+    line-height: 1.55;
+    margin: 0 0 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.gp-card > .gp-note:last-of-type {
+    margin-bottom: 8px;
+}
+
+.gp-card label {
+    display: block;
+    font-size: 0.78rem;
+    color: #666666;
+    margin: 10px 0 5px;
+}
+
+.gp-card label:first-of-type {
+    margin-top: 0;
+}
+
+.gp-checkbox {
+    display: flex !important;
+    align-items: center;
+    gap: 6px;
+}
+
+.gp-card input[type="number"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid rgba(0, 0, 0, 0.14);
+    background: #ffffff;
+    color: #000000;
+    font-size: 0.92rem;
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+}
+
+.gp-card input[type="number"]:focus {
+    outline: none;
+    border-color: #111111;
+}
+
+.gp-card input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    margin: 0;
+}
+
+.gp-primary {
+    margin-top: 14px;
+    width: 100%;
+    padding: 10px 14px;
+    border: none;
+    background: var(--gradient-theme);
+    color: var(--color-theme-ink);
+    font-weight: 700;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.gp-primary:hover {
+    background: var(--gradient-theme-reverse);
+    transform: translateY(-1px);
+}
+
+.gp-primary:active {
+    transform: translateY(0);
+}
+
+.gp-stats {
+    margin-top: 12px;
+    padding: 12px 14px;
+    background: #f7f7f7;
+    font-size: 0.82rem;
+    line-height: 1.58;
+    color: #222222;
+    min-height: 50px;
+}
+
+.gp-stats:empty {
+    display: none;
+}
+
+.gp-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .gp-cols {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .gacha-planner {
+        gap: 12px;
+    }
+
+    .gp-card {
+        padding: 14px;
+    }
+
+    .gp-card h2 {
+        font-size: 0.9rem;
+    }
+
+    .gp-col-title {
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+    }
+
+    .gp-note {
+        font-size: 0.74rem;
+    }
+
+    .gp-card label {
+        font-size: 0.74rem;
+    }
+
+    .gp-primary {
+        font-size: 0.8rem;
+    }
+
+    .gp-stats {
+        font-size: 0.78rem;
+        padding: 10px 12px;
+    }
+}

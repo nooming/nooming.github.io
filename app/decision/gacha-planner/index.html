@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#FFFA00">
+    <meta name="description" content="终末地抽卡规划：按概率与保底进行模拟，估算六星与当期获取表现。">
+    <meta name="keywords" content="终末地,抽卡,概率,保底,蒙特卡洛,规划工具">
+
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../../../assets/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../../assets/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../../assets/icons/favicon-16x16.png">
+    <link rel="manifest" href="../../../assets/icons/site.webmanifest">
+    <link rel="shortcut icon" href="../../../assets/icons/favicon.ico">
+
+    <!-- 公共样式 -->
+    <link rel="stylesheet" href="../../../assets/css/common.css">
+    <!-- 页面样式 -->
+    <link rel="stylesheet" href="assets/css/gacha-planner.css">
+</head>
+<body class="page-container">
+    <div class="page-header">
+        <div class="header-top">
+            <a href="../" class="back-btn">返回上一级</a>
+            <a href="../../../index.html" class="back-btn">返回主页</a>
+        </div>
+        <div class="section-header section-header--page">
+            <h1>终末地抽卡规划</h1>
+            <p>
+                基于公开规则的模拟估算工具：用于评估六星 / 当期的期望、中位数与概率表现。结果仅供规划参考，请以游戏内当期公示为准。
+            </p>
+        </div>
+    </div>
+
+    <main>
+        <div class="app-panel gacha-planner">
+            <section class="gp-card">
+                <h2>抽卡口径（集中说明）</h2>
+                <p class="gp-note">
+                    <strong>角色池概率与保底</strong>：6★基础 0.8%，5★基础 8%，4★基础 91.2%；80 抽 6★保底、10 抽 5★及以上保底；连续 65 抽未出 6★后，每抽 6★概率 +5%；出 6★时当期占 50%。<br>
+                    <strong>角色池里程碑</strong>：前 120 次付费寻访必得当期 6★（仅生效 1 次，关池清零）；累计 30 抽送 10 抽加急；累计 60 抽赠寻访情报书；累计 240 抽付费寻访额外 +1 当期信物。<br>
+                    <strong>加急十连口径</strong>：加急十连结果不计入保底与奖励累计次数；但其 5★/6★会产出保障配额，可继续触发“25 配额换 1 抽”。<br>
+                    <strong>当期统计口径</strong>：当期数量 = 抽取获得的当期 + 240 抽信物折算；“六星（含当期与信物折算）”展示同样包含信物折算。<br>
+                    <strong>武器池概率与保底</strong>：每次申领 10 件武器且至少 1 件 5★及以上；6★ 4%，5★ 15%，4★ 81%；出 6★时当期（UP）占 25%；3 次申领未出 6★则第 4 次必出，7 次申领未出 UP 则第 8 次必出 UP（该规则仅生效 1 次，关池清零）。<br>
+                    <strong>武器申领奖励口径</strong>：10 次起每 8 次交替发放武库赠礼/限定赠礼；限定赠礼计入“当期 UP 武器”；补充武库箱计入非当期 6★武器。<br>
+                    <strong>配额估算口径</strong>：保障配额按 6★=50、5★=10；武库配额按 6★=2000、5★=200、4★=20；信物与奖励武器本身不额外再产武库配额。
+                </p>
+            </section>
+
+            <section class="gp-card">
+                <h2>角色池通用设置</h2>
+                <p class="gp-note">以下设置将同时用于角色池计算与 6+6 目标横幅。</p>
+                <label for="shared-pity-six-remain">6星保底剩余抽数（可选）</label>
+                <input id="shared-pity-six-remain" type="number" step="1" min="1" max="80" value="80">
+                <label for="shared-pity-five-remain">5星及以上保底剩余抽数（可选）</label>
+                <input id="shared-pity-five-remain" type="number" step="1" min="1" max="10" value="10">
+                <label class="gp-checkbox"><input id="shared-use-baozhang" type="checkbox"> 使用保障配额换抽（25 配额 = 1 抽）</label>
+                <label for="shared-init-baozhang">初始保障配额（可选）</label>
+                <input id="shared-init-baozhang" type="number" step="1" min="0" value="0">
+            </section>
+
+            <section class="gp-card">
+                <h2>6+6 目标规划（当期角色 + 当期武器）</h2>
+                <p class="gp-note">目标：最终获得至少 6 个当期 UP 角色，且至少 6 把当期 UP 武器。输入角色总抽数与现有武库配额后自动估算联合概率。</p>
+                <label for="combo-char-n">角色总抽数（单抽）</label>
+                <input id="combo-char-n" type="number" step="1" min="0" value="600">
+                <label for="combo-wuku-init">现有武库配额</label>
+                <input id="combo-wuku-init" type="number" step="1" min="0" value="0">
+                <button type="button" class="gp-primary" id="combo-calc">开始计算 6+6 概率</button>
+                <div class="gp-stats" id="combo-out"></div>
+            </section>
+
+            <div class="gp-cols">
+                <div>
+                    <h3 class="gp-col-title">特许寻访（角色）</h3>
+
+                    <section class="gp-card">
+                        <h2>给定总抽数</h2>
+                        <p class="gp-note">使用上方「角色池通用设置」。</p>
+                        <label for="up-n">总抽数（单抽计 1）</label>
+                        <input id="up-n" type="number" step="1" min="0" value="80">
+                        <button type="button" class="gp-primary" id="up-calc-summary">开始计算六星与当期个数</button>
+                        <div class="gp-stats" id="up-out-summary"></div>
+                    </section>
+
+                    <section class="gp-card">
+                        <h2>当期个数 ≥ k 的概率</h2>
+                        <p class="gp-note">输入总抽数 n，仅统计当期（读取上方「角色池通用设置」，另含 240 抽信物加成）。</p>
+                        <label for="up-up-k">目标个数 k</label>
+                        <input id="up-up-k" type="number" step="1" min="1" value="1">
+                        <label for="up-up-n">总抽数 n</label>
+                        <input id="up-up-n" type="number" step="1" min="0" value="120">
+                        <button type="button" class="gp-primary" id="up-up-calc">开始计算概率</button>
+                        <div class="gp-stats" id="up-up-out"></div>
+                    </section>
+                </div>
+
+                <div>
+                    <h3 class="gp-col-title">武库申领（武器）</h3>
+
+                    <section class="gp-card">
+                        <h2>给定申领次数</h2>
+                        <label for="wp-t">申领次数 T（总武器件数 = 10T）</label>
+                        <input id="wp-t" type="number" step="1" min="0" value="10">
+                        <button type="button" class="gp-primary" id="wp-calc">开始计算六星武器与当期个数</button>
+                        <div class="gp-stats" id="wp-out"></div>
+                    </section>
+
+                    <section class="gp-card">
+                        <h2>当期武器个数 ≥ k 的概率</h2>
+                        <p class="gp-note">输入申领次数 T，仅统计当期（歪不计入）。</p>
+                        <label for="wp-up-k">目标个数 k</label>
+                        <input id="wp-up-k" type="number" step="1" min="1" value="1">
+                        <label for="wp-up-t-prob">申领次数 T</label>
+                        <input id="wp-up-t-prob" type="number" step="1" min="0" value="10">
+                        <button type="button" class="gp-primary" id="wp-up-calc-prob">开始计算概率</button>
+                        <div class="gp-stats" id="wp-up-prob-out"></div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer" role="contentinfo">
+        <p>© 2026 个人站点 · 非商用学习记录</p>
+    </footer>
+
+    <script src="../../../assets/js/utils.js" defer></script>
+    <script src="assets/js/gacha-planner.js" defer></script>
+</body>
+</html>

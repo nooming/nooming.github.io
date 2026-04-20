@@ -77,6 +77,12 @@
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
+    <url>
+        <loc>https://nooming.github.io/app/decision/gacha-planner/</loc>
+        <lastmod>2026-04-21</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.65</priority>
+    </url>
     
     <!-- 心理测试 -->
     <url>
@@ -135,7 +141,7 @@
         <changefreq>monthly</changefreq>
         <priority>0.65</priority>
     </url>
-    
+
     <!-- 小游戏 -->
     <url>
         <loc>https://nooming.github.io/app/games/</loc>
