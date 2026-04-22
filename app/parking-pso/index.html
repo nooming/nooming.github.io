@@ -10,19 +10,25 @@
   <link rel="icon" type="image/png" sizes="16x16" href="../../assets/icons/favicon-16x16.png">
   <link rel="shortcut icon" href="../../assets/icons/favicon.ico">
   <title>停车分配实验</title>
+  <link rel="stylesheet" href="../../assets/css/common.css" />
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
-<body>
-  <header>
-    <div class="site-tool-bar">
-      <a href="../../index.html" class="site-tool-back">返回上一级</a>
+<body class="page-container">
+  <div class="page-header">
+    <div class="header-top">
+      <a href="../" class="back-btn">返回上一级</a>
+      <a href="../../index.html" class="back-btn">返回主页</a>
     </div>
-    <h1>停车分配实验</h1>
-    <span class="hint hint--header" title="可拖拽：入口、花坛、楼、车位。内环道路不可拖拽，请在右侧侧栏改数值。车位沿内环停车带吸附；入口吸附内环边线。">
+    <div class="section-header section-header--page">
+      <h1>停车分配实验</h1>
+      <p>拖拽入口、花坛、楼和车位；支持匈牙利精确解与 PSO 近似收敛。</p>
+    </div>
+  </div>
+  <div class="app-panel parking-pso-panel">
+    <div class="hint hint--header" title="可拖拽：入口、花坛、楼、车位。内环道路不可拖拽，请在右侧侧栏改数值。车位沿内环停车带吸附；入口吸附内环边线。">
       拖拽：入口、花坛、楼、车位；右侧改内环；车位与入口吸附内环。
-    </span>
-  </header>
-  <div class="layout">
+    </div>
+    <div class="layout">
     <div class="canvas-wrap">
       <div class="map-stage">
         <canvas id="map" width="720" height="720" aria-label="小区平面图"></canvas>
@@ -97,6 +103,7 @@
         <p id="chart-caption" class="chart-caption"></p>
       </div>
     </aside>
+    </div>
   </div>
   <script src="assets/js/optimizer.js"></script>
   <script src="assets/js/app.js"></script>

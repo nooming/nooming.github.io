@@ -141,6 +141,7 @@
   /** 与本地优化内核一致；东西带用 SNAP_INSET_EW，南北带用车宽一半+边距 */
   const SNAP_MARGIN = 0.45;
   const SNAP_INSET_EW = 2.55;
+  const OVERLAP_EPS = 0.2;
 
   let scenario = null;
   let selection = null;
@@ -193,6 +194,15 @@
     return {
       wx: Math.max(0, Math.min(lotW(), x)),
       wy: Math.max(0, Math.min(lotH(), y)),
+    };
+  }
+
+  function clampBuildingCenter(x, y) {
+    const halfW = B.bw / 2;
+    const halfH = B.bh / 2;
+    return {
+      wx: Math.max(halfW, Math.min(lotW() - halfW, x)),
+      wy: Math.max(halfH, Math.min(lotH() - halfH, y)),
     };
   }
 
@@ -373,30 +383,15 @@
   }
 
   function snapSlotToRoad(x, y) {
-    const inn = scenario.inner;
-    const xm = inn.x_min;
-    const xM = inn.x_max;
-    const ym = inn.y_min;
-    const yM = inn.y_max;
-    const iw = xM - xm;
-    const ih = yM - ym;
-    const margin = SNAP_MARGIN;
-    if (iw < 2 * margin + 0.2 || ih < 2 * margin + 0.2) {
+    const strips = getParkingStripDefs();
+    if (!strips.length) {
       return clampWorld(x, y);
     }
-    const insetEW = Math.max(0.4, Math.min(SNAP_INSET_EW, iw / 2 - margin - 0.1));
-    const insetNS = Math.max(0.4, Math.min(B.sh / 2 + margin, ih / 2 - margin - 0.1));
-    const strips = [
-      [xm + margin, ym + insetNS, xM - margin, ym + insetNS],
-      [xm + margin, yM - insetNS, xM - margin, yM - insetNS],
-      [xm + insetEW, ym + margin, xm + insetEW, yM - margin],
-      [xM - insetEW, ym + margin, xM - insetEW, yM - margin],
-    ];
     let bestX = x;
     let bestY = y;
     let bestD = 1e30;
     for (const s of strips) {
-      const q = closestPointOnSegment(x, y, s[0], s[1], s[2], s[3]);
+      const q = closestPointOnSegment(x, y, s.x1, s.y1, s.x2, s.y2);
       const d = (x - q.qx) ** 2 + (y - q.qy) ** 2;
       if (d < bestD) {
         bestD = d;
@@ -407,18 +402,7 @@
     return clampWorld(bestX, bestY);
   }
 
-  function applySnapToSlot(i) {
-    const s = snapSlotToRoad(scenario.slots[i][0], scenario.slots[i][1]);
-    scenario.slots[i][0] = s.wx;
-    scenario.slots[i][1] = s.wy;
-  }
-
-  function applySnapToAllSlots() {
-    if (!scenario?.slots?.length) return;
-    scenario.slots.forEach((_, i) => applySnapToSlot(i));
-  }
-
-  function parkingStripSegments() {
+  function getParkingStripDefs() {
     const inn = scenario.inner;
     const xm = inn.x_min;
     const xM = inn.x_max;
@@ -431,23 +415,213 @@
     const insetEW = Math.max(0.4, Math.min(SNAP_INSET_EW, iw / 2 - margin - 0.1));
     const insetNS = Math.max(0.4, Math.min(B.sh / 2 + margin, ih / 2 - margin - 0.1));
     return [
-      [
-        [xm + margin, ym + insetNS],
-        [xM - margin, ym + insetNS],
-      ],
-      [
-        [xm + margin, yM - insetNS],
-        [xM - margin, yM - insetNS],
-      ],
-      [
-        [xm + insetEW, ym + margin],
-        [xm + insetEW, yM - margin],
-      ],
-      [
-        [xM - insetEW, ym + margin],
-        [xM - insetEW, yM - margin],
-      ],
+      {
+        id: "south",
+        x1: xm + margin,
+        y1: ym + insetNS,
+        x2: xM - margin,
+        y2: ym + insetNS,
+        axis: "x",
+        fixed: ym + insetNS,
+        start: xm + margin,
+        end: xM - margin,
+      },
+      {
+        id: "north",
+        x1: xm + margin,
+        y1: yM - insetNS,
+        x2: xM - margin,
+        y2: yM - insetNS,
+        axis: "x",
+        fixed: yM - insetNS,
+        start: xm + margin,
+        end: xM - margin,
+      },
+      {
+        id: "west",
+        x1: xm + insetEW,
+        y1: ym + margin,
+        x2: xm + insetEW,
+        y2: yM - margin,
+        axis: "y",
+        fixed: xm + insetEW,
+        start: ym + margin,
+        end: yM - margin,
+      },
+      {
+        id: "east",
+        x1: xM - insetEW,
+        y1: ym + margin,
+        x2: xM - insetEW,
+        y2: yM - margin,
+        axis: "y",
+        fixed: xM - insetEW,
+        start: ym + margin,
+        end: yM - margin,
+      },
     ];
+  }
+
+  function rectsOverlap(a, b, pad = 0) {
+    return !(
+      a.xmin + a.w + pad <= b.xmin ||
+      b.xmin + b.w + pad <= a.xmin ||
+      a.ymin + a.h + pad <= b.ymin ||
+      b.ymin + b.h + pad <= a.ymin
+    );
+  }
+
+  function pointInsideRect(px, py, r, pad = 0) {
+    return (
+      px >= r.xmin - pad &&
+      px <= r.xmin + r.w + pad &&
+      py >= r.ymin - pad &&
+      py <= r.ymin + r.h + pad
+    );
+  }
+
+  function buildingRectAt(cx, cy) {
+    return { xmin: cx - B.bw / 2, ymin: cy - B.bh / 2, w: B.bw, h: B.bh };
+  }
+
+  function obstacleRect() {
+    const o = scenario.obstacle;
+    return { xmin: o.x_min, ymin: o.y_min, w: o.x_max - o.x_min, h: o.y_max - o.y_min };
+  }
+
+  function slotRectAt(cx, cy) {
+    const fp = slotFootprint(cx, cy);
+    return { xmin: fp.xmin, ymin: fp.ymin, w: fp.w, h: fp.h };
+  }
+
+  function canPlaceBuilding(cx, cy, ignoreIndex = -1) {
+    const r = buildingRectAt(cx, cy);
+    const o = obstacleRect();
+    if (rectsOverlap(r, o, OVERLAP_EPS)) return false;
+    for (let i = 0; i < scenario.buildings.length; i++) {
+      if (i === ignoreIndex) continue;
+      const [bx, by] = scenario.buildings[i];
+      if (rectsOverlap(r, buildingRectAt(bx, by), OVERLAP_EPS)) return false;
+    }
+    for (let i = 0; i < scenario.slots.length; i++) {
+      const [sx, sy] = scenario.slots[i];
+      if (rectsOverlap(r, slotRectAt(sx, sy), OVERLAP_EPS)) return false;
+    }
+    if (pointInsideRect(scenario.entrance[0], scenario.entrance[1], r, 0.25)) return false;
+    return true;
+  }
+
+  function nearestStripForPoint(x, y) {
+    const strips = getParkingStripDefs();
+    if (!strips.length) return null;
+    let best = null;
+    let bestD = Infinity;
+    for (const s of strips) {
+      const d = distPointToSeg(x, y, s.x1, s.y1, s.x2, s.y2);
+      if (d < bestD) {
+        bestD = d;
+        best = s;
+      }
+    }
+    return best;
+  }
+
+  function slotAxisValue(def, x, y) {
+    return def.axis === "x" ? x : y;
+  }
+
+  function slotPointFromAxis(def, t) {
+    if (def.axis === "x") return { wx: t, wy: def.fixed };
+    return { wx: def.fixed, wy: t };
+  }
+
+  function canPlaceSlot(cx, cy, ignoreIndex = -1) {
+    const r = slotRectAt(cx, cy);
+    const o = obstacleRect();
+    if (rectsOverlap(r, o, OVERLAP_EPS)) return false;
+    for (let i = 0; i < scenario.buildings.length; i++) {
+      const [bx, by] = scenario.buildings[i];
+      if (rectsOverlap(r, buildingRectAt(bx, by), OVERLAP_EPS)) return false;
+    }
+    for (let i = 0; i < scenario.slots.length; i++) {
+      if (i === ignoreIndex) continue;
+      const [sx, sy] = scenario.slots[i];
+      if (rectsOverlap(r, slotRectAt(sx, sy), OVERLAP_EPS)) return false;
+    }
+    if (pointInsideRect(scenario.entrance[0], scenario.entrance[1], r, 0.25)) return false;
+    return true;
+  }
+
+  function canPlaceEntrance(wx, wy) {
+    if (pointInsideRect(wx, wy, obstacleRect(), 0.12)) return false;
+    for (let i = 0; i < scenario.buildings.length; i++) {
+      const [bx, by] = scenario.buildings[i];
+      if (pointInsideRect(wx, wy, buildingRectAt(bx, by), 0.12)) return false;
+    }
+    for (let i = 0; i < scenario.slots.length; i++) {
+      const [sx, sy] = scenario.slots[i];
+      if (pointInsideRect(wx, wy, slotRectAt(sx, sy), 0.12)) return false;
+    }
+    return true;
+  }
+
+  function suggestUniformSlotPosition(x, y, ignoreIndex = -1) {
+    const snapped = snapSlotToRoad(x, y);
+    const lane = nearestStripForPoint(snapped.wx, snapped.wy);
+    if (!lane) return canPlaceSlot(snapped.wx, snapped.wy, ignoreIndex) ? snapped : null;
+    const endInset = B.sw / 2 + 0.08;
+    const laneStart = lane.start + endInset;
+    const laneEnd = lane.end - endInset;
+    if (laneEnd <= laneStart) {
+      return canPlaceSlot(snapped.wx, snapped.wy, ignoreIndex) ? snapped : null;
+    }
+    const desired = Math.max(
+      laneStart,
+      Math.min(laneEnd, slotAxisValue(lane, snapped.wx, snapped.wy))
+    );
+    const occupied = [];
+    for (let i = 0; i < scenario.slots.length; i++) {
+      if (i === ignoreIndex) continue;
+      const [sx, sy] = scenario.slots[i];
+      const sideLane = nearestStripForPoint(sx, sy);
+      if (!sideLane || sideLane.id !== lane.id) continue;
+      occupied.push(slotAxisValue(lane, sx, sy));
+    }
+    occupied.sort((a, b) => a - b);
+    const candidates = new Set([desired, laneStart, laneEnd]);
+    const anchors = [laneStart, ...occupied, laneEnd];
+    for (let i = 0; i < anchors.length - 1; i++) {
+      candidates.add((anchors[i] + anchors[i + 1]) / 2);
+    }
+    const sortedCandidates = [...candidates].sort(
+      (a, b) => Math.abs(a - desired) - Math.abs(b - desired)
+    );
+    for (const t0 of sortedCandidates) {
+      const t = Math.max(laneStart, Math.min(laneEnd, t0));
+      const p = slotPointFromAxis(lane, t);
+      if (canPlaceSlot(p.wx, p.wy, ignoreIndex)) return p;
+    }
+    return null;
+  }
+
+  function applySnapToSlot(i) {
+    const p = suggestUniformSlotPosition(scenario.slots[i][0], scenario.slots[i][1], i);
+    if (!p) return false;
+    scenario.slots[i][0] = p.wx;
+    scenario.slots[i][1] = p.wy;
+    return true;
+  }
+
+  function applySnapToAllSlots() {
+    if (!scenario?.slots?.length) return;
+    scenario.slots.forEach((_, i) => applySnapToSlot(i));
+  }
+
+  function parkingStripSegments() {
+    return getParkingStripDefs().map((s) => [
+      [s.x1, s.y1],
+      [s.x2, s.y2],
+    ]);
   }
 
   function distPointToSeg(px, py, x1, y1, x2, y2) {
@@ -988,11 +1162,18 @@
       );
       const e = scenario.entrance;
       const applyEntrance = () => {
-        scenario.entrance[0] = parseFloat(document.getElementById("p-ex").value) || 0;
-        scenario.entrance[1] = parseFloat(document.getElementById("p-ey").value) || 0;
-        const s = snapEntranceToInner(scenario.entrance[0], scenario.entrance[1]);
-        scenario.entrance[0] = s.wx;
-        scenario.entrance[1] = s.wy;
+        const oldX = scenario.entrance[0];
+        const oldY = scenario.entrance[1];
+        const sx = parseFloat(document.getElementById("p-ex").value) || 0;
+        const sy = parseFloat(document.getElementById("p-ey").value) || 0;
+        const s = snapEntranceToInner(sx, sy);
+        if (!canPlaceEntrance(s.wx, s.wy)) {
+          scenario.entrance[0] = oldX;
+          scenario.entrance[1] = oldY;
+        } else {
+          scenario.entrance[0] = s.wx;
+          scenario.entrance[1] = s.wy;
+        }
         renderProps();
         draw();
       };
@@ -1039,19 +1220,23 @@
     } else if (selection.kind === "building") {
       const [x, y] = scenario.buildings[selection.index];
       addNum("楼中心 X (" + uLen() + ")", "p-bx", x, () => {
-        const v = clampWorld(
+        const v = clampBuildingCenter(
           parseFloat(document.getElementById("p-bx").value) || 0,
           parseFloat(document.getElementById("p-by").value) || 0
         );
-        scenario.buildings[selection.index][0] = v.wx;
+        if (canPlaceBuilding(v.wx, v.wy, selection.index)) {
+          scenario.buildings[selection.index][0] = v.wx;
+        }
         draw();
       });
       addNum("楼中心 Y (" + uLen() + ")", "p-by", y, () => {
-        const v = clampWorld(
+        const v = clampBuildingCenter(
           parseFloat(document.getElementById("p-bx").value) || 0,
           parseFloat(document.getElementById("p-by").value) || 0
         );
-        scenario.buildings[selection.index][1] = v.wy;
+        if (canPlaceBuilding(v.wx, v.wy, selection.index)) {
+          scenario.buildings[selection.index][1] = v.wy;
+        }
         draw();
       });
     } else if (selection.kind === "slot") {
@@ -1060,7 +1245,7 @@
       const applySlotFromInputs = () => {
         scenario.slots[idx][0] = parseFloat(document.getElementById("p-sx").value) || 0;
         scenario.slots[idx][1] = parseFloat(document.getElementById("p-sy").value) || 0;
-        applySnapToSlot(idx);
+        if (!applySnapToSlot(idx)) return;
         renderProps();
         draw();
       };
@@ -1078,6 +1263,78 @@
     fix(scenario.inner);
   }
 
+  function findNearestValidBuildingPosition(x, y, ignoreIndex = -1) {
+    const base = clampBuildingCenter(x, y);
+    if (canPlaceBuilding(base.wx, base.wy, ignoreIndex)) return base;
+    const angleN = 20;
+    const ringN = 14;
+    const step = Math.max(0.8, Math.min(B.sh, B.bh) * 0.45);
+    for (let r = 1; r <= ringN; r++) {
+      const radius = r * step;
+      for (let k = 0; k < angleN; k++) {
+        const a = (Math.PI * 2 * k) / angleN;
+        const c = clampBuildingCenter(base.wx + radius * Math.cos(a), base.wy + radius * Math.sin(a));
+        if (canPlaceBuilding(c.wx, c.wy, ignoreIndex)) return c;
+      }
+    }
+    return null;
+  }
+
+  function nearestValidEntrancePoint(x, y) {
+    const segs = innerBoundarySegments(scenario.inner);
+    let best = null;
+    let bestD = Infinity;
+    for (const [x1, y1, x2, y2] of segs) {
+      const samples = 72;
+      for (let i = 0; i <= samples; i++) {
+        const t = i / samples;
+        const px = x1 + (x2 - x1) * t;
+        const py = y1 + (y2 - y1) * t;
+        if (!canPlaceEntrance(px, py)) continue;
+        const d = (px - x) ** 2 + (py - y) ** 2;
+        if (d < bestD) {
+          bestD = d;
+          best = { wx: px, wy: py };
+        }
+      }
+    }
+    return best;
+  }
+
+  function sanitizeScenarioGeometry() {
+    if (!scenario) return;
+    normalizeObstacleInner();
+    const rawBuildings = Array.isArray(scenario.buildings) ? scenario.buildings.slice() : [];
+    const rawSlots = Array.isArray(scenario.slots) ? scenario.slots.slice() : [];
+    scenario.slots = [];
+    scenario.buildings = [];
+    for (const b of rawBuildings) {
+      const bx = Number(b?.[0]);
+      const by = Number(b?.[1]);
+      if (!Number.isFinite(bx) || !Number.isFinite(by)) continue;
+      const p = findNearestValidBuildingPosition(bx, by, -1);
+      if (p) scenario.buildings.push([p.wx, p.wy]);
+    }
+    const es = snapEntranceToInner(scenario.entrance?.[0] ?? 0, scenario.entrance?.[1] ?? 0);
+    if (canPlaceEntrance(es.wx, es.wy)) {
+      scenario.entrance[0] = es.wx;
+      scenario.entrance[1] = es.wy;
+    } else {
+      const altE = nearestValidEntrancePoint(es.wx, es.wy);
+      if (altE) {
+        scenario.entrance[0] = altE.wx;
+        scenario.entrance[1] = altE.wy;
+      }
+    }
+    for (const s of rawSlots) {
+      const sx = Number(s?.[0]);
+      const sy = Number(s?.[1]);
+      if (!Number.isFinite(sx) || !Number.isFinite(sy)) continue;
+      const p = suggestUniformSlotPosition(sx, sy, -1);
+      if (p) scenario.slots.push([p.wx, p.wy]);
+    }
+  }
+
   function setSelection(sel) {
     selection = sel;
     document.querySelectorAll(".toolbar button").forEach((b) => {
@@ -1093,7 +1350,8 @@
     const { wx, wy } = eventToWorld(ev);
 
     if (pendingAdd === "building") {
-      const c = clampWorld(wx, wy);
+      const c = clampBuildingCenter(wx, wy);
+      if (!canPlaceBuilding(c.wx, c.wy)) return;
       scenario.buildings.push([c.wx, c.wy]);
       ensureVehicleDestinationsArray();
       rebuildVehicleTargetsUI();
@@ -1103,11 +1361,10 @@
     }
     if (pendingAdd === "slot") {
       const c = clampWorld(wx, wy);
-      scenario.slots.push([c.wx, c.wy]);
+      const p = suggestUniformSlotPosition(c.wx, c.wy, -1);
+      if (!p) return;
+      scenario.slots.push([p.wx, p.wy]);
       const si = scenario.slots.length - 1;
-      const snapped = snapSlotToRoad(scenario.slots[si][0], scenario.slots[si][1]);
-      scenario.slots[si][0] = snapped.wx;
-      scenario.slots[si][1] = snapped.wy;
       pendingAdd = null;
       setSelection({ kind: "slot", index: si });
       return;
@@ -1148,16 +1405,24 @@
 
     if (drag.kind === "entrance") {
       const c = clampWorld(wx + drag.ox, wy + drag.oy);
-      scenario.entrance[0] = c.wx;
-      scenario.entrance[1] = c.wy;
+      const s = snapEntranceToInner(c.wx, c.wy);
+      if (canPlaceEntrance(s.wx, s.wy)) {
+        scenario.entrance[0] = s.wx;
+        scenario.entrance[1] = s.wy;
+      }
     } else if (drag.kind === "building") {
-      const c = clampWorld(wx + drag.ox, wy + drag.oy);
-      scenario.buildings[drag.index][0] = c.wx;
-      scenario.buildings[drag.index][1] = c.wy;
+      const c = clampBuildingCenter(wx + drag.ox, wy + drag.oy);
+      if (canPlaceBuilding(c.wx, c.wy, drag.index)) {
+        scenario.buildings[drag.index][0] = c.wx;
+        scenario.buildings[drag.index][1] = c.wy;
+      }
     } else if (drag.kind === "slot") {
       const c = clampWorld(wx + drag.ox, wy + drag.oy);
-      scenario.slots[drag.index][0] = c.wx;
-      scenario.slots[drag.index][1] = c.wy;
+      const p = suggestUniformSlotPosition(c.wx, c.wy, drag.index);
+      if (p) {
+        scenario.slots[drag.index][0] = p.wx;
+        scenario.slots[drag.index][1] = p.wy;
+      }
     } else if (drag.kind === "obstacle") {
       const dx = wx - drag.startW.wx;
       const dy = wy - drag.startW.wy;
@@ -1180,14 +1445,15 @@
     let changed = false;
     if (d?.kind === "entrance") {
       const s = snapEntranceToInner(scenario.entrance[0], scenario.entrance[1]);
-      scenario.entrance[0] = s.wx;
-      scenario.entrance[1] = s.wy;
-      changed = true;
+      if (canPlaceEntrance(s.wx, s.wy)) {
+        scenario.entrance[0] = s.wx;
+        scenario.entrance[1] = s.wy;
+        changed = true;
+      }
       renderProps();
     }
     if (d?.kind === "slot") {
-      applySnapToSlot(d.index);
-      changed = true;
+      changed = applySnapToSlot(d.index) || changed;
       renderProps();
     }
     if (changed) draw();
@@ -1227,8 +1493,18 @@
     el.textContent = "横轴：迭代次数（次）；纵轴：最优总时间（" + tu + "）";
   }
 
+  const CHART_THEME = {
+    bg: "#f8fafc",
+    axisText: "#64748b",
+    helperText: "#475569",
+    line: "#0284c7",
+    lineSoft: "rgba(2,132,199,0.32)",
+    dotStroke: "#0369a1",
+    labelText: "#0f172a",
+  };
+
   function chartDrawAxisDecor(w, h) {
-    cctx.fillStyle = "#d0dce8";
+    cctx.fillStyle = CHART_THEME.axisText;
     cctx.font = '12px "Segoe UI", "Microsoft YaHei", sans-serif';
     cctx.textAlign = "center";
     cctx.textBaseline = "bottom";
@@ -1244,7 +1520,7 @@
 
   /** 匈牙利/精确最优仅一个标量：无迭代曲线，画水平参考线 + 圆点 + 数值 */
   function chartDrawAxisDecorExact(w, h) {
-    cctx.fillStyle = "#d0dce8";
+    cctx.fillStyle = CHART_THEME.axisText;
     cctx.font = '11px "Segoe UI", "Microsoft YaHei", sans-serif';
     cctx.textAlign = "center";
     cctx.textBaseline = "bottom";
@@ -1270,10 +1546,10 @@
     const plotH = Math.max(h - pad - CHART_BOTTOM_AXIS - 4, 24);
     const plotTop = pad + 4;
     cctx.clearRect(0, 0, w, h);
-    cctx.fillStyle = "#0f1419";
+    cctx.fillStyle = CHART_THEME.bg;
     cctx.fillRect(0, 0, w, h);
     if (!series.length) {
-      cctx.fillStyle = "#94a3b8";
+      cctx.fillStyle = CHART_THEME.helperText;
       cctx.font = '12px "Segoe UI", "Microsoft YaHei", sans-serif';
       cctx.textAlign = "center";
       cctx.textBaseline = "middle";
@@ -1288,7 +1564,7 @@
       const hi = v0 + span;
       const y = plotTop + (1 - (v0 - lo) / (hi - lo)) * plotH;
       const cx = (w - 2 * pad) * 0.55 + pad;
-      cctx.strokeStyle = "rgba(56,189,248,0.4)";
+      cctx.strokeStyle = CHART_THEME.lineSoft;
       cctx.lineWidth = 1;
       cctx.setLineDash([5, 5]);
       cctx.beginPath();
@@ -1296,14 +1572,14 @@
       cctx.lineTo(w - pad, y);
       cctx.stroke();
       cctx.setLineDash([]);
-      cctx.fillStyle = "#38bdf8";
+      cctx.fillStyle = CHART_THEME.line;
       cctx.beginPath();
       cctx.arc(cx, y, 6, 0, Math.PI * 2);
       cctx.fill();
-      cctx.strokeStyle = "#0ea5e9";
+      cctx.strokeStyle = CHART_THEME.dotStroke;
       cctx.lineWidth = 1.5;
       cctx.stroke();
-      cctx.fillStyle = "#f1f5f9";
+      cctx.fillStyle = CHART_THEME.labelText;
       cctx.font = '12px "Segoe UI", "Microsoft YaHei", sans-serif';
       cctx.textAlign = "left";
       cctx.textBaseline = "bottom";
@@ -1311,7 +1587,7 @@
       cctx.fillText(label, Math.min(cx + 10, w - pad - 2), y - 4);
       cctx.textAlign = "center";
       cctx.textBaseline = "top";
-      cctx.fillStyle = "#b8c9dc";
+      cctx.fillStyle = CHART_THEME.helperText;
       cctx.font = '11px "Segoe UI", "Microsoft YaHei", sans-serif';
       cctx.fillText("匈牙利：全局最优（非迭代算法）", w / 2, pad + 2);
       chartDrawAxisDecorExact(w, h);
@@ -1322,7 +1598,7 @@
     if (hi === lo) {
       hi = lo + 1;
     }
-    cctx.strokeStyle = "#38bdf8";
+    cctx.strokeStyle = CHART_THEME.line;
     cctx.lineWidth = 2;
     cctx.beginPath();
     for (let i = 0; i < series.length; i++) {
@@ -1337,13 +1613,13 @@
       const t = 0;
       const x = pad + t * (w - 2 * pad);
       const y = plotTop + (1 - (series[0] - lo) / (hi - lo)) * plotH;
-      cctx.fillStyle = "#38bdf8";
+      cctx.fillStyle = CHART_THEME.line;
       cctx.beginPath();
       cctx.arc(x, y, 5, 0, Math.PI * 2);
       cctx.fill();
     }
     if (series.length >= 2) {
-      cctx.fillStyle = "#a8b8cc";
+      cctx.fillStyle = CHART_THEME.axisText;
       cctx.font = '11px "Segoe UI", "Microsoft YaHei", sans-serif';
       cctx.textBaseline = "top";
       cctx.textAlign = "left";
@@ -1383,6 +1659,7 @@
       lastResult = data;
       scenario = data.scenario;
       ensureConstraints();
+      sanitizeScenarioGeometry();
       ensureVehicleDestinationsArray();
       nVehInput.value = scenario.n_veh ?? 12;
       rebuildVehicleTargetsUI();
@@ -1466,6 +1743,7 @@
       }
       scenario = optimizer.normalizeScenario(localScenario);
       ensureConstraints();
+      sanitizeScenarioGeometry();
       ensureVehicleDestinationsArray();
       rebuildVehicleTargetsUI();
       lastResult = null;
