@@ -32,52 +32,49 @@
   function defaultScenario() {
     const lotW = 100.0;
     const lotH = 100.0;
-    const k = lotW / 30.0;
-    const obstacleYMin = 8.0 * k;
-    const obstacleYMax = 22.0 * k;
-    const slotYs = [
-      obstacleYMin + 1.2,
-      obstacleYMin + 1.2 + ((obstacleYMax - 2.4) / 5) * 1,
-      obstacleYMin + 1.2 + ((obstacleYMax - 2.4) / 5) * 2,
-      obstacleYMin + 1.2 + ((obstacleYMax - 2.4) / 5) * 3,
-      obstacleYMin + 1.2 + ((obstacleYMax - 2.4) / 5) * 4,
-      obstacleYMax - 1.2,
-    ];
     const inner = {
-      x_min: 7.0 * k,
-      x_max: 23.0 * k,
-      y_min: 6.0 * k,
-      y_max: 24.0 * k,
+      x_min: 22.0,
+      x_max: 78.0,
+      y_min: 18.0,
+      y_max: 82.0,
     };
-    const leftX = inner.x_min + SLOT_ROAD_INSET;
-    const rightX = inner.x_max - SLOT_ROAD_INSET;
-    const slots = [];
-    slotYs.forEach((y) => {
-      slots.push([leftX, y], [rightX, y]);
-    });
+    const slots = [
+      [24.55, 21.03],
+      [75.45, 21.03],
+      [24.55, 32.62],
+      [75.45, 32.62],
+      [24.55, 44.21],
+      [75.45, 44.21],
+      [24.55, 55.79],
+      [75.45, 55.79],
+      [24.55, 67.38],
+      [75.45, 67.38],
+      [24.55, 78.97],
+      [75.45, 78.97],
+    ];
     const buildings = [
-      [8.0 * k, 27.0 * k],
-      [15.0 * k, 27.0 * k],
-      [22.0 * k, 27.0 * k],
-      [15.0 * k, 3.0 * k],
-      [22.0 * k, 3.0 * k],
-      [3.0 * k, 8.0 * k],
-      [3.0 * k, 15.0 * k],
-      [3.0 * k, 22.0 * k],
-      [27.0 * k, 8.0 * k],
-      [27.0 * k, 15.0 * k],
-      [27.0 * k, 22.0 * k],
+      [26.0, 90.0],
+      [50.0, 90.0],
+      [74.0, 90.0],
+      [50.0, 10.0],
+      [74.0, 10.0],
+      [10.0, 26.0],
+      [10.0, 50.0],
+      [10.0, 74.0],
+      [90.0, 26.0],
+      [90.0, 50.0],
+      [90.0, 74.0],
     ];
     const nVeh = 12;
     return {
       lot: { width: lotW, height: lotH },
-      entrance: [7.0 * k, 6.0 * k],
+      entrance: [22.0, 18.0],
       inner,
       obstacle: {
-        x_min: 13.0 * k,
-        x_max: 17.0 * k,
-        y_min: obstacleYMin,
-        y_max: obstacleYMax,
+        x_min: 44.0,
+        x_max: 56.0,
+        y_min: 30.0,
+        y_max: 70.0,
       },
       buildings,
       slots,
