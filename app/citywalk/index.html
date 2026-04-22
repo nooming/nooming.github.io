@@ -29,6 +29,29 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
+    <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden;">
+        <symbol id="cw-walk" viewBox="0 0 24 24"><circle fill="none" stroke="currentColor" stroke-width="1.75" cx="12" cy="5" r="2"/><path fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" d="M9 22v-6l-2-5h2l2 5v6M15 22v-5l2-8h-2l-1 4"/></symbol>
+        <symbol id="cw-map" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round" d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3V6z"/><path fill="none" stroke="currentColor" stroke-width="1.75" d="M9 3v15M15 6v15"/></symbol>
+        <symbol id="cw-coffee" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.75" d="M18 8h1a4 4 0 0 1 0 8h-1M5 8h10v5a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V8z"/><path fill="none" stroke="currentColor" stroke-width="1.75" d="M6 2v2M10 2v2M14 2v2"/></symbol>
+        <symbol id="cw-sparkle" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2l1.2 5.2L18 8l-4.8 1.8L12 15l-1.2-5.2L6 8l4.8-1.8L12 2z"/></symbol>
+        <symbol id="cw-pin" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" d="M12 21s7-5 7-11a7 7 0 1 0-14 0c0 6 7 11 7 11z"/><circle fill="currentColor" cx="12" cy="10" r="2.5"/></symbol>
+        <symbol id="cw-flag" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" d="M4 22V4"/><path fill="currentColor" d="M4 4h10l-2 4 2 4H4V4z"/></symbol>
+        <symbol id="cw-tree" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.75" d="M12 22V12M8 14l4-10 4 10"/></symbol>
+        <symbol id="cw-column" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.75" d="M8 22V8h8v14M6 8h12M10 8V5h4v3"/></symbol>
+        <symbol id="cw-flower" viewBox="0 0 24 24"><circle fill="currentColor" cx="12" cy="12" r="2"/><circle fill="currentColor" cx="12" cy="8" r="2"/><circle fill="currentColor" cx="12" cy="16" r="2"/><circle fill="currentColor" cx="8" cy="12" r="2"/><circle fill="currentColor" cx="16" cy="12" r="2"/></symbol>
+        <symbol id="cw-cake" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.75" d="M4 22h16M6 22v-8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8"/><path fill="none" stroke="currentColor" stroke-width="1.75" d="M8 12V8h8v4"/></symbol>
+        <symbol id="cw-croissant" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" d="M4 16c2-4 6-6 8-6s6 2 8 6"/><path fill="none" stroke="currentColor" stroke-width="1.5" d="M7 14c1-2 3-3 5-3s4 1 5 3"/></symbol>
+        <symbol id="cw-sun" viewBox="0 0 24 24"><circle fill="none" stroke="currentColor" stroke-width="1.75" cx="12" cy="12" r="4"/><path fill="none" stroke="currentColor" stroke-width="1.75" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></symbol>
+        <symbol id="cw-cloud" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.75" d="M7 18a4 4 0 0 1 0-8 4 4 0 0 1 7.7-1A5 5 0 0 1 17 18H7z"/></symbol>
+        <symbol id="cw-rain" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.75" d="M7 16a4 4 0 0 1 0-8 4 4 0 0 1 7.7-1A5 5 0 0 1 17 16"/><path fill="none" stroke="currentColor" stroke-width="1.75" d="M8 20v2M12 18v4M16 20v2"/></symbol>
+        <symbol id="cw-snow" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.75" d="M7 15a4 4 0 0 1 0-8 4 4 0 0 1 7.7-1A5 5 0 0 1 17 15"/><path fill="none" stroke="currentColor" stroke-width="1.5" d="M10 19l2-2 2 2M12 17v4"/></symbol>
+        <symbol id="cw-wind" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" d="M3 8h10a3 3 0 1 0-3-3M5 12h12a3 3 0 1 1-3 3M7 16h8"/></symbol>
+        <symbol id="cw-partly" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.75" d="M7 19a4 4 0 0 1 0-8h.5"/><circle fill="none" stroke="currentColor" stroke-width="1.5" cx="16" cy="8" r="3"/><path fill="none" stroke="currentColor" stroke-width="1.5" d="M16 3v1M19.5 8H21M16 13v1M12.5 8H11"/></symbol>
+        <symbol id="cw-tag" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.75" d="M3 5h6l11 11-4 4L3 9V5z"/><circle fill="currentColor" cx="7.5" cy="8.5" r="1"/></symbol>
+        <symbol id="cw-clock" viewBox="0 0 24 24"><circle fill="none" stroke="currentColor" stroke-width="1.75" cx="12" cy="12" r="9"/><path fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" d="M12 7v5l3 3"/></symbol>
+        <symbol id="cw-search" viewBox="0 0 24 24"><circle fill="none" stroke="currentColor" stroke-width="1.75" cx="11" cy="11" r="7"/><path fill="none" stroke="currentColor" stroke-width="1.75" d="m21 21-4.3-4.3"/></symbol>
+        <symbol id="cw-camera" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.75" d="M4 9h3l2-2h6l2 2h3a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2z"/><circle fill="none" stroke="currentColor" stroke-width="1.75" cx="12" cy="14" r="3"/></symbol>
+    </svg>
     <div id="container"></div>
 
     <button
@@ -47,22 +70,22 @@
             <div class="loading-title">规划路线中</div>
             <div class="loading-steps">
                 <div class="loading-step" id="step1">
-                    <span class="step-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-map"/></svg></span>
+                    <span class="step-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="#cw-map"/></svg></span>
                     <span class="step-text">算路</span>
                     <span class="step-status"></span>
                 </div>
                 <div class="loading-step" id="step2">
-                    <span class="step-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-coffee"/></svg></span>
+                    <span class="step-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="#cw-coffee"/></svg></span>
                     <span class="step-text">沿途兴趣点</span>
                     <span class="step-status"></span>
                 </div>
                 <div class="loading-step" id="step3">
-                    <span class="step-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-walk"/></svg></span>
+                    <span class="step-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="#cw-walk"/></svg></span>
                     <span class="step-text">排序</span>
                     <span class="step-status"></span>
                 </div>
                 <div class="loading-step" id="step4">
-                    <span class="step-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-sparkle"/></svg></span>
+                    <span class="step-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="#cw-sparkle"/></svg></span>
                     <span class="step-text">汇总</span>
                     <span class="step-status"></span>
                 </div>
@@ -73,7 +96,7 @@
     <div class="control-panel">
         <div class="panel-header">
             <h2>
-                <span class="panel-header-walk-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-walk"/></svg></span>
+                <span class="panel-header-walk-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="#cw-walk"/></svg></span>
                 <span class="panel-header-title-text">Citywalk</span>
             </h2>
         </div>
@@ -81,7 +104,7 @@
             <!-- 城市选择器 -->
             <div class="city-selector" style="margin-bottom: 16px; background: linear-gradient(135deg, var(--primary-light), var(--primary)); padding: 12px; border-radius: 0;">
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                    <span class="cw-inline-ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-pin"/></svg></span>
+                    <span class="cw-inline-ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="#cw-pin"/></svg></span>
                     <span style="font-weight: 600; color: white; font-size: 14px;">当前城市</span>
                     <span id="currentCity" style="font-weight: 700; color: white; font-size: 16px;">定位中...</span>
                 </div>
@@ -119,11 +142,11 @@
             <!-- 起终点状态 -->
             <div class="status-group">
                 <div class="status-card" id="startCard">
-                    <div class="label status-label-row"><span class="cw-inline-ico cw-inline-ico--muted" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-pin"/></svg></span>起点</div>
+                    <div class="label status-label-row"><span class="cw-inline-ico cw-inline-ico--muted" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="#cw-pin"/></svg></span>起点</div>
                     <div class="value" id="startValue">点击地图选择</div>
                 </div>
                 <div class="status-card" id="endCard">
-                    <div class="label status-label-row"><span class="cw-inline-ico cw-inline-ico--muted" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-flag"/></svg></span>终点</div>
+                    <div class="label status-label-row"><span class="cw-inline-ico cw-inline-ico--muted" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="#cw-flag"/></svg></span>终点</div>
                     <div class="value" id="endValue">点击地图选择</div>
                 </div>
             </div>
@@ -138,13 +161,13 @@
                 <div class="filter-title">路线偏好</div>
                 <div class="poi-type-group">
                     <div class="poi-type-btn active" data-type="无偏好">无偏好</div>
-                    <div class="poi-type-btn" data-type="自然"><span class="poi-type-ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-tree"/></svg></span>自然</div>
-                    <div class="poi-type-btn" data-type="历史"><span class="poi-type-ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-column"/></svg></span>历史</div>
-                    <div class="poi-type-btn" data-type="文创"><span class="poi-type-ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-sparkle"/></svg></span>文创</div>
-                    <div class="poi-type-btn" data-type="花店"><span class="poi-type-ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-flower"/></svg></span>花店</div>
-                    <div class="poi-type-btn" data-type="咖啡"><span class="poi-type-ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-coffee"/></svg></span>咖啡</div>
-                    <div class="poi-type-btn" data-type="甜品"><span class="poi-type-ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-cake"/></svg></span>甜品</div>
-                    <div class="poi-type-btn" data-type="烘焙"><span class="poi-type-ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-croissant"/></svg></span>烘焙</div>
+                    <div class="poi-type-btn" data-type="自然"><span class="poi-type-ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="#cw-tree"/></svg></span>自然</div>
+                    <div class="poi-type-btn" data-type="历史"><span class="poi-type-ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="#cw-column"/></svg></span>历史</div>
+                    <div class="poi-type-btn" data-type="文创"><span class="poi-type-ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="#cw-sparkle"/></svg></span>文创</div>
+                    <div class="poi-type-btn" data-type="花店"><span class="poi-type-ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="#cw-flower"/></svg></span>花店</div>
+                    <div class="poi-type-btn" data-type="咖啡"><span class="poi-type-ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="#cw-coffee"/></svg></span>咖啡</div>
+                    <div class="poi-type-btn" data-type="甜品"><span class="poi-type-ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="#cw-cake"/></svg></span>甜品</div>
+                    <div class="poi-type-btn" data-type="烘焙"><span class="poi-type-ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="#cw-croissant"/></svg></span>烘焙</div>
                 </div>
 
                 <div class="filter-title">计划时长</div>
@@ -168,7 +191,7 @@
 
             <!-- 新增：生成分享图片按钮 -->
             <button class="btn-generate-plan" id="btnShareImage" onclick="generateShareImage()" style="margin-top: 12px; background: var(--gradient-theme); color: var(--color-theme-ink); display: none;">
-                <span class="btn-share-ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="assets/icons/cw-sprite.svg#cw-camera"/></svg></span>
+                <span class="btn-share-ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="#cw-camera"/></svg></span>
                 导出分享图
             </button>
 

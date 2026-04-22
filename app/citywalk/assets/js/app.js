@@ -45,7 +45,6 @@
                 ? 'http://localhost:5000'
                 : 'https://noomings-backend.zeabur.app';
 
-        const CW_SPRITE = 'assets/icons/cw-sprite.svg';
         const WEATHER_SVG_IDS = {
             sunny: 'cw-sun',
             cloudy: 'cw-cloud',
@@ -67,12 +66,12 @@
 
         function weatherIconHtml(key) {
             const id = WEATHER_SVG_IDS[key] || WEATHER_SVG_IDS.partly;
-            return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="100%" height="100%" focusable="false" aria-hidden="true"><use href="${CW_SPRITE}#${id}"/></svg>`;
+            return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="100%" height="100%" focusable="false" aria-hidden="true"><use href="#${id}"/></svg>`;
         }
 
         function cwUseHtml(symbolId, w, h, color) {
             const style = color ? `color:${color};` : '';
-            return `<span style="display:inline-flex;width:${w}px;height:${h}px;${style}align-items:center;justify-content:center;flex-shrink:0;"><svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 24 24" focusable="false" aria-hidden="true"><use href="${CW_SPRITE}#${symbolId}"/></svg></span>`;
+            return `<span style="display:inline-flex;width:${w}px;height:${h}px;${style}align-items:center;justify-content:center;flex-shrink:0;"><svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 24 24" focusable="false" aria-hidden="true"><use href="#${symbolId}"/></svg></span>`;
         }
 
         // 主题配色方案
