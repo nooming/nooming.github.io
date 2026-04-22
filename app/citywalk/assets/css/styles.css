@@ -299,9 +299,9 @@
             background: var(--primary);
         }
 
-        /* 天气卡片 - 渐变背景 */
+        /* 天气卡片 - 白色背景 */
         .weather-card {
-            background: var(--gradient-theme);
+            background: #ffffff;
             border-radius: 0;
             padding: 16px 20px;
             margin-bottom: 20px;
