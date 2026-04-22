@@ -6,6 +6,15 @@
 
     <meta charset="UTF-8">
 
+    <script>
+        (function normalizeIndexUrl() {
+            var p = window.location.pathname || "";
+            if (!/\/index\.html$/i.test(p)) return;
+            var normalized = p.replace(/index\.html$/i, "");
+            window.history.replaceState(null, "", normalized + window.location.search + window.location.hash);
+        })();
+    </script>
+
     <title>个人主页</title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
