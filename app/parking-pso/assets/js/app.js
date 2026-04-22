@@ -1728,18 +1728,23 @@
         throw new Error("optimizer module missing");
       }
       let localScenario = null;
-      if (window.location.protocol === "file:") {
-        localScenario = optimizer.defaultScenario();
-      } else {
+      let inlineScenario = null;
+      const inlineNode = document.getElementById("default-scenario-inline");
+      if (inlineNode) {
         try {
-          const res = await fetch("assets/data/default-scenario.json", {
-            cache: "no-store",
-          });
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          localScenario = await res.json();
+          inlineScenario = JSON.parse(inlineNode.textContent);
         } catch (_) {
-          localScenario = optimizer.defaultScenario();
+          inlineScenario = null;
         }
+      }
+      try {
+        const res = await fetch("assets/data/default-scenario.json", {
+          cache: "no-store",
+        });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        localScenario = await res.json();
+      } catch (_) {
+        localScenario = inlineScenario || optimizer.defaultScenario();
       }
       scenario = optimizer.normalizeScenario(localScenario);
       ensureConstraints();

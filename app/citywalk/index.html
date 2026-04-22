@@ -15,14 +15,14 @@
             securityJsCode: 'dd98c8e83161c0d87e596a17f2d29750'
         }
     </script>
-    <script src="../../assets/js/utils.js"></script>
+    <script src="assets/shared/utils.js"></script>
     <script>
         function mapLoadError() {
-            showToast('地图加载失败，请刷新重试', 'error', 4000);
+            showToast('地图加载失败，请检查网络或地图 Key 配置', 'error', 4000);
         }
     </script>
     <script src="https://webapi.amap.com/maps?v=2.0&key=4ade0b9a9942f8c1d5b470525887a258&plugin=AMap.Marker,AMap.InfoWindow,AMap.Weather" async defer onerror="mapLoadError()"></script>
-    <link rel="stylesheet" href="../../assets/css/common.css">
+    <link rel="stylesheet" href="assets/shared/common.css">
     <link rel="stylesheet" href="assets/css/styles.css">
     
     <!-- 引入 html2canvas 用于生成分享图片 -->
@@ -31,7 +31,13 @@
 <body>
     <div id="container"></div>
 
-    <button type="button" class="back-home-fab" onclick="window.location.href='../../index.html'" aria-label="返回主页" title="返回主页">
+    <button
+        type="button"
+        id="backHomeFab"
+        class="back-home-fab"
+        data-target-home="../../index.html"
+        aria-label="返回主页"
+        title="返回主页">
         返回主页
     </button>
 
@@ -186,6 +192,29 @@
         </div>
     </div>
 
+    <script>
+        (function initFileModeNavFallback() {
+            const isFileMode = window.location.protocol === "file:";
+            const backHomeFab = document.getElementById("backHomeFab");
+            if (!backHomeFab) return;
+
+            backHomeFab.addEventListener("click", function () {
+                if (!isFileMode) {
+                    const target = backHomeFab.getAttribute("data-target-home");
+                    if (target) window.location.href = target;
+                    return;
+                }
+                if (window.history.length > 1) {
+                    window.history.back();
+                    return;
+                }
+                backHomeFab.style.display = "none";
+                if (window.showToast) {
+                    window.showToast("独立文件模式下无可返回页面", "info", 2500);
+                }
+            });
+        })();
+    </script>
     <script src="assets/js/app.js"></script>
 </body>
 </html>

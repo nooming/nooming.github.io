@@ -38,6 +38,7 @@
         };
 
         // API 基础地址配置 - 根据环境自动切换（本地含 IPv6 ::1）
+        const IS_FILE_MODE = window.location.protocol === 'file:';
         const _h = window.location.hostname;
         const API_BASE_URL =
             _h === 'localhost' || _h === '127.0.0.1' || _h === '[::1]' || _h === '::1'
@@ -257,6 +258,15 @@
             if (el) el.innerHTML = weatherIconHtml(key);
             document.getElementById('weatherTitle').textContent = title;
             document.getElementById('weatherDesc').textContent = desc;
+        }
+
+        function showRuntimeModeHint() {
+            if (IS_FILE_MODE) {
+                cwToast('当前为独立文件模式，若出现网络受限可改用本地静态服务器打开', 'info', 3600);
+            }
+            window.addEventListener('offline', function () {
+                cwToast('网络已断开，地图与路线规划能力将不可用', 'error', 3600);
+            });
         }
 
         // ========== 地图初始化与基础交互 ==========
@@ -800,7 +810,9 @@
                 } else if (error.message.includes('timeout')) {
                     errorMsg = "请求超时，检查网络或后端";
                 } else if (error.message.includes('Failed to fetch')) {
-                    errorMsg = "无法连接后端：确认服务已启动、地址端口与跨域";
+                    errorMsg = IS_FILE_MODE
+                        ? "独立文件模式下请求受浏览器限制，建议使用本地静态服务器打开"
+                        : "无法连接后端：确认服务已启动、地址端口与跨域";
                 } else if (error.message.includes('JSON')) {
                     errorMsg = "接口返回非预期 JSON";
                 } else {
@@ -1448,6 +1460,7 @@ function showCustomModal(content) {
         }
 
         // 页面加载完成初始化
+        showRuntimeModeHint();
         if (window.AMap) {
             initMap();
         } else {

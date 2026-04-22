@@ -5,19 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="虚拟小区停车：匈牙利精确最优或 PSO 近似；路径可视化。" />
   <meta name="keywords" content="停车分配,PSO,粒子群,匈牙利算法,小区规划,在线工具" />
-  <link rel="apple-touch-icon" sizes="180x180" href="../../assets/icons/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="../../assets/icons/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="../../assets/icons/favicon-16x16.png">
-  <link rel="shortcut icon" href="../../assets/icons/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' fill='%23fffa00'/%3E%3Cpath fill='%23000' d='M48 18a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm-18 26h36l8 32h-10l-3-13H35l-3 13H22l8-32zm11 11h14l-2-8h-10l-2 8z'/%3E%3C/svg%3E">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' fill='%23fffa00'/%3E%3Cpath fill='%23000' d='M48 18a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm-18 26h36l8 32h-10l-3-13H35l-3 13H22l8-32zm11 11h14l-2-8h-10l-2 8z'/%3E%3C/svg%3E">
+  <link rel="shortcut icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' fill='%23fffa00'/%3E%3Cpath fill='%23000' d='M48 18a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm-18 26h36l8 32h-10l-3-13H35l-3 13H22l8-32zm11 11h14l-2-8h-10l-2 8z'/%3E%3C/svg%3E">
   <title>停车分配实验</title>
-  <link rel="stylesheet" href="../../assets/css/common.css" />
+  <link rel="stylesheet" href="assets/shared/common.css" />
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body class="page-container">
   <div class="page-header">
     <div class="header-top">
-      <a href="../" class="back-btn">返回上一级</a>
-      <a href="../../index.html" class="back-btn">返回主页</a>
+      <a href="../" class="back-btn js-local-nav">返回上一级</a>
+      <a href="../../index.html" class="back-btn js-local-nav">返回主页</a>
     </div>
     <div class="section-header section-header--page">
       <h1>停车分配实验</h1>
@@ -105,6 +104,88 @@
     </aside>
     </div>
   </div>
+  <script id="default-scenario-inline" type="application/json">
+{
+  "lot": { "width": 100, "height": 100 },
+  "entrance": [22, 18],
+  "inner": {
+    "x_min": 22,
+    "x_max": 78,
+    "y_min": 18,
+    "y_max": 82
+  },
+  "obstacle": {
+    "x_min": 44,
+    "x_max": 56,
+    "y_min": 30,
+    "y_max": 70
+  },
+  "buildings": [
+    [26, 90],
+    [50, 90],
+    [74, 90],
+    [50, 10],
+    [74, 10],
+    [10, 26],
+    [10, 50],
+    [10, 74],
+    [90, 26],
+    [90, 50],
+    [90, 74]
+  ],
+  "slots": [
+    [24.55, 21.03],
+    [75.45, 21.03],
+    [24.55, 32.62],
+    [75.45, 32.62],
+    [24.55, 44.21],
+    [75.45, 44.21],
+    [24.55, 55.79],
+    [75.45, 55.79],
+    [24.55, 67.38],
+    [75.45, 67.38],
+    [24.55, 78.97],
+    [75.45, 78.97]
+  ],
+  "n_veh": 12,
+  "vehicle_destinations": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0],
+  "pso": {
+    "n_particles": 40,
+    "n_iter": 600,
+    "w": 0.7,
+    "c1": 1.5,
+    "c2": 1.5,
+    "v_max": 0.25
+  },
+  "constraints": {
+    "snap_slots_to_inner_road": true,
+    "snap_entrance_to_inner": true
+  },
+  "display": {
+    "length_unit": "m",
+    "time_unit": "s",
+    "scale_bar_m": 20,
+    "coord_note": "平面坐标 1 单位 = 1 m"
+  }
+}
+  </script>
+  <script>
+    (function initFileModeNavFallback() {
+      const isFileMode = window.location.protocol === "file:";
+      const navLinks = document.querySelectorAll(".js-local-nav");
+      navLinks.forEach(function (link) {
+        link.addEventListener("click", function (event) {
+          if (!isFileMode) return;
+          event.preventDefault();
+          if (window.history.length > 1) {
+            window.history.back();
+            return;
+          }
+          link.style.display = "none";
+        });
+      });
+    })();
+  </script>
   <script src="assets/js/optimizer.js"></script>
   <script src="assets/js/app.js"></script>
 </body>

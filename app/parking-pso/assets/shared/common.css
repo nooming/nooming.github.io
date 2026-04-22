@@ -1,0 +1,169 @@
+/* parking-pso 本地自包含公共样式（精简版） */
+:root {
+    --color-theme: #fffa00;
+    --color-theme-secondary: #000000;
+    --color-theme-ink: #000000;
+    --gradient-theme: #fffa00;
+    --gradient-theme-reverse: #ebe300;
+    --shadow-theme: 0 4px 12px rgba(212, 200, 0, 0.35);
+    --shadow-theme-hover: 0 6px 20px rgba(212, 200, 0, 0.45);
+    --color-canvas: #ffffff;
+    --color-card: #ffffff;
+    --color-body: rgba(0, 0, 0, 0.72);
+    --shadow-card-float:
+        0 1px 0 rgba(255, 255, 255, 0.9) inset,
+        0 18px 46px rgba(0, 0, 0, 0.09),
+        0 6px 16px rgba(0, 0, 0, 0.05);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    background-color: var(--color-canvas);
+    color: var(--color-body);
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+.page-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 25px 20px;
+    background: transparent;
+    min-height: 100vh;
+}
+
+.page-header {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+    position: relative;
+    padding-top: 0;
+}
+
+.header-top {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 0;
+}
+
+.back-btn {
+    display: inline-block;
+    padding: 9px 18px;
+    background: var(--gradient-theme);
+    color: var(--color-theme-ink) !important;
+    text-decoration: none !important;
+    margin-bottom: 0 !important;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-theme);
+}
+
+.back-btn:hover {
+    background: var(--gradient-theme-reverse);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-theme-hover);
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 0;
+    padding: 14px 16px 6px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    width: 100%;
+}
+
+.section-header--page {
+    padding-top: 10px;
+    margin-bottom: 4px;
+}
+
+.section-header h1,
+.section-header h2 {
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: #000000;
+    margin: 0 0 0 0;
+    padding: 0 0 12px 0;
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+    line-height: 1.25;
+    letter-spacing: -0.3px;
+    text-align: center;
+}
+
+.section-header h1::after,
+.section-header h2::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 52px;
+    height: 4px;
+    background: var(--color-theme);
+}
+
+.section-header p {
+    color: #666666;
+    font-size: 0.95rem;
+    font-weight: 400;
+    line-height: 1.65;
+    margin: 14px auto 0;
+    max-width: 42rem;
+}
+
+.app-panel {
+    background: var(--color-card);
+    padding: 25px;
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    box-shadow: var(--shadow-card-float);
+    margin-top: 0;
+}
+
+@media (max-width: 767.98px) {
+    .page-container {
+        padding: 15px 12px;
+    }
+
+    .page-header {
+        margin-bottom: 18px;
+    }
+
+    .back-btn {
+        font-size: 0.85rem;
+        padding: 7px 14px;
+    }
+
+    .section-header h1,
+    .section-header h2 {
+        font-size: 1.45rem;
+        padding-bottom: 10px;
+    }
+
+    .section-header h1::after,
+    .section-header h2::after {
+        width: 44px;
+        height: 3px;
+    }
+
+    .section-header p {
+        font-size: 0.9rem;
+        margin-top: 12px;
+    }
+
+    .app-panel {
+        padding: 20px 18px;
+    }
+}
