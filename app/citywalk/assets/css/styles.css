@@ -25,7 +25,7 @@
             padding: 4px 10px;
             background: rgba(255,255,255,0.25);
             color: white;
-            border-radius: 0;
+            border-radius: 12px;
             font-size: 11px;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -71,7 +71,7 @@
 
         .loading-card {
             background: white;
-            border-radius: 0;
+            border-radius: var(--radius-lg);
             padding: 32px 40px;
             box-shadow: var(--shadow-lg);
             text-align: center;
@@ -109,28 +109,13 @@
         }
 
         .loading-step .step-icon {
+            font-size: 18px;
             width: 24px;
-            height: 24px;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-medium, #64748b);
-        }
-
-        .loading-step .step-icon svg {
-            width: 20px;
-            height: 20px;
-            display: block;
+            text-align: center;
         }
 
         .loading-step.active .step-icon {
             animation: bounce 0.6s ease infinite;
-            color: var(--primary);
-        }
-
-        .loading-step.done .step-icon {
-            color: #22c55e;
         }
 
         @keyframes bounce {
@@ -144,13 +129,8 @@
         }
 
         .loading-step.done .step-status::after {
-            content: '';
-            display: inline-block;
-            width: 14px;
-            height: 14px;
-            background-color: #22c55e;
-            -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M20 6L9 17l-5-5' stroke='black' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
-            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M20 6L9 17l-5-5' stroke='black' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+            content: '✓';
+            color: #22c55e;
         }
 
         .loading-step.active .step-status::after {
@@ -160,12 +140,35 @@
             height: 12px;
             border: 2px solid var(--primary);
             border-top-color: transparent;
-            border-radius: 0;
+            border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
+        }
+
+        /* 错误提示 */
+        .error-toast {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #ef4444, #f87171);
+            color: white;
+            padding: 12px 24px;
+            border-radius: var(--radius-md);
+            z-index: 1000;
+            display: none;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: var(--shadow-lg);
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
         }
 
         /* 控制面板 - 玻璃拟态风格 */
@@ -178,7 +181,7 @@
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-radius: 0;
+            border-radius: var(--radius-lg);
             box-shadow: var(--shadow-lg);
             z-index: 100;
             overflow: hidden;
@@ -201,7 +204,7 @@
             font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
 .panel-header-title-text {
@@ -210,20 +213,9 @@
             gap: 8px;
         }
 
-        .panel-header-walk-icon {
-            display: inline-flex;
-            width: 26px;
-            height: 26px;
-            flex-shrink: 0;
-            color: #fff;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .panel-header-walk-icon svg {
-            width: 22px;
-            height: 22px;
-            display: block;
+        .panel-header h2::before {
+            content: '🚶';
+            font-size: 22px;
         }
 
         /* 悬浮返回主页按钮样式（地图上的圆形按钮） */
@@ -231,18 +223,16 @@
             position: fixed;
             top: 16px;
             left: 16px;
-            min-width: 40px;
+            width: 40px;
             height: 40px;
-            padding: 0 12px;
-            border-radius: 0;
+            border-radius: 999px;
             border: none;
             background: rgba(15, 23, 42, 0.82);
             color: #ffffff;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.8rem;
-            font-weight: 700;
+            font-size: 18px;
             box-shadow: 0 10px 25px rgba(15, 23, 42, 0.35);
             cursor: pointer;
             z-index: 150;
@@ -266,10 +256,9 @@
             .back-home-fab {
                 top: 14px;
                 left: 12px;
-                min-width: 36px;
+                width: 36px;
                 height: 36px;
-                padding: 0 10px;
-                font-size: 0.72rem;
+                font-size: 16px;
                 box-shadow: 0 8px 20px rgba(15, 23, 42, 0.35);
             }
         }
@@ -287,28 +276,28 @@
 
         .panel-body::-webkit-scrollbar-track {
             background: var(--bg-light);
-            border-radius: 0;
+            border-radius: 3px;
         }
 
         .panel-body::-webkit-scrollbar-thumb {
             background: linear-gradient(180deg, var(--primary-light), var(--primary));
-            border-radius: 0;
+            border-radius: 3px;
         }
 
         .panel-body::-webkit-scrollbar-thumb:hover {
             background: var(--primary);
         }
 
-        /* 天气卡片 - 白色背景 */
+        /* 天气卡片 - 渐变背景 */
         .weather-card {
-            background: #ffffff;
-            border-radius: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: var(--radius-md);
             padding: 16px 20px;
             margin-bottom: 20px;
             display: flex;
             align-items: center;
             gap: 16px;
-            color: #000000;
+            color: white;
             box-shadow: var(--shadow-md);
             transition: var(--transition);
         }
@@ -319,20 +308,8 @@
         }
 
         .weather-icon {
-            width: 48px;
-            height: 48px;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #000000;
+            font-size: 36px;
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
-        }
-
-        .weather-icon svg {
-            width: 40px;
-            height: 40px;
-            display: block;
         }
 
         .weather-info {
@@ -347,8 +324,7 @@
 
         .weather-info .desc {
             font-size: 12px;
-            color: #000000;
-            opacity: 0.85;
+            opacity: 0.9;
         }
 
         /* 起终点状态卡片 */
@@ -363,7 +339,7 @@
             padding: 14px 16px;
             background: var(--bg-light);
             border: 2px solid var(--border-light);
-            border-radius: 0;
+            border-radius: var(--radius-md);
             transition: var(--transition);
             cursor: pointer;
         }
@@ -399,34 +375,6 @@
             color: var(--primary-dark);
         }
 
-        .status-label-row {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .cw-inline-ico {
-            width: 18px;
-            height: 18px;
-            display: inline-flex;
-            flex-shrink: 0;
-            color: rgba(255, 255, 255, 0.95);
-            align-items: center;
-            justify-content: center;
-        }
-
-        .cw-inline-ico svg {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-
-        .cw-inline-ico--muted {
-            width: 14px;
-            height: 14px;
-            color: var(--text-light);
-        }
-
         /* 筛选标题 */
         .filter-title {
             font-size: 13px;
@@ -443,7 +391,7 @@
             width: 3px;
             height: 14px;
             background: linear-gradient(180deg, var(--primary), var(--primary-light));
-            border-radius: 0;
+            border-radius: 2px;
         }
 
         /* POI类型按钮组 */
@@ -457,32 +405,13 @@
         .poi-type-btn {
             padding: 8px 14px;
             border: 1.5px solid var(--border-light);
-            border-radius: 0;
+            border-radius: 20px;
             font-size: 13px;
             cursor: pointer;
             background: white;
             color: var(--text-medium);
             transition: var(--transition);
             font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .poi-type-ico {
-            width: 16px;
-            height: 16px;
-            display: inline-flex;
-            flex-shrink: 0;
-            color: inherit;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .poi-type-ico svg {
-            width: 100%;
-            height: 100%;
-            display: block;
         }
 
         .poi-type-btn:hover {
@@ -509,7 +438,7 @@
             flex: 1;
             padding: 12px 16px;
             border: 2px solid var(--border-light);
-            border-radius: 0;
+            border-radius: var(--radius-md);
             font-size: 15px;
             font-weight: 500;
             color: var(--text-dark);
@@ -540,7 +469,7 @@
             flex: 1;
             padding: 12px 16px;
             border: none;
-            border-radius: 0;
+            border-radius: var(--radius-md);
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
@@ -581,7 +510,7 @@
             width: 100%;
             padding: 12px 16px;
             border: none;
-            border-radius: 0;
+            border-radius: var(--radius-md);
             background: linear-gradient(135deg, #3b82f6, #60a5fa);
             color: white;
             font-size: 14px;
@@ -589,25 +518,8 @@
             cursor: pointer;
             margin: 8px 0;
             display: none;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
             transition: var(--transition);
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        }
-
-        .btn-share-ico {
-            width: 18px;
-            height: 18px;
-            display: inline-flex;
-            flex-shrink: 0;
-            color: inherit;
-        }
-
-        .btn-share-ico svg {
-            width: 100%;
-            height: 100%;
-            display: block;
         }
 
         .btn-generate-plan:hover {
@@ -640,14 +552,8 @@
         }
 
         .result-header::before {
-            content: '';
-            display: inline-block;
-            width: 18px;
-            height: 18px;
-            flex-shrink: 0;
-            background-color: var(--primary, #22c55e);
-            -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E") center / contain no-repeat;
-            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E") center / contain no-repeat;
+            content: '✅';
+            font-size: 16px;
         }
 
         .result-item {
@@ -657,7 +563,7 @@
             padding: 10px 14px;
             margin: 8px 0;
             background: var(--bg-light);
-            border-radius: 0;
+            border-radius: var(--radius-sm);
             font-size: 14px;
         }
 
@@ -686,12 +592,12 @@
 
         .poi-list::-webkit-scrollbar-track {
             background: var(--bg-light);
-            border-radius: 0;
+            border-radius: 2px;
         }
 
         .poi-list::-webkit-scrollbar-thumb {
             background: var(--border-light);
-            border-radius: 0;
+            border-radius: 2px;
         }
 
         .poi-item {
@@ -699,7 +605,7 @@
             font-size: 13px;
             color: var(--text-medium);
             cursor: pointer;
-            border-radius: 0;
+            border-radius: var(--radius-sm);
             margin-bottom: 6px;
             background: white;
             border: 1px solid var(--border-light);
@@ -726,7 +632,7 @@
             height: 22px;
             background: linear-gradient(135deg, var(--primary), var(--primary-light));
             color: white;
-            border-radius: 0;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -748,7 +654,7 @@
                 height: auto;
                 /* 默认只显示头部，让用户看到更多地图 */
                 max-height: none;
-                border-radius: 0;
+                border-radius: 20px 20px 0 0;
                 box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
                 border: none;
                 border-top: 1px solid rgba(255,255,255,0.8);
@@ -759,7 +665,7 @@
 
             .panel-header {
                 padding: 24px 20px 16px 20px;
-                border-radius: 0;
+                border-radius: 20px 20px 0 0;
                 /* 增加拖动区域 */
                 position: relative;
                 cursor: grab;
@@ -825,7 +731,7 @@
                 width: 36px;
                 height: 4px;
                 background: rgba(255,255,255,0.6);
-                border-radius: 0;
+                border-radius: 2px;
                 pointer-events: none;
                 transition: width 0.2s ease, background 0.2s ease;
             }
@@ -937,13 +843,7 @@
             }
 
             .weather-icon {
-                width: 44px;
-                height: 44px;
-            }
-
-            .weather-icon svg {
-                width: 36px;
-                height: 36px;
+                font-size: 32px;
             }
 
             /* 移动端加载动画 */
@@ -959,6 +859,14 @@
             .loading-step {
                 font-size: 13px;
                 padding: 8px 0;
+            }
+
+            /* 移动端提示框 */
+            .error-toast {
+                top: 16px;
+                padding: 14px 20px;
+                font-size: 14px;
+                max-width: 90vw;
             }
 
             /* 移动端筛选标题 */
@@ -1008,7 +916,7 @@
                 left: auto;
                 top: 10px;
                 bottom: auto;
-                border-radius: 0;
+                border-radius: 16px;
             }
         }
 

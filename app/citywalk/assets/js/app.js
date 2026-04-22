@@ -1,6 +1,3 @@
-        // Toast：全站 assets/js/utils.js（Citywalk 默认略长显示）
-        const cwToast = (message, type = 'info', duration = 3000) => window.showToast(message, type, duration);
-
         // ========== Citywalk 前端 · 配置与全局状态 ==========
         // 全局变量
         let map = null;
@@ -13,6 +10,7 @@
         let infoWindow = null;
         let selectedPoiType = "无偏好";
         let routeData = null;
+        let debounceTimer = null;
         let liveWeatherData = null;
         let liveWeatherForCity = null;
         let currentTheme = null;
@@ -38,41 +36,11 @@
         };
 
         // API 基础地址配置 - 根据环境自动切换（本地含 IPv6 ::1）
-        const IS_FILE_MODE = window.location.protocol === 'file:';
         const _h = window.location.hostname;
         const API_BASE_URL =
             _h === 'localhost' || _h === '127.0.0.1' || _h === '[::1]' || _h === '::1'
                 ? 'http://localhost:5000'
                 : 'https://noomings-backend.zeabur.app';
-
-        const WEATHER_SVG_IDS = {
-            sunny: 'cw-sun',
-            cloudy: 'cw-cloud',
-            rainy: 'cw-rain',
-            snowy: 'cw-snow',
-            windy: 'cw-wind',
-            partly: 'cw-partly'
-        };
-
-        function getWeatherIconKey(weather) {
-            const s = weather == null ? '' : String(weather);
-            if (s.includes('晴')) return 'sunny';
-            if (s.includes('云')) return 'cloudy';
-            if (s.includes('雨')) return 'rainy';
-            if (s.includes('雪')) return 'snowy';
-            if (s.includes('风')) return 'windy';
-            return 'partly';
-        }
-
-        function weatherIconHtml(key) {
-            const id = WEATHER_SVG_IDS[key] || WEATHER_SVG_IDS.partly;
-            return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="100%" height="100%" focusable="false" aria-hidden="true"><use href="#${id}"/></svg>`;
-        }
-
-        function cwUseHtml(symbolId, w, h, color) {
-            const style = color ? `color:${color};` : '';
-            return `<span style="display:inline-flex;width:${w}px;height:${h}px;${style}align-items:center;justify-content:center;flex-shrink:0;"><svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 24 24" focusable="false" aria-hidden="true"><use href="#${symbolId}"/></svg></span>`;
-        }
 
         // 主题配色方案
         const colorThemes = [
@@ -98,6 +66,11 @@
 
         // 页面加载时设置随机主题
         setRandomTheme();
+
+        // 地图加载失败处理
+        function mapLoadError() {
+            showToast("高德地图加载失败，请刷新页面重试");
+        }
 
         // ========== 天气（获取 / 刷新 / 渲染） ==========
         /**
@@ -154,13 +127,13 @@
                 updateWeatherUI(
                     `${liveWeatherData.weather} ${liveWeatherData.temperature}℃`,
                     weatherCardDescFromStoredLiveData(liveWeatherData),
-                    getWeatherIconKey(liveWeatherData.weather)
+                    getWeatherIcon(liveWeatherData.weather)
                 );
                 return;
             }
 
             if (!window.AMap || !AMap.Weather) {
-                updateWeatherUI("天气加载失败", "无法获取天气数据", "partly");
+                updateWeatherUI("天气加载失败", "无法获取天气数据", "⛅");
                 return;
             }
 
@@ -168,14 +141,14 @@
             updateWeatherUI(
                 "加载中...",
                 meta.loadingHint || `正在获取${city}实时天气`,
-                "partly"
+                "🌤️"
             );
 
             function showUnavailable() {
                 updateWeatherUI(
                     "天气暂不可用",
                     "该地区暂无高德实时天气或名称不匹配，请出门前查看当地预报",
-                    "partly"
+                    "⛅"
                 );
             }
 
@@ -193,7 +166,7 @@
                 updateWeatherUI(
                     `${data.weather} ${data.temperature}℃`,
                     weatherCardDescFromStoredLiveData(liveWeatherData),
-                    getWeatherIconKey(data.weather)
+                    getWeatherIcon(data.weather)
                 );
             }
 
@@ -247,25 +220,22 @@
             return true;
         }
 
-        // 更新天气卡片 UI（第三参数为 getWeatherIconKey 结果或原始 weather 文案）
-        function updateWeatherUI(title, desc, weatherKeyOrLabel) {
-            const key =
-                weatherKeyOrLabel && WEATHER_SVG_IDS[weatherKeyOrLabel]
-                    ? weatherKeyOrLabel
-                    : getWeatherIconKey(weatherKeyOrLabel);
-            const el = document.getElementById('weatherIcon');
-            if (el) el.innerHTML = weatherIconHtml(key);
-            document.getElementById('weatherTitle').textContent = title;
-            document.getElementById('weatherDesc').textContent = desc;
+        // 根据天气类型获取对应图标（weather 可能为 undefined，需兜底）
+        function getWeatherIcon(weather) {
+            const s = weather == null ? '' : String(weather);
+            if (s.includes('晴')) return '☀️';
+            if (s.includes('云')) return '☁️';
+            if (s.includes('雨')) return '🌧️';
+            if (s.includes('雪')) return '❄️';
+            if (s.includes('风')) return '🌬️';
+            return '⛅';
         }
 
-        function showRuntimeModeHint() {
-            if (IS_FILE_MODE) {
-                cwToast('当前为独立文件模式，若出现网络受限可改用本地静态服务器打开', 'info', 3600);
-            }
-            window.addEventListener('offline', function () {
-                cwToast('网络已断开，地图与路线规划能力将不可用', 'error', 3600);
-            });
+        // 更新天气卡片UI
+        function updateWeatherUI(title, desc, icon) {
+            document.getElementById('weatherIcon').textContent = icon;
+            document.getElementById('weatherTitle').textContent = title;
+            document.getElementById('weatherDesc').textContent = desc;
         }
 
         // ========== 地图初始化与基础交互 ==========
@@ -298,7 +268,7 @@
             const cityInput = document.getElementById('cityInput');
             const city = cityInput.value.trim();
             if (!city) {
-                cwToast('请填写城市名', 'error');
+                showToast('请输入城市名称');
                 return;
             }
             quickSwitchCity(city);
@@ -307,7 +277,7 @@
         // 快速切换城市
         async function quickSwitchCity(city) {
             if (!city || !city.trim()) {
-                cwToast('城市名无效', 'error');
+                showToast('请输入有效的城市名称');
                 return;
             }
             
@@ -322,7 +292,7 @@
             }
             
             // 未知城市，使用高德地理编码获取坐标
-            cwToast(`定位中：${cityName}`);
+            showToast(`🔍 正在定位 ${cityName}...`);
             
             try {
                 const coords = await geocodeCity(cityName);
@@ -331,11 +301,11 @@
                     currentCityCenter = coords;
                     applyCitySwitch(currentCity, currentCityCenter);
                 } else {
-                    cwToast(`未找到城市：${cityName}`, 'error');
+                    showToast(`❌ 无法定位城市：${cityName}，请检查城市名称`);
                 }
             } catch (e) {
                 console.error('城市定位失败：', e);
-                cwToast(`定位失败：${cityName}`, 'error');
+                showToast(`❌ 定位失败：${cityName}`);
             }
         }
         
@@ -381,13 +351,13 @@
             // 重置路线选择
             resetSelection();
             
-            cwToast(`已切换：${cityName}`, 'success');
+            showToast(`✅ 已切换到：${cityName}`);
         }
 
         // 初始化地图
         function initMap() {
             if (!window.AMap) {
-                cwToast("地图加载失败，检查网络或 Key", 'error');
+                showToast("高德地图加载失败，请检查网络或Key有效性");
                 return;
             }
 
@@ -431,9 +401,21 @@
 
                 console.log("地图初始化成功");
             } catch (e) {
-                cwToast(`地图初始化失败：${e.message}`, 'error');
+                showToast(`地图初始化失败：${e.message}`);
                 console.error("地图初始化错误：", e);
             }
+        }
+
+        // 显示提示框（防抖）
+        function showToast(message, duration = 3000) {
+            clearTimeout(debounceTimer);
+            const toast = document.getElementById('errorToast');
+            toast.textContent = message;
+            toast.style.display = 'block';
+
+            debounceTimer = setTimeout(() => {
+                toast.style.display = 'none';
+            }, duration);
         }
 
         // ========== 路线选择与 POI 标记 ==========
@@ -574,7 +556,7 @@
                     style: {
                         'background': `linear-gradient(135deg, ${themeColor}, ${themeLightColor})`,
                         'color': 'white',
-                        'border-radius': '0',
+                        'border-radius': '14px',
                         'min-width': '28px',
                         'height': '28px',
                         'text-align': 'center',
@@ -597,17 +579,17 @@
                         content: `
                             <div style="padding: 16px; font-size: 14px; min-width: 200px; font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;">
                                 <h4 style="margin: 0 0 12px 0; color: #1e293b; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                                    <span style="background: linear-gradient(135deg, #ff7e5f, #feb47b); color: white; width: 24px; height: 24px; border-radius: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 12px;">${index+1}</span>
+                                    <span style="background: linear-gradient(135deg, #ff7e5f, #feb47b); color: white; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px;">${index+1}</span>
                                     ${poi.name}
                                 </h4>
                                 <p style="margin: 8px 0; color: #64748b; display: flex; align-items: center; gap: 6px;">
-                                    ${cwUseHtml('cw-tag', 14, 14, '#94a3b8')} ${poi.category || poi.type || '未知类型'}
+                                    <span style="color: #94a3b8;">🏷️</span> ${poi.category || poi.type || '未知类型'}
                                 </p>
                                 <p style="margin: 8px 0; color: #64748b; display: flex; align-items: center; gap: 6px;">
-                                    ${cwUseHtml('cw-pin', 14, 14, '#94a3b8')} ${poi.address || '暂无地址'}
+                                    <span style="color: #94a3b8;">📍</span> ${poi.address || '暂无地址'}
                                 </p>
                                 <p style="margin: 8px 0; color: #ff7e5f; font-weight: 600; display: flex; align-items: center; gap: 6px;">
-                                    ${cwUseHtml('cw-clock', 14, 14, '#ff7e5f')} 建议停留 ${poi.stay_time || 8} 分钟
+                                    <span>⏱️</span> 建议停留 ${poi.stay_time || 8} 分钟
                                 </p>
                             </div>
                         `,
@@ -658,7 +640,7 @@
         // 生成路线
         function generateRoute() {
             if (!startPoint || !endPoint) {
-                cwToast("先选起终点", 'error');
+                showToast("请先选择起终点");
                 return;
             }
 
@@ -666,7 +648,7 @@
             let planTime = parseInt(planTimeSlider.value, 10);
 
             if (isNaN(planTime) || planTime < 30 || planTime > 180) {
-                cwToast("计划时长须在 30–180 分钟", 'error');
+                showToast("请设置30-180分钟的游玩时间");
                 return;
             }
 
@@ -713,7 +695,7 @@
             .then(data => {
                 hideLoadingSteps();
                 if (!data.success) {
-                    cwToast(`规划失败：${data.message || '未知错误'}`, 'error');
+                    showToast(`路线规划失败：${data.message || '未知错误'}`);
                     return;
                 }
 
@@ -773,7 +755,7 @@
                             };
                             poiItem.innerHTML = `
                                 <div style="display: flex; align-items: flex-start; gap: 8px;">
-                                    ${cwUseHtml('cw-pin', 20, 20, 'var(--primary, #ff7e5f)')}
+                                    <span style="font-size: 18px;">${poi.icon || '📍'}</span>
                                     <div style="flex: 1;">
                                         <strong>${index+1}. ${poiName}</strong>
                                         <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">${poiType}</div>
@@ -794,9 +776,9 @@
                 const resultArea = document.getElementById('resultArea');
                 if (resultArea) resultArea.style.display = 'block';
                 const btnGeneratePlan = document.getElementById('btnGeneratePlan');
-                if (btnGeneratePlan) btnGeneratePlan.style.display = 'flex';
+                if (btnGeneratePlan) btnGeneratePlan.style.display = 'block';
                 const btnShareImage = document.getElementById('btnShareImage');
-                if (btnShareImage) btnShareImage.style.display = 'flex';
+                if (btnShareImage) btnShareImage.style.display = 'block';
 
                 // 生成路线后主动刷新天气
                 getCityWeather(currentCity, true);
@@ -805,19 +787,17 @@
                 hideLoadingSteps();
                 let errorMsg = '';
                 if (error.name === 'AbortError') {
-                    errorMsg = "请求超时：检查后端是否运行或缩短路线";
+                    errorMsg = "请求超时（2分钟），请检查后端服务是否运行或缩短路线距离";
                 } else if (error.message.includes('timeout')) {
-                    errorMsg = "请求超时，检查网络或后端";
+                    errorMsg = "请求超时，请检查网络或后端服务是否运行";
                 } else if (error.message.includes('Failed to fetch')) {
-                    errorMsg = IS_FILE_MODE
-                        ? "独立文件模式下请求受浏览器限制，建议使用本地静态服务器打开"
-                        : "无法连接后端：确认服务已启动、地址端口与跨域";
+                    errorMsg = "无法连接到后端服务，请确认：1.后端已启动 2.地址端口正确 3.已配置跨域";
                 } else if (error.message.includes('JSON')) {
-                    errorMsg = "接口返回非预期 JSON";
+                    errorMsg = "后端返回数据格式错误，请检查接口返回值";
                 } else {
                     errorMsg = `请求失败：${error.message}`;
                 }
-                cwToast(errorMsg, 'error');
+                showToast(errorMsg);
                 console.error('路线规划错误：', error);
             });
         }
@@ -826,7 +806,7 @@
         // 生成更贴心的文字方案
         function generatePlanText() {
             if (!routeData || !routeData.success) {
-                cwToast("请先生成路线", 'error');
+                showToast("请先生成有效的路线规划！");
                 return;
             }
 
@@ -844,58 +824,68 @@
             const hour = now.getHours();
             let greeting = '';
             if (hour < 10) {
-                greeting = '早上好';
+                greeting = '☀️ 早上好呀～';
             } else if (hour < 14) {
-                greeting = '中午好';
+                greeting = '🍛 中午好～';
             } else if (hour < 18) {
-                greeting = '下午好';
+                greeting = '☕ 下午好～';
             } else {
-                greeting = '晚上好';
+                greeting = '🌙 晚上好～';
             }
 
             let poiText = '';
             if (poiCount > 0) {
-                poiText = '\n【打卡点】\n';
+                poiText = '\n✨ 【今日推荐打卡点】\n';
                 routeData.pois.forEach((poi, index) => {
                     const poiName = poi.name || '未知名称';
-                    poiText += `${index + 1}. ${poiName}\n`;
+                    const poiIcon = poi.icon || '📍';
+                    poiText += `${index + 1}. ${poiIcon} ${poiName}\n`;
                 });
             } else {
-                poiText = '\n【打卡点】\n暂无推荐点，可自由步行。\n';
+                poiText = '\n✨ 【今日推荐打卡点】\n暂时没有推荐的打卡点哦，不妨随心走走，说不定会发现意外的美好～';
             }
 
-            let weatherTips = '\n【天气】\n';
+            let weatherTips = '\n🌤️ 【今日天气小贴士】\n';
             if (liveWeatherData && liveWeatherData.weather != null) {
                 const proxyHint = liveWeatherData.proxyNeighborName
                     ? `（${liveWeatherData.proxyNeighborName}市实况，供${currentCity}参考）`
                     : '';
-                weatherTips += `${proxyHint}${currentCity} ${liveWeatherData.weather}，${liveWeatherData.temperature}℃，${liveWeatherData.windDirection}风${liveWeatherData.windPower}级，湿度${liveWeatherData.humidity}%\n`;
+                weatherTips += `${proxyHint}今天${currentCity}${liveWeatherData.weather}，气温${liveWeatherData.temperature}℃，${liveWeatherData.windDirection}${liveWeatherData.windPower}级，湿度${liveWeatherData.humidity}%\n`;
 
                 const wx = String(liveWeatherData.weather);
                 const t = parseInt(liveWeatherData.temperature, 10);
                 if (wx.includes('雨')) {
-                    weatherTips += '有雨，注意路滑，建议带伞。\n';
+                    weatherTips += '💧 温馨提示：今日有雨，记得带上小雨伞哦～路面可能湿滑，走路慢慢走，安全第一❤️\n';
                 } else if (t > 30) {
-                    weatherTips += '气温偏高，注意防晒与补水。\n';
+                    weatherTips += '☀️ 温馨提示：今日气温较高，做好防晒哦～记得随身带瓶水，补充水分💦\n';
                 } else if (t < 10) {
-                    weatherTips += '气温偏低，注意保暖。\n';
+                    weatherTips += '🧣 温馨提示：今日气温较低，多穿点衣服哦～别着凉啦❤️\n';
+                } else if (wx.includes('晴')) {
+                    weatherTips += '😘 温馨提示：今日天气超棒！适合出门走走，记得带上好心情～\n';
                 } else {
-                    weatherTips += '体感尚可，适合步行。\n';
+                    weatherTips += '😊 温馨提示：今日天气舒适，适合Citywalk，享受慢时光～\n';
                 }
             } else {
-                weatherTips += '暂无实时天气，出门前请自行查看预报。\n';
+                weatherTips += '暂时无法获取实时天气，出门前记得看下天气预报哦～\n';
             }
 
-            const planText = `${greeting}。${currentCity} 步行方案
+            const planText = `${greeting} 这份专属你的${currentCity}Citywalk攻略来啦～
 
-【主题】${poiType}
-【计划时长】${planTime} 分钟
-【路线长度】${distance} 公里
-【预计总耗时】${duration} 分钟
+🎈 【游玩主题】：${poiType}
+⏰ 【计划时长】：${planTime}分钟
+📏 【路线总长】：${distance}公里
+⌛ 【预计耗时】：${duration} 分钟
 ${weatherTips}
 ${poiText}
 
-【备注】按序号游览；可随时改路线。`;
+💖 【暖心小建议】：
+1. 建议按照序号顺序游玩，每个打卡点慢慢逛，不用赶时间～
+2. 走路累了可以找家小店歇歇脚，喝杯咖啡或奶茶☕
+3. 记得多拍点美美的照片，记录美好的瞬间～
+4. 注意随身物品安全，开开心心出门，平平安安回家～
+5. 如果走累了，随时可以调整路线，游玩最重要的是开心呀🥳
+
+✨ 愿你在${currentCity}的街头，遇见美好，收获满满的快乐～`;
 
             // 使用自定义弹窗展示长文案（避免原生 alert 截断）
             showCustomModal(planText);
@@ -904,7 +894,7 @@ ${poiText}
             try {
                 if (navigator.clipboard && window.isSecureContext) {
                     navigator.clipboard.writeText(planText).then(() => {
-                        cwToast("文字方案已复制", 'success');
+                        showToast("❤️ 游玩方案已复制到剪贴板啦～");
                     }).catch(err => {
                         throw err;
                     });
@@ -916,27 +906,27 @@ ${poiText}
                     textArea.select();
                     document.execCommand('copy');
                     document.body.removeChild(textArea);
-                    cwToast("文字方案已复制", 'success');
+                    showToast("❤️ 游玩方案已复制到剪贴板啦～");
                 }
             } catch (err) {
                 console.error('复制失败：', err);
-                cwToast("复制失败，请手动复制弹窗内文字", 'error');
+                showToast("😥 复制失败啦，可以手动复制弹窗里的内容哦～");
             }
         }
 
 // 生成分享长图（使用浏览器原生截图API截取地图）
 async function generateShareImage() {
     if (!routeData || !routeData.success) {
-        cwToast("请先生成路线", 'error');
+        showToast("请先生成有效的路线规划！");
         return;
     }
 
-    cwToast("截屏中…");
+    showToast("🎨 正在截取地图，请稍候...");
 
     // ========== 第一步：使用屏幕共享API截取地图 ==========
     let mapImageUrl = null;
     try {
-        cwToast("请选择要导出的地图区域");
+        showToast("🗺️ 请选择要分享的地图区域...");
         
         // 请求屏幕共享
         const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -947,7 +937,7 @@ async function generateShareImage() {
             audio: false
         });
         
-        cwToast("截屏中…");
+        showToast("📸 正在截取地图...");
         
         // 创建视频元素捕获画面
         const video = document.createElement('video');
@@ -973,13 +963,13 @@ async function generateShareImage() {
         
         // 转换为图片URL
         mapImageUrl = canvas.toDataURL('image/png', 0.9);
-        cwToast("截屏完成，合成中…");
+        showToast("✅ 地图截取成功，正在合成长图...");
     } catch (e) {
         console.warn('屏幕共享取消或失败:', e);
         if (e.name === 'NotAllowedError') {
-            cwToast("已取消共享，使用默认背景");
+            showToast("已取消屏幕共享，使用默认背景...");
         } else {
-            cwToast("截图失败，使用默认背景", 'error');
+            showToast("截图失败，使用默认背景...");
         }
     }
 
@@ -1013,11 +1003,13 @@ async function generateShareImage() {
     
     // 天气信息
     let weatherText = '适宜出行';
+    let weatherIcon = '🌤️';
     if (liveWeatherData) {
         const px = liveWeatherData.proxyNeighborName
             ? `${liveWeatherData.proxyNeighborName}市 `
             : '';
         weatherText = `${px}${liveWeatherData.weather} ${liveWeatherData.temperature}℃`;
+        weatherIcon = getWeatherIcon(liveWeatherData.weather);
     }
     
     // 日期格式化
@@ -1072,19 +1064,19 @@ async function generateShareImage() {
     if (poiCount > 0) {
         const showPois = routeData.pois.slice(0, 4);
         poisHtml = '<div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; padding: 0 10px;">';
-        const pinSvgShare = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="none" stroke="#2d3748" stroke-width="1.75" d="M12 21s7-5 7-11a7 7 0 1 0-14 0c0 6 7 11 7 11z"/><circle fill="#2d3748" cx="12" cy="10" r="2"/></svg>';
         showPois.forEach((poi, index) => {
+            const poiIcon = poi.icon || '📍';
             const poiName = (poi.name || '未知').slice(0, 6);
             poisHtml += `
-                <div style="background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(255,255,255,0.9)); border-radius: 0; padding: 8px 14px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.5); backdrop-filter: blur(10px);">
-                    <span style="display:inline-flex;filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));">${pinSvgShare}</span>
+                <div style="background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(255,255,255,0.9)); border-radius: 20px; padding: 8px 14px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.5); backdrop-filter: blur(10px);">
+                    <span style="font-size: 16px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));">${poiIcon}</span>
                     <span style="font-size: 11px; color: #2d3748; font-weight: 600; letter-spacing: 0.3px;">${poiName}</span>
                 </div>
             `;
         });
         if (poiCount > 4) {
             poisHtml += `
-                <div style="background: linear-gradient(135deg, ${theme.primary}, ${theme.secondary}); border-radius: 0; padding: 8px 14px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.3);">
+                <div style="background: linear-gradient(135deg, ${theme.primary}, ${theme.secondary}); border-radius: 20px; padding: 8px 14px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.3);">
                     <span style="font-size: 12px; color: white; font-weight: 700;">+${poiCount - 4}</span>
                 </div>
             `;
@@ -1123,22 +1115,22 @@ async function generateShareImage() {
         
         <!-- 顶部信息区 -->
         <div style="position: absolute; top: 0; left: 0; width: 100%; padding: 18px 22px; box-sizing: border-box;">
-            <div style="font-size: 10px; color: rgba(255,255,255,0.95); margin-bottom: 6px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 500; text-shadow: 0 1px 3px rgba(0,0,0,0.2);">CITYWALK · ${areaName}</div>
+            <div style="font-size: 10px; color: rgba(255,255,255,0.95); margin-bottom: 6px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 500; text-shadow: 0 1px 3px rgba(0,0,0,0.2);">🚶 CITYWALK · ${areaName}</div>
             <h1 style="margin: 0; font-size: 24px; font-weight: 800; color: white; line-height: 1.2; text-shadow: 0 2px 12px rgba(0,0,0,0.3); letter-spacing: 0.5px;">
                 ${themeName}
             </h1>
-            <div style="margin-top: 10px; font-size: 12px; color: rgba(255,255,255,0.9); font-weight: 500; text-shadow: 0 1px 3px rgba(0,0,0,0.2);">${dateStr} · ${weatherText}</div>
+            <div style="margin-top: 10px; font-size: 12px; color: rgba(255,255,255,0.9); font-weight: 500; text-shadow: 0 1px 3px rgba(0,0,0,0.2);">${dateStr} · ${weatherIcon} ${weatherText}</div>
         </div>
         
         <!-- 右侧竖排文案区 -->
         <div style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); writing-mode: vertical-rl; text-orientation: upright; z-index: 10;">
-            <div style="font-size: 13px; color: white; font-weight: 700; text-shadow: 0 2px 8px rgba(0,0,0,0.4); letter-spacing: 4px; padding: 12px 8px; background: linear-gradient(180deg, ${theme.primary}cc, ${theme.secondary}aa); border-radius: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            <div style="font-size: 13px; color: white; font-weight: 700; text-shadow: 0 2px 8px rgba(0,0,0,0.4); letter-spacing: 4px; padding: 12px 8px; background: linear-gradient(180deg, ${theme.primary}cc, ${theme.secondary}aa); border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
                 ${randomSlogan}
             </div>
         </div>
         
         <!-- 底部信息区 - 毛玻璃卡片样式 -->
-        <div style="position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); width: calc(100% - 32px); max-width: 360px; padding: 20px; box-sizing: border-box; background: rgba(255,255,255,0.25); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 0; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.3);">
+        <div style="position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); width: calc(100% - 32px); max-width: 360px; padding: 20px; box-sizing: border-box; background: rgba(255,255,255,0.25); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 24px; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.3);">
             <!-- 数据统计 -->
             <div style="display: flex; justify-content: space-around; margin-bottom: 16px;">
                 <div style="text-align: center; flex: 1;">
@@ -1185,14 +1177,14 @@ async function generateShareImage() {
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
             
-            cwToast("长图已生成", 'success');
+            showToast("🎉 精美长图已生成，快去分享吧！");
         }, 'image/png', 0.95);
         
         document.body.removeChild(shareCard);
     } catch (err) {
         console.error('生成图片失败:', err);
         document.body.removeChild(shareCard);
-        cwToast("导出图片失败，请重试", 'error');
+        showToast("😥 生成图片失败，请重试");
     }
 }
 
@@ -1219,7 +1211,7 @@ function showCustomModal(content) {
     const modalContent = document.createElement('div');
     modalContent.style.cssText = `
         background: white;
-        border-radius: 0;
+        border-radius: 10px;
         padding: 20px;
         width: 90%;
         max-width: 600px;
@@ -1241,7 +1233,7 @@ function showCustomModal(content) {
         background: #2563eb;
         color: white;
         border: none;
-        border-radius: 0;
+        border-radius: 5px;
         cursor: pointer;
         font-size: 14px;
         display: block;
@@ -1300,11 +1292,11 @@ function showCustomModal(content) {
         // 搜索地址（使用PlaceSearch支持模糊搜索）
         function searchAddress(keyword) {
             if (!window.AMap) {
-                cwToast("地图未就绪", 'error');
+                showToast("地图未加载，请稍后重试");
                 return;
             }
 
-            cwToast(`搜索中：${keyword}`);
+            showToast(`🔍 正在搜索 "${keyword}"...`);
 
             // 先尝试使用 PlaceSearch 进行POI搜索（支持模糊匹配）
             AMap.plugin('AMap.PlaceSearch', function() {
@@ -1343,7 +1335,7 @@ function showCustomModal(content) {
                         });
                         infoWindow.open(map, [poi.location.lng, poi.location.lat]);
                         
-                        cwToast(`已找到「${poi.name}」，请在地图选起终点`, 'success');
+                        showToast(`✅ 找到 "${poi.name}"，点击地图选择为起点或终点`);
                         
                         // 3秒后清除标记和信息窗
                         setTimeout(() => {
@@ -1381,14 +1373,14 @@ function showCustomModal(content) {
                         map.setCenter([location.lng, location.lat]);
                         map.setZoom(17);
                         
-                        cwToast("已定位，请在地图选起终点", 'success');
+                        showToast("✅ 已定位，请点击地图选择为起点或终点");
                         
                         // 3秒后清除标记
                         setTimeout(() => {
                             map.remove(marker);
                         }, 3000);
                     } else {
-                        cwToast("未找到地点，请换关键词", 'error');
+                        showToast("❌ 未找到相关地点，请尝试其他关键词如：南京路、外滩、陆家嘴");
                     }
                 });
             });
@@ -1459,7 +1451,6 @@ function showCustomModal(content) {
         }
 
         // 页面加载完成初始化
-        showRuntimeModeHint();
         if (window.AMap) {
             initMap();
         } else {
