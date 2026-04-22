@@ -1,6 +1,6 @@
 /**
  * 小区停车分配 · 前端画布
- * 约定：与 parking_engine / 后端 /api 字段一致；分段注释用「// --- 标题 ---」。
+ * 约定：与 optimizer.js 结果字段一致；分段注释用「// --- 标题 ---」。
  */
 (function () {
   "use strict";
@@ -53,21 +53,53 @@
     cctx.imageSmoothingEnabled = true;
   }
 
-  // --- API 基址：file:// 走本机 Flask；线上静态站走 Zeabur ---
-  function apiUrl(path) {
-    if (window.location.protocol === "file:") {
-      return "http://127.0.0.1:5000" + path;
+  const optimizer = window.ParkingOptimizer || null;
+  const RESULT_KEYS = optimizer?.RESULT_KEYS || [
+    "scenario",
+    "gbest_value",
+    "history_best",
+    "assign",
+    "veh_targets",
+    "paths",
+    "road_segments",
+    "optimizer",
+  ];
+
+  function normalizeOptimizeResult(raw, method, fallbackScenario) {
+    const fallback = {
+      scenario: fallbackScenario,
+      gbest_value: null,
+      history_best: [],
+      assign: [],
+      veh_targets: [],
+      paths: [],
+      road_segments: [],
+      optimizer: method || "exact",
+      error: "优化结果结构无效",
+    };
+    if (!raw || typeof raw !== "object") return fallback;
+    const out = {};
+    for (const key of RESULT_KEYS) {
+      out[key] = raw[key];
     }
-    const h = window.location.hostname;
-    const local =
-      h === "localhost" ||
-      h === "127.0.0.1" ||
-      h === "[::1]" ||
-      h === "::1";
-    const base = local
-      ? "http://localhost:5000"
-      : "https://noomings-backend.zeabur.app";
-    return base + path;
+    out.error = typeof raw.error === "string" ? raw.error : null;
+    out.optimizer = out.optimizer === "pso" ? "pso" : "exact";
+    out.scenario = out.scenario && typeof out.scenario === "object" ? out.scenario : fallbackScenario;
+    out.gbest_value = Number.isFinite(Number(out.gbest_value))
+      ? Number(out.gbest_value)
+      : null;
+    out.history_best = Array.isArray(out.history_best)
+      ? out.history_best.map((v) => Number(v)).filter((v) => Number.isFinite(v))
+      : [];
+    out.assign = Array.isArray(out.assign)
+      ? out.assign.map((v) => parseInt(v, 10)).filter((v) => Number.isFinite(v))
+      : [];
+    out.veh_targets = Array.isArray(out.veh_targets)
+      ? out.veh_targets.map((v) => parseInt(v, 10)).filter((v) => Number.isFinite(v))
+      : [];
+    out.paths = Array.isArray(out.paths) ? out.paths : [];
+    out.road_segments = Array.isArray(out.road_segments) ? out.road_segments : [];
+    return out;
   }
 
   /**
@@ -102,12 +134,11 @@
   };
 
   /**
-   * 俯视绘制（米）：车位 ≈ 标准泊位 5×2.5，与引擎沿路车长/车宽量级一致；
-   * 居民楼 bw×bh 与 parking_engine.BUILDING_FOOTPRINT_W/H 一致（步行绕非目的楼障碍用）。
+   * 俯视绘制（米）：车位 ≈ 标准泊位 5×2.5，居民楼 bw×bh 与本地优化内核一致。
    */
   const B = { bw: 11.0, bh: 7.0, sw: 5.0, sh: 2.5 };
   const HIT_PAD = 0.5;
-  /** 与 parking_engine 一致；东西带用 SNAP_INSET_EW，南北带用车宽一半+边距 */
+  /** 与本地优化内核一致；东西带用 SNAP_INSET_EW，南北带用车宽一半+边距 */
   const SNAP_MARGIN = 0.45;
   const SNAP_INSET_EW = 2.55;
 
@@ -189,7 +220,7 @@
   function ensureConstraints() {
     if (!scenario) return;
     if (!scenario.constraints) scenario.constraints = {};
-    /* 无开关：始终吸附内环停车带与内环边线（与后端 normalize 一致） */
+    /* 无开关：始终吸附内环停车带与内环边线（与本地优化内核 normalize 一致） */
     scenario.constraints.snap_slots_to_inner_road = true;
     scenario.constraints.snap_entrance_to_inner = true;
     ensureDisplay();
@@ -1333,23 +1364,19 @@
     status.textContent = "计算中…（总时间单位：" + uTime() + "）";
     gbestEl.style.display = "none";
     try {
-      const res = await fetch(apiUrl("/api/optimize"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scenario, method }),
-      });
-      const rawText = await res.text();
-      let data = null;
-      try {
-        data = rawText ? JSON.parse(rawText) : {};
-      } catch (_) {
-        status.textContent =
-          "服务器返回非 JSON（多为 500）。请查看运行 web_app 的终端报错，改代码后需重启服务。";
+      if (!optimizer || typeof optimizer.runOptimize !== "function") {
+        status.textContent = "本地优化模块未加载（assets/js/optimizer.js）。";
         invalidateOptimizationResult();
         return;
       }
-      if (!res.ok) {
-        status.textContent = data.error || "请求失败（HTTP " + res.status + "）";
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      const data = normalizeOptimizeResult(
+        optimizer.runOptimize(scenario, { method }),
+        method,
+        scenario
+      );
+      if (data.error) {
+        status.textContent = data.error;
         invalidateOptimizationResult();
         return;
       }
@@ -1367,7 +1394,7 @@
         "：";
       gbestEl.style.display = "block";
       gbestEl.textContent =
-        Number(data.gbest_value).toFixed(2) + " " + uTime();
+        Number(data.gbest_value ?? 0).toFixed(2) + " " + uTime();
       updateChartCaption(opt === "exact" ? "exact" : undefined);
       drawChart(data.history_best || [], opt);
       draw();
@@ -1420,9 +1447,24 @@
 
   async function loadDefault() {
     try {
-      const res = await fetch(apiUrl("/api/default"));
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      scenario = await res.json();
+      if (!optimizer || typeof optimizer.normalizeScenario !== "function") {
+        throw new Error("optimizer module missing");
+      }
+      let localScenario = null;
+      if (window.location.protocol === "file:") {
+        localScenario = optimizer.defaultScenario();
+      } else {
+        try {
+          const res = await fetch("assets/data/default-scenario.json", {
+            cache: "no-store",
+          });
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          localScenario = await res.json();
+        } catch (_) {
+          localScenario = optimizer.defaultScenario();
+        }
+      }
+      scenario = optimizer.normalizeScenario(localScenario);
       ensureConstraints();
       ensureVehicleDestinationsArray();
       rebuildVehicleTargetsUI();
@@ -1437,14 +1479,9 @@
       draw();
     } catch (e) {
       document.getElementById("result-status").textContent =
-        "无法连接后端：本地请运行 noomings_backend 的 Flask（python citywalk.py），并用 localhost:5000 打开；线上需已部署含 numpy/scipy 的后端。";
+        "默认场景加载失败，请检查 assets/data/default-scenario.json 或 optimizer.js 是否可访问。";
       console.error(e);
     }
-  }
-
-  const fileHint = document.getElementById("file-protocol-hint");
-  if (fileHint && window.location.protocol === "file:") {
-    fileHint.style.display = "block";
   }
 
   let resizeChartTimer = null;

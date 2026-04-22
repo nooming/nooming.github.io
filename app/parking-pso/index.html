@@ -8,7 +8,6 @@
   <link rel="apple-touch-icon" sizes="180x180" href="../../assets/icons/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="../../assets/icons/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="../../assets/icons/favicon-16x16.png">
-  <link rel="manifest" href="../../assets/icons/site.webmanifest">
   <link rel="shortcut icon" href="../../assets/icons/favicon.ico">
   <title>停车分配实验</title>
   <link rel="stylesheet" href="assets/css/style.css" />
@@ -22,9 +21,6 @@
     <span class="hint hint--header" title="可拖拽：入口、花坛、楼、车位。内环道路不可拖拽，请在右侧侧栏改数值。车位沿内环停车带吸附；入口吸附内环边线。">
       拖拽：入口、花坛、楼、车位；右侧改内环；车位与入口吸附内环。
     </span>
-    <p id="file-protocol-hint" class="hint" style="display:none;margin:0.5rem 0 0;padding:0.5rem 0.75rem;background:#3f1d1d;border:1px solid #b91c1c;border-radius: 0;color:#fecaca;">
-      当前是<strong>本地文件</strong>打开。请先在本机运行后端（<code style="background:#1f1414;padding:0.1em 0.35em;border-radius: 0;">cd noomings_backend &amp;&amp; python citywalk.py</code>），再用浏览器访问 <code style="background:#1f1414;padding:0.1em 0.35em;border-radius: 0;">http://127.0.0.1:5000</code> 或部署后的 Zeabur 地址；勿仅双击本 HTML。
-    </p>
   </header>
   <div class="layout">
     <div class="canvas-wrap">
@@ -102,6 +98,7 @@
       </div>
     </aside>
   </div>
+  <script src="assets/js/optimizer.js"></script>
   <script src="assets/js/app.js"></script>
 </body>
 </html>
