@@ -54,6 +54,11 @@ body {
     margin-bottom: 0;
 }
 
+/* 两个返回按钮：保持“返回上一级”在左，“返回主页”贴右 */
+.header-top .back-btn + .back-btn {
+    margin-left: auto;
+}
+
 .back-btn {
     display: inline-block;
     padding: 9px 18px;
@@ -144,6 +149,10 @@ body {
     .back-btn {
         font-size: 0.85rem;
         padding: 7px 14px;
+    }
+
+    .header-top .back-btn + .back-btn {
+        margin-left: 0;
     }
 
     .section-header h1,
