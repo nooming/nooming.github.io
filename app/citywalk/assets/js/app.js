@@ -9,6 +9,7 @@
         let poiMarkers = [];
         let infoWindow = null;
         let selectedPoiType = "无偏好";
+        let selectedRouteStyle = "balanced";
         let routeData = null;
         let debounceTimer = null;
         let liveWeatherData = null;
@@ -673,6 +674,8 @@
                     end: end,
                     plan_time: planTime,
                     poi_type: selectedPoiType.trim(),
+                    route_style: selectedRouteStyle,
+                    ambience_profile: selectedPoiType.trim(),
                     city: currentCity
                 }),
                 signal: controller.signal
@@ -745,6 +748,8 @@
                         pois.forEach((poi, index) => {
                             const poiName = poi.name || '未知名称';
                             const poiType = poi.type || '未知类型';
+                            const reason = poi.recommendation_reason || '综合氛围与绕路成本推荐';
+                            const score = (typeof poi.final_score === 'number') ? poi.final_score.toFixed(1) : null;
                             const poiItem = document.createElement('div');
                             poiItem.className = 'poi-item';
                             poiItem.onclick = () => {
@@ -759,6 +764,7 @@
                                     <div style="flex: 1;">
                                         <strong>${index+1}. ${poiName}</strong>
                                         <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">${poiType}</div>
+                                        <div style="font-size: 11px; color: #64748b; margin-top: 3px;">${reason}${score ? ` · 氛围分 ${score}` : ''}</div>
                                     </div>
                                 </div>
                             `;
