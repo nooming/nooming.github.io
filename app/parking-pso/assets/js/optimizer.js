@@ -1,6 +1,9 @@
 (function () {
   "use strict";
 
+  const geometry = window.ParkingGeometry || null;
+  const coreConstants = window.ParkingCoreConstants || null;
+
   const N_PARTICLES_DEFAULT = 40;
   const N_ITER_DEFAULT = 600;
   const W_DEFAULT = 0.7;
@@ -9,17 +12,22 @@
   const V_MAX_DEFAULT = 0.25;
 
   const SLOT_SNAP_MARGIN = 0.45;
-  const SLOT_ROAD_INSET = 2.55;
-  const SLOT_HALF_BERTH_W = 1.25;
-  const BUILDING_FOOTPRINT_W = 11.0;
-  const BUILDING_FOOTPRINT_H = 7.0;
+  const SLOT_HALF_BERTH_W = 1.3;
+  const DEFAULT_ROAD_WIDTH = 6.0;
+  const BUILDING_FOOTPRINT_W = 18.0;
+  const BUILDING_FOOTPRINT_H = 12.0;
+  const NAV_GRID_STEP = 1.2;
+  const NAV_GRID_STEP_MAX = 1.8;
+  const UNREACHABLE_WALK_DIST = 1e6;
 
-  const RESULT_KEYS = [
+  const RESULT_KEYS = coreConstants?.RESULT_KEYS || [
     "scenario",
     "gbest_value",
     "history_best",
     "assign",
     "veh_targets",
+    "veh_entrances",
+    "vehicle_breakdown",
     "paths",
     "road_segments",
     "optimizer",
@@ -29,57 +37,67 @@
     return JSON.parse(JSON.stringify(v));
   }
 
+  function normalizeAngle(theta) {
+    const t = Number(theta);
+    if (!Number.isFinite(t)) return 0;
+    let out = t;
+    while (out <= -Math.PI) out += Math.PI * 2;
+    while (out > Math.PI) out -= Math.PI * 2;
+    return out;
+  }
+
+  function normalizeSlotEntry(rawSlot) {
+    const x = Number(rawSlot?.[0]);
+    const y = Number(rawSlot?.[1]);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+    return [x, y, normalizeAngle(rawSlot?.[2] ?? 0)];
+  }
+
   function defaultScenario() {
-    const lotW = 100.0;
+    const lotW = 140.0;
     const lotH = 100.0;
-    const inner = {
-      x_min: 22.0,
-      x_max: 78.0,
-      y_min: 18.0,
-      y_max: 82.0,
-    };
-    const slots = [
-      [24.55, 21.03],
-      [75.45, 21.03],
-      [24.55, 32.62],
-      [75.45, 32.62],
-      [24.55, 44.21],
-      [75.45, 44.21],
-      [24.55, 55.79],
-      [75.45, 55.79],
-      [24.55, 67.38],
-      [75.45, 67.38],
-      [24.55, 78.97],
-      [75.45, 78.97],
-    ];
-    const buildings = [
-      [26.0, 90.0],
-      [50.0, 90.0],
-      [74.0, 90.0],
-      [50.0, 10.0],
-      [74.0, 10.0],
-      [10.0, 26.0],
-      [10.0, 50.0],
-      [10.0, 74.0],
-      [90.0, 26.0],
-      [90.0, 50.0],
-      [90.0, 74.0],
-    ];
     const nVeh = 12;
+    const laneRows = Math.max(1, Math.ceil(nVeh / 2));
+    const slots = Array.from({ length: nVeh }, (_, i) => {
+      const row = Math.floor(i / 2);
+      const t = laneRows <= 1 ? 0.5 : row / (laneRows - 1);
+      return [23.25 + (i % 2) * 93.5, 24 + t * 52, 0];
+    });
+    const buildings = [
+      [28.0, 90.0],
+      [56.0, 90.0],
+      [84.0, 90.0],
+      [112.0, 90.0],
+      [28.0, 10.0],
+      [56.0, 10.0],
+      [84.0, 10.0],
+      [112.0, 10.0],
+    ];
+    const inner = { x_min: 28.0, x_max: 112.0, y_min: 18.0, y_max: 82.0 };
     return {
       lot: { width: lotW, height: lotH },
-      entrance: [22.0, 18.0],
+      entrance: [28.0, 18.0],
+      entrances: [[28.0, 18.0], [112.0, 82.0]],
       inner,
-      obstacle: {
-        x_min: 44.0,
-        x_max: 56.0,
-        y_min: 30.0,
-        y_max: 70.0,
+      road: {
+        centerline: [
+          [inner.x_min, inner.y_min],
+          [inner.x_max, inner.y_min],
+          [inner.x_max, inner.y_max],
+          [inner.x_min, inner.y_max],
+          [inner.x_min, inner.y_min],
+        ],
+        width: DEFAULT_ROAD_WIDTH,
+        closed: true,
       },
+      obstacle: { x_min: 64.0, x_max: 76.0, y_min: 30.0, y_max: 70.0 },
+      obstacles: [{ points: [[64.0, 30.0], [76.0, 30.0], [76.0, 70.0], [64.0, 70.0]] }],
       buildings,
       slots,
       n_veh: nVeh,
       vehicle_destinations: Array.from({ length: nVeh }, (_, i) => i % buildings.length),
+      vehicle_entrances: Array.from({ length: nVeh }, (_, i) => (i < nVeh / 2 ? 0 : 1)),
+      entrance_mode: "auto",
       pso: {
         n_particles: N_PARTICLES_DEFAULT,
         n_iter: N_ITER_DEFAULT,
@@ -88,20 +106,22 @@
         c2: C2_DEFAULT,
         v_max: V_MAX_DEFAULT,
       },
-      constraints: {
-        snap_slots_to_inner_road: true,
-        snap_entrance_to_inner: true,
-      },
+      constraints: { snap_slots_to_inner_road: true, snap_entrance_to_inner: true },
+      slot_types: Array.from({ length: slots.length }, () => "normal"),
+      vehicle_requirements: Array.from({ length: nVeh }, () => "normal"),
+      soft_constraints: { type_mismatch_penalty: 0 },
       display: {
         length_unit: "m",
         time_unit: "s",
+        meters_per_unit: 2,
         scale_bar_m: 20.0,
-        coord_note: "平面坐标 1 单位 = 1 m",
+        coord_note: "平面坐标 1 单位 = 2 m",
       },
     };
   }
 
   function closestPointOnSegment(px, py, x1, y1, x2, y2) {
+    if (geometry?.closestPointOnSegment) return geometry.closestPointOnSegment(px, py, x1, y1, x2, y2);
     const dx = x2 - x1;
     const dy = y2 - y1;
     const l2 = dx * dx + dy * dy;
@@ -111,63 +131,139 @@
     return [x1 + t * dx, y1 + t * dy];
   }
 
-  function snapPointToInnerPerimeter(x, y, inner, lotW, lotH) {
-    const ix0 = Number(inner.x_min);
-    const ix1 = Number(inner.x_max);
-    const iy0 = Number(inner.y_min);
-    const iy1 = Number(inner.y_max);
-    const strips = [
-      [ix0, iy0, ix1, iy0],
-      [ix1, iy0, ix1, iy1],
-      [ix1, iy1, ix0, iy1],
-      [ix0, iy1, ix0, iy0],
-    ];
-    let bestX = x;
-    let bestY = y;
-    let bestD = 1e30;
-    strips.forEach(([x0, y0, x1, y1]) => {
-      const [qx, qy] = closestPointOnSegment(x, y, x0, y0, x1, y1);
-      const d = (x - qx) ** 2 + (y - qy) ** 2;
-      if (d < bestD) {
-        bestD = d;
-        bestX = qx;
-        bestY = qy;
-      }
-    });
-    return [Math.max(0, Math.min(lotW, bestX)), Math.max(0, Math.min(lotH, bestY))];
+  function roadFromInner(inner, fallbackWidth = DEFAULT_ROAD_WIDTH) {
+    const ix0 = Number(inner?.x_min);
+    const ix1 = Number(inner?.x_max);
+    const iy0 = Number(inner?.y_min);
+    const iy1 = Number(inner?.y_max);
+    if (![ix0, ix1, iy0, iy1].every((v) => Number.isFinite(v))) return null;
+    return {
+      centerline: [
+        [ix0, iy0],
+        [ix1, iy0],
+        [ix1, iy1],
+        [ix0, iy1],
+        [ix0, iy0],
+      ],
+      width: Number.isFinite(Number(fallbackWidth)) ? Number(fallbackWidth) : DEFAULT_ROAD_WIDTH,
+      closed: true,
+    };
   }
 
-  function snapSlotToRoad(x, y, inner, lotW, lotH, margin = SLOT_SNAP_MARGIN) {
-    const xm = Number(inner.x_min);
-    const xM = Number(inner.x_max);
-    const ym = Number(inner.y_min);
-    const yM = Number(inner.y_max);
-    const iw = xM - xm;
-    const ih = yM - ym;
-    if (iw < 2 * margin + 0.2 || ih < 2 * margin + 0.2) {
-      return [Math.max(0, Math.min(lotW, x)), Math.max(0, Math.min(lotH, y))];
+  function innerFromRoad(road) {
+    const pts = Array.isArray(road?.centerline) ? road.centerline : [];
+    let xmin = Infinity;
+    let xmax = -Infinity;
+    let ymin = Infinity;
+    let ymax = -Infinity;
+    for (let i = 0; i < pts.length; i++) {
+      const x = Number(pts[i]?.[0]);
+      const y = Number(pts[i]?.[1]);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+      xmin = Math.min(xmin, x);
+      xmax = Math.max(xmax, x);
+      ymin = Math.min(ymin, y);
+      ymax = Math.max(ymax, y);
     }
-    const insetEW = Math.max(0.4, Math.min(SLOT_ROAD_INSET, iw / 2 - margin - 0.1));
-    const insetNS = Math.max(0.4, Math.min(SLOT_HALF_BERTH_W + margin, ih / 2 - margin - 0.1));
-    const strips = [
-      [xm + margin, ym + insetNS, xM - margin, ym + insetNS],
-      [xm + margin, yM - insetNS, xM - margin, yM - insetNS],
-      [xm + insetEW, ym + margin, xm + insetEW, yM - margin],
-      [xM - insetEW, ym + margin, xM - insetEW, yM - margin],
-    ];
+    if (![xmin, xmax, ymin, ymax].every((v) => Number.isFinite(v))) return null;
+    return { x_min: xmin, x_max: xmax, y_min: ymin, y_max: ymax };
+  }
+
+  function normalizeRoad(roadRaw, innerRaw) {
+    let road = roadRaw && typeof roadRaw === "object" ? cloneJson(roadRaw) : null;
+    if (!road || !Array.isArray(road.centerline) || road.centerline.length < 2) {
+      road = roadFromInner(innerRaw || {}, road?.width);
+    }
+    if (!road) return cloneJson(defaultScenario().road);
+    const centerline = Array.isArray(road.centerline) ? road.centerline : [];
+    const norm = centerline
+      .map((p) => [Number(p?.[0]), Number(p?.[1])])
+      .filter((p) => Number.isFinite(p[0]) && Number.isFinite(p[1]));
+    const clean = [];
+    for (let i = 0; i < norm.length; i++) {
+      if (!clean.length || Math.hypot(clean[clean.length - 1][0] - norm[i][0], clean[clean.length - 1][1] - norm[i][1]) > 1e-6) {
+        clean.push(norm[i]);
+      }
+    }
+    if (clean.length < 2) return cloneJson(defaultScenario().road);
+    road.centerline = clean;
+    road.width = Math.max(2.4, Number(road.width ?? DEFAULT_ROAD_WIDTH) || DEFAULT_ROAD_WIDTH);
+    road.closed = road.closed !== false;
+    return road;
+  }
+
+  function snapPointToInnerPerimeter(x, y, roadOrInner, lotW, lotH) {
+    const road = roadOrInner?.centerline
+      ? roadOrInner
+      : roadFromInner(roadOrInner || {}, DEFAULT_ROAD_WIDTH);
+    const proj = geometry?.projectPointToRoad
+      ? geometry.projectPointToRoad(Number(x), Number(y), { road })
+      : null;
+    const qx = proj?.point?.[0] ?? Number(x);
+    const qy = proj?.point?.[1] ?? Number(y);
+    return [Math.max(0, Math.min(lotW, qx)), Math.max(0, Math.min(lotH, qy))];
+  }
+
+  function buildRoadGuideSegments(road, lotW, lotH, margin = SLOT_SNAP_MARGIN) {
+    const segs = geometry?.buildRoadSegments ? geometry.buildRoadSegments({ road }) : [];
+    const strips = [];
+    const offset = Math.max(0.8, Number(road?.width || DEFAULT_ROAD_WIDTH) / 2 + SLOT_HALF_BERTH_W + margin);
+    for (let i = 0; i < segs.length; i++) {
+      const a = segs[i][0];
+      const b = segs[i][1];
+      const dx = b[0] - a[0];
+      const dy = b[1] - a[1];
+      const len = Math.hypot(dx, dy);
+      if (len < 1e-6) continue;
+      const nx = -dy / len;
+      const ny = dx / len;
+      const sideDefs = [
+        { sign: 1, id: "left-" + i },
+        { sign: -1, id: "right-" + i },
+      ];
+      for (const side of sideDefs) {
+        const x1 = a[0] + nx * offset * side.sign;
+        const y1 = a[1] + ny * offset * side.sign;
+        const x2 = b[0] + nx * offset * side.sign;
+        const y2 = b[1] + ny * offset * side.sign;
+        const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+        strips.push({
+          id: side.id,
+          x1: clamp(x1, SLOT_HALF_BERTH_W + 0.05, lotW - SLOT_HALF_BERTH_W - 0.05),
+          y1: clamp(y1, SLOT_HALF_BERTH_W + 0.05, lotH - SLOT_HALF_BERTH_W - 0.05),
+          x2: clamp(x2, SLOT_HALF_BERTH_W + 0.05, lotW - SLOT_HALF_BERTH_W - 0.05),
+          y2: clamp(y2, SLOT_HALF_BERTH_W + 0.05, lotH - SLOT_HALF_BERTH_W - 0.05),
+          tx: dx / len,
+          ty: dy / len,
+          theta: Math.atan2(dy, dx),
+          len: Math.hypot(x2 - x1, y2 - y1),
+        });
+      }
+    }
+    return strips;
+  }
+
+  function snapSlotToRoad(x, y, roadOrInner, lotW, lotH, margin = SLOT_SNAP_MARGIN) {
+    const road = roadOrInner?.centerline
+      ? roadOrInner
+      : roadFromInner(roadOrInner || {}, DEFAULT_ROAD_WIDTH);
+    const strips = buildRoadGuideSegments(road, lotW, lotH, margin);
+    if (!strips.length) return [Math.max(0, Math.min(lotW, x)), Math.max(0, Math.min(lotH, y)), 0];
     let bestX = x;
     let bestY = y;
+    let bestTheta = 0;
     let bestD = 1e30;
-    strips.forEach(([x0, y0, x1, y1]) => {
-      const [qx, qy] = closestPointOnSegment(x, y, x0, y0, x1, y1);
+    strips.forEach((s) => {
+      const [qx, qy] = closestPointOnSegment(x, y, s.x1, s.y1, s.x2, s.y2);
       const d = (x - qx) ** 2 + (y - qy) ** 2;
       if (d < bestD) {
         bestD = d;
         bestX = qx;
         bestY = qy;
+        bestTheta = s.theta;
       }
     });
-    return [Math.max(0, Math.min(lotW, bestX)), Math.max(0, Math.min(lotH, bestY))];
+    return [Math.max(0, Math.min(lotW, bestX)), Math.max(0, Math.min(lotH, bestY)), normalizeAngle(bestTheta)];
   }
 
   function normalizeVehicleDestinations(s) {
@@ -187,6 +283,36 @@
     s.vehicle_destinations = out;
   }
 
+  function normalizeVehicleEntrances(s) {
+    const nVeh = Math.max(0, parseInt(s.n_veh, 10) || 0);
+    const nE = Array.isArray(s.entrances) && s.entrances.length ? s.entrances.length : 1;
+    const raw = Array.isArray(s.vehicle_entrances) ? s.vehicle_entrances : [];
+    const out = [];
+    for (let i = 0; i < nVeh; i++) {
+      const v = parseInt(i < raw.length ? raw[i] : 0, 10);
+      out.push(Number.isFinite(v) ? Math.max(0, Math.min(nE - 1, v)) : 0);
+    }
+    s.vehicle_entrances = out;
+    s.entrance_mode = String(s.entrance_mode || "auto").toLowerCase() === "fixed" ? "fixed" : "auto";
+  }
+
+  function normalizeSlotAndVehicleTypes(s) {
+    const nSlot = Array.isArray(s.slots) ? s.slots.length : 0;
+    const nVeh = Math.max(0, parseInt(s.n_veh, 10) || 0);
+    const slotTypesRaw = Array.isArray(s.slot_types) ? s.slot_types : [];
+    const reqRaw = Array.isArray(s.vehicle_requirements) ? s.vehicle_requirements : [];
+    s.slot_types = Array.from({ length: nSlot }, (_, i) =>
+      String(slotTypesRaw[i] || "normal").trim().toLowerCase() || "normal"
+    );
+    s.vehicle_requirements = Array.from({ length: nVeh }, (_, i) =>
+      String(reqRaw[i] || "normal").trim().toLowerCase() || "normal"
+    );
+    const soft = s.soft_constraints || {};
+    s.soft_constraints = {
+      type_mismatch_penalty: Math.max(0, Number(soft.type_mismatch_penalty || 0)),
+    };
+  }
+
   function normalizeScenario(raw) {
     const s = cloneJson(raw || {});
     const def = defaultScenario();
@@ -196,18 +322,94 @@
     s.lot = { width: lw, height: lh };
     s.entrance = Array.isArray(s.entrance) ? [Number(s.entrance[0] || 0), Number(s.entrance[1] || 0)] : cloneJson(def.entrance);
     s.inner = s.inner || cloneJson(def.inner);
-    s.obstacle = s.obstacle || cloneJson(def.obstacle);
+    s.road = normalizeRoad(s.road, s.inner);
+    s.inner = innerFromRoad(s.road) || cloneJson(def.inner);
+    s.obstacle = s.obstacle || null;
+    const rawEntrances = Array.isArray(s.entrances) && s.entrances.length ? s.entrances : [s.entrance];
+    s.entrances = rawEntrances.map((p) => [Number(p?.[0] || 0), Number(p?.[1] || 0)]);
+    const normalizeObstacle = (o) => {
+      if (!o || typeof o !== "object") return null;
+      let pts = [];
+      if (Array.isArray(o.points) && o.points.length) {
+        pts = o.points.map((p) => [Number(p?.[0]), Number(p?.[1])]);
+      } else if (
+        Number.isFinite(Number(o.x_min)) &&
+        Number.isFinite(Number(o.x_max)) &&
+        Number.isFinite(Number(o.y_min)) &&
+        Number.isFinite(Number(o.y_max))
+      ) {
+        const x0 = Math.min(Number(o.x_min), Number(o.x_max));
+        const x1 = Math.max(Number(o.x_min), Number(o.x_max));
+        const y0 = Math.min(Number(o.y_min), Number(o.y_max));
+        const y1 = Math.max(Number(o.y_min), Number(o.y_max));
+        pts = [
+          [x0, y0],
+          [x1, y0],
+          [x1, y1],
+          [x0, y1],
+        ];
+      }
+      const out = [];
+      for (let i = 0; i < pts.length; i++) {
+        const x = Number(pts[i]?.[0]);
+        const y = Number(pts[i]?.[1]);
+        if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+        if (!out.length || Math.hypot(out[out.length - 1][0] - x, out[out.length - 1][1] - y) > 1e-6) {
+          out.push([x, y]);
+        }
+      }
+      if (out.length >= 2) {
+        const f0 = out[0];
+        const fn = out[out.length - 1];
+        if (Math.hypot(f0[0] - fn[0], f0[1] - fn[1]) < 1e-6) out.pop();
+      }
+      if (out.length < 3) return null;
+      if (polygonSelfIntersects(out)) return null;
+      let area = 0;
+      for (let i = 0; i < out.length; i++) {
+        const a = out[i];
+        const b = out[(i + 1) % out.length];
+        area += a[0] * b[1] - b[0] * a[1];
+      }
+      if (Math.abs(area) < 0.1) return null;
+      return { points: out };
+    };
+    const rawObstacles = Array.isArray(s.obstacles) && s.obstacles.length ? s.obstacles : [s.obstacle];
+    s.obstacles = rawObstacles.map((o) => normalizeObstacle(o)).filter((o) => !!o);
     s.buildings = Array.isArray(s.buildings) ? s.buildings.map((p) => [Number(p[0]), Number(p[1])]) : [];
-    s.slots = Array.isArray(s.slots) ? s.slots.map((p) => [Number(p[0]), Number(p[1])]) : [];
+    s.slots = Array.isArray(s.slots)
+      ? s.slots.map((p) => normalizeSlotEntry(p)).filter((p) => !!p)
+      : [];
     s.constraints = {
       snap_slots_to_inner_road: true,
       snap_entrance_to_inner: true,
     };
     if (s.constraints.snap_entrance_to_inner) {
-      s.entrance = snapPointToInnerPerimeter(Number(s.entrance[0]), Number(s.entrance[1]), s.inner, lw, lh);
+      s.entrances = s.entrances.map((p) =>
+        snapPointToInnerPerimeter(Number(p[0]), Number(p[1]), s.road, lw, lh)
+      );
     }
+    s.entrance = s.entrances[0] || cloneJson(def.entrance);
+    const p0 = s.obstacles[0]?.points || [];
+    let xmin = Infinity;
+    let xmax = -Infinity;
+    let ymin = Infinity;
+    let ymax = -Infinity;
+    for (let i = 0; i < p0.length; i++) {
+      xmin = Math.min(xmin, Number(p0[i][0]));
+      xmax = Math.max(xmax, Number(p0[i][0]));
+      ymin = Math.min(ymin, Number(p0[i][1]));
+      ymax = Math.max(ymax, Number(p0[i][1]));
+    }
+    s.obstacle =
+      Number.isFinite(xmin) && Number.isFinite(xmax) && Number.isFinite(ymin) && Number.isFinite(ymax)
+        ? { x_min: xmin, x_max: xmax, y_min: ymin, y_max: ymax }
+        : null;
     if (s.constraints.snap_slots_to_inner_road && s.slots.length) {
-      s.slots = s.slots.map((p) => snapSlotToRoad(Number(p[0]), Number(p[1]), s.inner, lw, lh));
+      s.slots = s.slots.map((p) => {
+        const snapped = snapSlotToRoad(Number(p[0]), Number(p[1]), s.road, lw, lh);
+        return [snapped[0], snapped[1], normalizeAngle(snapped[2] ?? p[2] ?? 0)];
+      });
     }
     const nVehRaw = parseInt(s.n_veh, 10) || 12;
     if (s.slots.length === 0) s.n_veh = 0;
@@ -222,61 +424,39 @@
       v_max: Number(pso.v_max ?? V_MAX_DEFAULT),
     };
     const disp = s.display || {};
+    const metersPerUnit = Number(disp.meters_per_unit ?? 2);
     s.display = {
       length_unit: String(disp.length_unit || "m"),
       time_unit: String(disp.time_unit || "s"),
+      meters_per_unit: Number.isFinite(metersPerUnit) && metersPerUnit > 0 ? metersPerUnit : 2,
       scale_bar_m: Number(disp.scale_bar_m ?? 20),
-      coord_note: String(disp.coord_note || "平面坐标 1 单位 = 1 m"),
+      coord_note: String(disp.coord_note || "平面坐标 1 单位 = 2 m"),
     };
     normalizeVehicleDestinations(s);
+    normalizeVehicleEntrances(s);
+    normalizeSlotAndVehicleTypes(s);
     return s;
   }
 
-  function segSegIntersect(ax, ay, bx, by, cx, cy, dx, dy) {
-    const o1 = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
-    const o2 = (bx - ax) * (dy - ay) - (by - ay) * (dx - ax);
-    const o3 = (dx - cx) * (ay - cy) - (dy - cy) * (ax - cx);
-    const o4 = (dx - cx) * (by - cy) - (dy - cy) * (bx - cx);
-    if (o1 * o2 < 0 && o3 * o4 < 0) return true;
-    const tol = 1e-9;
-    const onSeg = (x, y, x1, y1, x2, y2) =>
-      x >= Math.min(x1, x2) - tol &&
-      x <= Math.max(x1, x2) + tol &&
-      y >= Math.min(y1, y2) - tol &&
-      y <= Math.max(y1, y2) + tol;
-    if (Math.abs(o1) <= tol && onSeg(cx, cy, ax, ay, bx, by)) return true;
-    if (Math.abs(o2) <= tol && onSeg(dx, dy, ax, ay, bx, by)) return true;
-    if (Math.abs(o3) <= tol && onSeg(ax, ay, cx, cy, dx, dy)) return true;
-    if (Math.abs(o4) <= tol && onSeg(bx, by, cx, cy, dx, dy)) return true;
-    return false;
+  function polygonSelfIntersects(poly) {
+    return geometry?.polygonSelfIntersects ? geometry.polygonSelfIntersects(poly) : false;
   }
 
-  function segmentIntersectsAxisRect(p1, p2, rect) {
-    const eps = 1e-3;
-    const xMin = Number(rect.x_min) + eps;
-    const xMax = Number(rect.x_max) - eps;
-    const yMin = Number(rect.y_min) + eps;
-    const yMax = Number(rect.y_max) - eps;
-    if (xMin >= xMax || yMin >= yMax) return false;
-    const [p1x, p1y] = p1;
-    const [p2x, p2y] = p2;
-    const edges = [
-      [xMin, yMin, xMax, yMin],
-      [xMax, yMin, xMax, yMax],
-      [xMax, yMax, xMin, yMax],
-      [xMin, yMax, xMin, yMin],
-    ];
-    for (const [x0, y0, x1, y1] of edges) {
-      if (segSegIntersect(p1x, p1y, p2x, p2y, x0, y0, x1, y1)) return true;
-    }
-    const midx = 0.5 * (p1x + p2x);
-    const midy = 0.5 * (p1y + p2y);
-    return midx > xMin && midx < xMax && midy > yMin && midy < yMax;
+  function pointOnSegment(p, a, b, eps = 1e-6) {
+    return geometry?.pointOnSegment ? geometry.pointOnSegment(p, a, b, eps) : false;
+  }
+
+  function pointInPolygon(p, poly, includeBoundary = true) {
+    return geometry?.pointInPolygon ? geometry.pointInPolygon(p, poly, includeBoundary) : false;
+  }
+
+  function segmentIntersectsPolygon(p1, p2, poly) {
+    return geometry?.segmentIntersectsPolygon ? geometry.segmentIntersectsPolygon(p1, p2, poly) : false;
   }
 
   function segmentClearBoxes(p1, p2, boxes) {
     for (let i = 0; i < boxes.length; i++) {
-      if (segmentIntersectsAxisRect(p1, p2, boxes[i])) return false;
+      if (segmentIntersectsPolygon(p1, p2, boxes[i])) return false;
     }
     return true;
   }
@@ -284,48 +464,23 @@
   function buildingAxisBox(cx, cy) {
     const hw = BUILDING_FOOTPRINT_W / 2;
     const hh = BUILDING_FOOTPRINT_H / 2;
-    return { x_min: cx - hw, x_max: cx + hw, y_min: cy - hh, y_max: cy + hh };
+    return [
+      [cx - hw, cy - hh],
+      [cx + hw, cy - hh],
+      [cx + hw, cy + hh],
+      [cx - hw, cy + hh],
+    ];
   }
 
-  function walkBlockingBoxes(obs, buildingsPos, destBi) {
-    const boxes = [obs];
+  function walkBlockingBoxes(obstacles, buildingsPos, destBi) {
+    const boxes = (Array.isArray(obstacles) ? obstacles : [])
+      .map((o) => (Array.isArray(o?.points) ? o.points.map((p) => [Number(p[0]), Number(p[1])]) : null))
+      .filter((o) => Array.isArray(o) && o.length >= 3);
     for (let i = 0; i < buildingsPos.length; i++) {
       if (i === destBi) continue;
       boxes.push(buildingAxisBox(buildingsPos[i][0], buildingsPos[i][1]));
     }
     return boxes;
-  }
-
-  function pointInsideRect(p, r, eps = 1e-2) {
-    return (
-      p[0] > Number(r.x_min) + eps &&
-      p[0] < Number(r.x_max) - eps &&
-      p[1] > Number(r.y_min) + eps &&
-      p[1] < Number(r.y_max) - eps
-    );
-  }
-
-  function dedupValidCorners(boxes) {
-    const seen = new Set();
-    const out = [];
-    boxes.forEach((b) => {
-      const corners = [
-        [Number(b.x_min), Number(b.y_min)],
-        [Number(b.x_min), Number(b.y_max)],
-        [Number(b.x_max), Number(b.y_min)],
-        [Number(b.x_max), Number(b.y_max)],
-      ];
-      corners.forEach((c) => {
-        const key = `${Math.round(c[0] * 1000) / 1000},${Math.round(c[1] * 1000) / 1000}`;
-        if (seen.has(key)) return;
-        seen.add(key);
-        for (let i = 0; i < boxes.length; i++) {
-          if (pointInsideRect(c, boxes[i])) return;
-        }
-        out.push(c);
-      });
-    });
-    return out;
   }
 
   function polylineLength(pts) {
@@ -361,190 +516,356 @@
     return out;
   }
 
-  function visibilityGraphShortestPath(s, t, boxes) {
-    const corners = dedupValidCorners(boxes);
-    const nodes = [s.slice(), ...corners.map((c) => c.slice()), t.slice()];
-    const n = nodes.length;
-    const goal = n - 1;
-    const adj = Array.from({ length: n }, () => []);
-    for (let i = 0; i < n; i++) {
-      for (let j = i + 1; j < n; j++) {
-        if (segmentClearBoxes(nodes[i], nodes[j], boxes)) {
-          const w = Math.hypot(nodes[i][0] - nodes[j][0], nodes[i][1] - nodes[j][1]);
-          adj[i].push([j, w]);
-          adj[j].push([i, w]);
-        }
-      }
+  function pointInsideAnyObstacle(p, obstacles) {
+    for (let i = 0; i < obstacles.length; i++) {
+      if (pointInPolygon(p, obstacles[i], true)) return true;
     }
-    const dist = Array.from({ length: n }, () => Infinity);
-    const parent = Array.from({ length: n }, () => -1);
-    const used = Array.from({ length: n }, () => false);
-    dist[0] = 0;
-    for (let step = 0; step < n; step++) {
-      let u = -1;
-      let best = Infinity;
-      for (let i = 0; i < n; i++) {
-        if (!used[i] && dist[i] < best) {
-          best = dist[i];
-          u = i;
-        }
-      }
-      if (u < 0 || u === goal) break;
-      used[u] = true;
-      for (let i = 0; i < adj[u].length; i++) {
-        const [v, w] = adj[u][i];
-        const nd = dist[u] + w;
-        if (nd < dist[v]) {
-          dist[v] = nd;
-          parent[v] = u;
-        }
-      }
-    }
-    if (!Number.isFinite(dist[goal])) return null;
-    const seq = [];
-    for (let cur = goal; cur >= 0; cur = parent[cur]) {
-      seq.push(cur);
-      if (cur === 0) break;
-    }
-    seq.reverse();
-    const raw = seq.map((i) => nodes[i]);
-    const simp = simplifyColinearPolyline(raw);
-    return [polylineLength(simp), simp];
+    return false;
   }
 
-  function walkingPlan(slotXY, buildingXY, obs, buildingsPos, destBi, boxesInput) {
-    const boxes = boxesInput || walkBlockingBoxes(obs, buildingsPos, destBi);
+  function navGridIdx(i, j, nx) {
+    return j * nx + i;
+  }
+
+  function navGridCoord(idx, nx) {
+    return [idx % nx, Math.floor(idx / nx)];
+  }
+
+  function recommendNavStep(lotW, lotH, obstacleCount) {
+    const area = Math.max(1, Number(lotW) * Number(lotH));
+    const obsFactor = Math.max(0, Number(obstacleCount) || 0);
+    const densePenalty = Math.min(0.5, obsFactor * 0.04);
+    const areaPenalty = Math.min(0.4, Math.max(0, area - 12000) / 30000);
+    return Math.max(NAV_GRID_STEP, Math.min(NAV_GRID_STEP_MAX, NAV_GRID_STEP + densePenalty + areaPenalty));
+  }
+
+  function buildNavigationGrid(obstacles, lotW, lotH, step = NAV_GRID_STEP) {
+    const nx = Math.max(2, Math.floor(lotW / step) + 1);
+    const ny = Math.max(2, Math.floor(lotH / step) + 1);
+    const valid = new Uint8Array(nx * ny);
+    const points = Array(nx * ny);
+    for (let j = 0; j < ny; j++) {
+      for (let i = 0; i < nx; i++) {
+        const idx = navGridIdx(i, j, nx);
+        const x = Math.min(lotW, i * step);
+        const y = Math.min(lotH, j * step);
+        points[idx] = [x, y];
+        valid[idx] = pointInsideAnyObstacle([x, y], obstacles) ? 0 : 1;
+      }
+    }
+    const adj = Array.from({ length: nx * ny }, () => []);
+    const dirs = [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+      [1, 1],
+      [1, -1],
+      [-1, 1],
+      [-1, -1],
+    ];
+    for (let j = 0; j < ny; j++) {
+      for (let i = 0; i < nx; i++) {
+        const idx = navGridIdx(i, j, nx);
+        if (!valid[idx]) continue;
+        const p = points[idx];
+        for (let d = 0; d < dirs.length; d++) {
+          const ni = i + dirs[d][0];
+          const nj = j + dirs[d][1];
+          if (ni < 0 || nj < 0 || ni >= nx || nj >= ny) continue;
+          const nidx = navGridIdx(ni, nj, nx);
+          if (!valid[nidx]) continue;
+          const q = points[nidx];
+          if (!segmentClearBoxes(p, q, obstacles)) continue;
+          adj[idx].push([nidx, Math.hypot(q[0] - p[0], q[1] - p[1])]);
+        }
+      }
+    }
+    return { nx, ny, step, valid, points, adj, nodeCount: nx * ny };
+  }
+
+  function nearestVisibleGridNodes(point, nav, obstacles, maxNodes = 6, maxPx = 6) {
+    if (pointInsideAnyObstacle(point, obstacles)) return [];
+    const [px, py] = point;
+    const ci = Math.max(0, Math.min(nav.nx - 1, Math.round(px / nav.step)));
+    const cj = Math.max(0, Math.min(nav.ny - 1, Math.round(py / nav.step)));
+    const cands = [];
+    for (let r = 0; r <= maxPx; r++) {
+      const i0 = Math.max(0, ci - r);
+      const i1 = Math.min(nav.nx - 1, ci + r);
+      const j0 = Math.max(0, cj - r);
+      const j1 = Math.min(nav.ny - 1, cj + r);
+      for (let j = j0; j <= j1; j++) {
+        for (let i = i0; i <= i1; i++) {
+          if (r > 0 && i > i0 && i < i1 && j > j0 && j < j1) continue;
+          const idx = navGridIdx(i, j, nav.nx);
+          if (!nav.valid[idx]) continue;
+          const q = nav.points[idx];
+          if (!segmentClearBoxes(point, q, obstacles)) continue;
+          cands.push([idx, Math.hypot(q[0] - px, q[1] - py)]);
+        }
+      }
+      if (cands.length >= maxNodes) break;
+    }
+    if (!cands.length) {
+      for (let idx = 0; idx < nav.nodeCount; idx++) {
+        if (!nav.valid[idx]) continue;
+        const q = nav.points[idx];
+        if (!segmentClearBoxes(point, q, obstacles)) continue;
+        cands.push([idx, Math.hypot(q[0] - px, q[1] - py)]);
+      }
+    }
+    cands.sort((a, b) => a[1] - b[1]);
+    return cands.slice(0, maxNodes);
+  }
+
+  function minHeapPush(heap, item) {
+    heap.push(item);
+    let i = heap.length - 1;
+    while (i > 0) {
+      const p = Math.floor((i - 1) / 2);
+      if (heap[p][0] <= heap[i][0]) break;
+      [heap[p], heap[i]] = [heap[i], heap[p]];
+      i = p;
+    }
+  }
+
+  function minHeapPop(heap) {
+    if (!heap.length) return null;
+    const top = heap[0];
+    const tail = heap.pop();
+    if (heap.length) {
+      heap[0] = tail;
+      let i = 0;
+      while (true) {
+        const l = i * 2 + 1;
+        const r = l + 1;
+        let m = i;
+        if (l < heap.length && heap[l][0] < heap[m][0]) m = l;
+        if (r < heap.length && heap[r][0] < heap[m][0]) m = r;
+        if (m === i) break;
+        [heap[m], heap[i]] = [heap[i], heap[m]];
+        i = m;
+      }
+    }
+    return top;
+  }
+
+  function aStarBetweenNodes(startIdx, goalIdx, nav) {
+    if (startIdx === goalIdx) return [0, [startIdx]];
+    const n = nav.nodeCount;
+    const g = Array.from({ length: n }, () => Infinity);
+    const f = Array.from({ length: n }, () => Infinity);
+    const parent = Array.from({ length: n }, () => -1);
+    const closed = new Uint8Array(n);
+    const goalPt = nav.points[goalIdx];
+    g[startIdx] = 0;
+    f[startIdx] = Math.hypot(nav.points[startIdx][0] - goalPt[0], nav.points[startIdx][1] - goalPt[1]);
+    const heap = [];
+    minHeapPush(heap, [f[startIdx], startIdx]);
+    while (heap.length) {
+      const cur = minHeapPop(heap);
+      const u = cur[1];
+      if (closed[u]) continue;
+      closed[u] = 1;
+      if (u === goalIdx) break;
+      const nbrs = nav.adj[u];
+      for (let i = 0; i < nbrs.length; i++) {
+        const v = nbrs[i][0];
+        const w = nbrs[i][1];
+        if (closed[v]) continue;
+        const ng = g[u] + w;
+        if (ng >= g[v]) continue;
+        g[v] = ng;
+        parent[v] = u;
+        f[v] = ng + Math.hypot(nav.points[v][0] - goalPt[0], nav.points[v][1] - goalPt[1]);
+        minHeapPush(heap, [f[v], v]);
+      }
+    }
+    if (!Number.isFinite(g[goalIdx])) return null;
+    const seq = [];
+    for (let cur = goalIdx; cur >= 0; cur = parent[cur]) {
+      seq.push(cur);
+      if (cur === startIdx) break;
+    }
+    seq.reverse();
+    return [g[goalIdx], seq];
+  }
+
+  function simplifyPathWithCollision(path, obstacles) {
+    if (!Array.isArray(path) || path.length <= 2) return path ? path.slice() : [];
+    const out = [path[0]];
+    let anchor = 0;
+    while (anchor < path.length - 1) {
+      let best = anchor + 1;
+      for (let j = path.length - 1; j > anchor + 1; j--) {
+        if (segmentClearBoxes(path[anchor], path[j], obstacles)) {
+          best = j;
+          break;
+        }
+      }
+      out.push(path[best]);
+      anchor = best;
+    }
+    return simplifyColinearPolyline(out);
+  }
+
+  function walkingPlan(slotXY, buildingXY, obstacles, buildingsPos, destBi, boxesInput, navInput, lotInput) {
+    const boxes = boxesInput || walkBlockingBoxes(obstacles, buildingsPos, destBi);
     const s = [Number(slotXY[0]), Number(slotXY[1])];
     const t = [Number(buildingXY[0]), Number(buildingXY[1])];
     if (segmentClearBoxes(s, t, boxes)) return [Math.hypot(s[0] - t[0], s[1] - t[1]), [s, t]];
-    const vg = visibilityGraphShortestPath(s, t, boxes);
-    if (vg) return vg;
-    const margin = 0.5;
-    const xLeft = Number(obs.x_min) - margin;
-    const xRight = Number(obs.x_max) + margin;
-    const sidePolylines = (xSide) => {
-      const slotY = s[1];
-      const by = t[1];
-      const out = [];
-      if (by <= Number(obs.y_min) - margin || by >= Number(obs.y_max) + margin) {
-        const pts = [s, [xSide, slotY], [xSide, by], t];
-        if (polylineSegmentsClear(pts, boxes)) out.push(pts);
-        return out;
-      }
-      const yUp = Number(obs.y_max) + margin;
-      const yDown = Number(obs.y_min) - margin;
-      const up = [s, [xSide, slotY], [xSide, yUp], [t[0], yUp], t];
-      const down = [s, [xSide, slotY], [xSide, yDown], [t[0], yDown], t];
-      if (polylineSegmentsClear(up, boxes)) out.push(up);
-      if (polylineSegmentsClear(down, boxes)) out.push(down);
-      return out;
-    };
-    const cands = [...sidePolylines(xLeft), ...sidePolylines(xRight)];
-    if (cands.length) {
-      let best = cands[0];
-      let bestLen = polylineLength(best);
-      for (let i = 1; i < cands.length; i++) {
-        const len = polylineLength(cands[i]);
-        if (len < bestLen) {
-          bestLen = len;
-          best = cands[i];
+    const lotW = Math.max(1, Number(lotInput?.width || 100));
+    const lotH = Math.max(1, Number(lotInput?.height || 100));
+    const nav =
+      navInput || buildNavigationGrid(boxes, lotW, lotH, recommendNavStep(lotW, lotH, boxes.length));
+    const sNodes = nearestVisibleGridNodes(s, nav, boxes, 6, 7);
+    const tNodes = nearestVisibleGridNodes(t, nav, boxes, 6, 7);
+    if (!sNodes.length || !tNodes.length) return [UNREACHABLE_WALK_DIST, [s]];
+    let bestDist = Infinity;
+    let bestPath = null;
+    for (let i = 0; i < sNodes.length; i++) {
+      const [si, ds] = sNodes[i];
+      for (let j = 0; j < tNodes.length; j++) {
+        const [ti, dt] = tNodes[j];
+        const ast = aStarBetweenNodes(si, ti, nav);
+        if (!ast) continue;
+        const [dgrid, idxSeq] = ast;
+        const pts = [s, ...idxSeq.map((idx) => nav.points[idx]), t];
+        const simp = simplifyPathWithCollision(pts, boxes);
+        if (!polylineSegmentsClear(simp, boxes)) continue;
+        const d = ds + dgrid + dt;
+        if (d < bestDist) {
+          bestDist = d;
+          bestPath = simp;
         }
       }
-      return [bestLen, best];
     }
-    return [Math.hypot(s[0] - t[0], s[1] - t[1]), [s, t]];
+    if (!bestPath) return [UNREACHABLE_WALK_DIST, [s]];
+    return [polylineLength(bestPath), bestPath];
   }
 
-  function buildRoadSegments(inner) {
-    const ix0 = Number(inner.x_min);
-    const ix1 = Number(inner.x_max);
-    const iy0 = Number(inner.y_min);
-    const iy1 = Number(inner.y_max);
-    return [
-      [[ix0, iy0], [ix1, iy0]],
-      [[ix1, iy0], [ix1, iy1]],
-      [[ix1, iy1], [ix0, iy1]],
-      [[ix0, iy1], [ix0, iy0]],
-    ];
+  function buildRoadSegments(roadOrInner) {
+    const road = roadOrInner?.centerline
+      ? roadOrInner
+      : roadFromInner(roadOrInner || {}, DEFAULT_ROAD_WIDTH);
+    if (geometry?.buildRoadSegments) return geometry.buildRoadSegments({ road });
+    return [];
   }
 
-  function arcLengthFromBLCCW(px, py, inner) {
-    const ix0 = Number(inner.x_min);
-    const ix1 = Number(inner.x_max);
-    const iy0 = Number(inner.y_min);
-    const iy1 = Number(inner.y_max);
-    const w = ix1 - ix0;
-    const h = iy1 - iy0;
-    const L = 2 * w + 2 * h;
-    if (L < 1e-9) return 0;
-    const tol = 0.04;
-    if (Math.abs(py - iy0) <= tol && px >= ix0 - tol && px <= ix1 + tol) return Math.max(0, Math.min(w, px - ix0));
-    if (Math.abs(px - ix1) <= tol && py >= iy0 - tol && py <= iy1 + tol) return w + Math.max(0, Math.min(h, py - iy0));
-    if (Math.abs(py - iy1) <= tol && px >= ix0 - tol && px <= ix1 + tol) return w + h + Math.max(0, Math.min(w, ix1 - px));
-    if (Math.abs(px - ix0) <= tol && py >= iy0 - tol && py <= iy1 + tol) return w + h + w + Math.max(0, Math.min(h, iy1 - py));
-    const [qx, qy] = snapPointToInnerPerimeter(px, py, inner, 1e9, 1e9);
-    return arcLengthFromBLCCW(qx, qy, inner);
+  function arcLengthFromBLCCW(px, py, roadOrInner) {
+    const road = roadOrInner?.centerline
+      ? roadOrInner
+      : roadFromInner(roadOrInner || {}, DEFAULT_ROAD_WIDTH);
+    if (!geometry?.projectPointToRoad) return 0;
+    const proj = geometry.projectPointToRoad(px, py, { road });
+    return Number(proj?.along || 0);
   }
 
-  function perimeterDistanceBetween(ax, ay, bx, by, inner) {
-    const [qax, qay] = snapPointToInnerPerimeter(ax, ay, inner, 1e9, 1e9);
-    const [qbx, qby] = snapPointToInnerPerimeter(bx, by, inner, 1e9, 1e9);
-    const ix0 = Number(inner.x_min);
-    const ix1 = Number(inner.x_max);
-    const iy0 = Number(inner.y_min);
-    const iy1 = Number(inner.y_max);
-    const L = 2 * (ix1 - ix0) + 2 * (iy1 - iy0);
-    if (L < 1e-9) return 0;
-    const s1 = arcLengthFromBLCCW(qax, qay, inner);
-    const s2 = arcLengthFromBLCCW(qbx, qby, inner);
-    const d = Math.abs(s1 - s2);
-    return Math.min(d, L - d);
+  function perimeterDistanceBetween(ax, ay, bx, by, roadOrInner) {
+    const road = roadOrInner?.centerline
+      ? roadOrInner
+      : roadFromInner(roadOrInner || {}, DEFAULT_ROAD_WIDTH);
+    if (geometry?.roadDistanceBetweenPoints) {
+      return geometry.roadDistanceBetweenPoints([ax, ay], [bx, by], { road });
+    }
+    return Math.abs(arcLengthFromBLCCW(ax, ay, road) - arcLengthFromBLCCW(bx, by, road));
   }
 
-  function drivingDistanceFromEntrance(slotXY, inner, entrance) {
-    const ix0 = Number(inner.x_min);
-    const ix1 = Number(inner.x_max);
-    const iy0 = Number(inner.y_min);
-    const iy1 = Number(inner.y_max);
+  function drivingDistanceFromEntrance(slotXY, roadOrInner, entrance) {
+    const road = roadOrInner?.centerline
+      ? roadOrInner
+      : roadFromInner(roadOrInner || {}, DEFAULT_ROAD_WIDTH);
     const ex = Number(entrance[0]);
     const ey = Number(entrance[1]);
     const sx = Number(slotXY[0]);
     const sy = Number(slotXY[1]);
-    const midX = (ix0 + ix1) / 2;
-    const syc = Math.min(Math.max(sy, iy0), iy1);
-    if (sx < midX) return perimeterDistanceBetween(ex, ey, ix0, syc, inner) + Math.abs(sx - ix0);
-    return perimeterDistanceBetween(ex, ey, ix1, syc, inner) + Math.abs(ix1 - sx);
+    const pSlot = geometry?.projectPointToRoad ? geometry.projectPointToRoad(sx, sy, { road }) : null;
+    if (!pSlot) return 0;
+    const onRoadDist = perimeterDistanceBetween(ex, ey, pSlot.point[0], pSlot.point[1], road);
+    return onRoadDist + pSlot.distance;
+  }
+
+  function vehicleSlotPenalty(s, vehIdx, slotIdx) {
+    const req = s.vehicle_requirements?.[vehIdx] || "normal";
+    if (req === "normal") return 0;
+    const slotType = s.slot_types?.[slotIdx] || "normal";
+    if (slotType === req) return 0;
+    return Number(s.soft_constraints?.type_mismatch_penalty || 0);
   }
 
   function precomputeFromNormalized(s) {
-    const inner = s.inner;
-    const obs = s.obstacle;
+    const road = s.road || roadFromInner(s.inner, DEFAULT_ROAD_WIDTH);
+    const obstacles = s.obstacles;
+    const lot = s.lot || { width: 100, height: 100 };
+    const metersPerUnit = Number(s?.display?.meters_per_unit) > 0 ? Number(s.display.meters_per_unit) : 2;
     const slotsPos = s.slots.map((p) => [Number(p[0]), Number(p[1])]);
     const buildingsPos = s.buildings.map((p) => [Number(p[0]), Number(p[1])]);
     const nSlot = slotsPos.length;
     const nB = buildingsPos.length;
-    const entrance = [Number(s.entrance[0]), Number(s.entrance[1])];
-    if (!nSlot || !nB) return { driveDist: [], walkMat: [], boxesByBi: [], slotsPos, buildingsPos, nSlot, nB };
-    const driveDist = slotsPos.map((slot) => drivingDistanceFromEntrance(slot, inner, entrance));
-    const boxesByBi = Array.from({ length: nB }, (_, bi) => walkBlockingBoxes(obs, buildingsPos, bi));
+    const entrancesPos = s.entrances.map((p) => [Number(p[0]), Number(p[1])]);
+    if (!nSlot || !nB)
+      return {
+        driveDistByEntrance: [],
+        walkMat: [],
+        boxesByBi: [],
+        navByBi: [],
+        slotsPos,
+        buildingsPos,
+        entrancesPos,
+        nSlot,
+        nB,
+      };
+    const driveDistByEntrance = slotsPos.map((slot) =>
+      entrancesPos.map((ent) => drivingDistanceFromEntrance(slot, road, ent) * metersPerUnit)
+    );
+    const boxesByBi = Array.from({ length: nB }, (_, bi) =>
+      walkBlockingBoxes(obstacles, buildingsPos, bi)
+    );
+    const navByBi = Array.from({ length: nB }, (_, bi) => {
+      const lw = Number(lot.width || 100);
+      const lh = Number(lot.height || 100);
+      const step = recommendNavStep(lw, lh, boxesByBi[bi].length);
+      return buildNavigationGrid(boxesByBi[bi], lw, lh, step);
+    });
     const walkMat = Array.from({ length: nSlot }, () => Array.from({ length: nB }, () => 0));
     for (let si = 0; si < nSlot; si++) {
       for (let bi = 0; bi < nB; bi++) {
-        walkMat[si][bi] = walkingPlan(slotsPos[si], buildingsPos[bi], obs, buildingsPos, bi, boxesByBi[bi])[0];
+        walkMat[si][bi] = walkingPlan(
+          slotsPos[si],
+          buildingsPos[bi],
+          obstacles,
+          buildingsPos,
+          bi,
+          boxesByBi[bi],
+          navByBi[bi],
+          lot
+        )[0] * metersPerUnit;
       }
     }
-    return { driveDist, walkMat, boxesByBi, slotsPos, buildingsPos, nSlot, nB };
+    return { driveDistByEntrance, walkMat, boxesByBi, navByBi, slotsPos, buildingsPos, entrancesPos, nSlot, nB, road };
   }
 
   function decodeParticle(position, nVeh, nSlot) {
-    const order = position
-      .map((v, idx) => [v, idx])
-      .sort((a, b) => (a[0] === b[0] ? a[1] - b[1] : a[0] - b[0]))
-      .map((x) => x[1]);
-    const assign = Array.from({ length: nVeh }, () => 0);
-    for (let k = 0; k < nVeh; k++) {
-      const vehIdx = order[k];
-      assign[vehIdx] = k;
+    // Each position value in [0,1] maps to a desired slot index in [0, nSlot).
+    // Vehicles are processed in order of their position value; each gets its
+    // desired slot or the nearest free one to avoid collisions.
+    const entries = position.map((v, i) => ({
+      v,
+      i,
+      want: Math.min(nSlot - 1, Math.max(0, Math.floor(v * nSlot))),
+    }));
+    entries.sort((a, b) => a.v - b.v);
+    const used = new Set();
+    const assign = new Array(nVeh).fill(0);
+    for (const { i, want } of entries) {
+      let slot = want;
+      for (let delta = 0; delta <= nSlot; delta++) {
+        if (!used.has(want + delta) && want + delta < nSlot) { slot = want + delta; break; }
+        if (!used.has(want - delta) && want - delta >= 0) { slot = want - delta; break; }
+      }
+      assign[i] = slot;
+      used.add(slot);
     }
     return assign;
   }
@@ -629,7 +950,16 @@
       const ti = opts.vehTargets[i];
       const slotXY = opts.slotsPos[opts.bestAssign[i]];
       const bxy = opts.buildingsPos[ti];
-      const poly = walkingPlan(slotXY, bxy, opts.obs, opts.buildingsPos, ti, opts.boxesByBi[ti])[1];
+      const poly = walkingPlan(
+        slotXY,
+        bxy,
+        opts.obstacles,
+        opts.buildingsPos,
+        ti,
+        opts.boxesByBi[ti],
+        opts.navByBi ? opts.navByBi[ti] : null,
+        opts.lot
+      )[1];
       paths.push(poly.map((p) => [Number(p[0]), Number(p[1])]));
     }
     return {
@@ -638,8 +968,19 @@
       history_best: opts.historyBest.map((v) => Number(v)),
       assign: opts.bestAssign.map((v) => Number(v)),
       veh_targets: opts.vehTargets.map((v) => Number(v)),
+      veh_entrances: opts.bestEntrances.map((v) => Number(v)),
+      vehicle_breakdown: opts.vehicleBreakdown.map((it) => ({
+        vehicle_index: Number(it.vehicle_index),
+        slot_index: Number(it.slot_index),
+        destination_index: Number(it.destination_index),
+        entrance_index: Number(it.entrance_index),
+        drive_time: Number(it.drive_time),
+        walk_time: Number(it.walk_time),
+        penalty: Number(it.penalty),
+        total_time: Number(it.total_time),
+      })),
       paths,
-      road_segments: buildRoadSegments(opts.inner).map((seg) => [
+      road_segments: buildRoadSegments(opts.road).map((seg) => [
         [Number(seg[0][0]), Number(seg[0][1])],
         [Number(seg[1][0]), Number(seg[1][1])],
       ]),
@@ -652,8 +993,8 @@
     const method = methodRaw === "pso" ? "pso" : "exact";
     const seed = options && Object.prototype.hasOwnProperty.call(options, "seed") ? options.seed : null;
     const s = normalizeScenario(scenarioInput);
-    const inner = s.inner;
-    const obs = s.obstacle;
+    const road = s.road || roadFromInner(s.inner, DEFAULT_ROAD_WIDTH);
+    const obstacles = s.obstacles;
     const prep = precomputeFromNormalized(s);
     const nSlot = prep.nSlot;
     const nB = prep.nB;
@@ -673,109 +1014,189 @@
     s.n_veh = nVeh;
     normalizeVehicleDestinations(s);
     const vehTargets = s.vehicle_destinations.slice(0, nVeh);
+    const vehEntrances = s.vehicle_entrances.slice(0, nVeh);
+    const entranceMode = s.entrance_mode === "fixed" ? "fixed" : "auto";
+    const entranceCount = prep.entrancesPos.length || 1;
     const vCar = 10.0;
     const vWalk = 1.5;
 
-    if (method === "exact") {
+    function resolveDriveForVehicle(slotIndex, vehIdx) {
+      if (entranceMode === "fixed") {
+        const eiRaw = Number(vehEntrances[vehIdx]);
+        const ei = Number.isFinite(eiRaw) ? Math.max(0, Math.min(entranceCount - 1, eiRaw)) : 0;
+        return { driveTime: prep.driveDistByEntrance[slotIndex][ei] / vCar, entranceIndex: ei };
+      }
+      let bestEi = 0;
+      let bestDrive = prep.driveDistByEntrance[slotIndex][0] / vCar;
+      for (let ei = 1; ei < entranceCount; ei++) {
+        const cur = prep.driveDistByEntrance[slotIndex][ei] / vCar;
+        if (cur < bestDrive) {
+          bestDrive = cur;
+          bestEi = ei;
+        }
+      }
+      return { driveTime: bestDrive, entranceIndex: bestEi };
+    }
+
+    function buildVehicleBreakdown(bestAssign) {
+      const bestEntrances = [];
+      const items = [];
+      for (let i = 0; i < nVeh; i++) {
+        const slotIndex = bestAssign[i];
+        const drive = resolveDriveForVehicle(slotIndex, i);
+        const walkTime = prep.walkMat[slotIndex][vehTargets[i]] / vWalk;
+        const penalty = vehicleSlotPenalty(s, i, slotIndex);
+        bestEntrances.push(drive.entranceIndex);
+        items.push({
+          vehicle_index: i,
+          slot_index: slotIndex,
+          destination_index: vehTargets[i],
+          entrance_index: drive.entranceIndex,
+          drive_time: drive.driveTime,
+          walk_time: walkTime,
+          penalty,
+          total_time: drive.driveTime + walkTime + penalty,
+        });
+      }
+      return { bestEntrances, items };
+    }
+
+    function runExactMethod() {
       const cost = Array.from({ length: nVeh }, (_, i) =>
-        Array.from({ length: nSlot }, (_, j) => prep.driveDist[j] / vCar + prep.walkMat[j][vehTargets[i]] / vWalk)
+        Array.from({ length: nSlot }, (_, j) => {
+          const drive = resolveDriveForVehicle(j, i).driveTime;
+          const walk = prep.walkMat[j][vehTargets[i]] / vWalk;
+          const penalty = vehicleSlotPenalty(s, i, j);
+          return drive + walk + penalty;
+        })
       );
       const bestAssign = hungarianRect(cost);
       let gbestValue = 0;
       for (let i = 0; i < nVeh; i++) gbestValue += cost[i][bestAssign[i]];
+      const breakdown = buildVehicleBreakdown(bestAssign);
       return packResult(s, {
         gbestValue,
         historyBest: [gbestValue],
         bestAssign,
+        bestEntrances: breakdown.bestEntrances,
+        vehicleBreakdown: breakdown.items,
         slotsPos: prep.slotsPos,
         buildingsPos: prep.buildingsPos,
-        obs,
+        obstacles,
         vehTargets,
         boxesByBi: prep.boxesByBi,
-        inner,
+        navByBi: prep.navByBi,
+        lot: s.lot,
+        road,
         optimizer: "exact",
       });
     }
 
-    const rng = makeRng(seed);
-    const pso = s.pso || {};
-    const nParticles = Math.max(2, Number(pso.n_particles) || N_PARTICLES_DEFAULT);
-    const nIter = Math.max(1, Number(pso.n_iter) || N_ITER_DEFAULT);
-    const w = Number(pso.w ?? W_DEFAULT);
-    const c1 = Number(pso.c1 ?? C1_DEFAULT);
-    const c2 = Number(pso.c2 ?? C2_DEFAULT);
-    const vMax = Number(pso.v_max ?? V_MAX_DEFAULT);
+    function runPsoMethod() {
+      const rng = makeRng(seed);
+      const pso = s.pso || {};
+      const nParticles = Math.max(2, Number(pso.n_particles) || N_PARTICLES_DEFAULT);
+      const nIter = Math.max(1, Number(pso.n_iter) || N_ITER_DEFAULT);
+      // w is now used as wMax for adaptive linearly-decreasing inertia
+      const wMax = Number(pso.w ?? W_DEFAULT) > 0.5 ? Number(pso.w ?? W_DEFAULT) : 0.9;
+      const wMin = 0.4;
+      const c1 = Number(pso.c1 ?? C1_DEFAULT);
+      const c2 = Number(pso.c2 ?? C2_DEFAULT);
+      const vMax = Number(pso.v_max ?? V_MAX_DEFAULT);
+      const EARLY_STOP_PATIENCE = Math.max(80, Math.round(nIter * 0.2));
 
-    function objective(position) {
-      const assign = decodeParticle(position, nVeh, nSlot);
-      let driveTotal = 0;
-      let walkTotal = 0;
-      for (let i = 0; i < nVeh; i++) {
-        const slotIndex = assign[i];
-        driveTotal += prep.driveDist[slotIndex] / vCar;
-        walkTotal += prep.walkMat[slotIndex][vehTargets[i]] / vWalk;
-      }
-      return driveTotal + walkTotal;
-    }
-
-    const positions = Array.from({ length: nParticles }, () =>
-      Array.from({ length: nVeh }, () => rng.random())
-    );
-    const velocities = Array.from({ length: nParticles }, () =>
-      Array.from({ length: nVeh }, () => gaussian(rng) * 0.1)
-    );
-    const pbestPositions = positions.map((p) => p.slice());
-    const pbestValues = positions.map((p) => objective(p));
-    let gbestIdx = 0;
-    for (let i = 1; i < nParticles; i++) {
-      if (pbestValues[i] < pbestValues[gbestIdx]) gbestIdx = i;
-    }
-    let gbestPosition = pbestPositions[gbestIdx].slice();
-    let gbestValue = pbestValues[gbestIdx];
-    const historyBest = [gbestValue];
-
-    for (let it = 0; it < nIter; it++) {
-      for (let i = 0; i < nParticles; i++) {
-        for (let d = 0; d < nVeh; d++) {
-          const r1 = rng.random();
-          const r2 = rng.random();
-          velocities[i][d] =
-            w * velocities[i][d] +
-            c1 * r1 * (pbestPositions[i][d] - positions[i][d]) +
-            c2 * r2 * (gbestPosition[d] - positions[i][d]);
-          velocities[i][d] = Math.max(-vMax, Math.min(vMax, velocities[i][d]));
-          positions[i][d] = Math.max(0, Math.min(1, positions[i][d] + velocities[i][d]));
+      function objective(position) {
+        const assign = decodeParticle(position, nVeh, nSlot);
+        let driveTotal = 0;
+        let walkTotal = 0;
+        for (let i = 0; i < nVeh; i++) {
+          const slotIndex = assign[i];
+          driveTotal += resolveDriveForVehicle(slotIndex, i).driveTime;
+          walkTotal += prep.walkMat[slotIndex][vehTargets[i]] / vWalk;
+          walkTotal += vehicleSlotPenalty(s, i, slotIndex);
         }
-        const val = objective(positions[i]);
-        if (val < pbestValues[i]) {
-          pbestValues[i] = val;
-          pbestPositions[i] = positions[i].slice();
-        }
+        return driveTotal + walkTotal;
       }
-      gbestIdx = 0;
+
+      function encodeAssignToPosition(assign) {
+        // Encode slot index directly into [0,1] so positions never exceed 1.
+        return assign.map((slotIdx) => (slotIdx + 0.5) / nSlot);
+      }
+
+      const positions = Array.from({ length: nParticles }, () =>
+        Array.from({ length: nVeh }, () => rng.random())
+      );
+
+      const velocities = Array.from({ length: nParticles }, () =>
+        Array.from({ length: nVeh }, () => gaussian(rng) * 0.1)
+      );
+      const pbestPositions = positions.map((p) => p.slice());
+      const pbestValues = positions.map((p) => objective(p));
+      let gbestIdx = 0;
       for (let i = 1; i < nParticles; i++) {
         if (pbestValues[i] < pbestValues[gbestIdx]) gbestIdx = i;
       }
-      if (pbestValues[gbestIdx] < gbestValue) {
-        gbestValue = pbestValues[gbestIdx];
-        gbestPosition = pbestPositions[gbestIdx].slice();
+      let gbestPosition = pbestPositions[gbestIdx].slice();
+      let gbestValue = pbestValues[gbestIdx];
+      const historyBest = [gbestValue];
+      let noImprovCount = 0;
+
+      for (let it = 0; it < nIter; it++) {
+        // Adaptive linearly-decreasing inertia weight
+        const w = nIter > 1 ? wMax - (wMax - wMin) * (it / (nIter - 1)) : wMax;
+
+        for (let i = 0; i < nParticles; i++) {
+          for (let d = 0; d < nVeh; d++) {
+            const r1 = rng.random();
+            const r2 = rng.random();
+            velocities[i][d] =
+              w * velocities[i][d] +
+              c1 * r1 * (pbestPositions[i][d] - positions[i][d]) +
+              c2 * r2 * (gbestPosition[d] - positions[i][d]);
+            velocities[i][d] = Math.max(-vMax, Math.min(vMax, velocities[i][d]));
+            positions[i][d] = Math.max(0, Math.min(1, positions[i][d] + velocities[i][d]));
+          }
+          const val = objective(positions[i]);
+          if (val < pbestValues[i]) {
+            pbestValues[i] = val;
+            pbestPositions[i] = positions[i].slice();
+          }
+        }
+        gbestIdx = 0;
+        for (let i = 1; i < nParticles; i++) {
+          if (pbestValues[i] < pbestValues[gbestIdx]) gbestIdx = i;
+        }
+        if (pbestValues[gbestIdx] < gbestValue) {
+          gbestValue = pbestValues[gbestIdx];
+          gbestPosition = pbestPositions[gbestIdx].slice();
+          noImprovCount = 0;
+        } else {
+          noImprovCount++;
+          if (noImprovCount >= EARLY_STOP_PATIENCE) break;
+        }
+        historyBest.push(gbestValue);
       }
-      historyBest.push(gbestValue);
+      const bestAssign = decodeParticle(gbestPosition, nVeh, nSlot);
+      const breakdown = buildVehicleBreakdown(bestAssign);
+      return packResult(s, {
+        gbestValue,
+        historyBest,
+        bestAssign,
+        bestEntrances: breakdown.bestEntrances,
+        vehicleBreakdown: breakdown.items,
+        slotsPos: prep.slotsPos,
+        buildingsPos: prep.buildingsPos,
+        obstacles,
+        vehTargets,
+        boxesByBi: prep.boxesByBi,
+        navByBi: prep.navByBi,
+        lot: s.lot,
+        road,
+        optimizer: "pso",
+      });
     }
 
-    const bestAssign = decodeParticle(gbestPosition, nVeh, nSlot);
-    return packResult(s, {
-      gbestValue,
-      historyBest,
-      bestAssign,
-      slotsPos: prep.slotsPos,
-      buildingsPos: prep.buildingsPos,
-      obs,
-      vehTargets,
-      boxesByBi: prep.boxesByBi,
-      inner,
-      optimizer: "pso",
-    });
+    return method === "exact" ? runExactMethod() : runPsoMethod();
   }
 
   window.ParkingOptimizer = {
