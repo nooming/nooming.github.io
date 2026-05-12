@@ -153,17 +153,23 @@
             position: fixed;
             top: 24px;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translateX(-50%) translateY(-8px);
             background: linear-gradient(135deg, #ef4444, #f87171);
             color: white;
             padding: 12px 24px;
             border-radius: var(--radius-md);
             z-index: 1000;
-            display: none;
             font-size: 14px;
             font-weight: 500;
             box-shadow: var(--shadow-lg);
-            animation: slideDown 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+        .error-toast.show {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(-50%) translateY(0);
         }
 
         @keyframes slideDown {
@@ -288,9 +294,9 @@
             background: var(--primary);
         }
 
-        /* 天气卡片 - 渐变背景 */
+        /* 天气卡片 - 跟随主题渐变 */
         .weather-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             border-radius: var(--radius-md);
             padding: 16px 20px;
             margin-bottom: 20px;
@@ -304,7 +310,7 @@
 
         .weather-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
         }
 
         .weather-icon {
@@ -527,6 +533,16 @@
             box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
         }
 
+        /* 分享图片按钮 - 跟随主题色，与文字方案按钮区分 */
+        .btn-share-image {
+            margin-top: 12px;
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+        }
+
+        .btn-share-image:hover {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        }
+
         /* 结果区域 */
         .result-area {
             margin-top: 20px;
@@ -581,7 +597,7 @@
         /* POI列表 */
         .poi-list {
             margin-top: 12px;
-            max-height: 180px;
+            max-height: 260px;
             overflow-y: auto;
             padding-right: 4px;
         }
@@ -925,4 +941,245 @@
             .control-panel {
                 padding-bottom: env(safe-area-inset-bottom);
             }
+        }
+
+        /* 返回按钮 - 刘海屏安全区域 */
+        @supports (padding: env(safe-area-inset-top)) {
+            .back-home-fab {
+                top: max(16px, env(safe-area-inset-top));
+                left: max(16px, env(safe-area-inset-left));
+            }
+        }
+
+        /* 城市选择器 */
+        .city-selector {
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--primary-light), var(--primary));
+            padding: 12px;
+            border-radius: var(--radius-md);
+        }
+
+        .city-selector-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .city-selector-icon {
+            font-size: 18px;
+        }
+
+        .city-selector-title {
+            font-weight: 600;
+            color: white;
+            font-size: 14px;
+        }
+
+        .city-selector-name {
+            font-weight: 700;
+            color: white;
+            font-size: 16px;
+        }
+
+        .city-input-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .city-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            outline: none;
+        }
+
+        .city-switch-btn {
+            padding: 8px 16px;
+            background: white;
+            color: var(--primary);
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
+            transition: opacity 0.2s;
+        }
+
+        .city-switch-btn:hover {
+            opacity: 0.85;
+        }
+
+        .hot-cities-row {
+            margin-top: 10px;
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .hot-cities-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.9);
+        }
+
+        /* 搜索框 */
+        .search-box {
+            margin-bottom: 16px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border-light);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            transition: all 0.3s;
+            outline: none;
+            background: white;
+        }
+
+        .search-box input:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(255,126,95,0.1);
+        }
+
+        /* 操作提示框 */
+        .tips-box {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            margin-bottom: 16px;
+            font-size: 12px;
+            color: #0369a1;
+        }
+
+        /* 时间滑块组 */
+        .time-slider-group {
+            padding: 8px 0;
+        }
+
+        .time-slider-group input[type=range] {
+            width: 100%;
+            accent-color: var(--primary);
+        }
+
+        .time-slider-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 4px;
+        }
+
+        .time-slider-value {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* POI 列表项内容（消除 inline style） */
+        .poi-item-content {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .poi-item-icon {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .poi-item-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .poi-item-name {
+            color: var(--text-dark);
+            font-size: 13px;
+        }
+
+        .poi-item-type {
+            font-size: 11px;
+            color: var(--text-light);
+            margin-top: 2px;
+        }
+
+        .poi-item-reason {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 3px;
+        }
+
+        /* POI 信息窗口 */
+        .poi-infowin {
+            padding: 16px;
+            font-size: 14px;
+            min-width: 200px;
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+        }
+
+        .poi-infowin-title {
+            margin: 0 0 12px 0;
+            color: #1e293b;
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .poi-infowin-badge {
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .poi-infowin-name {
+            flex: 1;
+        }
+
+        .poi-infowin-row {
+            margin: 8px 0;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .poi-infowin-icon {
+            color: #94a3b8;
+        }
+
+        .poi-infowin-stay {
+            font-weight: 600;
+        }
+
+        /* 搜索结果信息窗口 */
+        .search-infowin {
+            padding: 10px;
+            font-size: 14px;
+        }
+
+        .search-infowin-addr {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .search-infowin-hint {
+            color: var(--primary);
+            font-size: 12px;
+        }
+
+        /* 分享按钮默认隐藏，生成路线后由 JS 显示 */
+        #btnShareImage {
+            display: none;
         }
