@@ -219,9 +219,9 @@
             gap: 8px;
         }
 
-        .panel-header h2::before {
-            content: '🚶';
+        .panel-header-icon {
             font-size: 22px;
+            line-height: 1;
         }
 
         /* 悬浮返回主页按钮样式（地图上的圆形按钮） */
