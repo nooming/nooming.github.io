@@ -502,3 +502,5 @@ h1 {
         font-size: 0.85rem;
     }
 }
+#practice .tips-cards.tips-cards--practice{grid-template-columns:repeat(3,minmax(0,1fr));max-width:1200px;}
+@media (max-width:900px){#practice .tips-cards.tips-cards--practice{grid-template-columns:1fr;}}
