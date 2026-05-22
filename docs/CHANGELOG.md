@@ -5,6 +5,9 @@
 1. 新增实践工具「像素涌流」（`app/pixelflow/`）：双图像素排序重排、动画过渡、运动拖尾与 PNG 导出，纯本地处理。
 2. 首页实践区新增入口并适配三卡布局；SEO 与区块说明、小游戏合集 description 等全站文案与新功能对齐。
 3. `sitemap.xml` 增加 `app/pixelflow/` 条目。
+4. 重组 `app/games/`：五子棋、围棋、象棋迁入 `board-games/`，与 `card-games/` 目录模式一致。
+5. 质子世界迁至 `app/proton/`，与首页「实践」栏目一致；小游戏合集文案仅描述棋类、桌游、小恐龙。
+6. 全站链接与 `sitemap.xml` 同步新路径（旧 `app/games/proton/`、`app/games/gomoku/` 等不再保留）。
 
 ## v1.8
 
