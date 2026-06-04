@@ -1,5 +1,13 @@
 # 更新日志
 
+## v2.2
+
+Citywalk 大版本同步：前后端模块化，智能规划与环线探索上线；API 仍为 `noomings-backend.zeabur.app`。
+
+1. **前端**（`app/citywalk/`）：智能规划 / 手动规划 / 结果 Tab；环线探索、灵感种草卡片、对话微调路线、路线风格与合并打卡偏好、历史路线；JS 拆分为 `core/`、`map/`、`plan/`、`ui/`、`share/`。
+2. **后端**（`noomings_backend`）：由单体 `citywalk.py` 拆为 `agent/`、`api/`、`lib/`、`planning/`；新增 `/agent/*`、`/resolve_location`、`/poi/enrich` 等接口；环境变量配置 Key 与 CORS。
+3. 站内左上角「←」仍返回首页；重置选点由面板内「重置选择」提供。
+
 ## v2.1
 
 实践栏目扩充与 `app/games` 目录重组；全站链接、文案与站点地图同步更新（旧路径不保留跳转）。

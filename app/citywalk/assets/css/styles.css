@@ -4,6 +4,7 @@
             --primary: #ff7e5f;
             --primary-light: #feb47b;
             --primary-dark: #e85d40;
+            --primary-rgb: 255,126,95; /* 由 app.js 随主题动态写入，供 rgba() 跟随主题 */
             --bg-white: #ffffff;
             --bg-light: #f8fafc;
             --radius-sm: 8px;
@@ -17,22 +18,29 @@
             --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
             --shadow-lg: 0 10px 40px rgba(0,0,0,0.12);
             --transition: all 0.3s ease;
+            /* 间距尺度 */
+            --space-1: 4px;
+            --space-2: 8px;
+            --space-3: 12px;
+            --space-4: 16px;
+            --space-5: 20px;
+            --space-6: 24px;
         }
 
         /* 热门城市标签样式 */
         .hot-city-tag {
             display: inline-block;
             padding: 4px 10px;
-            background: rgba(255,255,255,0.25);
-            color: white;
+            background: rgba(var(--primary-rgb), 0.08);
+            color: var(--primary-dark);
             border-radius: 12px;
             font-size: 11px;
             cursor: pointer;
-            transition: all 0.2s ease;
-            border: 1px solid rgba(255,255,255,0.3);
+            transition: background 0.2s ease, transform 0.2s ease;
+            border: 1px solid rgba(var(--primary-rgb), 0.2);
         }
         .hot-city-tag:hover {
-            background: rgba(255,255,255,0.4);
+            background: rgba(var(--primary-rgb), 0.16);
             transform: translateY(-1px);
         }
 
@@ -45,6 +53,36 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
             background: var(--bg-light);
+        }
+
+        /* 屏幕阅读器专用文本（视觉隐藏，仍可被读屏/键盘聚焦标签引用） */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* 由 div 升级为 <button> 的可点元素：抹平浏览器默认字体/对齐，保持原视觉 */
+        .poi-type-btn,
+        .route-style-btn,
+        .hot-city-tag {
+            font-family: inherit;
+            line-height: normal;
+            text-align: center;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        /* 统一键盘可见焦点环（鼠标点击不显示，仅键盘 Tab 时显示） */
+        :focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
         }
 
         /* 地图容器 */
@@ -148,13 +186,15 @@
             to { transform: rotate(360deg); }
         }
 
-        /* 错误提示 */
+        /* 提示 toast - 语义三态（默认中性 info） */
         .error-toast {
             position: fixed;
             top: 24px;
             left: 50%;
             transform: translateX(-50%) translateY(-8px);
-            background: linear-gradient(135deg, #ef4444, #f87171);
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             color: white;
             padding: 12px 24px;
             border-radius: var(--radius-md);
@@ -165,6 +205,18 @@
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+        /* 信息（中性深色玻璃，默认） */
+        .error-toast.toast-info {
+            background: rgba(15, 23, 42, 0.92);
+        }
+        /* 成功（绿） */
+        .error-toast.toast-success {
+            background: linear-gradient(135deg, #16a34a, #22c55e);
+        }
+        /* 错误（红） */
+        .error-toast.toast-error {
+            background: linear-gradient(135deg, #ef4444, #f87171);
         }
         .error-toast.show {
             opacity: 1;
@@ -294,29 +346,478 @@
             background: var(--primary);
         }
 
-        /* 天气卡片 - 跟随主题渐变 */
-        .weather-card {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            border-radius: var(--radius-md);
-            padding: 16px 20px;
-            margin-bottom: 20px;
+        /* 环境层：一行城市 + 天气 */
+        .panel-env {
+            flex-shrink: 0;
+            padding: 10px 14px 0;
+        }
+
+        .panel-env-bar {
+            display: flex;
+            align-items: stretch;
+            gap: 10px;
+        }
+
+        .panel-env-bar:has(.city-switcher[open]) {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+        }
+
+        .panel-env-bar:has(.city-switcher[open]) .weather-chip {
+            max-width: none;
+            width: 100%;
+        }
+
+        .city-switcher {
+            flex: 1;
+            min-width: 0;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-sm);
+            background: var(--bg-white);
+        }
+
+        .city-switcher-summary {
+            list-style: none;
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 6px;
+            padding: 8px 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .city-switcher-summary::-webkit-details-marker { display: none; }
+
+        .city-switcher-name {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--primary);
+        }
+
+        .city-switcher-chevron {
+            font-size: 11px;
+            color: var(--text-light);
+        }
+
+        .city-switcher-body {
+            padding: 10px 12px 12px;
+            border-top: 1px dashed var(--border-light);
+        }
+
+        .city-switcher-body .city-input-row {
+            margin-top: 8px;
+        }
+
+        .city-switcher-body .hot-cities-row {
+            display: flex;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            gap: 8px;
+            margin-top: 10px;
+            padding: 4px 0 6px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+        }
+
+        .city-switcher-body .hot-cities-row::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .city-switcher-body .hot-city-tag {
+            flex-shrink: 0;
+            white-space: nowrap;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .city-switcher-body .hot-cities-label { display: none; }
+
+        .weather-chip {
+            flex-shrink: 0;
+            max-width: 46%;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: white;
-            box-shadow: var(--shadow-md);
-            transition: var(--transition);
+            cursor: pointer;
+            border: none;
+            text-align: left;
         }
 
-        .weather-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        .weather-chip-icon { font-size: 20px; line-height: 1; }
+
+        .weather-chip-text {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
         }
 
-        .weather-icon {
-            font-size: 36px;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        .weather-chip-title {
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
+
+        .weather-chip-desc {
+            font-size: 11px;
+            opacity: 0.9;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            line-height: 1.3;
+            word-break: normal;
+        }
+
+        .panel-env-bar:not(:has(.city-switcher[open])) .weather-chip-desc {
+            white-space: nowrap;
+            display: block;
+            -webkit-line-clamp: unset;
+            text-overflow: ellipsis;
+        }
+
+        .panel-shared--hidden {
+            display: none !important;
+        }
+
+        /* 智能规划 Tab：起终点/搜索/模式切换均由描述解析，隐藏避免误导；时长滑块保留 */
+        /* 智能 Tab 与手动 Tab 共用搜索、模式、选点（参与 Agent 请求） */
+
+        /* Tab 导航 */
+        .panel-tabs {
+            flex-shrink: 0;
+            display: flex;
+            gap: 0;
+            padding: 0 12px;
+            border-bottom: 1px solid var(--border-light);
+            background: rgba(255, 255, 255, 0.98);
+        }
+
+        .panel-tab {
+            flex: 1;
+            padding: 10px 4px;
+            border: none;
+            border-bottom: 2px solid transparent;
+            background: transparent;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-medium);
+            cursor: pointer;
+            transition: color 0.2s ease, border-color 0.2s ease;
+            margin-bottom: -1px;
+        }
+
+        .panel-tab:hover:not(:disabled):not(.panel-tab--disabled) {
+            color: var(--primary);
+        }
+
+        .panel-tab--active {
+            color: var(--primary);
+            font-weight: 600;
+            border-bottom-color: var(--primary);
+        }
+
+        .panel-tab--disabled,
+        .panel-tab:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .panel-tab[hidden] {
+            display: none;
+        }
+
+        /* 共享选点区 */
+        .panel-shared {
+            padding-bottom: 14px;
+            margin-bottom: 14px;
+            border-bottom: 1px dashed var(--border-light);
+        }
+
+        .panel-shared .search-box {
+            margin-bottom: 12px;
+        }
+
+        .panel-shared .plan-mode-group {
+            margin-bottom: 12px;
+        }
+
+        .panel-shared .status-group {
+            margin-bottom: 0;
+        }
+
+        .search-box--compact input {
+            padding: 10px 14px;
+            font-size: 14px;
+        }
+
+        .plan-time-mini {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px dashed var(--border-light);
+        }
+
+        .plan-time-mini-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-medium);
+            flex-shrink: 0;
+        }
+
+        .plan-time-mini input[type="range"] {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .plan-time-mini-value {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--primary);
+            flex-shrink: 0;
+            min-width: 52px;
+            text-align: right;
+        }
+
+        .panel-shared.plan-mode-loop .pickup-strip #startCard {
+            flex: 1 1 100%;
+        }
+
+        .panel-shared.plan-mode-loop #endCard {
+            display: none !important;
+        }
+
+        /* Tab 面板 */
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel--active {
+            display: block;
+        }
+
+        .tab-panel[hidden] {
+            display: none !important;
+        }
+
+        .btn-ghost.btn-reset {
+            width: 100%;
+            margin-top: 8px;
+            padding: 8px;
+            border: none;
+            background: transparent;
+            color: var(--text-light);
+            font-size: 13px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .btn-ghost.btn-reset:hover { color: var(--primary); }
+
+        .btn-group--manual-primary {
+            display: block;
+            margin-bottom: 0;
+        }
+
+        .btn-group--manual-primary .btn-plan {
+            width: 100%;
+        }
+
+        .tips-box--compact {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 8px 10px;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        .tips-box-dismiss {
+            border: none;
+            background: transparent;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 2px 6px;
+            font-size: 14px;
+        }
+
+        .manual-filters,
+        .manual-history,
+        .result-notes,
+        .result-chat {
+            margin-top: 10px;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-sm);
+            padding: 0 10px 10px;
+            background: var(--bg-light);
+        }
+
+        .manual-filters summary,
+        .manual-history summary,
+        .result-notes summary,
+        .result-chat summary {
+            padding: 10px 0;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-medium);
+            cursor: pointer;
+        }
+
+        .result-toolbar {
+            margin-bottom: 8px;
+        }
+
+        .btn-link-back-plan {
+            padding: 6px 0;
+            border: none;
+            background: transparent;
+            color: var(--primary);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: left;
+            font-family: inherit;
+            width: 100%;
+        }
+
+        .result-stats-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .result-stat {
+            flex: 1;
+            text-align: center;
+            padding: 10px 6px;
+            background: var(--bg-light);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-light);
+        }
+
+        .result-stat .label {
+            font-size: 11px;
+            color: var(--text-light);
+            margin-bottom: 4px;
+        }
+
+        .result-stat .value {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .duration-stat-value {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            font-size: 12px;
+            line-height: 1.35;
+            font-weight: 600;
+        }
+
+        .duration-plan {
+            white-space: nowrap;
+        }
+
+        .duration-est {
+            white-space: nowrap;
+            color: var(--text-medium);
+            font-weight: 500;
+        }
+
+        .duration-free {
+            white-space: nowrap;
+            font-size: 11px;
+            color: var(--text-medium);
+            font-weight: 500;
+            opacity: 0.9;
+        }
+
+        .poi-seed-tag {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--primary);
+            background: rgba(var(--primary-rgb), 0.12);
+            border-radius: 4px;
+            padding: 1px 5px;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+
+        .result-actions-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .result-share-block .result-actions-row .btn-generate-plan {
+            display: block;
+            flex: 1;
+            margin: 0;
+        }
+
+        .result-share-block .btn-share-image {
+            margin-top: 0;
+        }
+
+        #tab-panel-result .result-chat .agent-chat-section {
+            margin-top: 8px;
+            padding-top: 0;
+            border-top: none;
+        }
+
+        .result-share-block {
+            margin-top: 12px;
+        }
+
+        .result-share-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-medium);
+            margin-bottom: 8px;
+        }
+
+        .result-area .result-actions-row {
+            display: flex;
+            margin-top: 0;
+        }
+
+        /* 分享按钮仅在结果区内展示，勿用全局 display:none 隐藏 */
+        #tab-panel-result .result-share-block .btn-generate-plan {
+            display: block;
+        }
+
+        .result-chat-hint {
+            font-size: 11px;
+            color: var(--text-light);
+            margin: 0 0 8px;
+            line-height: 1.45;
+        }
+
+        #tab-panel-result .agent-chat-log:empty {
+            display: none;
+            margin: 0;
+            padding: 0;
+            background: transparent;
+        }
+
 
         .weather-info {
             flex: 1;
@@ -352,13 +853,13 @@
 
         .status-card:hover {
             border-color: var(--primary-light);
-            background: #fff8f5;
+            background: rgba(var(--primary-rgb), 0.05);
         }
 
         .status-card.selected {
             border-color: var(--primary);
-            background: linear-gradient(135deg, #fff5f2, #fff9f7);
-            box-shadow: 0 0 0 3px rgba(255, 126, 95, 0.1);
+            background: rgba(var(--primary-rgb), 0.08);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
         }
 
         .status-card .label {
@@ -374,7 +875,12 @@
             font-size: 13px;
             font-weight: 600;
             color: var(--text-dark);
-            word-break: break-all;
+            word-break: normal;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            line-height: 1.35;
         }
 
         .status-card.selected .value {
@@ -400,6 +906,13 @@
             border-radius: 2px;
         }
 
+        .filter-hint {
+            font-size: 12px;
+            color: var(--text-light, #888);
+            margin: -6px 0 10px 0;
+            line-height: 1.4;
+        }
+
         /* POI类型按钮组 */
         .poi-type-group {
             display: flex;
@@ -423,14 +936,14 @@
         .poi-type-btn:hover {
             border-color: var(--primary-light);
             color: var(--primary);
-            background: #fff8f5;
+            background: rgba(var(--primary-rgb), 0.06);
         }
 
         .poi-type-btn.active {
             background: linear-gradient(135deg, var(--primary), var(--primary-light));
             color: white;
             border-color: transparent;
-            box-shadow: 0 4px 12px rgba(255, 126, 95, 0.3);
+            box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
         }
 
         /* 时间输入组 */
@@ -455,7 +968,7 @@
         .time-input-group input:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(255, 126, 95, 0.1);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
         }
 
         .unit {
@@ -496,12 +1009,12 @@
         .btn-plan {
             background: linear-gradient(135deg, var(--primary), var(--primary-light));
             color: white;
-            box-shadow: 0 4px 12px rgba(255, 126, 95, 0.3);
+            box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
         }
 
         .btn-plan:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 126, 95, 0.4);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(var(--primary-rgb), 0.4);
         }
 
         .btn-plan:disabled {
@@ -511,43 +1024,44 @@
             box-shadow: none;
         }
 
-        /* 生成方案按钮 */
+        /* 生成方案按钮 - secondary：白底 + 主题描边/文字 */
         .btn-generate-plan {
             width: 100%;
             padding: 12px 16px;
-            border: none;
+            border: 1.5px solid var(--primary);
             border-radius: var(--radius-md);
-            background: linear-gradient(135deg, #3b82f6, #60a5fa);
-            color: white;
+            background: var(--bg-white);
+            color: var(--primary-dark);
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            margin: 8px 0;
-            display: none;
+            margin: var(--space-2) 0;
             transition: var(--transition);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
 
         .btn-generate-plan:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+            background: rgba(var(--primary-rgb), 0.08);
+            transform: translateY(-1px);
         }
 
-        /* 分享图片按钮 - 跟随主题色，与文字方案按钮区分 */
+        /* 分享图片按钮 - 与文字方案同为 secondary，浅主题底以作区分 */
         .btn-share-image {
-            margin-top: 12px;
-            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            margin-top: var(--space-3);
+            background: rgba(var(--primary-rgb), 0.1);
         }
 
         .btn-share-image:hover {
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            background: rgba(var(--primary-rgb), 0.18);
         }
 
         /* 结果区域 */
+        #tab-panel-result .result-area {
+            margin-top: 0;
+            padding-top: 0;
+            border-top: none;
+        }
+
         .result-area {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid var(--border-light);
             display: none;
             animation: fadeIn 0.3s ease;
         }
@@ -560,7 +1074,7 @@
         .result-header {
             font-size: 14px;
             font-weight: 600;
-            margin-bottom: 16px;
+            margin-bottom: 10px;
             color: var(--text-dark);
             display: flex;
             align-items: center;
@@ -597,7 +1111,7 @@
         /* POI列表 */
         .poi-list {
             margin-top: 12px;
-            max-height: 260px;
+            max-height: 300px;
             overflow-y: auto;
             padding-right: 4px;
         }
@@ -631,8 +1145,118 @@
         .poi-item:hover {
             color: var(--primary-dark);
             border-color: var(--primary-light);
-            background: #fff8f5;
+            background: rgba(var(--primary-rgb), 0.06);
             transform: translateX(4px);
+        }
+
+        .poi-item.active {
+            border-color: var(--primary);
+            background: rgba(var(--primary-rgb), 0.1);
+            box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.15);
+        }
+
+        /* 自定义起终点地图标记 */
+        .cw-endpoint-marker {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            border: 3px solid #fff;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+            box-sizing: border-box;
+        }
+
+        .cw-endpoint-marker--end {
+            width: 38px;
+            height: 38px;
+            font-size: 14px;
+            border-width: 4px;
+            box-shadow: 0 0 0 3px rgba(232, 93, 64, 0.35), 0 4px 12px rgba(0,0,0,0.35);
+        }
+
+        .result-notes {
+            margin-top: 12px;
+        }
+
+        .result-notes-body {
+            padding-top: 4px;
+        }
+
+        .result-notes-body .route-end-hint {
+            margin-top: 0;
+        }
+
+        .result-notes-body .route-feedback {
+            margin-top: 8px;
+        }
+
+        .result-notes-body .weather-nudge {
+            margin-top: 8px;
+        }
+
+        .route-end-hint {
+            font-size: 12px;
+            color: var(--text-medium);
+            line-height: 1.55;
+            margin-bottom: 0;
+        }
+
+        .agent-inspire {
+            margin: 10px 0 12px;
+            padding: 10px 12px;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-sm);
+            background: var(--bg-light);
+        }
+
+        .agent-inspire-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 10px;
+        }
+
+        .agent-inspire-row .inspire-toggle {
+            margin: 0;
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .agent-inspire-row .btn-inspire-cards {
+            width: auto;
+            flex: 1;
+            min-width: 120px;
+            margin-top: 0;
+        }
+
+        .agent-inspire-hint {
+            margin: 8px 0 0;
+            font-size: 11px;
+            line-height: 1.45;
+            color: var(--text-light);
+        }
+
+        .agent-inspire .inspire-cards {
+            margin-top: 10px;
+        }
+
+        #inspireCards[hidden] {
+            display: none !important;
+        }
+
+        .agent-inspire #inspireCards:empty {
+            display: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .status-card--destination .label {
+            font-weight: 700;
         }
 
         .poi-item strong {
@@ -656,7 +1280,7 @@
             font-weight: bold;
             border: 2px solid white;
             z-index: 101;
-            box-shadow: 0 2px 6px rgba(255, 126, 95, 0.4);
+            box-shadow: 0 2px 6px rgba(var(--primary-rgb), 0.4);
         }
 
         /* 响应式适配 - 全面移动端优化 */
@@ -702,6 +1326,24 @@
                 font-size: 17px;
                 pointer-events: none;
                 margin: 0;
+            }
+
+            /* 收起时仅保留标题栏，环境区与 Tab 随面板一并隐藏 */
+            .panel-env,
+            .panel-tabs {
+                display: none;
+            }
+
+            .control-panel.expanded .panel-env {
+                display: flex;
+            }
+
+            .control-panel.expanded .panel-tabs {
+                display: flex;
+            }
+
+            .panel-env {
+                padding: 10px 16px 0;
             }
 
             .panel-body {
@@ -843,23 +1485,13 @@
                 padding: 12px 14px;
             }
 
-            /* 移动端POI列表 */
+            /* 移动端POI列表：上调高度，容纳增强图文，仍在 panel-body(55vh) 内可滚动 */
             .poi-list {
-                max-height: 150px;
+                max-height: 38vh;
             }
 
             .poi-item {
                 padding: 12px 14px;
-            }
-
-            /* 移动端天气卡片 */
-            .weather-card {
-                padding: 14px 16px;
-                margin-bottom: 16px;
-            }
-
-            .weather-icon {
-                font-size: 32px;
             }
 
             /* 移动端加载动画 */
@@ -953,10 +1585,12 @@
 
         /* 城市选择器 */
         .city-selector {
-            margin-bottom: 16px;
-            background: linear-gradient(135deg, var(--primary-light), var(--primary));
-            padding: 12px;
+            margin-bottom: var(--space-4);
+            background: var(--bg-white);
+            padding: var(--space-3);
             border-radius: var(--radius-md);
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow-sm);
         }
 
         .city-selector-header {
@@ -972,13 +1606,13 @@
 
         .city-selector-title {
             font-weight: 600;
-            color: white;
+            color: var(--text-medium);
             font-size: 14px;
         }
 
         .city-selector-name {
             font-weight: 700;
-            color: white;
+            color: var(--primary);
             font-size: 16px;
         }
 
@@ -990,16 +1624,21 @@
         .city-input {
             flex: 1;
             padding: 8px 12px;
-            border: none;
+            border: 1px solid var(--border-light);
             border-radius: var(--radius-sm);
             font-size: 13px;
             outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .city-input:focus {
+            border-color: var(--primary);
         }
 
         .city-switch-btn {
             padding: 8px 16px;
-            background: white;
-            color: var(--primary);
+            background: var(--primary);
+            color: white;
             border: none;
             border-radius: var(--radius-sm);
             font-weight: 600;
@@ -1022,7 +1661,7 @@
 
         .hot-cities-label {
             font-size: 11px;
-            color: rgba(255,255,255,0.9);
+            color: var(--text-light);
         }
 
         /* 搜索框 */
@@ -1043,17 +1682,175 @@
 
         .search-box input:focus {
             border-color: var(--primary-light);
-            box-shadow: 0 0 0 3px rgba(255,126,95,0.1);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb),0.1);
         }
 
-        /* 操作提示框 */
-        .tips-box {
-            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
-            border-radius: var(--radius-sm);
-            padding: 12px;
-            margin-bottom: 16px;
+        /* 智能体输入区 - 干净白卡 + 左侧主题点缀 */
+        .agent-box {
+            margin-bottom: var(--space-4);
+            padding: var(--space-3);
+            border-radius: var(--radius-md);
+            background: var(--bg-white);
+            border: 1px solid var(--border-light);
+            border-left: 3px solid var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .agent-hint {
+            margin: 0 0 10px;
             font-size: 12px;
-            color: #0369a1;
+            line-height: 1.45;
+            color: var(--text-light);
+        }
+
+        .agent-query-input {
+            width: 100%;
+            min-height: 64px;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            line-height: 1.5;
+            resize: vertical;
+            font-family: inherit;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease;
+        }
+
+        .agent-query-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+        }
+
+        .btn-agent-plan {
+            width: 100%;
+            padding: 12px 16px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            color: white;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
+            transition: var(--transition);
+        }
+
+        .btn-agent-plan:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(var(--primary-rgb), 0.4);
+        }
+
+        .btn-agent-plan:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        .agent-chat-section {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px dashed var(--border-light);
+        }
+
+        .agent-chat-log {
+            max-height: 140px;
+            overflow-y: auto;
+            margin-bottom: 8px;
+            padding: 8px;
+            background: var(--bg-light);
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .agent-chat-msg {
+            margin-bottom: 6px;
+        }
+
+        .agent-chat-msg.user {
+            color: var(--primary-dark);
+        }
+
+        .agent-chat-msg.assistant {
+            color: var(--text-medium);
+        }
+
+        .agent-chat-input-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .agent-chat-input {
+            flex: 1;
+            padding: 8px 10px;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .agent-chat-input:focus {
+            border-color: var(--primary);
+        }
+
+        .btn-agent-chat-send {
+            padding: 8px 14px;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .btn-agent-chat-send:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* 规划模式切换 */
+        .plan-mode-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: var(--space-4);
+        }
+
+        .plan-mode-btn {
+            flex: 1;
+            padding: 10px 8px;
+            border: 2px solid var(--primary);
+            border-radius: var(--radius-sm);
+            background: white;
+            color: var(--primary);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .plan-mode-btn--active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* 操作提示框 - 中性低调 */
+        .tips-box {
+            background: var(--bg-light);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-sm);
+            padding: var(--space-3);
+            margin-bottom: var(--space-4);
+            font-size: 12px;
+            color: var(--text-medium);
+        }
+
+        .tips-box strong {
+            color: var(--text-dark);
         }
 
         /* 时间滑块组 */
@@ -1179,7 +1976,502 @@
             font-size: 12px;
         }
 
-        /* 分享按钮默认隐藏，生成路线后由 JS 显示 */
-        #btnShareImage {
-            display: none;
+
+        /* 文字方案弹窗 - 与全站一致的圆角/阴影/留白 */
+        .cw-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: var(--space-5);
+            box-sizing: border-box;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .cw-modal-content {
+            background: var(--bg-white);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: var(--space-6);
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--text-dark);
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .cw-modal-close {
+            margin: var(--space-5) auto 0 auto;
+            padding: 10px 28px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            display: block;
+            box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
+            transition: var(--transition);
+        }
+
+        .cw-modal-close:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(var(--primary-rgb), 0.4);
+        }
+
+        /* 无障碍：尊重系统「减少动态效果」设置 */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.001ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.001ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+
+        /* 结果区·可执行反馈 */
+        .route-feedback {
+            font-size: 12px;
+            line-height: 1.6;
+            color: var(--text-medium);
+            background: rgba(var(--primary-rgb), 0.06);
+            border-radius: var(--radius-md);
+            padding: 8px 12px;
+            margin-bottom: 12px;
+        }
+        .route-feedback b { color: var(--primary-dark); font-weight: 600; }
+
+        /* 结果区·天气联动提示 */
+        .weather-nudge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            color: var(--text-dark);
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            border-radius: var(--radius-md);
+            padding: 10px 12px;
+            margin-bottom: 12px;
+        }
+        .weather-nudge .weather-nudge-text { flex: 1; line-height: 1.5; }
+        .weather-nudge .weather-nudge-btn {
+            flex-shrink: 0;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border: none;
+            border-radius: 999px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        /* 结果区·导航闭环按钮 */
+        .route-actions { margin-top: 12px; }
+        .btn-route-action {
+            display: block;
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-family: inherit;
+            box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
+            transition: var(--transition);
+        }
+        .btn-route-action:hover { transform: translateY(-1px); }
+
+        /* 灵感种草开关 */
+        .inspire-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+            font-size: 12px;
+            color: var(--text-medium);
+            cursor: pointer;
+            user-select: none;
+        }
+        .inspire-toggle input { width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; }
+
+        /* 灵感卡片：先看候选点再手动勾选规划 */
+        .btn-inspire-cards {
+            width: 100%;
+            margin-top: 8px;
+            padding: 9px 12px;
+            font: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary-dark);
+            background: rgba(var(--primary-rgb), 0.06);
+            border: 1.5px dashed var(--primary-light);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: background .15s, border-color .15s;
+        }
+        .btn-inspire-cards:hover:not(:disabled) { background: rgba(var(--primary-rgb), 0.12); border-color: var(--primary); }
+        .btn-inspire-cards:disabled { opacity: .6; cursor: default; }
+
+        .inspire-cards { margin-top: 10px; }
+        .inspire-loading,
+        .inspire-empty {
+            font-size: 12px;
+            color: var(--text-medium);
+            text-align: center;
+            padding: 12px 8px;
+        }
+        .inspire-head {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--primary-dark);
+            margin-bottom: 8px;
+        }
+        .inspire-card-list { display: flex; flex-direction: column; gap: 8px; }
+        .inspire-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 12px;
+            border: 1.5px solid var(--border-color, #e5e5e5);
+            border-radius: var(--radius-sm);
+            background: #fff;
+            cursor: pointer;
+            transition: border-color .15s, background .15s, box-shadow .15s;
+        }
+        .inspire-card:hover { border-color: var(--primary-light); background: rgba(var(--primary-rgb), 0.04); }
+        .inspire-card.selected {
+            border-color: var(--primary);
+            background: rgba(var(--primary-rgb), 0.08);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+        }
+        .inspire-card-cb { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--primary); cursor: pointer; flex-shrink: 0; }
+        .inspire-card-body { flex: 1; min-width: 0; }
+        .inspire-card-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dark, #333);
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .inspire-card-tag {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--primary-dark);
+            background: rgba(var(--primary-rgb), 0.1);
+            border-radius: 999px;
+            padding: 1px 8px;
+        }
+        .inspire-card-reason {
+            font-size: 11px;
+            line-height: 1.5;
+            color: var(--text-medium);
+            margin-top: 3px;
+        }
+        .inspire-foot { margin-top: 10px; }
+
+        /* 打卡点·增强图文（懒加载） */
+        .poi-enrich { margin-top: 6px; }
+        .poi-desc {
+            font-size: 11px;
+            line-height: 1.5;
+            color: var(--text-medium);
+            background: rgba(var(--primary-rgb), 0.05);
+            border-radius: var(--radius-sm);
+            padding: 5px 8px;
+            margin-bottom: 6px;
+        }
+        .poi-photos { display: flex; gap: 6px; }
+        .poi-photo {
+            width: 64px;
+            height: 48px;
+            object-fit: cover;
+            border-radius: 8px;
+            background: var(--bg-light);
+            flex-shrink: 0;
+        }
+
+        /* 打卡点·逐点导航小链接 */
+        .poi-nav {
+            display: inline-block;
+            margin-top: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--primary-dark);
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .poi-nav:hover { text-decoration: underline; }
+
+        /* 最近路线 / 收藏 */
+        .recent-routes {
+            margin-bottom: 16px;
+            background: var(--bg-light);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            padding: 10px 12px;
+        }
+        .recent-routes-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-medium);
+            margin-bottom: 8px;
+        }
+        .recent-routes-clear {
+            font-size: 11px;
+            color: var(--text-light);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .recent-routes-clear:hover { color: var(--primary); }
+        .recent-route-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 0;
+            border-top: 1px solid var(--border-light);
+        }
+        .recent-route-fav {
+            flex-shrink: 0;
+            font-size: 14px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            line-height: 1;
+            padding: 2px;
+        }
+        .recent-route-main {
+            flex: 1;
+            min-width: 0;
+            cursor: pointer;
+        }
+        .recent-route-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .recent-route-sub {
+            font-size: 11px;
+            color: var(--text-light);
+            margin-top: 1px;
+        }
+        .recent-route-del {
+            flex-shrink: 0;
+            font-size: 14px;
+            color: var(--text-light);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 2px 4px;
+        }
+        .recent-route-del:hover { color: #ef4444; }
+
+        /* ========== 分享长图卡片（cw-share.js 离屏渲染，html2canvas 合成） ========== */
+        /* 仅主题色渐变 / 背景图由 JS 按当次主题内联（html2canvas 对 CSS 变量支持不稳，
+           故动态色保留内联，其余静态布局全部下沉到此处的类。） */
+        .cw-share-card {
+            position: fixed;
+            top: -9999px;
+            left: -9999px;
+            width: 400px;
+            height: 500px;
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            overflow: hidden;
+        }
+        .cw-share-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+        }
+        .cw-share-bg-dim {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.25);
+        }
+        .cw-share-top-grad {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 150px;
+        }
+        .cw-share-bottom-grad {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 200px;
+        }
+        .cw-share-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 18px 22px;
+            box-sizing: border-box;
+        }
+        .cw-share-eyebrow {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 6px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            font-weight: 500;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        .cw-share-title {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1.2;
+            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+            letter-spacing: 0.5px;
+        }
+        .cw-share-subtitle {
+            margin-top: 10px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        .cw-share-slogan-wrap {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            z-index: 10;
+        }
+        .cw-share-slogan {
+            font-size: 13px;
+            color: #fff;
+            font-weight: 700;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            letter-spacing: 4px;
+            padding: 12px 8px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        .cw-share-footer {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 32px);
+            max-width: 360px;
+            padding: 20px;
+            box-sizing: border-box;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+        .cw-share-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 16px;
+        }
+        .cw-share-stat {
+            text-align: center;
+            flex: 1;
+        }
+        .cw-share-stat-num {
+            font-size: 26px;
+            font-weight: 800;
+            color: #fff;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            letter-spacing: -0.5px;
+        }
+        .cw-share-stat-unit {
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 2px;
+        }
+        .cw-share-stat-label {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.85);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+        .cw-share-stat-divider {
+            width: 1px;
+            background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+        }
+        .cw-share-pois {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding: 0 10px;
+        }
+        .cw-share-poi {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.9));
+            border-radius: 20px;
+            padding: 8px 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        .cw-share-poi-icon {
+            font-size: 16px;
+        }
+        .cw-share-poi-name {
+            font-size: 11px;
+            color: #2d3748;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+        .cw-share-poi-more {
+            border-radius: 20px;
+            padding: 8px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .cw-share-poi-more span {
+            font-size: 12px;
+            color: #fff;
+            font-weight: 700;
         }

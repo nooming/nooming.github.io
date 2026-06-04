@@ -10,191 +10,288 @@
     <meta name="description" content="全国Citywalk定制路线规划，发现城市之美，支持北京、上海、广州、深圳、成都、杭州、香港、澳门等城市">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚶</text></svg>">
     <title>全国Citywalk · 定制路线规划</title>
+    <!-- 提前与第三方域名建连，缩短首屏地图/分享脚本建连耗时 -->
+    <link rel="preconnect" href="https://webapi.amap.com">
+    <link rel="preconnect" href="https://restapi.amap.com">
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
     <script type="text/javascript">
         window._AMapSecurityConfig = {
             securityJsCode: 'dd98c8e83161c0d87e596a17f2d29750'
+        };
+        // 地图脚本就绪桥接：AMap(async/defer) 与 app.js 谁先到都能可靠初始化，
+        // 取代旧的 setTimeout(2000) 猜测。
+        window.__amapReady = false;
+        function onAMapLoaded() {
+            window.__amapReady = true;
+            if (typeof window.__cwOnAMapReady === 'function') {
+                window.__cwOnAMapReady();
+            }
+        }
+        // 地图加载失败兜底：此时 app.js / showToast 未必就绪，直接操作 DOM
+        function mapLoadError() {
+            var toast = document.getElementById('errorToast');
+            if (toast) {
+                toast.textContent = '地图加载失败，请刷新页面重试';
+                toast.classList.add('show');
+            }
         }
     </script>
-    <script src="https://webapi.amap.com/maps?v=2.0&key=4ade0b9a9942f8c1d5b470525887a258&plugin=AMap.Marker,AMap.InfoWindow,AMap.Weather" async defer onerror="mapLoadError()"></script>
+    <script src="https://webapi.amap.com/maps?v=2.0&key=4ade0b9a9942f8c1d5b470525887a258&plugin=AMap.Marker,AMap.InfoWindow,AMap.Geocoder,AMap.Weather" async defer onload="onAMapLoaded()" onerror="mapLoadError()"></script>
     <link rel="stylesheet" href="assets/css/styles.css">
-    
-    <!-- 引入 html2canvas 用于生成分享图片 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- html2canvas 按需懒加载（见 cw-share.js 的 ensureHtml2canvas），首屏不加载 -->
 </head>
 <body>
     <div id="container"></div>
 
-    <!-- 悬浮返回主页按钮（地图上的圆形按钮） -->
-    <button class="back-home-fab" onclick="window.location.href='../../'">
+    <!-- 悬浮「重新开始」按钮（清空选择/结果并露出地图） -->
+    <button class="back-home-fab" type="button" aria-label="返回站内首页" title="返回首页" onclick="window.location.href='../../'">
         ←
     </button>
 
     <!-- 分步骤加载动画 -->
-    <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-overlay" id="loadingOverlay" role="status" aria-live="polite" aria-hidden="true">
         <div class="loading-card">
-            <div class="loading-title">🚶 正在规划您的专属路线</div>
+            <div class="loading-title">🚶 正在为你规划专属路线</div>
             <div class="loading-steps">
                 <div class="loading-step" id="step1">
                     <span class="step-icon">🗺️</span>
-                    <span class="step-text">计算最优路径...</span>
+                    <span class="step-text">计算最优路径</span>
                     <span class="step-status"></span>
                 </div>
                 <div class="loading-step" id="step2">
                     <span class="step-icon">☕</span>
-                    <span class="step-text">沿途搜寻好店...</span>
+                    <span class="step-text">寻找沿途好去处</span>
                     <span class="step-status"></span>
                 </div>
                 <div class="loading-step" id="step3">
                     <span class="step-icon">🚶</span>
-                    <span class="step-text">优化路线顺序...</span>
+                    <span class="step-text">优化打卡顺序</span>
                     <span class="step-status"></span>
                 </div>
                 <div class="loading-step" id="step4">
                     <span class="step-icon">✨</span>
-                    <span class="step-text">生成精美路线...</span>
+                    <span class="step-text">生成专属路线</span>
                     <span class="step-status"></span>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="error-toast" id="errorToast"></div>
+    <div class="error-toast" id="errorToast" role="alert" aria-live="assertive"></div>
 
     <div class="control-panel">
         <div class="panel-header">
             <h2>
                 <span class="panel-header-icon">🚶</span>
-                <span class="panel-header-title-text">您的Citywalk定制器</span>
+                <span class="panel-header-title-text">Citywalk</span>
             </h2>
         </div>
+
+        <div class="panel-env">
+            <div class="panel-env-bar">
+                <details class="city-switcher" id="citySwitcherDetails">
+                    <summary class="city-switcher-summary">
+                        <span class="city-switcher-icon">📍</span>
+                        <span id="currentCity" class="city-switcher-name">定位中...</span>
+                        <span class="city-switcher-chevron">▾</span>
+                    </summary>
+                    <div class="city-switcher-body">
+                        <div class="city-input-row">
+                            <label for="cityInput" class="sr-only">切换城市</label>
+                            <input type="text" id="cityInput" class="city-input" placeholder="输入城市名称">
+                            <button id="citySwitchBtn" type="button" class="city-switch-btn">切换</button>
+                        </div>
+                        <div class="hot-cities-row" role="group" aria-label="热门城市快捷切换">
+                            <button type="button" class="hot-city-tag" data-city="北京">北京</button>
+                            <button type="button" class="hot-city-tag" data-city="上海">上海</button>
+                            <button type="button" class="hot-city-tag" data-city="广州">广州</button>
+                            <button type="button" class="hot-city-tag" data-city="成都">成都</button>
+                            <button type="button" class="hot-city-tag" data-city="香港">香港</button>
+                        </div>
+                    </div>
+                </details>
+                <div class="weather-chip" id="weatherCard" role="button" tabindex="0" aria-label="点击刷新天气" title="点击刷新天气">
+                    <span class="weather-chip-icon" id="weatherIcon">🌤️</span>
+                    <span class="weather-chip-text">
+                        <span class="weather-chip-title" id="weatherTitle">加载中</span>
+                        <span class="weather-chip-desc" id="weatherDesc">天气</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <nav class="panel-tabs" role="tablist" aria-label="规划方式">
+            <button type="button" class="panel-tab panel-tab--active" role="tab" id="tabBtnAgent" data-tab="agent" aria-selected="true" aria-controls="tab-panel-agent">智能规划</button>
+            <button type="button" class="panel-tab" role="tab" id="tabBtnManual" data-tab="manual" aria-selected="false" aria-controls="tab-panel-manual">手动规划</button>
+            <button type="button" class="panel-tab panel-tab--disabled" role="tab" id="tabBtnResult" data-tab="result" aria-selected="false" aria-controls="tab-panel-result" hidden disabled>路线结果</button>
+        </nav>
+
         <div class="panel-body">
-            <!-- 城市选择器 -->
-            <div class="city-selector">
-                <div class="city-selector-header">
-                    <span class="city-selector-icon">📍</span>
-                    <span class="city-selector-title">当前城市</span>
-                    <span id="currentCity" class="city-selector-name">定位中...</span>
-                </div>
-                <div class="city-input-row">
-                    <input type="text" id="cityInput" class="city-input" placeholder="输入城市名切换（如：北京、香港）" onkeypress="if(event.key==='Enter')switchCity()">
-                    <button onclick="switchCity()" class="city-switch-btn">切换</button>
-                </div>
-                <div class="hot-cities-row">
-                    <span class="hot-cities-label">热门：</span>
-                    <span class="hot-city-tag" onclick="quickSwitchCity('北京')">北京</span>
-                    <span class="hot-city-tag" onclick="quickSwitchCity('上海')">上海</span>
-                    <span class="hot-city-tag" onclick="quickSwitchCity('广州')">广州</span>
-                    <span class="hot-city-tag" onclick="quickSwitchCity('深圳')">深圳</span>
-                    <span class="hot-city-tag" onclick="quickSwitchCity('成都')">成都</span>
-                    <span class="hot-city-tag" onclick="quickSwitchCity('杭州')">杭州</span>
-                    <span class="hot-city-tag" onclick="quickSwitchCity('香港')">香港</span>
-                    <span class="hot-city-tag" onclick="quickSwitchCity('澳门')">澳门</span>
-                </div>
-            </div>
-
-            <!-- 搜索框 -->
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="🔍 搜索地址（输入后回车定位）">
-            </div>
-
-            <!-- 天气卡片 -->
-            <div class="weather-card" id="weatherCard" style="cursor: pointer;" title="点击刷新天气">
-                <div class="weather-icon" id="weatherIcon">🌤️</div>
-                <div class="weather-info">
-                    <div class="title" id="weatherTitle">加载中...</div>
-                    <div class="desc" id="weatherDesc">正在获取实时天气</div>
-                </div>
-            </div>
-
-            <!-- 起终点状态 -->
-            <div class="status-group">
-                <div class="status-card" id="startCard">
-                    <div class="label">📍 起点</div>
-                    <div class="value" id="startValue">点击地图选择</div>
-                </div>
-                <div class="status-card" id="endCard">
-                    <div class="label">🏁 终点</div>
-                    <div class="value" id="endValue">点击地图选择</div>
-                </div>
-            </div>
-
-            <!-- 使用提示 -->
-            <div class="tips-box">
-                💡 <strong>操作提示：</strong>点击地图选择起点和终点，或在上方搜索框输入地址
-            </div>
-
-            <!-- 筛选条件 -->
-            <div class="filter-group">
-                <div class="filter-title">路线偏好</div>
-                <div class="poi-type-group">
-                    <div class="poi-type-btn active" data-type="无偏好">无偏好</div>
-                    <div class="poi-type-btn" data-type="自然">🌳 自然</div>
-                    <div class="poi-type-btn" data-type="历史">🏛️ 历史</div>
-                    <div class="poi-type-btn" data-type="文创">✨ 文创</div>
-                    <div class="poi-type-btn" data-type="花店">💐 花店</div>
-                    <div class="poi-type-btn" data-type="咖啡">☕ 咖啡</div>
-                    <div class="poi-type-btn" data-type="甜品">🍰 甜品</div>
-                    <div class="poi-type-btn" data-type="烘焙">🥐 烘焙</div>
+            <section id="panel-shared" class="panel-shared plan-mode-route" aria-label="选点与模式">
+                <div class="search-box search-box--compact">
+                    <label for="searchInput" class="sr-only">搜索地址</label>
+                    <input type="text" id="searchInput" placeholder="🔍 搜索地址，回车定位">
                 </div>
 
-                <div class="filter-title">计划游玩时间</div>
-                <div class="time-slider-group">
-                    <input type="range" id="planTimeSlider" min="30" max="180" value="60">
-                    <div class="time-slider-labels">
-                        <span>30分钟</span>
-                        <span id="planTimeValue" class="time-slider-value">60 分钟</span>
-                        <span>3小时</span>
+                <div class="plan-mode-group" role="group" aria-label="规划模式">
+                    <button type="button" class="plan-mode-btn plan-mode-btn--active" id="modeBtnRoute">起终点路线</button>
+                    <button type="button" class="plan-mode-btn" id="modeBtnLoop">环线探索</button>
+                </div>
+
+                <div class="pickup-strip status-group">
+                    <div class="status-card" id="startCard">
+                        <div class="label">📍 起点</div>
+                        <div class="value" id="startValue">点击地图选择</div>
+                    </div>
+                    <div class="status-card status-card--destination" id="endCard">
+                        <div class="label">🏁 终点</div>
+                        <div class="value" id="endValue">点击地图选择</div>
                     </div>
                 </div>
-            </div>
 
-            <!-- 功能按钮 -->
-            <div class="btn-group">
-                <button class="btn btn-reset" onclick="resetSelection()">重置选择</button>
-                <button class="btn btn-plan" id="btnPlan" onclick="generateRoute()" disabled>等待选择起终点</button>
-            </div>
-
-            <button class="btn-generate-plan" id="btnGeneratePlan" onclick="generatePlanText()">生成游玩文字方案</button>
-
-            <!-- 新增：生成分享图片按钮 -->
-            <button class="btn-generate-plan btn-share-image" id="btnShareImage" onclick="generateShareImage()">
-                📸 生成朋友圈分享图
-            </button>
-
-            <!-- 结果展示 -->
-            <div class="result-area" id="resultArea">
-                <div class="result-header">路线规划完成</div>
-                <div class="result-item">
-                    <div class="label">总距离</div>
-                    <div class="value highlight" id="distanceValue">--</div>
+                <div class="plan-time-mini time-slider-group">
+                    <span class="plan-time-mini-label">计划时长</span>
+                    <label for="planTimeSlider" class="sr-only">计划游玩时间（分钟）</label>
+                    <input type="range" id="planTimeSlider" min="30" max="240" value="60">
+                    <span id="planTimeValue" class="time-slider-value plan-time-mini-value">60 分钟</span>
                 </div>
-                <div class="result-item">
-                    <div class="label">预计耗时</div>
-                    <div class="value highlight" id="durationValue">--</div>
+            </section>
+
+            <section class="tab-panel tab-panel--active" id="tab-panel-agent" data-tab-panel="agent" role="tabpanel" aria-labelledby="tabBtnAgent">
+                <div class="agent-box">
+                    <p class="agent-hint">可用上方搜索/地图选点或环线模式；已在地图选起终点时，描述可只写玩法偏好。计划时长以侧栏滑块为准；勾选灵感卡片会纳入打卡点。</p>
+                    <label for="agentQueryInput" class="sr-only">智能规划需求描述</label>
+                    <textarea id="agentQueryInput" class="agent-query-input" rows="3" placeholder="例：静安寺—南京西路，约90分钟，偏好咖啡馆"></textarea>
+                    <section class="agent-inspire" aria-label="灵感推荐">
+                        <div class="agent-inspire-row">
+                            <label class="inspire-toggle">
+                                <input type="checkbox" id="inspireToggle" checked>
+                                <span>灵感推荐（真实 POI）</span>
+                            </label>
+                            <button type="button" class="btn-inspire-cards" id="btnInspireCards">浏览推荐地点</button>
+                        </div>
+                        <p class="agent-inspire-hint">勾选想去的点再点「智能规划路线」会优先串入；未勾选时若开启灵感推荐则自动联网选点。也可点「浏览推荐地点」展开卡片。</p>
+                        <div class="inspire-cards" id="inspireCards" hidden></div>
+                    </section>
+                    <button type="button" class="btn btn-agent-plan" id="btnAgentPlan">智能规划路线</button>
                 </div>
-                <div class="result-item">
-                    <div class="label">打卡点</div>
-                    <div class="value highlight" id="poiCountValue">0个</div>
+            </section>
+
+            <section class="tab-panel" id="tab-panel-manual" data-tab-panel="manual" role="tabpanel" aria-labelledby="tabBtnManual" hidden>
+                <div class="tips-box tips-box--compact" id="planModeTips">
+                    <span class="tips-box-text">自然语言描述需求？请使用「智能规划」</span>
+                    <button type="button" class="tips-box-dismiss" id="btnDismissTips" aria-label="关闭提示">✕</button>
                 </div>
-                <div class="poi-list" id="poiList"></div>
-            </div>
+
+                <div class="btn-group btn-group--manual-primary">
+                    <button class="btn btn-plan" id="btnPlan" type="button" disabled>先在地图上选起终点</button>
+                </div>
+                <button class="btn btn-ghost btn-reset" id="btnReset" type="button">重置选择</button>
+
+                <details class="manual-filters">
+                    <summary>打卡偏好与路线风格</summary>
+                    <div class="filter-group">
+                        <div class="filter-title" id="poiPrefTitle">打卡偏好</div>
+                        <div class="poi-type-group" role="group" aria-labelledby="poiPrefTitle">
+                            <button type="button" class="poi-type-btn active" data-type="无偏好" aria-pressed="true">无偏好</button>
+                            <button type="button" class="poi-type-btn" data-type="自然" aria-pressed="false">🌳 自然</button>
+                            <button type="button" class="poi-type-btn" data-type="历史" aria-pressed="false">🏛️ 历史</button>
+                            <button type="button" class="poi-type-btn" data-type="文创" aria-pressed="false">✨ 文创</button>
+                            <button type="button" class="poi-type-btn" data-type="花店" aria-pressed="false">💐 花店</button>
+                            <button type="button" class="poi-type-btn" data-type="咖啡甜品" aria-pressed="false">☕ 咖啡甜品</button>
+                            <button type="button" class="poi-type-btn" data-type="商场" aria-pressed="false">🛍️ 商场</button>
+                        </div>
+                        <p class="filter-pace-hint">默认以快速打卡为主；结果中标「可选」的点可按体力跳过。</p>
+                        <div class="filter-title" id="routeStyleTitle">路线风格</div>
+                        <div class="route-style-group poi-type-group" role="group" aria-labelledby="routeStyleTitle">
+                            <button type="button" class="route-style-btn poi-type-btn active" data-style="balanced" aria-pressed="true">均衡</button>
+                            <button type="button" class="route-style-btn poi-type-btn" data-style="atmosphere_first" aria-pressed="false">氛围优先</button>
+                            <button type="button" class="route-style-btn poi-type-btn" data-style="efficiency_first" aria-pressed="false">省力直达</button>
+                        </div>
+                    </div>
+                </details>
+
+                <details class="manual-history" id="manualHistoryDetails" style="display:none;">
+                    <summary>历史路线</summary>
+                    <div class="recent-routes" id="recentRoutes">
+                        <div class="recent-routes-header">
+                            <button type="button" class="recent-routes-clear" id="btnClearRecent">清空</button>
+                        </div>
+                        <div class="recent-routes-list" id="recentRoutesList"></div>
+                    </div>
+                </details>
+            </section>
+
+            <section class="tab-panel" id="tab-panel-result" data-tab-panel="result" role="tabpanel" aria-labelledby="tabBtnResult" hidden>
+                <div class="result-toolbar">
+                    <button type="button" class="btn-link-back-plan" id="btnBackToPlan">← 返回调整路线</button>
+                </div>
+
+                <div class="result-area" id="resultArea" style="display:none;">
+                    <div class="result-header">路线规划完成</div>
+                    <div class="result-stats-row">
+                        <div class="result-stat">
+                            <div class="label">距离</div>
+                            <div class="value highlight" id="distanceValue">--</div>
+                        </div>
+                        <div class="result-stat result-stat--duration">
+                            <div class="label" title="计划为滑块目标；预计为步行+打卡，余下为自由安排">耗时</div>
+                            <div class="value highlight duration-stat-value">
+                                <span class="duration-plan" id="durationPlanValue">--</span>
+                                <span class="duration-est" id="durationEstValue">--</span>
+                                <span class="duration-free" id="durationFreeValue" style="display:none;"></span>
+                            </div>
+                        </div>
+                        <div class="result-stat">
+                            <div class="label">打卡</div>
+                            <div class="value highlight" id="poiCountValue">0</div>
+                        </div>
+                    </div>
+                    <div class="poi-list" id="poiList"></div>
+                    <div class="route-actions" id="routeActions" style="display:none;">
+                        <button type="button" class="btn-route-action" id="btnOpenAmap">🧭 在高德地图打开</button>
+                    </div>
+                    <div class="result-share-block">
+                        <div class="result-share-label">分享与导出</div>
+                        <div class="result-actions-row">
+                            <button class="btn-generate-plan" id="btnGeneratePlan" type="button">生成游记攻略</button>
+                            <button class="btn-generate-plan btn-share-image" id="btnShareImage" type="button">导出分享图</button>
+                        </div>
+                    </div>
+                    <details class="result-chat" id="resultChatDetails">
+                        <summary>对话优化路线</summary>
+                        <div class="agent-chat-section">
+                            <p class="result-chat-hint">用一句话微调时长、顺序或打卡偏好</p>
+                            <div class="agent-chat-log" id="agentChatLog" role="log" aria-live="polite"></div>
+                            <div class="agent-chat-input-row">
+                                <label for="agentChatInput" class="sr-only">对话调整输入</label>
+                                <input type="text" id="agentChatInput" class="agent-chat-input" placeholder="例：调整为 90 分钟、减少步行">
+                                <button type="button" class="btn-agent-chat-send" id="btnAgentChat">发送</button>
+                            </div>
+                        </div>
+                    </details>
+                    <details class="result-notes" id="resultNotesDetails" hidden>
+                        <summary>路线说明</summary>
+                        <div class="result-notes-body">
+                            <div class="route-end-hint" id="routeEndHint" style="display:none;"></div>
+                            <div class="route-feedback" id="routeFeedback" style="display:none;"></div>
+                            <div class="weather-nudge" id="weatherNudge" style="display:none;"></div>
+                        </div>
+                    </details>
+                </div>
+            </section>
         </div>
     </div>
 
-    <script>
-        function mapLoadError() {
-            var toast = document.getElementById('errorToast');
-            if (toast) {
-                toast.textContent = '高德地图加载失败，请刷新页面重试';
-                toast.classList.add('show');
-            }
-        }
-    </script>
-    <script src="assets/shared/utils.js"></script>
-    <script src="assets/js/cw-state.js"></script>
-    <script src="assets/js/cw-weather.js"></script>
-    <script src="assets/js/cw-map.js"></script>
-    <script src="assets/js/cw-route.js"></script>
-    <script src="assets/js/app.js"></script>
+    <script src="assets/js/core/cw-state.js"></script>
+    <script src="assets/js/map/cw-weather.js"></script>
+    <script src="assets/js/map/cw-map.js"></script>
+    <script src="assets/js/ui/cw-tabs.js"></script>
+    <script src="assets/js/plan/cw-route.js"></script>
+    <script src="assets/js/plan/cw-agent.js"></script>
+    <script src="assets/js/share/cw-share.js"></script>
+    <script src="assets/js/ui/cw-actions.js"></script>
+    <script src="assets/js/plan/cw-inspire.js"></script>
+    <script src="assets/js/core/app.js"></script>
 </body>
 </html>

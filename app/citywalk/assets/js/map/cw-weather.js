@@ -33,25 +33,25 @@ function weatherCardDescFromStoredLiveData(d) {
     const h = d.humidity != null ? d.humidity : '--';
     const base = `风向${w} ${p}级 | 湿度${h}%`;
     if (d.proxyNeighborName) {
-        const dest = liveWeatherForCity || currentCity || '';
+        const dest = CW.liveWeatherForCity || CW.currentCity || '';
         return `${d.proxyNeighborName}市天气 · 供${dest}参考 | ${base} | 刚刚更新`;
     }
     return `${base} | 刚刚更新`;
 }
 
 function getCityWeather(city, forceRefresh = false) {
-    if (!city) city = currentCity;
-    if (!forceRefresh && liveWeatherData && liveWeatherForCity === city) {
+    if (!city) city = CW.currentCity;
+    if (!forceRefresh && CW.liveWeatherData && CW.liveWeatherForCity === city) {
         updateWeatherUI(
-            `${liveWeatherData.weather} ${liveWeatherData.temperature}℃`,
-            weatherCardDescFromStoredLiveData(liveWeatherData),
-            getWeatherIcon(liveWeatherData.weather)
+            `${CW.liveWeatherData.weather} ${CW.liveWeatherData.temperature}℃`,
+            weatherCardDescFromStoredLiveData(CW.liveWeatherData),
+            getWeatherIcon(CW.liveWeatherData.weather)
         );
         return;
     }
 
     if (!window.AMap || !AMap.Weather) {
-        updateWeatherUI("天气加载失败", "无法获取天气数据", "⛅");
+        updateWeatherUI("天气加载失败", "暂时拿不到天气数据", "⛅");
         return;
     }
 
@@ -63,20 +63,20 @@ function getCityWeather(city, forceRefresh = false) {
     );
 
     // 记录本次请求的版本号，防止过期响应覆盖新结果
-    const myRequestId = ++weatherRequestId;
+    const myRequestId = ++CW.weatherRequestId;
 
     function showUnavailable() {
         updateWeatherUI(
             "天气暂不可用",
-            "该地区暂无高德实时天气或名称不匹配，请出门前查看当地预报",
+            "这里暂时没有实时天气，出门前看下当地预报吧",
             "⛅"
         );
     }
 
     function applyLiveWeather(data, proxyNeighborName) {
-        if (weatherRequestId !== myRequestId) return; // 丢弃过期响应
-        liveWeatherForCity = city;
-        liveWeatherData = {
+        if (CW.weatherRequestId !== myRequestId) return; // 丢弃过期响应
+        CW.liveWeatherForCity = city;
+        CW.liveWeatherData = {
             temperature: data.temperature,
             weather: data.weather,
             windDirection: data.windDirection || '--',
@@ -87,7 +87,7 @@ function getCityWeather(city, forceRefresh = false) {
         };
         updateWeatherUI(
             `${data.weather} ${data.temperature}℃`,
-            weatherCardDescFromStoredLiveData(liveWeatherData),
+            weatherCardDescFromStoredLiveData(CW.liveWeatherData),
             getWeatherIcon(data.weather)
         );
     }
@@ -126,12 +126,38 @@ function getCityWeather(city, forceRefresh = false) {
 }
 
 let _weatherRefreshInterval = null;
-function startWeatherRefresh() {
-    if (_weatherRefreshInterval) clearInterval(_weatherRefreshInterval);
-    getCityWeather(currentCity, true);
+const WEATHER_REFRESH_MS = 5 * 60 * 1000;
+
+function _stopWeatherInterval() {
+    if (_weatherRefreshInterval) {
+        clearInterval(_weatherRefreshInterval);
+        _weatherRefreshInterval = null;
+    }
+}
+
+function _startWeatherInterval() {
+    _stopWeatherInterval();
     _weatherRefreshInterval = setInterval(function() {
-        getCityWeather(currentCity, true);
-    }, 5 * 60 * 1000);
+        getCityWeather(CW.currentCity, true);
+    }, WEATHER_REFRESH_MS);
+}
+
+function startWeatherRefresh() {
+    getCityWeather(CW.currentCity, true);
+    _startWeatherInterval();
+
+    // 页面切到后台时停轮询省请求/电量，回到前台立即补刷一次再恢复
+    if (!startWeatherRefresh._visibilityBound) {
+        startWeatherRefresh._visibilityBound = true;
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                _stopWeatherInterval();
+            } else {
+                getCityWeather(CW.currentCity, true);
+                _startWeatherInterval();
+            }
+        });
+    }
 }
 
 function isValidLiveWeatherPayload(data) {
