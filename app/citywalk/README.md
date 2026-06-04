@@ -4,8 +4,8 @@
 
 ## 访问地址
 
-- **页面**：<https://nooming.github.io/app/citywalk/>
-- **API**：<https://noomings-backend.zeabur.app>
+- **页面**：<https://noomings.com/app/citywalk/>（自定义域，与 <https://nooming.github.io/app/citywalk/> 同源内容）
+- **API**：<https://noomings-backend.zeabur.app>（后端 `CORS_ORIGINS` 须同时允许 `noomings.com` 与 `nooming.github.io`）
 
 ## 功能概览
 
