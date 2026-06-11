@@ -9,8 +9,8 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' fill='%233b82f6'/%3E%3Cpath fill='%23fff' d='M48 18a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm-18 26h36l8 32h-10l-3-13H35l-3 13H22l8-32zm11 11h14l-2-8h-10l-2 8z'/%3E%3C/svg%3E">
   <link rel="shortcut icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' fill='%233b82f6'/%3E%3Cpath fill='%23fff' d='M48 18a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm-18 26h36l8 32h-10l-3-13H35l-3 13H22l8-32zm11 11h14l-2-8h-10l-2 8z'/%3E%3C/svg%3E">
   <title>停车分配实验</title>
-  <link rel="stylesheet" href="assets/shared/common.css" />
-  <link rel="stylesheet" href="assets/css/style.css" />
+  <link rel="stylesheet" href="assets/styles/tokens.css" />
+  <link rel="stylesheet" href="assets/styles/app.css" />
 </head>
 <body class="page-container">
   <div class="page-header">
@@ -284,11 +284,58 @@
   </script>
   <script src="assets/js/core/constants.js"></script>
   <script src="assets/js/core/geometry.js"></script>
+  <script src="assets/js/core/road/road-model.js"></script>
+  <script src="assets/js/core/road/road-snap.js"></script>
+  <script src="assets/js/core/scenario/default-scenario.js"></script>
+  <script src="assets/js/core/scenario/normalize.js"></script>
+  <script src="assets/js/optimizer/nav-grid.js"></script>
+  <script src="assets/js/optimizer/pathfinding.js"></script>
+  <script src="assets/js/optimizer/path-cost.js"></script>
+  <script src="assets/js/optimizer/cost-matrix.js"></script>
+  <script src="assets/js/optimizer/algorithms/hungarian.js"></script>
+  <script src="assets/js/optimizer/algorithms/pso.js"></script>
+  <script src="assets/js/optimizer/pack-result.js"></script>
+  <script src="assets/js/optimizer/index.js"></script>
+  <script src="assets/js/app/state/app-state.js"></script>
   <script src="assets/js/app/scenario/default-source.js"></script>
+  <script src="assets/js/app/scenario/collections.js"></script>
+  <script src="assets/js/app/scenario/road-edit.js"></script>
+  <script src="assets/js/app/scenario/obstacle-edit.js"></script>
+  <script src="assets/js/app/scenario/collision.js"></script>
+  <script src="assets/js/app/scenario/snap.js"></script>
+  <script src="assets/js/app/scenario/sanitize.js"></script>
   <script src="assets/js/app/storage/state-storage.js"></script>
+  <script src="assets/js/app/storage/scenario-io.js"></script>
   <script src="assets/js/app/analysis/optimizer-analysis.js"></script>
   <script src="assets/js/app/ui/tab-utils.js"></script>
-  <script src="assets/js/optimizer.js"></script>
-  <script src="assets/js/app.js"></script>
+  <script src="assets/js/app/ui/tab-flow.js"></script>
+  <script src="assets/js/app/ui/props/props-form-utils.js"></script>
+  <script src="assets/js/app/ui/props/props-entrance.js"></script>
+  <script src="assets/js/app/ui/props/props-obstacle.js"></script>
+  <script src="assets/js/app/ui/props/props-road.js"></script>
+  <script src="assets/js/app/ui/props/props-building.js"></script>
+  <script src="assets/js/app/ui/props/props-slot.js"></script>
+  <script src="assets/js/app/ui/props-panel.js"></script>
+  <script src="assets/js/app/ui/vehicle-panel.js"></script>
+  <script src="assets/js/app/ui/results-panel.js"></script>
+  <script src="assets/js/app/canvas/viewport.js"></script>
+  <script src="assets/js/app/canvas/layers/road-layer.js"></script>
+  <script src="assets/js/app/canvas/layers/draw-primitives.js"></script>
+  <script src="assets/js/app/canvas/layers/draw-slots.js"></script>
+  <script src="assets/js/app/canvas/layers/draw-buildings.js"></script>
+  <script src="assets/js/app/canvas/layers/draw-obstacles.js"></script>
+  <script src="assets/js/app/canvas/layers/draw-drafts.js"></script>
+  <script src="assets/js/app/canvas/layers/draw-entrances.js"></script>
+  <script src="assets/js/app/canvas/layers/objects-layer.js"></script>
+  <script src="assets/js/app/canvas/layers/hover-layer.js"></script>
+  <script src="assets/js/app/canvas/layers/overlay-layer.js"></script>
+  <script src="assets/js/app/canvas/renderer.js"></script>
+  <script src="assets/js/app/canvas/chart.js"></script>
+  <script src="assets/js/app/interaction/pick.js"></script>
+  <script src="assets/js/app/interaction/draft-tools.js"></script>
+  <script src="assets/js/app/interaction/drag-session.js"></script>
+  <script src="assets/js/app/interaction/pointer.js"></script>
+  <script src="assets/js/app/lifecycle/startup.js"></script>
+  <script src="assets/js/app/bootstrap.js"></script>
 </body>
 </html>
