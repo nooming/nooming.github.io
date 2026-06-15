@@ -91,7 +91,7 @@ async function sendAgentChat() {
     if (input) input.value = '';
 
     try {
-        const response = await fetch(`${API_BASE_URL}/agent/chat`, {
+        const response = await fetch(`${CW_API}/agent/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify({
@@ -186,7 +186,7 @@ async function fetchAgentGuideText() {
         } : null,
     };
 
-    const response = await fetch(`${API_BASE_URL}/agent/guide`, {
+    const response = await fetch(`${CW_API}/agent/guide`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),
@@ -311,7 +311,7 @@ async function resolveAddressToPoint(address, city) {
     try {
         return await geocodeAddressToPoint(address, city);
     } catch (_) {
-        const response = await fetch(`${API_BASE_URL}/resolve_location`, {
+        const response = await fetch(`${CW_API}/resolve_location`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify({
@@ -430,7 +430,7 @@ async function generateSmartRoute() {
     const body = buildAgentPlanPayload(query, cityHint);
 
     try {
-        const response = await fetch(`${API_BASE_URL}${planEndpoint}`, {
+        const response = await fetch(`${CW_API}${planEndpoint}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify(body),

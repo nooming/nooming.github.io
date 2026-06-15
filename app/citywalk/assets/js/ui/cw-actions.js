@@ -43,7 +43,7 @@ function enrichPoiList(pois) {
     pois.slice(0, 6).forEach((poi, i) => {
         const item = items[i];
         if (!item || !poi || !Array.isArray(poi.location) || poi.location.length !== 2) return;
-        fetch(`${API_BASE_URL}/poi/enrich`, {
+        fetch(`${CW_API}/poi/enrich`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify({

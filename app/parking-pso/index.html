@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="虚拟小区停车：匈牙利精确最优或 PSO 近似；路径可视化。" />
+  <meta name="description" content="停车方案设计器：自动布位、多方案对比、优化分配、到达仿真。" />
   <meta name="keywords" content="停车分配,PSO,粒子群,匈牙利算法,小区规划,在线工具" />
   <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' fill='%233b82f6'/%3E%3Cpath fill='%23fff' d='M48 18a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm-18 26h36l8 32h-10l-3-13H35l-3 13H22l8-32zm11 11h14l-2-8h-10l-2 8z'/%3E%3C/svg%3E">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' fill='%233b82f6'/%3E%3Cpath fill='%23fff' d='M48 18a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm-18 26h36l8 32h-10l-3-13H35l-3 13H22l8-32zm11 11h14l-2-8h-10l-2 8z'/%3E%3C/svg%3E">
   <link rel="shortcut icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' fill='%233b82f6'/%3E%3Cpath fill='%23fff' d='M48 18a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm-18 26h36l8 32h-10l-3-13H35l-3 13H22l8-32zm11 11h14l-2-8h-10l-2 8z'/%3E%3C/svg%3E">
-  <title>停车分配实验</title>
+  <title>停车方案设计器</title>
+  <script>window.PARKING_API_BASE = window.PARKING_API_BASE || "";</script>
   <link rel="stylesheet" href="assets/styles/tokens.css" />
   <link rel="stylesheet" href="assets/styles/app.css" />
 </head>
@@ -19,14 +20,14 @@
       <a href="../../index.html" class="back-btn js-local-nav">返回主页</a>
     </div>
     <div class="section-header section-header--page">
-      <h1>停车分配实验</h1>
-      <p>拖拽入口、花坛、楼和车位；支持匈牙利精确解与 PSO 近似收敛。</p>
+      <h1>停车方案设计器</h1>
+      <p>规划布局 · 多方案对比 · 优化分配 · 到达仿真回放。</p>
     </div>
   </div>
 
   <div class="app-panel parking-pso-panel">
-    <div class="hint hint--header" title="可拖拽：入口、花坛、道路顶点、楼、车位。道路支持按顶点绘制；车位沿道路两侧吸附；入口吸附道路中心线。">
-      拖拽：入口、花坛、道路顶点、楼、车位；支持顶点绘制道路。
+    <div class="hint hint--header" title="右键拖动画布平移；滚轮缩放；双击空白适应地块。可拖拽入口、花坛、道路顶点、楼、车位。">
+      右键平移 · 滚轮缩放 · 拖拽编辑场景要素。
     </div>
 
     <div class="layout">
@@ -34,6 +35,10 @@
       <!-- ===== Left: map canvas ===== -->
       <div class="canvas-wrap">
         <div class="map-stage">
+          <div class="map-view-tools" aria-label="地图视图">
+            <button type="button" id="btn-fit-lot-view" title="适应地块">适应地块</button>
+            <button type="button" id="btn-fit-content-view" title="适应内容">适应内容</button>
+          </div>
           <canvas id="map" width="720" height="720" aria-label="小区平面图"></canvas>
           <aside class="map-legend is-compact" aria-label="平面图图例">
             <h3 class="map-legend-title">图例</h3>
@@ -45,6 +50,7 @@
               <li><span class="map-legend-swatch map-legend-swatch--road" aria-hidden="true"></span>道路</li>
               <li><span class="map-legend-swatch map-legend-swatch--strip" aria-hidden="true"></span>泊位带</li>
               <li><span class="map-legend-swatch map-legend-swatch--path" aria-hidden="true"></span>步行路径</li>
+              <li><span class="map-legend-swatch map-legend-swatch--drive" aria-hidden="true"></span>行驶路径</li>
               <li><span class="map-legend-swatch map-legend-swatch--select" aria-hidden="true"></span>选中</li>
             </ul>
             <button type="button" id="btn-legend-toggle" class="map-legend-more">展开完整图例</button>
@@ -91,26 +97,44 @@
             <span>结果</span>
           </button>
 
-          <button type="button" class="side-tab" data-tab="lab" title="实验分析">
+          <button type="button" class="side-tab" data-tab="schemes" title="方案与对比">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v11l-4 7h14l-4-7V3"/>
+              <path d="M4 6h16M4 10h16M4 14h10M4 18h6"/>
+              <circle cx="17" cy="14" r="2"/>
             </svg>
-            <span>实验</span>
+            <span>方案</span>
+          </button>
+
+          <button type="button" class="side-tab" data-tab="simulate" title="到达仿真">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            <span>仿真</span>
           </button>
 
         </nav>
 
         <!-- Workspace content body -->
         <div class="workspace-body">
+          <p id="api-status" class="workspace-status api-status api-status--pending" role="status">检查 API 连接…</p>
+          <p id="workspace-status" class="workspace-status workspace-status--message" role="status" hidden></p>
           <div class="workspace-panels">
 
             <!-- ===== Tab: 总览 ===== -->
             <section id="tab-overview" class="tab-panel is-active" data-tab-panel="overview">
               <div class="panel">
                 <h2>总览</h2>
+                <div id="workflow-first-hint" class="workflow-first-hint" hidden>
+                  <p>按下方步骤完成：画场地 → 自动布位 → 优化 → 保存对比 → 仿真。</p>
+                  <button type="button" id="btn-workflow-dismiss">知道了</button>
+                </div>
+                <ol id="workflow-steps" class="workflow-steps" aria-label="主流程步骤"></ol>
                 <p id="lot-dim-hint" class="panel-note"></p>
-                <p class="panel-note">
-                  长度单位 <strong>m</strong>；优化总时间 <strong>s</strong>（距离 ÷ 假定速度）。
+              </div>
+              <div class="panel panel--run">
+                <h2>运行优化</h2>
+                <p class="panel-note panel-note--compact">
+                  长度单位 <strong>m</strong>；优化总时间 <strong>s</strong>。点击下方底栏「运行优化」执行。
                 </p>
                 <div class="prop-grid">
                   <label for="n-veh">车辆数（辆）</label>
@@ -123,49 +147,134 @@
                     <option value="pso">PSO · 近似收敛</option>
                   </select>
                 </div>
+                <div class="run-progress" id="run-progress" hidden aria-hidden="true"></div>
               </div>
+              <details class="panel panel--fold">
+                <summary>场景管理与高级实验</summary>
+                <div class="toolbar">
+                  <button type="button" id="btn-export-scenario">导出 JSON</button>
+                  <button type="button" id="btn-import-scenario">导入 JSON</button>
+                  <button type="button" id="btn-save-snapshot">保存快照</button>
+                  <button type="button" id="btn-load-snapshot">加载快照</button>
+                  <button type="button" id="btn-reset-scenario">重置场景</button>
+                </div>
+                <div class="prop-grid">
+                  <label for="snapshot-select">本地快照</label>
+                  <select id="snapshot-select"></select>
+                </div>
+                <input id="scenario-import-input" type="file" accept=".json,application/json" hidden />
+                <div class="prop-grid">
+                  <label for="pso-seed">随机种子</label>
+                  <input type="number" id="pso-seed" step="1" placeholder="留空=随机" />
+                </div>
+                <div class="prop-grid">
+                  <label for="benchmark-runs">Benchmark 次数</label>
+                  <input type="number" id="benchmark-runs" min="1" step="1" value="6" />
+                </div>
+                <div class="toolbar">
+                  <button type="button" id="btn-run-benchmark">运行 Benchmark</button>
+                  <button type="button" id="btn-recommend-params">参数推荐</button>
+                </div>
+                <pre id="benchmark-output" class="panel-pre" aria-live="polite"></pre>
+                <pre id="recommend-output" class="panel-pre" aria-live="polite"></pre>
+              </details>
             </section>
 
             <!-- ===== Tab: 场景编辑 ===== -->
             <section id="tab-scene" class="tab-panel" data-tab-panel="scene">
               <div class="panel">
-                <h2>场景编辑</h2>
-                <div class="toolbar">
-                  <button type="button" id="btn-add-entrance">添加入口</button>
-                  <button type="button" id="btn-add-road">添加道路</button>
-                  <button type="button" id="btn-add-obstacle">添加花坛</button>
-                  <button type="button" id="btn-add-building">添加居民楼</button>
-                  <button type="button" id="btn-add-slot">添加车位</button>
-                  <button type="button" class="danger" id="btn-delete">删除选中</button>
+                <h2>地块与绘制</h2>
+                <div class="prop-grid prop-grid--pair">
+                  <div class="prop-field">
+                    <label for="lot-width">宽度 (m)</label>
+                    <input type="number" id="lot-width" min="40" step="1" />
+                  </div>
+                  <div class="prop-field">
+                    <label for="lot-height">高度 (m)</label>
+                    <input type="number" id="lot-height" min="40" step="1" />
+                  </div>
                 </div>
-                <div class="prop-grid" style="margin-top:10px">
+                <p id="lot-edit-hint" class="panel-note panel-note--compact">拖动元素不会自动改变地块；缩小后若内容超出边界，请手动调整要素位置。</p>
+                <div class="prop-grid">
                   <label for="road-shape-mode">道路形态</label>
                   <select id="road-shape-mode">
                     <option value="closed" selected>环形（首尾相连）</option>
                     <option value="open">非环形（首尾不连）</option>
                   </select>
                 </div>
+                <span class="toolbar__label">绘制</span>
+                <div class="toolbar toolbar--draw">
+                  <button type="button" id="btn-add-entrance">入口</button>
+                  <button type="button" id="btn-add-road">道路</button>
+                  <button type="button" id="btn-add-obstacle">花坛</button>
+                  <button type="button" id="btn-add-building">居民楼</button>
+                  <button type="button" id="btn-add-slot">车位</button>
+                </div>
+                <button type="button" class="danger toolbar--danger-full" id="btn-delete">删除选中</button>
               </div>
-              <div class="panel panel--scroll panel--props">
-                <h2>选中项属性</h2>
+              <div class="panel">
+                <h2>智能规划</h2>
+                <div class="prop-grid">
+                  <label for="auto-slot-count">自动生成车位数</label>
+                  <input type="number" id="auto-slot-count" min="1" step="1" value="12" />
+                </div>
+                <div class="toolbar">
+                  <button type="button" id="btn-auto-slots">沿道路自动布位</button>
+                  <button type="button" id="btn-suggest-plans">生成候选方案</button>
+                </div>
+                <p id="auto-slots-status" class="panel-note"></p>
+                <div id="suggest-plans-list" class="suggest-plans-list"></div>
+              </div>
+              <div class="panel panel--fold-wrap">
+                <h2 class="panel-section__title">底图与图层</h2>
+                <details class="panel-fold-item">
+                  <summary>底图校准</summary>
+                  <p class="panel-note panel-note--compact">上传 PNG/JPEG 作为参考底图（建议 &lt;2MB），用两个世界坐标点完成比例对齐。</p>
+                  <div class="prop-grid">
+                    <label for="underlay-file">底图文件</label>
+                    <input type="file" id="underlay-file" accept="image/*" />
+                  </div>
+                  <div class="prop-grid">
+                    <label for="underlay-opacity">透明度</label>
+                    <input type="range" id="underlay-opacity" min="0.05" max="1" step="0.05" value="0.55" />
+                  </div>
+                  <div class="toolbar">
+                    <button type="button" id="btn-underlay-calibrate">开始校准</button>
+                    <button type="button" id="btn-underlay-confirm">确认校准</button>
+                    <button type="button" id="btn-underlay-clear">清除底图</button>
+                  </div>
+                  <p id="underlay-status" class="panel-note"></p>
+                </details>
+                <details class="panel-fold-item">
+                  <summary>图层显示</summary>
+                  <div class="layer-toggles">
+                    <label><input type="checkbox" id="layer-underlay" checked /> 底图</label>
+                    <label><input type="checkbox" id="layer-road" checked /> 道路</label>
+                    <label><input type="checkbox" id="layer-strip" checked /> 泊位带</label>
+                    <label><input type="checkbox" id="layer-path" checked /> 步行路径</label>
+                  </div>
+                </details>
+              </div>
+              <details class="panel panel--scroll panel--props">
+                <summary>选中项属性</summary>
                 <div id="props-empty" class="empty-select">
                   点画布上的入口、道路、花坛、楼或车位以选中
                 </div>
                 <div id="props-form" class="prop-grid" hidden></div>
-              </div>
+              </details>
             </section>
 
             <!-- ===== Tab: 车辆分配 ===== -->
-            <section id="tab-vehicle" class="tab-panel" data-tab-panel="vehicle">
+            <section id="tab-vehicle" class="tab-panel tab-panel--fill" data-tab-panel="vehicle">
               <div class="panel panel--scroll vehicle-targets-panel vehicle-targets-panel--solo">
                 <h2>车辆 → 目的楼</h2>
-                <div class="toolbar" style="margin-bottom:8px">
+                <div class="toolbar vehicle-targets-actions">
                   <button type="button" id="btn-random-dest">随机各车目的楼</button>
                 </div>
                 <p class="panel-note panel-note--vehicle">
                   楼号在屋面；优化后车位标车号与目的楼。
                 </p>
-                <div class="prop-grid vehicle-targets-mode">
+                <div class="prop-grid vehicle-targets-mode vehicle-targets-mode--divider">
                   <label for="entrance-mode">入口策略</label>
                   <select id="entrance-mode">
                     <option value="auto" selected>自动选最优入口</option>
@@ -185,9 +294,8 @@
             <section id="tab-result" class="tab-panel" data-tab-panel="result">
               <div class="panel panel--result">
                 <h2>优化结果</h2>
-                <p id="result-status" class="hint">尚未运行</p>
-                <!-- hidden legacy element; JS still writes to it -->
-                <p class="result-value" id="result-gbest" style="display:none"></p>
+                <p id="result-status" class="hint result-status">尚未运行</p>
+                <p class="result-value" id="result-gbest" hidden></p>
 
                 <!-- Metric cards -->
                 <div class="result-metrics">
@@ -206,49 +314,72 @@
                     <span class="metric-value" id="metric-total">--</span>
                     <span class="metric-unit">s</span>
                   </div>
+                  <div class="result-metric result-metric--mismatch">
+                    <span class="metric-label">类型违约数</span>
+                    <span class="metric-value" id="metric-mismatch">--</span>
+                    <span class="metric-unit">辆</span>
+                  </div>
                 </div>
 
                 <p id="result-breakdown" class="panel-note"></p>
                 <p id="result-tip" class="result-tip"></p>
-                <canvas id="chart" width="300" height="168"></canvas>
+                <div class="chart-wrap">
+                  <canvas id="chart" width="300" height="168"></canvas>
+                </div>
                 <p id="chart-caption" class="chart-caption"></p>
               </div>
             </section>
 
-            <!-- ===== Tab: 实验分析 ===== -->
-            <section id="tab-lab" class="tab-panel" data-tab-panel="lab">
-              <div class="panel">
-                <h2>场景管理</h2>
-                <div class="toolbar">
-                  <button type="button" id="btn-export-scenario">导出 JSON</button>
-                  <button type="button" id="btn-import-scenario">导入 JSON</button>
-                  <button type="button" id="btn-save-snapshot">保存快照</button>
-                  <button type="button" id="btn-load-snapshot">加载快照</button>
-                  <button type="button" id="btn-reset-scenario">重置场景</button>
+            <!-- ===== Tab: 方案（库 + 对比） ===== -->
+            <section id="tab-schemes" class="tab-panel tab-panel--fill" data-tab-panel="schemes">
+              <div class="panel panel--scroll panel--schemes-library">
+                <h2>命名方案库</h2>
+                <p class="panel-note panel-note--compact">保存当前场景与优化指标，勾选条目后可在下方对比。</p>
+                <div class="toolbar toolbar--save">
+                  <input type="text" id="plan-save-name" placeholder="方案名称，如 baseline" />
+                  <button type="button" id="btn-save-named-plan">保存到方案库</button>
                 </div>
-                <div class="prop-grid" style="margin-top:10px">
-                  <label for="snapshot-select">本地快照</label>
-                  <select id="snapshot-select"></select>
-                </div>
-                <input id="scenario-import-input" type="file" accept=".json,application/json" hidden />
+                <div id="plan-library-list" class="plan-library-list"></div>
               </div>
+              <div class="panel panel--compare panel--schemes-compare">
+                <h2>多方案对比</h2>
+                <p class="panel-note panel-note--compact">在方案库中勾选 2–4 个方案后点击下方刷新。</p>
+                <div class="toolbar">
+                  <button type="button" id="btn-refresh-compare">刷新对比</button>
+                  <button type="button" id="btn-export-compare-report">导出 HTML 报告</button>
+                </div>
+                <div id="compare-table" class="compare-table"></div>
+                <div class="chart-wrap">
+                  <canvas id="compare-radar" width="280" height="200" aria-label="雷达图"></canvas>
+                </div>
+              </div>
+            </section>
 
+            <!-- ===== Tab: 仿真 ===== -->
+            <section id="tab-simulate" class="tab-panel" data-tab-panel="simulate">
               <div class="panel">
-                <h2>实验与推荐</h2>
-                <div class="prop-grid">
-                  <label for="pso-seed">随机种子</label>
-                  <input type="number" id="pso-seed" step="1" placeholder="留空=随机" />
+                <h2>到达仿真</h2>
+                <p id="sim-status" class="panel-note">请先运行优化，再开始仿真。</p>
+                <div class="panel-section">
+                  <div class="prop-grid">
+                    <label for="sim-duration-min">到达时段（分钟）</label>
+                    <input type="number" id="sim-duration-min" min="5" step="5" value="20" />
+                  </div>
+                  <div class="toolbar">
+                    <button type="button" id="btn-run-sim">运行仿真</button>
+                    <button type="button" id="btn-sim-play">播放/暂停</button>
+                  </div>
                 </div>
-                <div class="prop-grid">
-                  <label for="benchmark-runs">Benchmark 次数</label>
-                  <input type="number" id="benchmark-runs" min="1" step="1" value="6" />
+                <div class="panel-section">
+                  <p id="sim-time-label" class="sim-time-label">回放时间：0.0 s</p>
+                  <input type="range" id="sim-scrub" min="0" max="100" value="0" />
                 </div>
-                <div class="toolbar" style="margin-top:8px">
-                  <button type="button" id="btn-run-benchmark">运行 Benchmark</button>
-                  <button type="button" id="btn-recommend-params">参数推荐</button>
+                <div class="panel-section">
+                  <div class="chart-wrap">
+                    <canvas id="sim-queue-chart" width="280" height="120" aria-label="排队长度曲线"></canvas>
+                  </div>
+                  <p id="sim-stats" class="panel-note"></p>
                 </div>
-                <pre id="benchmark-output" class="panel-note" aria-live="polite"></pre>
-                <pre id="recommend-output" class="panel-note" aria-live="polite"></pre>
               </div>
             </section>
 
@@ -256,7 +387,8 @@
 
           <!-- Run button pinned at bottom -->
           <div class="run-bar">
-            <button type="button" class="primary" id="btn-run">▶ 运行优化</button>
+            <span id="run-bar-summary" class="run-bar-summary"></span>
+            <button type="button" class="primary js-run-optimize" id="btn-run-sticky">▶ 运行优化</button>
           </div>
 
         </div><!-- .workspace-body -->
@@ -282,60 +414,7 @@
       });
     })();
   </script>
-  <script src="assets/js/core/constants.js"></script>
-  <script src="assets/js/core/geometry.js"></script>
-  <script src="assets/js/core/road/road-model.js"></script>
-  <script src="assets/js/core/road/road-snap.js"></script>
-  <script src="assets/js/core/scenario/default-scenario.js"></script>
-  <script src="assets/js/core/scenario/normalize.js"></script>
-  <script src="assets/js/optimizer/nav-grid.js"></script>
-  <script src="assets/js/optimizer/pathfinding.js"></script>
-  <script src="assets/js/optimizer/path-cost.js"></script>
-  <script src="assets/js/optimizer/cost-matrix.js"></script>
-  <script src="assets/js/optimizer/algorithms/hungarian.js"></script>
-  <script src="assets/js/optimizer/algorithms/pso.js"></script>
-  <script src="assets/js/optimizer/pack-result.js"></script>
-  <script src="assets/js/optimizer/index.js"></script>
-  <script src="assets/js/app/state/app-state.js"></script>
-  <script src="assets/js/app/scenario/default-source.js"></script>
-  <script src="assets/js/app/scenario/collections.js"></script>
-  <script src="assets/js/app/scenario/road-edit.js"></script>
-  <script src="assets/js/app/scenario/obstacle-edit.js"></script>
-  <script src="assets/js/app/scenario/collision.js"></script>
-  <script src="assets/js/app/scenario/snap.js"></script>
-  <script src="assets/js/app/scenario/sanitize.js"></script>
-  <script src="assets/js/app/storage/state-storage.js"></script>
-  <script src="assets/js/app/storage/scenario-io.js"></script>
-  <script src="assets/js/app/analysis/optimizer-analysis.js"></script>
-  <script src="assets/js/app/ui/tab-utils.js"></script>
-  <script src="assets/js/app/ui/tab-flow.js"></script>
-  <script src="assets/js/app/ui/props/props-form-utils.js"></script>
-  <script src="assets/js/app/ui/props/props-entrance.js"></script>
-  <script src="assets/js/app/ui/props/props-obstacle.js"></script>
-  <script src="assets/js/app/ui/props/props-road.js"></script>
-  <script src="assets/js/app/ui/props/props-building.js"></script>
-  <script src="assets/js/app/ui/props/props-slot.js"></script>
-  <script src="assets/js/app/ui/props-panel.js"></script>
-  <script src="assets/js/app/ui/vehicle-panel.js"></script>
-  <script src="assets/js/app/ui/results-panel.js"></script>
-  <script src="assets/js/app/canvas/viewport.js"></script>
-  <script src="assets/js/app/canvas/layers/road-layer.js"></script>
-  <script src="assets/js/app/canvas/layers/draw-primitives.js"></script>
-  <script src="assets/js/app/canvas/layers/draw-slots.js"></script>
-  <script src="assets/js/app/canvas/layers/draw-buildings.js"></script>
-  <script src="assets/js/app/canvas/layers/draw-obstacles.js"></script>
-  <script src="assets/js/app/canvas/layers/draw-drafts.js"></script>
-  <script src="assets/js/app/canvas/layers/draw-entrances.js"></script>
-  <script src="assets/js/app/canvas/layers/objects-layer.js"></script>
-  <script src="assets/js/app/canvas/layers/hover-layer.js"></script>
-  <script src="assets/js/app/canvas/layers/overlay-layer.js"></script>
-  <script src="assets/js/app/canvas/renderer.js"></script>
-  <script src="assets/js/app/canvas/chart.js"></script>
-  <script src="assets/js/app/interaction/pick.js"></script>
-  <script src="assets/js/app/interaction/draft-tools.js"></script>
-  <script src="assets/js/app/interaction/drag-session.js"></script>
-  <script src="assets/js/app/interaction/pointer.js"></script>
-  <script src="assets/js/app/lifecycle/startup.js"></script>
-  <script src="assets/js/app/bootstrap.js"></script>
+  <script src="assets/js/optimizer.bundle.js"></script>
+  <script src="assets/js/app.bundle.js"></script>
 </body>
 </html>

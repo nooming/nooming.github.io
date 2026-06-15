@@ -65,7 +65,7 @@ async function locateUserCity() {
     }
     CW.cityLocatePromise = (async () => {
         try {
-            const response = await fetch(`${API_BASE_URL}/locate_city`);
+            const response = await fetch(`${CW_API}/locate_city`);
             const data = await response.json();
             if (data.success && data.city) {
                 CW.currentCity = data.city;

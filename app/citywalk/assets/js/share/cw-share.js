@@ -55,7 +55,7 @@ function _shareEscape(s) {
 async function _fetchShareBackground() {
     try {
         const firstPoiName = (CW.routeData.pois && CW.routeData.pois[0] && CW.routeData.pois[0].name) || '';
-        const resp = await fetch(`${API_BASE_URL}/search_image`, {
+        const resp = await fetch(`${CW_API}/search_image`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify({

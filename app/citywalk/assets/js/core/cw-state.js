@@ -51,7 +51,7 @@ function cwEscapeHtml(s) {
         .replace(/"/g, '&quot;');
 }
 
-// --- POI 类型别名（前端单一来源；镜像后端 citywalk.py 的 POI_TYPE_ALIASES）---
+// --- POI 类型别名（前端单一来源）---
 // 之前 cw-agent.js / app.js 各写过一份，已收敛到此处统一引用。
 const POI_TYPE_ALIASES = { '咖啡': '咖啡甜品', '甜品': '咖啡甜品', '烘焙': '咖啡甜品' };
 function normalizePoiType(t) {
@@ -83,6 +83,7 @@ const API_BASE_URL =
     _h === 'localhost' || _h === '127.0.0.1' || _h === '[::1]' || _h === '::1'
         ? 'http://localhost:5000'
         : 'https://noomings-backend.zeabur.app';
+const CW_API = `${API_BASE_URL}/api/citywalk`;
 
 // --- 主题配色方案 ---
 const colorThemes = [

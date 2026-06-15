@@ -359,7 +359,7 @@ function generateRoute() {
     const controller = new AbortController();
     const timeoutId  = setTimeout(() => controller.abort(), 120000);
 
-    fetch(`${API_BASE_URL}/plan`, {
+    fetch(`${CW_API}/plan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),

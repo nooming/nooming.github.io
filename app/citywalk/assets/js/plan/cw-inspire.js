@@ -28,7 +28,7 @@ async function fetchInspirationCards() {
     const cityHint = CW.cityLocateReady ? CW.currentCity : '';
 
     try {
-        const response = await fetch(`${API_BASE_URL}/agent/inspire`, {
+        const response = await fetch(`${CW_API}/agent/inspire`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify({ query: query, city: cityHint }),
@@ -201,7 +201,7 @@ async function planWithSelectedInspiration() {
                 selected_spots: seeds,
             };
         body.selected_spots = seeds;
-        const response = await fetch(`${API_BASE_URL}/agent/plan_inspired`, {
+        const response = await fetch(`${CW_API}/agent/plan_inspired`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify(body),
