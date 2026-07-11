@@ -348,6 +348,124 @@ document.addEventListener("DOMContentLoaded", () => {
         return !!(el && el.checked);
     }
 
+    const FORM_STORAGE_KEY = "zmd_gacha_planner_form_v1";
+    const FORM_FIELDS = [
+        { id: "shared-pity-six-remain", type: "number", min: 1, max: 80 },
+        { id: "shared-pity-five-remain", type: "number", min: 1, max: 10 },
+        { id: "shared-use-baozhang", type: "checkbox" },
+        { id: "shared-init-baozhang", type: "number", min: 0 },
+        { id: "combo-char-n", type: "number", min: 0 },
+        { id: "combo-wuku-init", type: "number", min: 0 },
+        { id: "up-n", type: "number", min: 0 },
+        { id: "up-up-k", type: "number", min: 1 },
+        { id: "up-up-n", type: "number", min: 0 },
+        { id: "wp-t", type: "number", min: 0 },
+        { id: "wp-up-k", type: "number", min: 1 },
+        { id: "wp-up-t-prob", type: "number", min: 0 }
+    ];
+    let isRestoringForm = false;
+
+    function collectFormState() {
+        const state = {};
+        for (let i = 0; i < FORM_FIELDS.length; i++) {
+            const field = FORM_FIELDS[i];
+            const el = document.getElementById(field.id);
+            if (!el) {
+                continue;
+            }
+            if (field.type === "checkbox") {
+                state[field.id] = !!el.checked;
+            } else {
+                state[field.id] = el.value;
+            }
+        }
+        return state;
+    }
+
+    function saveFormState() {
+        try {
+            localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(collectFormState()));
+        } catch (err) {
+            console.warn("抽卡规划表单保存失败:", err && err.message ? err.message : err);
+        }
+    }
+
+    const scheduleSaveFormState = typeof debounce === "function"
+        ? debounce(saveFormState, 300)
+        : saveFormState;
+
+    function applyNumberField(el, raw, field) {
+        const v = Math.floor(Number(raw));
+        if (!Number.isFinite(v)) {
+            return;
+        }
+        let next = v;
+        if (field.min != null) {
+            next = Math.max(field.min, next);
+        }
+        if (field.max != null) {
+            next = Math.min(field.max, next);
+        }
+        el.value = String(next);
+    }
+
+    function loadFormState() {
+        let parsed = null;
+        try {
+            const raw = localStorage.getItem(FORM_STORAGE_KEY);
+            if (raw == null) {
+                return;
+            }
+            parsed = JSON.parse(raw);
+        } catch (err) {
+            return;
+        }
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+            return;
+        }
+
+        isRestoringForm = true;
+        try {
+            for (let i = 0; i < FORM_FIELDS.length; i++) {
+                const field = FORM_FIELDS[i];
+                if (!Object.prototype.hasOwnProperty.call(parsed, field.id)) {
+                    continue;
+                }
+                const el = document.getElementById(field.id);
+                if (!el) {
+                    continue;
+                }
+                if (field.type === "checkbox") {
+                    el.checked = !!parsed[field.id];
+                } else {
+                    applyNumberField(el, parsed[field.id], field);
+                }
+            }
+        } finally {
+            isRestoringForm = false;
+        }
+    }
+
+    function bindFormPersistence() {
+        const onChange = () => {
+            if (isRestoringForm) {
+                return;
+            }
+            scheduleSaveFormState();
+        };
+        for (let i = 0; i < FORM_FIELDS.length; i++) {
+            const el = document.getElementById(FORM_FIELDS[i].id);
+            if (!el) {
+                continue;
+            }
+            el.addEventListener("input", onChange);
+            el.addEventListener("change", onChange);
+        }
+    }
+
+    loadFormState();
+    bindFormPersistence();
+
     const p = G.CHAR_P;
     const ss = G.SOFT_START;
     const si = G.SOFT_INC;
