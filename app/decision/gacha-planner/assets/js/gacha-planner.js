@@ -568,7 +568,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const prob = hits / simC;
         document.getElementById("combo-out").innerHTML =
-            `<div><strong>6+6 达成概率</strong>：<strong>${(prob * 100).toFixed(2)}%</strong></div>` +
+            `<div><strong>5+6 达成概率</strong>：<strong>${(prob * 100).toFixed(2)}%</strong></div>` +
             `<div style="margin-top:8px"><strong>当期角色期望</strong>：${(sumUpChar / simC).toFixed(3)}，<strong>当期武器期望</strong>：${(sumUpWeapon / simC).toFixed(3)}</div>` +
             `<div style="margin-top:8px"><strong>总武库配额期望</strong>：${(sumWuku / simC).toFixed(0)}，<strong>可申领次数期望</strong>：${(sumApply / simC).toFixed(2)}</div>` +
             `<div style="margin-top:8px;font-size:0.75rem;color:#666666">${simC.toLocaleString()} 次模拟；角色基础抽数 ${baseN}，现有武库配额 ${initWuku}；保障换抽${useBaozhang ? "开启" : "关闭"}（初始 ${initBaozhang}，角色侧期望额外换抽 ${(sumExchange / simC).toFixed(2)}）；角色产出的武库配额已计入武器申领。规则详见上方「抽卡口径」。</div>`;
