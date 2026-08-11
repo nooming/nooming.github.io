@@ -1,8 +1,8 @@
+/* 背景网格由 common body / body.page-container 提供 */
 body {
     max-width: 1200px;
     margin: 0 auto;
     padding: 25px 20px;
-    background: var(--color-canvas);
     min-height: 100vh;
 }
 

@@ -9,7 +9,9 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
     height: 100vh;
     overflow: hidden;
-    background: var(--color-canvas);
+    background-color: var(--color-canvas);
+    background-image: var(--bg-canvas-grid);
+    background-size: var(--bg-grid-size) var(--bg-grid-size);
 }
 
 .app {
@@ -494,7 +496,9 @@ body {
 .editor.empty {
     justify-content: center;
     align-items: center;
-    background: var(--color-canvas);
+    background-color: var(--color-canvas);
+    background-image: var(--bg-canvas-grid);
+    background-size: var(--bg-grid-size) var(--bg-grid-size);
 }
 
 .empty-editor {

@@ -8,7 +8,9 @@ body {
     margin: 0 auto;
     padding: 25px 20px;
     min-height: 100vh;
-    background: #ffffff;
+    background-color: var(--color-canvas);
+    background-image: var(--bg-canvas-grid);
+    background-size: var(--bg-grid-size) var(--bg-grid-size);
 }
         
 /* 页顶主标题区：与区块标题同理，透明底（保留顶黄线装饰） */
@@ -355,7 +357,9 @@ h1 {
 @media (max-width: 767.98px) {
     body {
         padding: 15px 12px;
-        background: #ffffff;
+        background-color: var(--color-canvas);
+        background-image: var(--bg-canvas-grid);
+        background-size: var(--bg-grid-size) var(--bg-grid-size);
     }
             
     header {

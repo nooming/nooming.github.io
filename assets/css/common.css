@@ -24,9 +24,27 @@
     --shadow-theme-strong: 0 6px 30px rgba(212, 200, 0, 0.5);
     --shadow-tool: 0 6px 20px rgba(212, 200, 0, 0.4);
     --shadow-ins: 0 1px 0 rgba(0, 0, 0, 0.06);
-    /* 页面底：与首页一致纯白画布；卡片仍为白 */
-    --color-canvas: #ffffff;
+    /* 页面底：浅网格画布；卡片仍为白 */
+    --color-canvas: #f7f7f5;
     --color-card: #ffffff;
+    --bg-grid-color: rgba(0, 0, 0, 0.028);
+    --bg-grid-size: 28px;
+    --bg-canvas-grid:
+        linear-gradient(var(--bg-grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--bg-grid-color) 1px, transparent 1px);
+    /* 抽卡规划工业样板页用到的语义色（不影响其它页原版视觉） */
+    --line-hard: rgba(0, 0, 0, 0.22);
+    --color-theme-bar: #FFFA00;
+    --color-ink: #0a0a0a;
+    --color-ink-soft: #1a1a1a;
+    --color-ink-muted: rgba(0, 0, 0, 0.55);
+    --color-surface-dim: #f0f0ee;
+    --color-theme-wash: #fffce0;
+    --color-label-bg: #0a0a0a;
+    --color-label-fg: #FFFA00;
+    --color-label-fg-alt: #ffffff;
+    --font-mono: ui-monospace, "Cascadia Mono", "Consolas", "SF Mono", monospace;
+    --bar-accent: 4px;
     /* 首页「浮岛」卡片阴影（枢纽页 .feature-card 等复用） */
     --shadow-card-float:
         0 1px 0 rgba(255, 255, 255, 0.9) inset,
@@ -53,9 +71,26 @@ html {
 body {
     font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
     background-color: var(--color-canvas);
+    background-image: var(--bg-canvas-grid);
+    background-size: var(--bg-grid-size) var(--bg-grid-size);
     color: var(--color-body);
     line-height: 1.6;
     overflow-x: hidden;
+}
+
+/* 抽卡规划页技术标签（其它页不使用此类名） */
+.hub-label {
+    display: inline-block;
+    margin: 0 0 10px;
+    padding: 3px 8px;
+    background: var(--color-label-bg);
+    color: var(--color-label-fg);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    line-height: 1.4;
+    border: 1px solid var(--color-ink);
 }
 
 /* 返回主页按钮 - 统一样式 */
@@ -280,13 +315,19 @@ footer.site-footer p {
    通用页面布局样式
    ============================================ */
 
-/* 标准页面容器 */
+/* 标准页面容器（多数子页挂在 body 上；勿用 background 简写，以免冲掉网格） */
 .page-container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 25px 20px;
-    background: transparent;
     min-height: 100vh;
+}
+
+/* body.page-container：显式保留画布网格（特异性高于仅 background 的子页覆盖） */
+body.page-container {
+    background-color: var(--color-canvas);
+    background-image: var(--bg-canvas-grid);
+    background-size: var(--bg-grid-size) var(--bg-grid-size);
 }
 
 /* 标准页面标题样式（局部旧页；枢纽页请用 .section-header） */
