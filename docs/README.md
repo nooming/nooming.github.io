@@ -1,50 +1,36 @@
-# 个人站点
+# 本机工具箱
 
-笔记 · 工具 · 专题 · 实践 · 导航
+入口 · 实践 · 工具 · 其它
 
 ## 项目简介
 
-GitHub Pages 静态站：枢纽页聚合工具与长文；实验与地图类功能需联网。
+GitHub Pages 静态站：枢纽页按「入口 / 实践 / 工具 / 其它」聚合；实验与地图类功能需联网。
 
 ## 功能特性
 
-### 🌐 网址导航
-- **分类**（与 [app/navigation/](../app/navigation/) 页面顺序一致）：工具 → AI / 对话 → 开发 → 学习 → 视频（外链索引）
+首页栏目与下列分组一致；`app/`、`articles/` 目录未搬迁，仅入口分类变化。
 
-### 📝 手写笔记
-- **画布 + 文本**：多页面；画笔与颜色；本地持久化；批量删选
+### 入口
+- **导航**：[app/navigation/](../app/navigation/) — 工具 → AI / 对话 → 开发 → 学习 → 视频
+- **笔记**：[app/notes/](../app/notes/) — 画布 + 文本；本地持久化
+- **Citywalk**：[app/citywalk/](../app/citywalk/)（说明见 [app/citywalk/README.md](../app/citywalk/README.md)）
 
-### 📚 专题
-- **开发者工具**：Network、Console；步骤与限制
-- **猫抓扩展**：安装至抓取音视频
+### 实践
+- **停车**：[app/parking-pso/](../app/parking-pso/) — 画布编辑小区；精确最优或 PSO（在线优化服务）
+- **质子**：[app/proton/](../app/proton/) — 电场 / 磁场 / 阻力平面模拟
+- **像素涌流**：[app/pixelflow/](../app/pixelflow/) — 双图像素排序重排与 PNG 导出（纯本地）
+- **物理探究**：https://physics.noomings.com（外链实验站）
 
-### 🧪 实践
-- **停车分配**：[app/parking-pso/](../app/parking-pso/) — 画布编辑小区；精确最优或 PSO；路径可视化（在线优化服务）
-- **像素涌流**：[app/pixelflow/](../app/pixelflow/) — 双图上传；按明度/饱和度等排序重排像素；动画过渡、运动拖尾与 PNG 导出（纯本地）
-- **质子场**：电场 / 磁场 / 阻力平面模拟；[app/proton/](../app/proton/)（首页「实践」）
+### 工具
+- **换算与媒体**：[app/practical/](../app/practical/) — 音频、进制、Base64、二维码、风扇 RPM
+- **决策**：[app/decision/](../app/decision/) — 多选随机、抛硬币、转盘、抽卡规划
+- **Markdown 阅读**：[app/markdown/](../app/markdown/) — 粘贴 / 打开本地 `.md`，也可 Ctrl+V 粘贴文件；`catalog.json` + `?doc=id` 加载仓库文档（GitHub Pages 不能列目录）。专题 HTML 以后可以迁进阅读器，现有两篇长文暂不转换。
+- **图片识字**：[app/ocr/](../app/ocr/) — 拖入 / 选择 / Ctrl+V 粘贴图片或截图；Tesseract.js 在浏览器内识别（中文 / 英文 / 中英）。图不上传；首次会下载语言模型并缓存在本机。
 
-### 🔧 实用工具
-- **总览**：[实用工具](../app/practical/) — 音频、进制、Base64、二维码、风扇 RPM
-
-### 🎯 决策工具
-- **多选随机**：每行一项，随机保留一行
-- **抛硬币**：正反面；本地统计
-- **转盘**：自定义项与颜色；预设与历史
-
-### 🧠 心理测试
-- **MBTI**：28 题；四字母简述
-- **动物塑**：娱乐向映射
-
-### 🚶 Citywalk
-- **架构与功能说明**：[app/citywalk/README.md](../app/citywalk/README.md)
-- **多城步行**：起终点、沿途 POI；高德 Web；需联网
-- **文案与长图**：攻略与分享图导出
-
-### 🎮 小游戏
-- **总览**：[小游戏](../app/games/) — 棋类 → 桌游 → 小恐龙
-- **棋类**：五子棋 / 围棋 / 象棋；人机或双人（因游戏而异）
-- **桌游**：德州、UNO、红心；本地 AI；[桌游子页](../app/games/card-games/)
-- **小恐龙**：跑酷街机
+### 其它
+- **专题 HTML**：[浏览器开发者工具实战](../articles/crawler-experience/)、[猫抓扩展使用笔记](../articles/cat-catch-tutorial/)（独立 HTML 页，尚未迁入 Markdown 阅读器）
+- **棋类与桌游**：[app/games/](../app/games/) — 棋类 → 桌游 → 小恐龙
+- **心理测试**：[app/psychological/](../app/psychological/) — MBTI、动物塑
 
 ## 技术栈
 
@@ -55,6 +41,8 @@ GitHub Pages 静态站：枢纽页聚合工具与长文；实验与地图类功�
 - LameJS (MP3编码)
 - 中国象棋引擎库（xiangqi，`xiangqi.min.js`，位于 `app/games/board-games/chess/assets/lib/`）
 - Perfect Freehand (手写笔记绘图库)
+- marked + DOMPurify（Markdown 阅读；库文件在 `app/markdown/assets/js/vendor/`）
+- Tesseract.js（图片识字；CDN 加载 worker/core，语言模型从 tessdata 下载并缓存在浏览器）
 - Canvas API (绘图功能)
 - LocalStorage (数据持久化)
 
@@ -127,6 +115,14 @@ GitHub Pages 静态站：枢纽页聚合工具与长文；实验与地图类功�
 │   │   ├── base64-converter/
 │   │   ├── qr-code-generator/
 │   │   └── fan-rpm/
+│   ├── markdown/               # Markdown 阅读（工具；纯前端）
+│   │   ├── index.html
+│   │   ├── catalog.json
+│   │   ├── notes-md/
+│   │   └── assets/
+│   ├── ocr/                    # 图片识字（工具；Tesseract.js 本机识别）
+│   │   ├── index.html
+│   │   └── assets/
 │   ├── proton/                   # 质子世界（实践；自 games 迁出）
 │   │   ├── index.html
 │   │   └── assets/
@@ -158,6 +154,8 @@ GitHub Pages 静态站：枢纽页聚合工具与长文；实验与地图类功�
 - **`app/practical/`**：进制、Base64、二维码等工具的页面脚本与样式放在各子目录 **`assets/js/`**、**`assets/css/`**；音频转换、风扇转速等以单页内联或依赖根 **`assets/css/common.css`** / **`assets/js/utils.js`**（由页面写 `../` 链回到站根）为主。
 - **其他 `app/` 二级分类**（如 `decision`）：已采用 **`assets/`** 或与历史页并存的，新建页面时优先 **`assets/`** 模板，避免同分类混用多种布局。
 - **`app/proton/`**、**`app/pixelflow/`**、**`app/citywalk/`** 与 **`app/parking-pso/`**：作为独立交互应用（实践或地图类），业务脚本与样式放在各自目录的 **`assets/`**；与站根 **`assets/`** 仅通过 `../../assets/` 共享 favicon、**`common.css`**、**`utils.js`** 等，避免把应用逻辑散到站根。
+- **`app/markdown/`**：Markdown 阅读；页面脚本与样式在 **`assets/`**，第三方 **`marked`** / **`DOMPurify`** 放在 **`assets/js/vendor/`**，仓库文档清单为 **`catalog.json`**（GitHub Pages 不能列目录）。
+- **`app/ocr/`**：图片识字；页面脚本与样式在 **`assets/`**，Tesseract.js 从 CDN 加载（worker/core 随库走，`langPath` 指向 tessdata `4.0.0_fast`），不把训练数据打进仓库。
 
 ## 新增可访问页面时的检查清单
 

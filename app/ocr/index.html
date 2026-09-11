@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#FFFA00">
+    <meta name="description" content="本机图片识字：拖入、选择或 Ctrl+V 粘贴图片 / 截图，Tesseract.js 在浏览器内识别。图不上传。">
+    <meta name="keywords" content="OCR,图片识字,Tesseract,本地识别,中文OCR">
+    <meta name="author" content="nooming">
+
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="图片识字">
+    <meta property="og:description" content="图不上传，识别只在本机。首次会下载语言模型。">
+
+    <title>图片识字</title>
+
+    <link rel="apple-touch-icon" sizes="180x180" href="../../assets/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../assets/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../assets/icons/favicon-16x16.png">
+    <link rel="manifest" href="../../assets/icons/site.webmanifest">
+    <link rel="shortcut icon" href="../../assets/icons/favicon.ico">
+
+    <link rel="stylesheet" href="../../assets/css/common.css">
+    <link rel="stylesheet" href="assets/css/ocr.css">
+</head>
+<body class="page-container">
+    <div class="page-header">
+        <div class="header-top">
+            <a href="../../index.html" class="back-btn">返回</a>
+        </div>
+        <div class="section-header section-header--page">
+            <h1>图片识字</h1>
+            <p>图不上传，识别只在本机。首次会下载语言模型（中文较大），之后缓存在浏览器里。</p>
+        </div>
+    </div>
+
+    <main>
+        <section class="section">
+            <div class="app-panel ocr-toolbar">
+                <div class="card-icon-title">
+                    <span class="card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="../../assets/icons/ui/hub-sprite.svg#i-scan-text"/></svg></span>
+                    <h2 class="feature-title">识别</h2>
+                </div>
+                <div class="ocr-langs" role="radiogroup" aria-label="识别语言">
+                    <label class="ocr-lang"><input type="radio" name="ocr-lang" value="chi_sim" checked> 中文</label>
+                    <label class="ocr-lang"><input type="radio" name="ocr-lang" value="eng"> 英文</label>
+                    <label class="ocr-lang"><input type="radio" name="ocr-lang" value="chi_sim+eng"> 中英</label>
+                </div>
+                <div class="ocr-actions">
+                    <label class="tool-btn ocr-file-label">
+                        打开图片
+                        <input id="ocr-file" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp,image/tiff,.png,.jpg,.jpeg,.webp,.gif,.bmp,.tif,.tiff" hidden>
+                    </label>
+                    <button type="button" id="ocr-copy" class="back-btn ocr-action-btn">复制文本</button>
+                    <button type="button" id="ocr-clear" class="back-btn ocr-action-btn">清空</button>
+                    <p id="ocr-status" class="ocr-status" aria-live="polite">尚未选择图片</p>
+                </div>
+                <div id="ocr-progress" class="ocr-progress" hidden>
+                    <div class="ocr-progress-track">
+                        <div id="ocr-progress-bar" class="ocr-progress-bar"></div>
+                    </div>
+                    <p id="ocr-progress-label" class="ocr-progress-label"></p>
+                </div>
+            </div>
+
+            <div class="ocr-workspace">
+                <div id="ocr-drop" class="app-panel ocr-drop" tabindex="0">
+                    <p class="ocr-label">图片</p>
+                    <img id="ocr-thumb" class="ocr-thumb" alt="待识别图片预览" hidden>
+                    <p id="ocr-placeholder" class="ocr-placeholder">拖入图片，或 Ctrl+V。</p>
+                </div>
+                <div class="app-panel ocr-result-panel">
+                    <label for="ocr-text" class="ocr-label">识别结果</label>
+                    <textarea id="ocr-text" class="ocr-text" spellcheck="false" placeholder="识别出的文字会出现在这里。"></textarea>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer" role="contentinfo">
+        <p>© 2026 本机工具箱 · 自用，非商用</p>
+    </footer>
+
+    <script src="../../assets/js/utils.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" defer></script>
+    <script src="assets/js/ocr.js" defer></script>
+</body>
+</html>

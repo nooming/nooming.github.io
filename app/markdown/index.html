@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#FFFA00">
+    <meta name="description" content="本地 .md。可粘贴、拖入或选文件。不上传。目录文档用 ?doc=id。">
+    <meta name="keywords" content="Markdown,阅读器,本地预览,marked">
+    <meta name="author" content="nooming">
+
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Markdown 阅读">
+    <meta property="og:description" content="本地 .md。可粘贴、拖入或选文件。不上传。">
+
+    <title>Markdown 阅读</title>
+
+    <link rel="apple-touch-icon" sizes="180x180" href="../../assets/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../assets/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../assets/icons/favicon-16x16.png">
+    <link rel="manifest" href="../../assets/icons/site.webmanifest">
+    <link rel="shortcut icon" href="../../assets/icons/favicon.ico">
+
+    <link rel="stylesheet" href="../../assets/css/common.css">
+    <link rel="stylesheet" href="assets/css/markdown.css">
+</head>
+<body class="page-container">
+    <div class="page-header">
+        <div class="header-top">
+            <a href="../../index.html" class="back-btn">返回</a>
+        </div>
+        <div class="section-header section-header--page">
+            <h1>Markdown 阅读</h1>
+            <p>本地 <code>.md</code>。可粘贴、拖入或选文件。不上传。目录文档用 <code>?doc=id</code>。</p>
+        </div>
+    </div>
+
+    <main>
+        <section class="section">
+            <div class="app-panel md-toolbar">
+                <div class="card-icon-title">
+                    <span class="card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="../../assets/icons/ui/hub-sprite.svg#i-doc"/></svg></span>
+                    <h2 class="feature-title">文档</h2>
+                </div>
+                <div id="md-catalog" class="md-catalog" aria-label="目录文档"></div>
+                <div class="md-actions">
+                    <label class="tool-btn md-file-label">
+                        打开文件
+                        <input id="md-file" type="file" accept=".md,.markdown,text/markdown,text/plain" hidden>
+                    </label>
+                    <button type="button" id="md-clear" class="back-btn md-clear-btn">清空</button>
+                    <p id="md-status" class="md-status" aria-live="polite">尚未打开文档</p>
+                </div>
+            </div>
+
+            <div class="md-workspace">
+                <div id="md-drop" class="app-panel md-source-panel">
+                    <label for="md-source" class="md-label">源码</label>
+                    <textarea id="md-source" class="md-source" spellcheck="false" placeholder="粘贴 Markdown，或把 .md 拖进来。"></textarea>
+                </div>
+                <article id="md-preview" class="app-panel md-preview" aria-label="渲染预览">
+                    <p class="md-placeholder">预览会出现在这里。</p>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer" role="contentinfo">
+        <p>© 2026 本机工具箱 · 自用，非商用</p>
+    </footer>
+
+    <script src="../../assets/js/utils.js" defer></script>
+    <script src="assets/js/vendor/marked.min.js" defer></script>
+    <script src="assets/js/vendor/purify.min.js" defer></script>
+    <script src="assets/js/markdown.js" defer></script>
+</body>
+</html>
