@@ -2,11 +2,14 @@
 (function () {
     const sourceEl = document.getElementById('md-source');
     const previewEl = document.getElementById('md-preview');
+    const previewInnerEl = document.getElementById('md-preview-inner');
     const fileEl = document.getElementById('md-file');
     const dropEl = document.getElementById('md-drop');
+    const workspaceEl = document.getElementById('md-workspace');
     const catalogEl = document.getElementById('md-catalog');
     const statusEl = document.getElementById('md-status');
     const clearEl = document.getElementById('md-clear');
+    const toggleEl = document.getElementById('md-toggle-source');
 
     const purifyConfig = {
         USE_PROFILES: { html: true },
@@ -21,6 +24,20 @@
         if (statusEl) statusEl.textContent = text;
     }
 
+    function isReading() {
+        if (workspaceEl) return workspaceEl.classList.contains('is-source-collapsed');
+        return document.body.classList.contains('is-md-reading');
+    }
+
+    function setReading(on) {
+        document.body.classList.toggle('is-md-reading', on);
+        if (workspaceEl) workspaceEl.classList.toggle('is-source-collapsed', on);
+        if (!toggleEl) return;
+        toggleEl.setAttribute('aria-pressed', on ? 'false' : 'true');
+        toggleEl.classList.toggle('is-on', !on);
+        toggleEl.textContent = '源码';
+    }
+
     function setActive(id) {
         activeId = id || '';
         if (!catalogEl) return;
@@ -32,7 +49,12 @@
     function renderMarkdown(text) {
         const raw = window.marked.parse(text || '', { async: false });
         const html = window.DOMPurify.sanitize(raw, purifyConfig);
-        previewEl.innerHTML = html || '<p class="md-placeholder">预览会出现在这里。</p>';
+        const inner = html || '<p class="md-placeholder">预览会出现在这里。</p>';
+        if (previewInnerEl) {
+            previewInnerEl.innerHTML = inner;
+        } else {
+            previewEl.innerHTML = '<div class="md-preview-body">' + inner + '</div>';
+        }
     }
 
     function applyText(text, label, id) {
@@ -79,6 +101,7 @@
             if (!res.ok) throw new Error(String(res.status));
             const text = await res.text();
             applyText(text, item.title, item.id);
+            setReading(true);
             if (pushQuery) {
                 const url = new URL(window.location.href);
                 url.searchParams.set('doc', item.id);
@@ -125,7 +148,9 @@
         }
         if (catalog[0]) {
             await loadDoc(catalog[0].id, false);
+            return;
         }
+        setReading(false);
     }
 
     const liveRender = typeof debounce === 'function'
@@ -140,6 +165,12 @@
 
     sourceEl.addEventListener('input', liveRender);
 
+    if (toggleEl) {
+        toggleEl.addEventListener('click', function () {
+            setReading(!isReading());
+        });
+    }
+
     fileEl.addEventListener('change', function () {
         const file = fileEl.files && fileEl.files[0];
         readLocalFile(file);
@@ -148,25 +179,38 @@
 
     clearEl.addEventListener('click', function () {
         applyText('', '尚未打开文档', '');
+        setReading(false);
         const url = new URL(window.location.href);
         url.searchParams.delete('doc');
         window.history.replaceState(null, '', url.pathname + url.search + url.hash);
     });
 
+    function setDragover(on) {
+        if (dropEl) dropEl.classList.toggle('is-dragover', on);
+        if (workspaceEl) workspaceEl.classList.toggle('is-dragover', on);
+    }
+
+    function hasFiles(event) {
+        const types = event.dataTransfer && event.dataTransfer.types;
+        if (!types) return false;
+        return Array.prototype.indexOf.call(types, 'Files') !== -1;
+    }
+
     ['dragenter', 'dragover'].forEach((type) => {
-        dropEl.addEventListener(type, function (event) {
+        document.addEventListener(type, function (event) {
+            if (!hasFiles(event)) return;
             event.preventDefault();
-            dropEl.classList.add('is-dragover');
+            setDragover(true);
         });
     });
-    ['dragleave', 'drop'].forEach((type) => {
-        dropEl.addEventListener(type, function (event) {
-            event.preventDefault();
-            if (type === 'dragleave' && dropEl.contains(event.relatedTarget)) return;
-            dropEl.classList.remove('is-dragover');
-        });
+    document.addEventListener('dragleave', function (event) {
+        if (event.relatedTarget && document.contains(event.relatedTarget)) return;
+        setDragover(false);
     });
-    dropEl.addEventListener('drop', function (event) {
+    document.addEventListener('drop', function (event) {
+        if (!hasFiles(event)) return;
+        event.preventDefault();
+        setDragover(false);
         const file = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
         readLocalFile(file);
     });
@@ -174,9 +218,21 @@
     document.addEventListener('paste', function (event) {
         const clipboard = event.clipboardData;
         const file = clipboard && clipboard.files && clipboard.files[0];
-        if (!file || !isMarkdownFile(file)) return;
+        if (file && isMarkdownFile(file)) {
+            event.preventDefault();
+            readLocalFile(file);
+            return;
+        }
+        if (!isReading()) return;
+        const target = event.target;
+        if (target && typeof target.closest === 'function' && (target === sourceEl || target.closest('input, textarea, [contenteditable="true"]'))) {
+            return;
+        }
+        const text = clipboard && clipboard.getData('text/plain');
+        if (!text) return;
         event.preventDefault();
-        readLocalFile(file);
+        applyText(text, '来自粘贴 / 编辑', '');
+        if (typeof showToast === 'function') showToast('已粘贴并渲染', 'success');
     });
 
     initCatalog();

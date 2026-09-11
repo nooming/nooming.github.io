@@ -368,6 +368,7 @@ function renderEditor() {
             <div class="empty-editor">
                 <h2>未打开页面</h2>
                 <p>左侧选页或新建。</p>
+                <p>内容保存在本机浏览器，不会同步。</p>
             </div>
         `;
         canvas = null;

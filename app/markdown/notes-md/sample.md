@@ -1,6 +1,6 @@
 # Markdown 阅读示例
 
-这是本机工具箱里的示例文档。打开 `?doc=sample` 会加载它。
+这是 noomings 里的示例文档。打开 `?doc=sample` 会加载它。
 
 ## 能做什么
 

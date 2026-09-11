@@ -89,6 +89,14 @@ body {
     margin-top: 10px;
 }
 
+.notes-storage-hint {
+    margin: 0;
+    max-width: 168px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #888888;
+}
+
 .btn-back-home:hover {
     background: #f5f5f5;
     transform: translateY(-2px);

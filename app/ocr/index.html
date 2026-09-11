@@ -44,8 +44,9 @@
                 <div class="ocr-langs" role="radiogroup" aria-label="识别语言">
                     <label class="ocr-lang"><input type="radio" name="ocr-lang" value="chi_sim" checked> 中文</label>
                     <label class="ocr-lang"><input type="radio" name="ocr-lang" value="eng"> 英文</label>
-                    <label class="ocr-lang"><input type="radio" name="ocr-lang" value="chi_sim+eng"> 中英</label>
+                    <label class="ocr-lang" title="中英混排再用；纯中文截图请选中文"><input type="radio" name="ocr-lang" value="chi_sim+eng"> 中英</label>
                 </div>
+                <p class="ocr-hint">印刷体/高清截图；手写与模糊会有错字。</p>
                 <div class="ocr-actions">
                     <label class="tool-btn ocr-file-label">
                         打开图片
@@ -78,7 +79,7 @@
     </main>
 
     <footer class="site-footer" role="contentinfo">
-        <p>© 2026 本机工具箱 · 自用，非商用</p>
+        <p>© 2026 noomings · 非商业使用</p>
     </footer>
 
     <script src="../../assets/js/utils.js" defer></script>

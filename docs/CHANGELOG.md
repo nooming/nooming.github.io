@@ -1,5 +1,15 @@
 # 更新日志
 
+## v2.3
+
+枢纽页改为「入口 / 实践 / 工具 / 其它」，访客站名为 **noomings**；`app/` 下文件夹未按栏目搬迁。
+
+1. 首页（`index.html`）：四栏分组、整卡链接、条目更紧凑；标题 / canonical / og 为 `https://noomings.com/`；简介区分浏览器内完成与需联网。实践区增加外链「物理探究」（`https://physics.noomings.com`）。
+2. 新增 Markdown 阅读（`app/markdown/`）：全宽预览，粘贴或拖入 `.md`，目录见 `catalog.json`。
+3. 新增图片识字（`app/ocr/`）：本机 Tesseract；适合印刷体与截图。
+4. 音频转换（`app/practical/audio-converter/`）改为本地 `lamejs`，修复转码失败。
+5. 枢纽页返回改为「返回」；合集页整卡可点；页脚「© 2026 noomings · 非商业使用」。删除 `articles/parking-pso/` 占位，应用仍在 `app/parking-pso/`。
+
 ## v2.2
 
 Citywalk 大版本同步：前后端模块化，智能规划与环线探索上线；API 仍为 `noomings-backend.zeabur.app`。

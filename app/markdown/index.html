@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#FFFA00">
-    <meta name="description" content="本地 .md。可粘贴、拖入或选文件。不上传。目录文档用 ?doc=id。">
+    <meta name="description" content="本地 .md 阅读：可粘贴、拖入或选文件。不上传。">
     <meta name="keywords" content="Markdown,阅读器,本地预览,marked">
     <meta name="author" content="nooming">
 
@@ -23,14 +23,14 @@
     <link rel="stylesheet" href="../../assets/css/common.css">
     <link rel="stylesheet" href="assets/css/markdown.css">
 </head>
-<body class="page-container">
+<body class="page-container md-page is-md-reading">
     <div class="page-header">
         <div class="header-top">
             <a href="../../index.html" class="back-btn">返回</a>
         </div>
         <div class="section-header section-header--page">
             <h1>Markdown 阅读</h1>
-            <p>本地 <code>.md</code>。可粘贴、拖入或选文件。不上传。目录文档用 <code>?doc=id</code>。</p>
+            <p>本地 <code>.md</code> 阅读。可粘贴、拖入或选文件。不上传。</p>
         </div>
     </div>
 
@@ -47,25 +47,28 @@
                         打开文件
                         <input id="md-file" type="file" accept=".md,.markdown,text/markdown,text/plain" hidden>
                     </label>
-                    <button type="button" id="md-clear" class="back-btn md-clear-btn">清空</button>
+                    <button type="button" id="md-toggle-source" class="back-btn md-toolbar-btn" aria-pressed="false" aria-controls="md-drop" title="显示或隐藏源码">源码</button>
+                    <button type="button" id="md-clear" class="back-btn md-toolbar-btn">清空</button>
                     <p id="md-status" class="md-status" aria-live="polite">尚未打开文档</p>
                 </div>
             </div>
 
-            <div class="md-workspace">
+            <div id="md-workspace" class="md-workspace is-source-collapsed">
                 <div id="md-drop" class="app-panel md-source-panel">
                     <label for="md-source" class="md-label">源码</label>
                     <textarea id="md-source" class="md-source" spellcheck="false" placeholder="粘贴 Markdown，或把 .md 拖进来。"></textarea>
                 </div>
                 <article id="md-preview" class="app-panel md-preview" aria-label="渲染预览">
-                    <p class="md-placeholder">预览会出现在这里。</p>
+                    <div id="md-preview-inner" class="md-preview-inner">
+                        <p class="md-placeholder">预览会出现在这里。</p>
+                    </div>
                 </article>
             </div>
         </section>
     </main>
 
     <footer class="site-footer" role="contentinfo">
-        <p>© 2026 本机工具箱 · 自用，非商用</p>
+        <p>© 2026 noomings · 非商业使用</p>
     </footer>
 
     <script src="../../assets/js/utils.js" defer></script>

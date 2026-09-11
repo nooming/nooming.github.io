@@ -1,4 +1,4 @@
-# 本机工具箱
+# noomings
 
 入口 · 实践 · 工具 · 其它
 
@@ -71,10 +71,8 @@ GitHub Pages 静态站：枢纽页按「入口 / 实践 / 工具 / 其它」聚�
 │   ├── cat-catch-tutorial/     # 猫抓扩展教程
 │   │   ├── index.html          # 教程页入口
 │   │   └── cat-catch.zip       # 猫抓扩展源码压缩包
-│   ├── crawler-experience/     # 浏览器开发者工具实战
-│   │   └── index.html          # 专题页入口
-│   └── parking-pso/            # 仅占位：跳转至 app/parking-pso/（兼容旧 URL）
-│       └── index.html
+│   └── crawler-experience/     # 浏览器开发者工具实战
+│       └── index.html          # 专题页入口
 ├── assets/                     # 全站静态：CSS、JS、favicon 与 site.webmanifest
 │   ├── css/                    # common.css、home.css 等
 │   ├── js/                     # utils.js 等
@@ -174,7 +172,7 @@ GitHub Pages 静态站：枢纽页按「入口 / 实践 / 工具 / 其它」聚�
 
 ## 更新记录
 
-各版本功能与结构调整见 [CHANGELOG.md](CHANGELOG.md)（当前最新为 v2.1）。
+各版本功能与结构调整见 [CHANGELOG.md](CHANGELOG.md)（当前最新为 v2.3）。
 
 ## 许可证
 
