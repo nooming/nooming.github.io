@@ -3,11 +3,26 @@
     margin-bottom: 18px;
 }
 
+.ocr-field-label {
+    margin: 0 0 8px;
+    font-weight: 700;
+    color: var(--color-theme-ink);
+    font-size: 0.88rem;
+}
+
 .ocr-langs {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
     margin: 0 0 12px;
+}
+
+.ocr-langs[hidden] {
+    display: none;
+}
+
+.ocr-engines {
+    margin-bottom: 10px;
 }
 
 .ocr-lang {

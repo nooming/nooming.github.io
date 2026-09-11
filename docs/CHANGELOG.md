@@ -6,9 +6,10 @@
 
 1. 首页（`index.html`）：四栏分组、整卡链接、条目更紧凑；标题 / canonical / og 为 `https://noomings.com/`；简介区分浏览器内完成与需联网。实践区增加外链「物理探究」（`https://physics.noomings.com`）。
 2. 新增 Markdown 阅读（`app/markdown/`）：全宽预览，粘贴或拖入 `.md`，目录见 `catalog.json`。
-3. 新增图片识字（`app/ocr/`）：本机 Tesseract；适合印刷体与截图。
-4. 音频转换（`app/practical/audio-converter/`）改为本地 `lamejs`，修复转码失败。
-5. 枢纽页返回改为「返回」；合集页整卡可点；页脚「© 2026 noomings · 非商业使用」。删除 `articles/parking-pso/` 占位，应用仍在 `app/parking-pso/`。
+3. 新增图片识字（`app/ocr/`）：引擎可选「标准（PaddleOCR）」与「轻量（Tesseract）」；默认为标准。图仍不离开浏览器。标准引擎首次下载检测/识别模型（约 20MB）及 ONNX Runtime WASM，之后由浏览器缓存；识别可能要几秒。标准引擎加载失败时自动改用轻量引擎。
+4. 未采用官方 `@paddleocr/paddleocr-js`：该包依赖 OpenCV.js 与打包器，多线程 WASM 还需 COOP/COEP，GitHub Pages 不易配置。改为 vendored `@ocr-web/core` + jsDelivr 上的 PP-OCRv5 ONNX / `onnxruntime-web` 单线程 WASM。轻量引擎为 Tesseract.js（按需加载 CDN，canvas 预处理保留）；首页工具卡与 `docs/README.md` 同步为双引擎表述。
+5. 音频转换（`app/practical/audio-converter/`）改为本地 `lamejs`，修复转码失败。
+6. 枢纽页返回改为「返回」；合集页整卡可点；页脚「© 2026 noomings · 非商业使用」。删除 `articles/parking-pso/` 占位，应用仍在 `app/parking-pso/`。
 
 ## v2.2
 

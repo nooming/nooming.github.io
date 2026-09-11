@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#FFFA00">
-    <meta name="description" content="本机图片识字：拖入、选择或 Ctrl+V 粘贴图片 / 截图，Tesseract.js 在浏览器内识别。图不上传。">
-    <meta name="keywords" content="OCR,图片识字,Tesseract,本地识别,中文OCR">
+    <meta name="description" content="本机图片识字：拖入、选择或 Ctrl+V 粘贴图片 / 截图。默认 PaddleOCR，可选 Tesseract。图不离开浏览器。">
+    <meta name="keywords" content="OCR,图片识字,PaddleOCR,Tesseract,本地识别,中文OCR">
     <meta name="author" content="nooming">
 
     <meta property="og:type" content="website">
     <meta property="og:title" content="图片识字">
-    <meta property="og:description" content="图不上传，识别只在本机。首次会下载语言模型。">
+    <meta property="og:description" content="图不离开浏览器。默认 PaddleOCR；可选更轻的 Tesseract。首次会下载模型。">
 
     <title>图片识字</title>
 
@@ -22,6 +22,14 @@
 
     <link rel="stylesheet" href="../../assets/css/common.css">
     <link rel="stylesheet" href="assets/css/ocr.css">
+
+    <script type="importmap">
+    {
+        "imports": {
+            "onnxruntime-web": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.29.0/dist/ort.wasm.min.mjs"
+        }
+    }
+    </script>
 </head>
 <body class="page-container">
     <div class="page-header">
@@ -30,7 +38,7 @@
         </div>
         <div class="section-header section-header--page">
             <h1>图片识字</h1>
-            <p>图不上传，识别只在本机。首次会下载语言模型（中文较大），之后缓存在浏览器里。</p>
+            <p>图不离开浏览器。默认用 PaddleOCR 识别中文与中英印刷体；首次会下载约 20MB 模型，之后缓存在本机，识别可能要几秒。也可改用更轻的 Tesseract。</p>
         </div>
     </div>
 
@@ -41,12 +49,17 @@
                     <span class="card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="../../assets/icons/ui/hub-sprite.svg#i-scan-text"/></svg></span>
                     <h2 class="feature-title">识别</h2>
                 </div>
-                <div class="ocr-langs" role="radiogroup" aria-label="识别语言">
+                <p class="ocr-field-label" id="ocr-engine-label">引擎</p>
+                <div class="ocr-langs ocr-engines" role="radiogroup" aria-labelledby="ocr-engine-label">
+                    <label class="ocr-lang"><input type="radio" name="ocr-engine" value="paddle" checked> 标准（PaddleOCR）</label>
+                    <label class="ocr-lang"><input type="radio" name="ocr-engine" value="tesseract"> 轻量（Tesseract）</label>
+                </div>
+                <div id="ocr-langs" class="ocr-langs" role="radiogroup" aria-label="识别语言" hidden>
                     <label class="ocr-lang"><input type="radio" name="ocr-lang" value="chi_sim" checked> 中文</label>
                     <label class="ocr-lang"><input type="radio" name="ocr-lang" value="eng"> 英文</label>
                     <label class="ocr-lang" title="中英混排再用；纯中文截图请选中文"><input type="radio" name="ocr-lang" value="chi_sim+eng"> 中英</label>
                 </div>
-                <p class="ocr-hint">印刷体/高清截图；手写与模糊会有错字。</p>
+                <p id="ocr-hint" class="ocr-hint">印刷体/高清截图；手写、模糊、过小的代码截图仍会出错。标准引擎首次下载模型后会缓存。</p>
                 <div class="ocr-actions">
                     <label class="tool-btn ocr-file-label">
                         打开图片
@@ -83,7 +96,6 @@
     </footer>
 
     <script src="../../assets/js/utils.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" defer></script>
-    <script src="assets/js/ocr.js" defer></script>
+    <script type="module" src="assets/js/ocr.js"></script>
 </body>
 </html>

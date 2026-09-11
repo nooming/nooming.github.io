@@ -25,7 +25,7 @@ GitHub Pages 静态站：枢纽页按「入口 / 实践 / 工具 / 其它」聚�
 - **换算与媒体**：[app/practical/](../app/practical/) — 音频、进制、Base64、二维码、风扇 RPM
 - **决策**：[app/decision/](../app/decision/) — 多选随机、抛硬币、转盘、抽卡规划
 - **Markdown 阅读**：[app/markdown/](../app/markdown/) — 粘贴 / 打开本地 `.md`，也可 Ctrl+V 粘贴文件；`catalog.json` + `?doc=id` 加载仓库文档（GitHub Pages 不能列目录）。专题 HTML 以后可以迁进阅读器，现有两篇长文暂不转换。
-- **图片识字**：[app/ocr/](../app/ocr/) — 拖入 / 选择 / Ctrl+V 粘贴图片或截图；Tesseract.js 在浏览器内识别（中文 / 英文 / 中英）。图不上传；首次会下载语言模型并缓存在本机。
+- **图片识字**：[app/ocr/](../app/ocr/) — 拖入 / 选择 / Ctrl+V 粘贴图片或截图。默认 PaddleOCR（PP-OCRv5，浏览器内 ONNX）；可选更轻的 Tesseract.js。图不离开浏览器；标准引擎首次会下载模型（约 20MB）并缓存在本机。
 
 ### 其它
 - **专题 HTML**：[浏览器开发者工具实战](../articles/crawler-experience/)、[猫抓扩展使用笔记](../articles/cat-catch-tutorial/)（独立 HTML 页，尚未迁入 Markdown 阅读器）
@@ -42,7 +42,8 @@ GitHub Pages 静态站：枢纽页按「入口 / 实践 / 工具 / 其它」聚�
 - 中国象棋引擎库（xiangqi，`xiangqi.min.js`，位于 `app/games/board-games/chess/assets/lib/`）
 - Perfect Freehand (手写笔记绘图库)
 - marked + DOMPurify（Markdown 阅读；库文件在 `app/markdown/assets/js/vendor/`）
-- Tesseract.js（图片识字；CDN 加载 worker/core，语言模型从 tessdata 下载并缓存在浏览器）
+- PaddleOCR / `@ocr-web/core`（图片识字默认引擎；PP-OCRv5 ONNX，单线程 WASM；模型与 onnxruntime-web 从 jsDelivr 加载并缓存）
+- Tesseract.js（图片识字轻量备选；按需从 CDN 加载 worker/core，语言模型从 tessdata 下载并缓存在浏览器）
 - Canvas API (绘图功能)
 - LocalStorage (数据持久化)
 
@@ -118,7 +119,7 @@ GitHub Pages 静态站：枢纽页按「入口 / 实践 / 工具 / 其它」聚�
 │   │   ├── catalog.json
 │   │   ├── notes-md/
 │   │   └── assets/
-│   ├── ocr/                    # 图片识字（工具；Tesseract.js 本机识别）
+│   ├── ocr/                    # 图片识字（工具；默认 PaddleOCR，Tesseract 轻量备选）
 │   │   ├── index.html
 │   │   └── assets/
 │   ├── proton/                   # 质子世界（实践；自 games 迁出）
@@ -153,7 +154,7 @@ GitHub Pages 静态站：枢纽页按「入口 / 实践 / 工具 / 其它」聚�
 - **其他 `app/` 二级分类**（如 `decision`）：已采用 **`assets/`** 或与历史页并存的，新建页面时优先 **`assets/`** 模板，避免同分类混用多种布局。
 - **`app/proton/`**、**`app/pixelflow/`**、**`app/citywalk/`** 与 **`app/parking-pso/`**：作为独立交互应用（实践或地图类），业务脚本与样式放在各自目录的 **`assets/`**；与站根 **`assets/`** 仅通过 `../../assets/` 共享 favicon、**`common.css`**、**`utils.js`** 等，避免把应用逻辑散到站根。
 - **`app/markdown/`**：Markdown 阅读；页面脚本与样式在 **`assets/`**，第三方 **`marked`** / **`DOMPurify`** 放在 **`assets/js/vendor/`**，仓库文档清单为 **`catalog.json`**（GitHub Pages 不能列目录）。
-- **`app/ocr/`**：图片识字；页面脚本与样式在 **`assets/`**，Tesseract.js 从 CDN 加载（worker/core 随库走，`langPath` 指向 tessdata `4.0.0_fast`），不把训练数据打进仓库。
+- **`app/ocr/`**：图片识字；页面脚本与样式在 **`assets/`**。默认引擎为 vendored `@ocr-web/core`（PP-OCRv5），ONNX Runtime WASM 与模型从 jsDelivr 加载（`numThreads: 1`，不依赖 COOP/COEP）；轻量引擎为 Tesseract.js（按需 CDN，`langPath` 指向 tessdata `4.0.0_fast`）。不把大模型打进仓库。
 
 ## 新增可访问页面时的检查清单
 
