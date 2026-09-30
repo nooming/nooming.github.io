@@ -2,14 +2,21 @@
 // 标准引擎：@ocr-web/core（PP-OCRv5 ONNX），单线程 WASM，不依赖 COOP/COEP。
 // 模型与 ORT wasm 从 jsDelivr 拉取，浏览器缓存；推理只在本机。
 // 轻量引擎：Tesseract.js（按需加载 CDN）。标准引擎加载失败时自动改用轻量。
+// 识别后跑浏览器侧后处理；结果可编辑并 Markdown 预览。
 import { OcrEngine } from './vendor/ocr-web/index.js';
 import * as ort from 'onnxruntime-web';
+import { postprocessRecognizedMarkdown } from './postprocess/index.js';
+import { renderMarkdownPreview } from './md_preview.js';
+import { saveRecentResult, listRecentResults, getRecentResult } from './recent_results.js';
 
 const dropEl = document.getElementById('ocr-drop');
 const fileEl = document.getElementById('ocr-file');
 const thumbEl = document.getElementById('ocr-thumb');
 const placeholderEl = document.getElementById('ocr-placeholder');
 const textEl = document.getElementById('ocr-text');
+const previewEl = document.getElementById('ocr-preview');
+const tabEditEl = document.getElementById('ocr-tab-edit');
+const tabPreviewEl = document.getElementById('ocr-tab-preview');
 const statusEl = document.getElementById('ocr-status');
 const copyEl = document.getElementById('ocr-copy');
 const clearEl = document.getElementById('ocr-clear');
@@ -18,6 +25,8 @@ const progressBarEl = document.getElementById('ocr-progress-bar');
 const progressLabelEl = document.getElementById('ocr-progress-label');
 const langsEl = document.getElementById('ocr-langs');
 const hintEl = document.getElementById('ocr-hint');
+const recentSelectEl = document.getElementById('ocr-recent');
+const recentLoadEl = document.getElementById('ocr-recent-load');
 
 const LANG_PATH = 'https://tessdata.projectnaptha.com/4.0.0_fast';
 const TESSERACT_SRC = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
@@ -50,7 +59,8 @@ const PROGRESS_LABELS = {
     preprocessing: '正在增强图片',
     'loading paddle models': '下载 PaddleOCR 模型（首次较慢，之后会缓存）',
     'init paddle runtime': '初始化识别引擎',
-    'paddle recognizing': '正在识别'
+    'paddle recognizing': '正在识别',
+    postprocessing: '正在规整文本'
 };
 
 let currentFile = null;
@@ -62,6 +72,7 @@ let tesseractLoadPromise = null;
 let paddleEngine = null;
 let paddleLoadPromise = null;
 let paddleLoadFailed = false;
+let viewMode = 'edit';
 
 if (ort && ort.env && ort.env.wasm) {
     ort.env.wasm.wasmPaths = ORT_WASM_PATHS;
@@ -118,7 +129,8 @@ function progressText(message) {
         || status === 'recognizing text'
         || status.indexOf('loading tesseract') !== -1
         || status === 'preprocessing'
-        || status === 'loading paddle models';
+        || status === 'loading paddle models'
+        || status === 'postprocessing';
     if (ratio === null || !showPct) {
         return mapped;
     }
@@ -157,6 +169,57 @@ function resetPreview() {
     thumbEl.removeAttribute('src');
     thumbEl.hidden = true;
     placeholderEl.hidden = false;
+}
+
+function setResultText(text, opts) {
+    const options = opts || {};
+    textEl.value = text || '';
+    if (viewMode === 'preview') {
+        renderMarkdownPreview(previewEl, textEl.value);
+    }
+    if (options.saveRecent) {
+        saveRecentResult(textEl.value, options.hint || '');
+        refreshRecentSelect();
+    }
+}
+
+function setViewMode(mode) {
+    viewMode = mode === 'preview' ? 'preview' : 'edit';
+    const editing = viewMode === 'edit';
+    if (tabEditEl) {
+        tabEditEl.classList.toggle('is-active', editing);
+        tabEditEl.setAttribute('aria-selected', editing ? 'true' : 'false');
+    }
+    if (tabPreviewEl) {
+        tabPreviewEl.classList.toggle('is-active', !editing);
+        tabPreviewEl.setAttribute('aria-selected', editing ? 'false' : 'true');
+    }
+    textEl.hidden = !editing;
+    if (previewEl) previewEl.hidden = editing;
+    if (!editing) {
+        renderMarkdownPreview(previewEl, textEl.value);
+    }
+}
+
+function refreshRecentSelect() {
+    if (!recentSelectEl) return;
+    const cur = recentSelectEl.value;
+    const items = listRecentResults();
+    recentSelectEl.innerHTML = '';
+    const empty = document.createElement('option');
+    empty.value = '';
+    empty.textContent = items.length ? '选择一条…' : '（无）';
+    recentSelectEl.appendChild(empty);
+    items.forEach((item) => {
+        const opt = document.createElement('option');
+        opt.value = item.id;
+        opt.textContent = item.label;
+        recentSelectEl.appendChild(opt);
+    });
+    if (cur && [...recentSelectEl.options].some((o) => o.value === cur)) {
+        recentSelectEl.value = cur;
+    }
+    if (recentLoadEl) recentLoadEl.disabled = !recentSelectEl.value;
 }
 
 function loadImage(file) {
@@ -422,7 +485,7 @@ async function recognize(file) {
     const thisRun = ++runId;
     const label = file.name || '剪贴板图片';
     const engine = selectedEngine();
-    setStatus('正在识别 ' + label);
+    setStatus('正在识别 · ' + label);
     try {
         let text = '';
         if (engine === 'paddle') {
@@ -435,7 +498,7 @@ async function recognize(file) {
                     if (typeof showToast === 'function') {
                         showToast('标准引擎未能加载，已改用轻量引擎', 'info', 3200);
                     }
-                    setStatus('标准引擎失败，改用轻量识别 ' + label);
+                    setStatus('标准引擎失败，改用轻量识别 · ' + label);
                     text = await recognizeWithTesseract(file);
                 } else {
                     throw paddleErr;
@@ -445,7 +508,15 @@ async function recognize(file) {
             text = await recognizeWithTesseract(file);
         }
         if (thisRun !== runId) return;
-        textEl.value = text;
+        showProgress({ status: 'postprocessing', progress: 0.96 });
+        setStatus('正在规整文本 · ' + label);
+        try {
+            text = await postprocessRecognizedMarkdown(text);
+        } catch (ppErr) {
+            /* 后处理失败时仍展示原文 */
+        }
+        if (thisRun !== runId) return;
+        setResultText(text, { saveRecent: true, hint: label });
         setStatus('已识别 · ' + label);
         if (typeof showToast === 'function') showToast('识别完成', 'success');
     } catch (err) {
@@ -458,6 +529,8 @@ async function recognize(file) {
 }
 
 syncEngineUi();
+refreshRecentSelect();
+setViewMode('edit');
 
 fileEl.addEventListener('change', function () {
     const file = fileEl.files && fileEl.files[0];
@@ -466,7 +539,7 @@ fileEl.addEventListener('change', function () {
 });
 
 dropEl.addEventListener('click', function (event) {
-    if (event.target.closest('a, button, input, label')) return;
+    if (event.target.closest('a, button, input, label, select')) return;
     fileEl.click();
 });
 
@@ -498,6 +571,11 @@ dropEl.addEventListener('drop', function (event) {
 document.addEventListener('paste', function (event) {
     const file = clipboardImage(event.clipboardData);
     if (!file) return;
+    /* 编辑结果区时允许粘贴文字，不抢成图片识别 */
+    const t = event.target;
+    if (t === textEl || (t && t.closest && t.closest('textarea, input:not([type="file"])'))) {
+        return;
+    }
     event.preventDefault();
     recognize(file);
 });
@@ -515,6 +593,23 @@ document.querySelectorAll('input[name="ocr-lang"]').forEach(function (input) {
     });
 });
 
+if (tabEditEl) {
+    tabEditEl.addEventListener('click', function () {
+        setViewMode('edit');
+    });
+}
+if (tabPreviewEl) {
+    tabPreviewEl.addEventListener('click', function () {
+        setViewMode('preview');
+    });
+}
+
+textEl.addEventListener('input', function () {
+    if (viewMode === 'preview') {
+        renderMarkdownPreview(previewEl, textEl.value);
+    }
+});
+
 copyEl.addEventListener('click', function () {
     const text = textEl.value;
     if (!text) {
@@ -529,8 +624,30 @@ copyEl.addEventListener('click', function () {
 clearEl.addEventListener('click', function () {
     runId += 1;
     currentFile = null;
-    textEl.value = '';
+    setResultText('');
     resetPreview();
     hideProgress();
+    setViewMode('edit');
     setStatus('尚未选择图片');
 });
+
+if (recentSelectEl) {
+    recentSelectEl.addEventListener('change', function () {
+        if (recentLoadEl) recentLoadEl.disabled = !recentSelectEl.value;
+    });
+}
+if (recentLoadEl) {
+    recentLoadEl.addEventListener('click', function () {
+        const id = recentSelectEl && recentSelectEl.value;
+        if (!id) return;
+        const item = getRecentResult(id);
+        if (!item) {
+            if (typeof showToast === 'function') showToast('找不到该结果', 'info');
+            refreshRecentSelect();
+            return;
+        }
+        setResultText(item.text);
+        setStatus('已载入 · ' + item.label);
+        if (typeof showToast === 'function') showToast('已载入最近结果', 'success');
+    });
+}

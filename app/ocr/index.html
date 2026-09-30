@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#FFFA00">
-    <meta name="description" content="本机图片识字：拖入、选择或 Ctrl+V 粘贴图片 / 截图。默认 PaddleOCR，可选 Tesseract。图不离开浏览器。">
-    <meta name="keywords" content="OCR,图片识字,PaddleOCR,Tesseract,本地识别,中文OCR">
+    <meta name="description" content="本机图片识字：拖入、选择或 Ctrl+V 粘贴。浏览器内 PaddleOCR / Tesseract，识别后自动规整空格与标点，可编辑并预览 Markdown。图不离开浏览器。">
+    <meta name="keywords" content="OCR,图片识字,PaddleOCR,Tesseract,本地识别,中文OCR,Markdown">
     <meta name="author" content="nooming">
 
     <meta property="og:type" content="website">
     <meta property="og:title" content="图片识字">
-    <meta property="og:description" content="图不离开浏览器。默认 PaddleOCR；可选更轻的 Tesseract。首次会下载模型。">
+    <meta property="og:description" content="图不离开浏览器。识别后可编辑并预览 Markdown；首次会下载模型。">
 
     <title>图片识字</title>
 
@@ -22,6 +22,7 @@
 
     <link rel="stylesheet" href="../../assets/css/common.css">
     <link rel="stylesheet" href="assets/css/ocr.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 
     <script type="importmap">
     {
@@ -38,7 +39,7 @@
         </div>
         <div class="section-header section-header--page">
             <h1>图片识字</h1>
-            <p>图不离开浏览器。默认用 PaddleOCR 识别中文与中英印刷体；首次会下载约 20MB 模型，之后缓存在本机，识别可能要几秒。也可改用更轻的 Tesseract。</p>
+            <p>图不离开浏览器。默认用 PaddleOCR 识别中文与中英印刷体；识别后自动规整空格、标点，可编辑并预览 Markdown。首次会下载约 20MB 模型并缓存。复杂试卷版面不如本机结构识别工具。</p>
         </div>
     </div>
 
@@ -69,6 +70,15 @@
                     <button type="button" id="ocr-clear" class="back-btn ocr-action-btn">清空</button>
                     <p id="ocr-status" class="ocr-status" aria-live="polite">尚未选择图片</p>
                 </div>
+                <div class="ocr-recent-row" aria-label="最近结果">
+                    <label class="ocr-field-inline" for="ocr-recent">
+                        <span class="ocr-field-label ocr-field-label--inline">最近结果</span>
+                        <select id="ocr-recent" class="ocr-recent-select">
+                            <option value="">（无）</option>
+                        </select>
+                    </label>
+                    <button type="button" id="ocr-recent-load" class="back-btn ocr-action-btn" disabled>载入</button>
+                </div>
                 <div id="ocr-progress" class="ocr-progress" hidden>
                     <div class="ocr-progress-track">
                         <div id="ocr-progress-bar" class="ocr-progress-bar"></div>
@@ -84,8 +94,17 @@
                     <p id="ocr-placeholder" class="ocr-placeholder">拖入图片，或 Ctrl+V。</p>
                 </div>
                 <div class="app-panel ocr-result-panel">
-                    <label for="ocr-text" class="ocr-label">识别结果</label>
-                    <textarea id="ocr-text" class="ocr-text" spellcheck="false" placeholder="识别出的文字会出现在这里。"></textarea>
+                    <div class="ocr-result-head">
+                        <p class="ocr-label" id="ocr-result-label">识别结果</p>
+                        <div class="ocr-tabs" role="tablist" aria-label="结果视图">
+                            <button type="button" id="ocr-tab-edit" class="ocr-tab is-active" role="tab" aria-selected="true" aria-controls="ocr-text">编辑</button>
+                            <button type="button" id="ocr-tab-preview" class="ocr-tab" role="tab" aria-selected="false" aria-controls="ocr-preview">预览</button>
+                        </div>
+                    </div>
+                    <textarea id="ocr-text" class="ocr-text" spellcheck="false" placeholder="识别出的文字会出现在这里。" aria-labelledby="ocr-result-label"></textarea>
+                    <div id="ocr-preview" class="ocr-preview is-empty" role="tabpanel" hidden aria-labelledby="ocr-result-label">
+                        <p class="ocr-preview-placeholder">识别完成后可在此预览正文、表格与公式。</p>
+                    </div>
                 </div>
             </div>
         </section>
@@ -95,6 +114,9 @@
         <p>© 2026 noomings · 非商业使用</p>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" defer></script>
     <script src="../../assets/js/utils.js" defer></script>
     <script type="module" src="assets/js/ocr.js"></script>
 </body>
