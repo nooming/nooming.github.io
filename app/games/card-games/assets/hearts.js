@@ -3,7 +3,7 @@
  * Mirrors the backend logic in libs/ws.js to provide card validation,
  * UNO-like trick animations, and a square four-seat layout.
  */
-/* global $, sso, iziToast */
+/* global $, sso, showToast */
 
 let socket = null
 const AI_ONLY_MODE = true
@@ -18,7 +18,9 @@ const state = {
     passQueued: false,
     aiRoundIndex: 0,
     aiTimer: null,
-    turnRepairing: false
+    turnRepairing: false,
+    // 本局已观察到的缺门：voids[uid][suit] = true
+    voids: { 0: {}, 1: {}, 2: {}, 3: {} }
 }
 
 window.heartsSelectCard = handleCardClick
@@ -275,7 +277,7 @@ function renderButtons() {
         const alreadyPassed = hasAlreadyPassed()
         const canSubmit = !alreadyPassed && !state.passQueued && state.selected.size === 3
         const passDir = ['arrow-right', 'arrow-left', 'arrow-up', '无需传牌'][state.cur.passDirection] || '传牌'
-        const btnText = alreadyPassed ? '已传牌' : (state.passQueued ? '提交中...' : `<span class="glyphicon glyphicon-${passDir}"></span> 传牌 ${state.selected.size} / 3`)
+        const btnText = alreadyPassed ? '已传牌' : (state.passQueued ? '提交中...' : `${window.UIButtons ? UIButtons.glyph(passDir) : ''}传牌 ${state.selected.size} / 3`)
         detail.push(`<button class="btn btn-primary" ${canSubmit ? '' : 'disabled'} onclick="window.heartsSubmitPass && heartsSubmitPass()">${btnText}</button>`)
     } else if (state.tt === 2) {
         const card = Array.from(state.selected)[0]
@@ -396,7 +398,7 @@ function buildReadyButton(label, glyph = 'play') {
     const danger = state.cur.wasReady !== undefined && state.cur.wasReady !== -1 ? ' btn-danger' : ''
     const icon = glyph === 'repeat' ? 'repeat' : 'play'
     const action = AI_ONLY_MODE ? "window.heartsReady && heartsReady()" : "socket && socket.send('ready')"
-    return `<button class="btn btn-default${danger} btn-ready" onclick="${action}"><span class="glyphicon glyphicon-${icon}"></span> ${label}</button>`
+    return `<button class="btn btn-default${danger} btn-ready" onclick="${action}">${window.UIButtons ? UIButtons.glyph(icon) : ''}${label}</button>`
 }
 
 function listOfflineNames() {
@@ -555,6 +557,7 @@ function startLocalRound() {
     state.cur.passDirection = direction
     state.cur.passTargets = passTargets
     state.cur.passPick = passPick
+    state.voids = { 0: {}, 1: {}, 2: {}, 3: {} }
     state.cur.hasPassed = { 0: direction === 3, 1: direction === 3, 2: direction === 3, 3: direction === 3 }
     if (direction !== 3) {
         state.cur.hasPassed[1] = true
@@ -612,6 +615,12 @@ function submitLocalPass() {
 function playLocalCard(uid, card) {
     const hand = state.cur.hands[uid] || []
     if (!hand.includes(card) || !isLegalCardFor(uid, card)) return
+    const trickBefore = state.cur.trick || []
+    const leadSuit = trickBefore.length ? getSuit(trickBefore[0].card) : ''
+    if (leadSuit && getSuit(card) !== leadSuit) {
+        if (!state.voids[uid]) state.voids[uid] = {}
+        state.voids[uid][leadSuit] = true
+    }
     state.cur.hands[uid] = hand.filter((c, idx) => c !== card || idx !== hand.indexOf(card))
     state.cur.handCounts = getHandCounts(state.cur.hands)
     if (getSuit(card) === 'H') state.cur.heartsBroken = true
@@ -801,8 +810,16 @@ function chooseBotPlayCard(uid, legal) {
     const trick = state.cur.trick || []
     const sorted = [...legal].sort(compareCards)
     if (!trick.length) {
+        // 领出：避开明显会被缺门家垫分的花色
         const nonPoint = sorted.filter(c => !isPointCard(c))
-        return (nonPoint.length ? nonPoint : sorted)[0]
+        const pool = nonPoint.length ? nonPoint : sorted
+        const safe = pool.filter(c => {
+            const suit = getSuit(c)
+            const voiders = [0, 1, 2, 3].filter(p => p !== uid && state.voids[p] && state.voids[p][suit])
+            return voiders.length === 0
+        })
+        const leadPool = safe.length ? safe : pool
+        return leadPool[0]
     }
     const leadSuit = getSuit(trick[0].card)
     const leadCards = trick.filter(t => getSuit(t.card) === leadSuit).map(t => t.card)

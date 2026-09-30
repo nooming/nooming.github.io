@@ -1,0 +1,106 @@
+/* Card-table UI: replaces Bootstrap 3 btn / muted styles. Hard edges, site ink/theme. */
+
+.card-game-page .btn {
+    display: inline-block;
+    padding: 6px 12px;
+    margin-bottom: 0;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.42857143;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    background-image: none;
+    border: 1px solid var(--line-hard, #0a0a0a);
+    border-radius: 0;
+    background: var(--color-card, #fff);
+    color: var(--color-ink, #0a0a0a);
+    box-shadow: none;
+    text-shadow: none;
+    text-decoration: none;
+}
+
+.card-game-page .btn:hover,
+.card-game-page .btn:focus {
+    background: rgba(0, 0, 0, 0.04);
+    color: var(--color-ink, #0a0a0a);
+    border-color: var(--color-ink, #0a0a0a);
+    outline: none;
+}
+
+.card-game-page .btn:disabled,
+.card-game-page .btn.disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.card-game-page .btn-default {
+    background: var(--color-card, #fff);
+    color: var(--color-ink, #0a0a0a);
+    border-color: var(--line-hard, #0a0a0a);
+}
+
+.card-game-page .btn-primary {
+    background: var(--color-ink, #0a0a0a);
+    color: var(--color-theme, #FFFA00);
+    border-color: var(--color-ink, #0a0a0a);
+}
+
+.card-game-page .btn-primary:hover,
+.card-game-page .btn-primary:focus {
+    background: #1a1a1a;
+    color: var(--color-theme, #FFFA00);
+    border-color: #1a1a1a;
+}
+
+.card-game-page .btn-danger {
+    background: #c9302c;
+    color: #fff;
+    border-color: #ac2925;
+}
+
+.card-game-page .btn-danger:hover,
+.card-game-page .btn-danger:focus {
+    background: #ac2925;
+    color: #fff;
+    border-color: #761c19;
+}
+
+.card-game-page .btn-group {
+    display: inline-flex;
+    vertical-align: middle;
+}
+
+.card-game-page .btn-group > .btn {
+    position: relative;
+    float: none;
+}
+
+.card-game-page .btn-group > .btn + .btn {
+    margin-left: -1px;
+}
+
+.card-game-page .btn-sm {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+.card-game-page .text-muted {
+    color: #999;
+}
+
+.card-game-page .list-unstyled {
+    padding-left: 0;
+    list-style: none;
+}
+
+.card-game-page .card-icon {
+    display: inline-block;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 1;
+    margin-right: 2px;
+}

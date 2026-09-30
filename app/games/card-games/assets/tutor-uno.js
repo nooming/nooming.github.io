@@ -114,7 +114,7 @@ function tutor(step) {
             me.card = ''
             $('.uno-svg').css('opacity', '0.3')
             str += `<rect class="cards-rect" x="212.5" y="225" transform="rotate(0,250,250)" width="35" height="50" rx="5" fill="white" stroke="#333" stroke-width="1.5" onmouseenter="$('.cards-rect,.cards-left,.cards-arrow').css('translate','0 3px')" onmouseleave="$('.cards-rect,.cards-left,.cards-arrow').css('translate','0')" onclick="tutor(5)" style="cursor: pointer;"></rect>`
-                + `<text class="nomouse cards-arrow" x="229.5" y="270" text-anchor="middle" font-family="Glyphicons Halflings" fill="#333"></text>`
+                + `<text class="nomouse cards-arrow" x="229.5" y="270" text-anchor="middle" font-size="14" fill="#333">↓</text>`
                 + `<text class="nomouse cards-left" x="229.5" y="243" text-anchor="middle" font-size="12" fill="#333">摸牌</text>`
             $('.uno-btns-down').html(`${getButton('primary disabled', `出牌`, ``, 'arrow-up')}`)
             break
@@ -142,7 +142,7 @@ function tutor(step) {
             }
             $('.uno-svg').css('opacity', '0.3')
             str += `<rect class="cards-rect" x="212.5" y="225" transform="rotate(0,250,250)" width="35" height="50" rx="5" fill="white" stroke="#333" stroke-width="1.5" onmouseenter="$('.cards-rect,.cards-left,.cards-arrow').css('translate','0 3px')" onmouseleave="$('.cards-rect,.cards-left,.cards-arrow').css('translate','0')" onclick="tutor(5)" style="cursor: pointer;"></rect>`
-                + `<text class="nomouse cards-arrow" x="229.5" y="270" text-anchor="middle" font-family="Glyphicons Halflings" fill="#333"></text>`
+                + `<text class="nomouse cards-arrow" x="229.5" y="270" text-anchor="middle" font-size="14" fill="#333">↓</text>`
                 + `<text class="nomouse cards-left" x="229.5" y="243" text-anchor="middle" font-size="12" fill="#333">摸牌</text>`
             str += `<text class="card-text nomouse card-6-text" x="395" y="455" width="40" textWrap="wrap" transform="rotate(0,250,250)" font-size="12" fill="#333" style="display: none;">强制下一玩家<tspan x="395" y="472">摸两张牌</tspan></text>`
             $('.uno-btns-down').html(`${getButton('primary', `出牌`, `if(me.card=='B+')tutor(6)`, 'arrow-up')}`)
@@ -306,7 +306,7 @@ function tutor(step) {
             cur.banDraw = cur.toDraw = 4
             str2 += drawCard(10, 75, '!+', 0)
             str += `<rect class="cards-rect" x="212.5" y="225" transform="rotate(0,250,250)" width="35" height="50" rx="5" fill="white" stroke="#333" stroke-width="1.5" onmouseenter="$('.cards-rect,.cards-left,.cards-arrow').css('translate','0 3px')" onmouseleave="$('.cards-rect,.cards-left,.cards-arrow').css('translate','0')" onclick="tutor(17)" style="cursor: pointer;"></rect>`
-                + `<text class="nomouse cards-arrow" x="229.5" y="270" text-anchor="middle" font-family="Glyphicons Halflings" fill="#333"></text>`
+                + `<text class="nomouse cards-arrow" x="229.5" y="270" text-anchor="middle" font-size="14" fill="#333">↓</text>`
                 + `<text class="nomouse cards-left" x="229.5" y="243" text-anchor="middle" font-size="12" fill="#333">摸牌</text>`
             $('.uno-svg').css('opacity', '1')
             $('.uno-btns-down').html(`${getButton('primary disabled', `出牌`, ``, 'arrow-up')}`)
@@ -322,7 +322,7 @@ function tutor(step) {
             cur.banDraw = cur.toDraw = 3
             str2 += drawCard(10, 75, '!+', 0)
             str += `<rect class="cards-rect" x="212.5" y="225" transform="rotate(0,250,250)" width="35" height="50" rx="5" fill="white" stroke="#333" stroke-width="1.5" onmouseenter="$('.cards-rect,.cards-left,.cards-arrow').css('translate','0 3px')" onmouseleave="$('.cards-rect,.cards-left,.cards-arrow').css('translate','0')" onclick="tutor(18)" style="cursor: pointer;"></rect>`
-                + `<text class="nomouse cards-arrow" x="229.5" y="270" text-anchor="middle" font-family="Glyphicons Halflings" fill="#333"></text>`
+                + `<text class="nomouse cards-arrow" x="229.5" y="270" text-anchor="middle" font-size="14" fill="#333">↓</text>`
                 + `<text class="nomouse cards-left" x="229.5" y="243" text-anchor="middle" font-size="12" fill="#333">摸牌</text>`
             $('.uno-svg').css('opacity', '1')
             $('.uno-btns-down').html(`${getButton('primary disabled', `出牌`, ``, 'arrow-up')}`)
@@ -338,7 +338,7 @@ function tutor(step) {
             cur.banDraw = cur.toDraw = 2
             str2 += drawCard(10, 75, '!+', 0)
             str += `<rect class="cards-rect" x="212.5" y="225" transform="rotate(0,250,250)" width="35" height="50" rx="5" fill="white" stroke="#333" stroke-width="1.5" onmouseenter="$('.cards-rect,.cards-left,.cards-arrow').css('translate','0 3px')" onmouseleave="$('.cards-rect,.cards-left,.cards-arrow').css('translate','0')" onclick="tutor(19)" style="cursor: pointer;"></rect>`
-                + `<text class="nomouse cards-arrow" x="229.5" y="270" text-anchor="middle" font-family="Glyphicons Halflings" fill="#333"></text>`
+                + `<text class="nomouse cards-arrow" x="229.5" y="270" text-anchor="middle" font-size="14" fill="#333">↓</text>`
                 + `<text class="nomouse cards-left" x="229.5" y="243" text-anchor="middle" font-size="12" fill="#333">摸牌</text>`
             $('.uno-svg').css('opacity', '1')
             $('.uno-btns-down').html(`${getButton('primary disabled', `出牌`, ``, 'arrow-up')}`)
@@ -354,7 +354,7 @@ function tutor(step) {
             cur.banDraw = cur.toDraw = 1
             str2 += drawCard(10, 75, '!+', 0)
             str += `<rect class="cards-rect" x="212.5" y="225" transform="rotate(0,250,250)" width="35" height="50" rx="5" fill="white" stroke="#333" stroke-width="1.5" onmouseenter="$('.cards-rect,.cards-left,.cards-arrow').css('translate','0 3px')" onmouseleave="$('.cards-rect,.cards-left,.cards-arrow').css('translate','0')" onclick="tutor(20)" style="cursor: pointer;"></rect>`
-                + `<text class="nomouse cards-arrow" x="229.5" y="270" text-anchor="middle" font-family="Glyphicons Halflings" fill="#333"></text>`
+                + `<text class="nomouse cards-arrow" x="229.5" y="270" text-anchor="middle" font-size="14" fill="#333">↓</text>`
                 + `<text class="nomouse cards-left" x="229.5" y="243" text-anchor="middle" font-size="12" fill="#333">摸牌</text>`
             $('.uno-svg').css('opacity', '1')
             $('.uno-btns-down').html(`${getButton('primary disabled', `出牌`, ``, 'arrow-up')}`)
@@ -372,7 +372,7 @@ function tutor(step) {
             str += `<line x1="320" y1="250" x2="300" y2="250" stroke="#333" stroke-width="1.5" marker-end="url(#arrow)"/>`
             str += drawCard(335, 250, cur.cen[2] + 'X', 0)
             str += `<rect class="cards-rect" x="212.5" y="225" transform="rotate(0,250,250)" width="35" height="50" rx="5" fill="white" stroke="#333" stroke-width="1.5" onmouseenter="$('.cards-rect,.cards-left,.cards-arrow').css('translate','0 3px')" onmouseleave="$('.cards-rect,.cards-left,.cards-arrow').css('translate','0')" onclick="tutor(17)" style="cursor: pointer;"></rect>`
-                + `<text class="nomouse cards-arrow" x="229.5" y="270" text-anchor="middle" font-family="Glyphicons Halflings" fill="#333"></text>`
+                + `<text class="nomouse cards-arrow" x="229.5" y="270" text-anchor="middle" font-size="14" fill="#333">↓</text>`
                 + `<text class="nomouse cards-left" x="229.5" y="243" text-anchor="middle" font-size="12" fill="#333">摸牌</text>`
             $('.uno-svg').css('opacity', '1')
             $('.uno-btns-down').html(`<div class="btn-group">${getButton('default', `上一步`, `tutor(15)`, 'arrow-left')}${getButton('default', `下一步`, `tutor(21)`, 0, 0, 0, 0, 'arrow-right')}</div>`)
@@ -468,7 +468,7 @@ function drawCardDes(x, y, card, rot = 0, flipped = 0, cl = 0) {
     let str = ''
     // <use x="${x - 4}" y="${y - 8}" transform="rotate(${rot},${x},${y})" href="#${colMap[col]}" />
     if (flipped == 2) str = `<rect class="cards-rect" x="${x - 10}" y="${y - 25}" transform="rotate(${rot},${x},${y})" width="35" height="50" rx="5" fill="#ddd" stroke="#333" stroke-width="1.5"></rect>`
-        + `<text class="nomouse cards-arrow" x="${x + 7}" y="${y + 20}" text-anchor="middle" font-family="Glyphicons Halflings">&#xE094;</text>`
+        + `<text class="nomouse cards-arrow" x="${x + 7}" y="${y + 20}" text-anchor="middle" font-size="14">↓</text>`
         + `<text class="nomouse cards-left" x="${x + 7}" y="${y - 7}" text-anchor="middle" font-size="12"></text>`
         + `<text class="nomouse cards-text" x="${x + 7}" y="${y - 30}" text-anchor="middle" font-size="12" fill="#333"></text>`
     else if (flipped) str = `<rect x="${x - 10}" y="${y - 25}" transform="rotate(${rot},${x},${y})" width="35" height="50" rx="5" fill="#ddd" stroke="#333" stroke-width="1.5"></rect>`

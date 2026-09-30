@@ -17,7 +17,7 @@
     <link rel="manifest" href="../../assets/icons/site.webmanifest">
     <link rel="shortcut icon" href="../../assets/icons/favicon.ico">
     
-    <title>手写笔记</title>
+    <title>笔记 · noomings</title>
     <link rel="stylesheet" href="../../assets/css/common.css">
     <link rel="stylesheet" href="assets/css/styles.css">
 </head>
@@ -31,10 +31,15 @@
             <a href="../../index.html" class="btn-back-home" title="返回" aria-label="返回">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><g stroke-width="1.5"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l-2 0l9 -9l9 9l-2 0"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7"/><path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6"/></g></svg>
             </a>
-            <p class="notes-storage-hint">内容保存在本机浏览器，不会同步。</p>
+            <p class="notes-storage-hint">内容保存在本机浏览器，不会同步。可导出备份。</p>
+            <div class="notes-backup-row">
+                <button type="button" class="btn-notes-backup" onclick="exportNotesData()" title="下载 JSON 备份">导出</button>
+                <button type="button" class="btn-notes-backup" onclick="triggerImportNotes()" title="从 JSON 恢复">导入</button>
+                <input type="file" id="notesImportInput" accept="application/json,.json" hidden onchange="importNotesData(this.files && this.files[0])">
+            </div>
             <div class="page-picker-wrapper">
                 <div class="btn-group-create">
-                    <button class="btn-create btn-create-draw" onclick="handleDrawButtonClick(event)" title="绘图页面">
+                    <button class="btn-create btn-create-draw" onclick="handleDrawButtonClick(event)" title="展开或收起绘图页列表">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><g stroke-width="1.25"><path clip-rule="evenodd" d="m7.643 15.69 7.774-7.773a2.357 2.357 0 1 0-3.334-3.334L4.31 12.357a3.333 3.333 0 0 0-.977 2.357v1.953h1.953c.884 0 1.732-.352 2.357-.977Z"/><path d="m11.25 5.417 3.333 3.333"/></g></svg>
                         绘图
                     </button>
@@ -46,7 +51,7 @@
             </div>
             <div class="page-picker-wrapper">
                 <div class="btn-group-create">
-                    <button class="btn-create btn-create-text" onclick="handleTextButtonClick(event)" title="文本页面">
+                    <button class="btn-create btn-create-text" onclick="handleTextButtonClick(event)" title="展开或收起文本页列表">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><g stroke-width="1.5"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><line x1="4" y1="20" x2="7" y2="20"/><line x1="14" y1="20" x2="21" y2="20"/><line x1="6.9" y1="15" x2="13.8" y2="15"/><line x1="10.2" y1="6.3" x2="16" y2="20"/><polyline points="5 20 11 4 13 4 20 20"/></g></svg>
                         文本
                     </button>
@@ -76,7 +81,7 @@
             <div class="empty-editor">
                 <h2>未打开页面</h2>
                 <p>左侧选页或新建。</p>
-                <p>内容保存在本机浏览器，不会同步。</p>
+                <p>内容保存在本机浏览器，不会同步。可导出备份。</p>
             </div>
         </div>
 

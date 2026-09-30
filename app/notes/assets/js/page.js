@@ -13,19 +13,17 @@ const ALIGN_COMMANDS = {
     'right': 'justifyRight'
 };
 
-// 处理绘图按钮点击
+// 处理绘图按钮点击：只展开/收起该类列表，不新建
 function handleDrawButtonClick(e) {
-    // 只切换面板，不创建页面
     toggleDrawPanel(e);
 }
 
-// 处理文本按钮点击
+// 处理文本按钮点击：只展开/收起该类列表，不新建
 function handleTextButtonClick(e) {
-    // 只切换面板，不创建页面
     toggleTextPanel(e);
 }
 
-// 创建页面
+// 创建页面（仅由侧栏加号调用）
 function createPage(type) {
     // 生成唯一的页面名称
     const baseName = type === 'text' ? '文本页面' : '绘图页面';

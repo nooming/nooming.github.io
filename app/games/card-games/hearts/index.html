@@ -7,7 +7,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta name="theme-color" content="#FFFA00">
 
-        <title>红心大战</title>
+        <title>红心大战 · noomings</title>
         <meta name="description" content="传统红心大战与本地 AI 同台，尽量避免红心与黑桃 Q。">
         <link rel="canonical" href="https://noomings.com/app/games/card-games/hearts/">
         <meta property="og:type" content="website">
@@ -20,14 +20,12 @@
         <link rel="manifest" href="../../../../assets/icons/site.webmanifest">
         <link rel="shortcut icon" href="../../../../assets/icons/favicon.ico">
 
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css">
         <link rel="stylesheet" href="../../../../assets/css/common.css">
-        <script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"></script>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css">
-        <script src="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js"></script>
+        <link rel="stylesheet" href="../assets/card-ui.css">
         <link rel="stylesheet" href="../assets/game-layout.css">
 
+        <script src="../../../../assets/js/utils.js"></script>
+        <script src="../assets/common/dom.js"></script>
         <script src="../assets/common/ui-buttons.js"></script>
         <script src="../assets/common/tutorial-shell.js"></script>
         <script src="../assets/tutor-hearts.js"></script>
@@ -122,8 +120,7 @@
     <body class="page-container card-game-page">
         <div class="page-header">
             <div class="header-top">
-                <a href="../" class="back-btn">返回上一级</a>
-                <a href="../../../../index.html" class="back-btn">返回</a>
+                <a href="../" class="back-btn">返回</a>
             </div>
             <div class="section-header section-header--page">
                 <h1>红心大战</h1>
@@ -135,8 +132,8 @@
         <div class="list-all col-md-6 nopadding">
             <ul class="list list-unstyled list-table"></ul>
             <div class="btn-group" style="margin-bottom: 10px;">
-                <button class="btn btn-default btn-start-ai"><span class="glyphicon glyphicon-knight"></span> 开始 AI 对战</button>
-                <button class="btn btn-default" onclick="startTutor();"><span class="glyphicon glyphicon-book"></span> 规则教程</button>
+                <button class="btn btn-default btn-start-ai"><span class="card-icon" aria-hidden="true">◆</span> 开始 AI 对战</button>
+                <button class="btn btn-default" onclick="startTutor();"><span class="card-icon" aria-hidden="true">※</span> 规则教程</button>
             </div>
         </div>
 
@@ -152,7 +149,7 @@
         </div>
 
         <div class="chat" style="position: fixed;bottom:15px;right:15px;display: none;">
-            <button class="btn-exit btn btn-default" onclick="$(this).hasClass('btn-danger')?(socket?(socket.send('closing'),socket.close()):endTutor()):$(this).addClass('btn-danger')"><span class="glyphicon glyphicon-log-out"></span> 离开</button>
+            <button class="btn-exit btn btn-default" onclick="$(this).hasClass('btn-danger')?(socket?(socket.send('closing'),socket.close()):endTutor()):$(this).addClass('btn-danger')"><span class="card-icon" aria-hidden="true">⎋</span> 离开</button>
         </div>
 
         <footer class="site-footer" role="contentinfo">

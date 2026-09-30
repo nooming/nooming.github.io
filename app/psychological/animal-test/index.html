@@ -4,70 +4,67 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#FFFA00">
-    <meta name="description" content="动物塑趣味问卷；娱乐向结果。">
+    <meta name="description" content="动物塑趣味问卷；按维度原型匹配，仅供娱乐。">
     <meta name="keywords" content="动物塑测试,性格测试,心理测试,动物性格">
-    <title>动物塑测试 - 免费在线测试</title>
-    
-    <!-- Favicon -->
+    <title>动物塑 · noomings</title>
+
     <link rel="apple-touch-icon" sizes="180x180" href="../../../assets/icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="../../../assets/icons/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="../../../assets/icons/favicon-16x16.png">
     <link rel="manifest" href="../../../assets/icons/site.webmanifest">
     <link rel="shortcut icon" href="../../../assets/icons/favicon.ico">
-    
-    <!-- 公共样式 -->
+
     <link rel="stylesheet" href="../../../assets/css/common.css">
     <link rel="stylesheet" href="../assets/css/quiz-shell.css">
     <link rel="stylesheet" href="../assets/css/quiz-theme-animal.css">
 </head>
 <body class="page-container">
-    <!-- 页面头部 -->
     <div class="page-header">
         <div class="header-top">
-            <a href="../" class="back-btn">返回上一级</a>
-            <a href="../../../index.html" class="back-btn">返回</a>
+            <a href="../" class="back-btn">返回</a>
         </div>
         <div class="section-header section-header--page">
             <h1>动物塑测试</h1>
-            <p>选择题映射动物意象。</p>
+            <p>选择题映射动物意象；娱乐向结果。</p>
         </div>
     </div>
-    
+
     <div class="test-container app-panel">
-        <p class="test-intro">通过回答以下问题，发现你的动物性格</p>
-        
+        <p class="test-intro">按直觉选择更贴近你的做法。本测试仅供娱乐，不是性格诊断。</p>
+
         <div class="progress-text">
             <span id="progress-text">问题 1 / 20</span>
         </div>
         <div class="progress-bar">
             <div class="progress-fill" id="progress-fill"></div>
         </div>
-        
-        <div id="questions-container">
-            <!-- 问题将通过JavaScript动态生成 -->
-        </div>
-        
+
+        <div id="questions-container"></div>
+
         <div class="btn-container">
             <button class="btn btn-secondary" id="prev-btn" onclick="previousQuestion()" disabled>上一题</button>
             <button class="btn btn-primary" id="next-btn" onclick="nextQuestion()">下一题</button>
         </div>
-        
+
         <div class="result-container" id="result-container">
+            <p class="result-disclaimer">本测试仅供娱乐参考，不构成临床诊断或专业心理评估。</p>
             <div class="result-animal" id="result-animal"></div>
-            <h2 class="result-title">你的动物性格是</h2>
+            <h2 class="result-title">最接近的动物意象是</h2>
             <div class="result-type" id="result-type"></div>
             <div class="result-description" id="result-description"></div>
             <div class="result-traits" id="result-traits"></div>
             <button class="restart-btn" onclick="restartTest()">重新测试</button>
         </div>
     </div>
-    
+
     <footer class="site-footer" role="contentinfo">
         <p>© 2026 noomings · 非商业使用</p>
     </footer>
-    
+
     <script>
-        // 动物塑测试题目
+        const STORAGE_PREFIX = 'animal_q';
+
+        // dim 两侧键唯一，避免旧版键名冲突导致部分维度虚设
         const questions = [
             { q: "在社交场合，你更倾向于", a: "主动与他人交流", b: "观察和倾听", dim: "active_observe" },
             { q: "面对压力时，你更可能", a: "直接面对并解决", b: "需要时间思考", dim: "direct_think" },
@@ -81,149 +78,247 @@
             { q: "你更喜欢", a: "安静的环境", b: "热闹的环境", dim: "quiet_lively" },
             { q: "你更可能", a: "坚持自己的观点", b: "适应他人", dim: "persist_adapt" },
             { q: "你更关注", a: "现在和当下", b: "未来和可能", dim: "present_future" },
-            { q: "你更倾向于", a: "快速行动", b: "深思熟虑", dim: "fast_think" },
+            { q: "你更倾向于", a: "快速行动", b: "深思熟虑", dim: "fast_deliberate" },
             { q: "你更喜欢", a: "明确的规则", b: "自由的空间", dim: "rule_free" },
-            { q: "你更可能", a: "直接表达情绪", b: "控制情绪", dim: "express_control" },
+            { q: "你更可能", a: "直接表达情绪", b: "控制情绪", dim: "emo_control" },
             { q: "你更倾向于", a: "竞争和挑战", b: "合作和和谐", dim: "compete_cooperate" },
             { q: "你更喜欢", a: "熟悉的事物", b: "新鲜的事物", dim: "familiar_new" },
-            { q: "你更可能", a: "主动寻求变化", b: "保持现状", dim: "change_stable" },
+            { q: "你更可能", a: "主动寻求变化", b: "保持现状", dim: "seekchange_keep" },
             { q: "你更倾向于", a: "关注他人需求", b: "关注自己需求", dim: "others_self" },
-            { q: "你更喜欢", a: "结构化的方式", b: "自由的方式", dim: "structured_free" }
+            { q: "你更喜欢", a: "结构化的方式", b: "自由的方式", dim: "structured_freestyle" }
         ];
-        
-        // 动物类型和描述
+
+        const traitLabels = {
+            active: "偏活跃外向", observe: "偏观察倾听",
+            direct: "偏直接应对", think: "偏先想再动",
+            plan: "偏计划推进", flexible: "偏灵活应变",
+            lead: "偏主导推进", support: "偏支援配合",
+            detail: "偏细节具体", whole: "偏整体概念",
+            express: "偏表达己见", listen: "偏倾听他人",
+            stable: "偏好稳定环境", change: "偏好变化环境",
+            logic: "偏逻辑分析", intuition: "偏直觉感受",
+            independent: "偏独立工作", team: "偏团队合作",
+            quiet: "偏好安静", lively: "偏好热闹",
+            persist: "偏坚持己见", adapt: "偏适应他人",
+            present: "偏关注当下", future: "偏关注未来",
+            fast: "偏快速行动", deliberate: "偏深思熟虑",
+            rule: "偏明确规则", free: "偏自由空间",
+            emo: "偏直接表达情绪", control: "偏控制情绪",
+            compete: "偏竞争挑战", cooperate: "偏合作和谐",
+            familiar: "偏好熟悉事物", new: "偏好新鲜事物",
+            seekchange: "偏主动求变", keep: "偏保持现状",
+            others: "偏关注他人", self: "偏关注自我",
+            structured: "偏结构化方式", freestyle: "偏自由方式"
+        };
+
+        // 原型权重：正值表示该侧更贴合；各动物用已有维度参与匹配
+        const prototypes = {
+            lion: {
+                lead: 2, compete: 2, direct: 2, persist: 1.5, active: 1.5,
+                express: 1, fast: 1, self: 0.5, structured: 0.5
+            },
+            eagle: {
+                independent: 2, future: 2, whole: 1.5, direct: 1.5, self: 1.5,
+                free: 1, persist: 1, seekchange: 0.5, logic: 0.5
+            },
+            dolphin: {
+                active: 2, lively: 2, team: 1.5, cooperate: 1.5, express: 1.5,
+                flexible: 1, emo: 1, new: 0.5, others: 0.5
+            },
+            bear: {
+                stable: 2, structured: 2, plan: 1.5, support: 1.5, familiar: 1.5,
+                keep: 1, rule: 1, deliberate: 0.5, present: 0.5
+            },
+            wolf: {
+                team: 2, cooperate: 2, others: 1.5, persist: 1, lead: 1,
+                active: 0.5, logic: 0.5, structured: 0.5, present: 0.5
+            },
+            fox: {
+                flexible: 2, adapt: 2, seekchange: 1.5, intuition: 1.5, new: 1.5,
+                observe: 1, freestyle: 1, fast: 0.5, change: 0.5
+            },
+            cat: {
+                independent: 2, quiet: 2, free: 1.5, self: 1.5, control: 1.5,
+                observe: 1, freestyle: 1, think: 0.5, keep: 0.5
+            },
+            rabbit: {
+                support: 2, cooperate: 1.5, others: 1.5, intuition: 1.5, observe: 1.5,
+                quiet: 1, adapt: 1, emo: 0.5, familiar: 0.5
+            }
+        };
+
         const animalTypes = {
             lion: {
                 iconId: "a-lion",
                 name: "狮子",
-                description: "你是一个天生的领导者，自信、果断、有强烈的目标感。你善于组织和管理，喜欢掌控局面，追求成功和成就。你直接、坦率，不畏惧挑战，但有时可能显得过于强势。",
-                traits: ["领导力强", "自信果断", "目标导向", "直接坦率", "勇于挑战"]
+                description: "你更像狮子：偏主导、直接、敢竞争。擅长把目标推到前面，有时会显得强势，需要留意是否压到他人节奏。"
             },
             eagle: {
                 iconId: "a-eagle",
                 name: "老鹰",
-                description: "你是一个远见卓识的人，独立、自信、追求自由。你善于从高处看问题，有强烈的目标感和执行力。你喜欢挑战和冒险，但有时可能显得过于独立和疏离。",
-                traits: ["远见卓识", "独立自信", "追求自由", "执行力强", "喜欢挑战"]
+                description: "你更像老鹰：独立、看远、少依赖群体。善于从高处看问题并独自推进，有时会显得疏离或难以被靠近。"
             },
             dolphin: {
                 iconId: "a-dolphin",
                 name: "海豚",
-                description: "你是一个聪明、友好、社交能力强的人。你善于沟通，富有创造力，喜欢与他人合作。你乐观、灵活，适应能力强，但有时可能缺乏专注和深度。",
-                traits: ["聪明友好", "社交能力强", "富有创造力", "乐观灵活", "适应能力强"]
+                description: "你更像海豚：活跃、合群、爱互动。沟通与协作通常是你的舒适区，深度专注和长期收束有时会差点劲。"
             },
             bear: {
                 iconId: "a-bear",
                 name: "熊",
-                description: "你是一个稳重、可靠、有耐心的人。你重视稳定和安全，善于保护他人，有强烈的责任感。你温和、包容，但有时可能显得过于保守和缺乏灵活性。",
-                traits: ["稳重可靠", "有耐心", "重视稳定", "保护他人", "责任感强"]
+                description: "你更像熊：稳重、重结构、求安全。可靠和耐心是优势，变化太快或规则被打破时可能显得保守。"
             },
             wolf: {
                 iconId: "a-wolf",
                 name: "狼",
-                description: "你是一个忠诚、合作、有团队精神的人。你重视关系和归属感，善于与他人合作，有强烈的集体意识。你聪明、适应能力强，但有时可能缺乏独立性。",
-                traits: ["忠诚合作", "团队精神", "重视关系", "集体意识", "适应能力强"]
+                description: "你更像狼：重团队、讲配合、在群体里找位置。忠诚与协作感强，独自决策或脱离集体时可能不那么自在。"
             },
             fox: {
                 iconId: "a-fox",
                 name: "狐狸",
-                description: "你是一个聪明、灵活、适应能力强的人。你善于观察和分析，能够快速适应环境变化。你机智、有创造力，但有时可能显得过于谨慎和多疑。",
-                traits: ["聪明灵活", "适应能力强", "善于观察", "机智有创造力", "谨慎"]
+                description: "你更像狐狸：灵活、善变通、观察快。适应环境是强项，有时会显得跳脱或不够坚持同一条路。"
             },
             cat: {
                 iconId: "a-cat",
                 name: "猫",
-                description: "你是一个独立、优雅、有自己节奏的人。你享受自由和独处，有自己的想法和原则。你灵活、适应能力强，但有时可能显得过于独立和难以捉摸。",
-                traits: ["独立优雅", "享受自由", "有自己的节奏", "灵活适应", "难以捉摸"]
+                description: "你更像猫：独立、安静、按自己的节奏来。独处与边界感清晰，有时会让人觉得难懂或不够主动。"
             },
             rabbit: {
                 iconId: "a-rabbit",
                 name: "兔子",
-                description: "你是一个温和、敏感、富有创造力的人。你重视和谐和美感，善于观察细节，有强烈的直觉。你友好、合作，但有时可能显得过于敏感和缺乏自信。",
-                traits: ["温和敏感", "富有创造力", "重视和谐", "善于观察", "友好合作"]
+                description: "你更像兔子：温和、敏感、重视氛围。善于体察细节与他人感受，压力大时可能更容易退缩或过度在意评价。"
             }
         };
-        
+
         let currentQuestion = 0;
-        let answers = {
-            active: 0, observe: 0,
-            direct: 0, think: 0,
-            plan: 0, flexible: 0,
-            lead: 0, support: 0,
-            detail: 0, whole: 0,
-            express: 0, listen: 0,
-            stable: 0, change: 0,
-            logic: 0, intuition: 0,
-            independent: 0, team: 0,
-            quiet: 0, lively: 0,
-            persist: 0, adapt: 0,
-            present: 0, future: 0,
-            fast: 0, think_deep: 0,
-            rule: 0, free: 0,
-            express_emo: 0, control: 0,
-            compete: 0, cooperate: 0,
-            familiar: 0, new: 0,
-            change_pref: 0, stable_pref: 0,
-            others: 0, self: 0,
-            structured: 0, free_style: 0
-        };
-        
+
+        function emptyAnswers() {
+            const scores = {};
+            questions.forEach(q => {
+                const [a, b] = q.dim.split('_');
+                scores[a] = 0;
+                scores[b] = 0;
+            });
+            return scores;
+        }
+
+        function getSavedAnswer(index) {
+            return localStorage.getItem(STORAGE_PREFIX + index);
+        }
+
+        function setSavedAnswer(index, option) {
+            localStorage.setItem(STORAGE_PREFIX + index, option);
+        }
+
+        function clearSavedAnswers() {
+            for (let i = 0; i < questions.length; i++) {
+                localStorage.removeItem(STORAGE_PREFIX + i);
+            }
+        }
+
+        function tallyAnswers() {
+            const scores = emptyAnswers();
+            for (let i = 0; i < questions.length; i++) {
+                const saved = getSavedAnswer(i);
+                if (!saved) continue;
+                const [keyA, keyB] = questions[i].dim.split('_');
+                if (saved === 'A') scores[keyA]++;
+                else if (saved === 'B') scores[keyB]++;
+            }
+            return scores;
+        }
+
+        function matchScore(scores, proto) {
+            let score = 0;
+            Object.keys(proto).forEach(key => {
+                score += (scores[key] || 0) * proto[key];
+            });
+            return score;
+        }
+
+        function pickAnimal(scores) {
+            let best = 'rabbit';
+            let bestScore = -Infinity;
+            Object.keys(prototypes).forEach(key => {
+                const s = matchScore(scores, prototypes[key]);
+                if (s > bestScore) {
+                    bestScore = s;
+                    best = key;
+                }
+            });
+            return { key: best, score: bestScore };
+        }
+
+        function topTendencies(scores, animalKey, limit) {
+            const proto = prototypes[animalKey] || {};
+            const ranked = Object.keys(proto)
+                .filter(k => (scores[k] || 0) > 0 && traitLabels[k])
+                .sort((a, b) => {
+                    const sa = (scores[a] || 0) * proto[a];
+                    const sb = (scores[b] || 0) * proto[b];
+                    return sb - sa || a.localeCompare(b);
+                })
+                .map(k => traitLabels[k]);
+            if (ranked.length >= limit) return ranked.slice(0, limit);
+            // 不足时用其余高分倾向补齐
+            const extra = Object.keys(scores)
+                .filter(k => scores[k] > 0 && traitLabels[k] && !ranked.includes(traitLabels[k]))
+                .sort((a, b) => scores[b] - scores[a] || a.localeCompare(b))
+                .map(k => traitLabels[k]);
+            return ranked.concat(extra).slice(0, limit);
+        }
+
         function initTest() {
+            currentQuestion = 0;
+            for (let i = 0; i < questions.length; i++) {
+                if (!getSavedAnswer(i)) {
+                    currentQuestion = i;
+                    break;
+                }
+                if (i === questions.length - 1) currentQuestion = i;
+            }
             renderQuestion();
             updateProgress();
         }
-        
+
         function renderQuestion() {
             const container = document.getElementById('questions-container');
             const question = questions[currentQuestion];
-            
+
             container.innerHTML = `
                 <div class="question-container active">
                     <div class="question">${question.q}</div>
                     <div class="options">
-                        <div class="option" onclick="selectOption('A')" data-option="A">
+                        <button type="button" class="option" onclick="selectOption('A')" data-option="A">
                             ${question.a}
-                        </div>
-                        <div class="option" onclick="selectOption('B')" data-option="B">
+                        </button>
+                        <button type="button" class="option" onclick="selectOption('B')" data-option="B">
                             ${question.b}
-                        </div>
+                        </button>
                     </div>
                 </div>
             `;
-            
-            // 恢复已选择的答案
-            const savedAnswer = localStorage.getItem(`animal_q${currentQuestion}`);
+
+            const savedAnswer = getSavedAnswer(currentQuestion);
             if (savedAnswer) {
-                document.querySelector(`[data-option="${savedAnswer}"]`).classList.add('selected');
+                const el = document.querySelector(`[data-option="${savedAnswer}"]`);
+                if (el) el.classList.add('selected');
             }
-            
+
             updateButtons();
         }
-        
+
         function selectOption(option) {
-            // 移除之前的选择
             document.querySelectorAll('.option').forEach(opt => {
                 opt.classList.remove('selected');
             });
-            
-            // 添加新选择
             document.querySelector(`[data-option="${option}"]`).classList.add('selected');
-            
-            // 保存答案
-            const question = questions[currentQuestion];
-            const dimension = question.dim;
-            const [keyA, keyB] = dimension.split('_');
-            
-            if (option === 'A') {
-                answers[keyA]++;
-            } else {
-                answers[keyB]++;
-            }
-            
-            localStorage.setItem(`animal_q${currentQuestion}`, option);
+            setSavedAnswer(currentQuestion, option);
             updateButtons();
         }
-        
+
         function nextQuestion() {
+            if (!getSavedAnswer(currentQuestion)) return;
             if (currentQuestion < questions.length - 1) {
                 currentQuestion++;
                 renderQuestion();
@@ -232,149 +327,72 @@
                 showResult();
             }
         }
-        
+
         function previousQuestion() {
             if (currentQuestion > 0) {
-                // 撤销当前问题的答案
-                const question = questions[currentQuestion];
-                const dimension = question.dim;
-                const [keyA, keyB] = dimension.split('_');
-                const savedAnswer = localStorage.getItem(`animal_q${currentQuestion}`);
-                
-                if (savedAnswer === 'A') {
-                    answers[keyA]--;
-                } else if (savedAnswer === 'B') {
-                    answers[keyB]--;
-                }
-                
                 currentQuestion--;
                 renderQuestion();
                 updateProgress();
             }
         }
-        
+
         function updateProgress() {
             const progress = ((currentQuestion + 1) / questions.length) * 100;
             document.getElementById('progress-fill').style.width = progress + '%';
-            document.getElementById('progress-text').textContent = `问题 ${currentQuestion + 1} / ${questions.length}`;
+            document.getElementById('progress-text').textContent =
+                `问题 ${currentQuestion + 1} / ${questions.length}`;
         }
-        
+
         function updateButtons() {
             const hasSelection = document.querySelector('.option.selected') !== null;
             document.getElementById('next-btn').disabled = !hasSelection;
             document.getElementById('prev-btn').disabled = currentQuestion === 0;
-            
-            if (currentQuestion === questions.length - 1 && hasSelection) {
-                document.getElementById('next-btn').textContent = '查看结果';
-            } else {
-                document.getElementById('next-btn').textContent = '下一题';
-            }
+            document.getElementById('next-btn').textContent =
+                currentQuestion === questions.length - 1 && hasSelection ? '查看结果' : '下一题';
         }
-        
+
         function showResult() {
-            // 计算动物类型
-            let animalType = 'cat'; // 默认值
-            
-            // 根据答案特征判断
-            const isLeader = answers.lead > answers.support;
-            const isIndependent = answers.independent > answers.team;
-            const isActive = answers.active > answers.observe;
-            const isDirect = answers.direct > answers.think;
-            const isFuture = answers.future > answers.present;
-            const isCompetitive = answers.compete > answers.cooperate;
-            const isStructured = answers.structured > answers.free_style;
-            const isLively = answers.lively > answers.quiet;
-            
-            if (isLeader && isCompetitive && isDirect) {
-                animalType = 'lion';
-            } else if (isIndependent && isFuture && isDirect) {
-                animalType = 'eagle';
-            } else if (isActive && isLively && !isIndependent) {
-                animalType = 'dolphin';
-            } else if (!isActive && !isCompetitive && isStructured) {
-                animalType = 'bear';
-            } else if (!isIndependent && !isCompetitive && answers.team > answers.independent) {
-                animalType = 'wolf';
-            } else if (answers.flexible > answers.plan && answers.adapt > answers.persist) {
-                animalType = 'fox';
-            } else if (isIndependent && !isActive) {
-                animalType = 'cat';
-            } else {
-                animalType = 'rabbit';
-            }
-            
-            const result = animalTypes[animalType];
-            
+            const scores = tallyAnswers();
+            const picked = pickAnimal(scores);
+            const result = animalTypes[picked.key];
+            const tendencies = topTendencies(scores, picked.key, 3);
+
             document.getElementById('questions-container').style.display = 'none';
             document.querySelector('.btn-container').style.display = 'none';
             document.querySelector('.progress-bar').style.display = 'none';
             document.querySelector('.progress-text').style.display = 'none';
-            
+
             const animalSprite = '../../../assets/icons/ui/animal-sprite.svg';
             document.getElementById('result-animal').innerHTML =
                 `<svg xmlns="http://www.w3.org/2000/svg" class="result-animal-svg" viewBox="0 0 24 24" role="img" aria-label="${result.name}图示"><use href="${animalSprite}#${result.iconId}"/></svg>`;
             document.getElementById('result-type').textContent = result.name;
             document.getElementById('result-description').textContent = result.description;
-            
-            // 显示特征
-            const traitsHtml = `
-                <h3>你的特征：</h3>
+
+            document.getElementById('result-traits').innerHTML = `
+                <h3>主要倾向</h3>
                 <ul>
-                    ${result.traits.map(trait => `<li>${trait}</li>`).join('')}
+                    ${tendencies.map(t => `<li>${t}</li>`).join('')}
                 </ul>
             `;
-            document.getElementById('result-traits').innerHTML = traitsHtml;
-            
+
             document.getElementById('result-container').classList.add('show');
         }
-        
+
         function restartTest() {
-            // 清除所有答案
-            answers = {
-                active: 0, observe: 0,
-                direct: 0, think: 0,
-                plan: 0, flexible: 0,
-                lead: 0, support: 0,
-                detail: 0, whole: 0,
-                express: 0, listen: 0,
-                stable: 0, change: 0,
-                logic: 0, intuition: 0,
-                independent: 0, team: 0,
-                quiet: 0, lively: 0,
-                persist: 0, adapt: 0,
-                present: 0, future: 0,
-                fast: 0, think_deep: 0,
-                rule: 0, free: 0,
-                express_emo: 0, control: 0,
-                compete: 0, cooperate: 0,
-                familiar: 0, new: 0,
-                change_pref: 0, stable_pref: 0,
-                others: 0, self: 0,
-                structured: 0, free_style: 0
-            };
-            
-            // 清除localStorage
-            for (let i = 0; i < questions.length; i++) {
-                localStorage.removeItem(`animal_q${i}`);
-            }
-            
+            clearSavedAnswers();
             currentQuestion = 0;
-            
-            // 重置UI
+
             document.getElementById('questions-container').style.display = 'block';
             document.querySelector('.btn-container').style.display = 'flex';
             document.querySelector('.progress-bar').style.display = 'block';
             document.querySelector('.progress-text').style.display = 'block';
             document.getElementById('result-container').classList.remove('show');
-            
+
             renderQuestion();
             updateProgress();
         }
-        
-        // 初始化测试
+
         initTest();
     </script>
 </body>
 </html>
-
-

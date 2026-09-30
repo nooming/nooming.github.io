@@ -97,6 +97,31 @@ body {
     color: #888888;
 }
 
+.notes-backup-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 4px 0 2px;
+    max-width: 168px;
+}
+
+.btn-notes-backup {
+    padding: 6px 10px;
+    border: 1px solid rgba(0, 0, 0, 0.18);
+    background: #fff;
+    color: #1a1a1a;
+    border-radius: 0;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: inherit;
+    line-height: 1.3;
+}
+
+.btn-notes-backup:hover {
+    border-color: #0a0a0a;
+    background: #f7f7f7;
+}
+
 .btn-back-home:hover {
     background: #f5f5f5;
     transform: translateY(-2px);

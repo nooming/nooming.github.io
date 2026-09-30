@@ -1,4 +1,4 @@
-/* 与全站子页一致：边距/最大宽度由 common .page-container 控制；抵消 Bootstrap html 62.5% */
+/* 与全站子页一致：边距/最大宽度由 common .page-container 控制 */
 html:has(body.proton-page) {
     font-size: 100%;
 }
@@ -6,6 +6,71 @@ html:has(body.proton-page) {
 body.proton-page.page-container {
     font-size: 16px;
     line-height: 1.6;
+}
+
+.proton-page .btn {
+    display: inline-block;
+    padding: 6px 12px;
+    margin-bottom: 0;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.42857143;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    background-image: none;
+    border: 1px solid var(--line-hard, #0a0a0a);
+    border-radius: 0;
+    background: var(--color-card, #fff);
+    color: var(--color-ink, #0a0a0a);
+    box-shadow: none;
+    text-shadow: none;
+}
+
+.proton-page .btn-sm {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+.proton-page .btn-group {
+    display: inline-flex;
+    vertical-align: middle;
+}
+
+.proton-page .btn-group > .btn {
+    float: none;
+    position: relative;
+}
+
+.proton-page .btn-group > .btn + .btn {
+    margin-left: -1px;
+}
+
+.proton-page .btn.btn-danger {
+    background: #c9302c !important;
+    color: #fff !important;
+    border-color: #ac2925 !important;
+}
+
+.proton-page .icon-svg {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    vertical-align: -1px;
+    fill: currentColor;
+}
+
+.proton-page .icon-close {
+    font-weight: 700;
+    line-height: 1;
+}
+
+.proton-page .dragger .icon-arrow-down {
+    transform: translate(-8.6px, -5px);
+    transform-origin: 0 -4px;
+    color: #333;
 }
 
 .bodypad {
@@ -39,6 +104,43 @@ body.proton-page.page-container {
     text-align: right;
     position: relative;
     top: -1px;
+    border-radius: 0 !important;
+    border: 1px solid var(--line-hard) !important;
+    background: var(--color-card) !important;
+    color: var(--color-ink) !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+}
+
+.proton-toolbar .btn:hover,
+.proton-toolbar .btn:focus {
+    background: rgba(0, 0, 0, 0.04) !important;
+    color: var(--color-ink) !important;
+    border-color: var(--color-ink) !important;
+}
+
+.proton-toolbar .btn.btn-primary,
+.proton-toolbar .btn-group .btn.btn-primary {
+    background: var(--color-ink) !important;
+    color: var(--color-theme, #FFFA00) !important;
+    border-color: var(--color-ink) !important;
+}
+
+.proton-toolbar .btn.btn-primary:hover,
+.proton-toolbar .btn.btn-primary:focus {
+    background: #1a1a1a !important;
+    color: var(--color-theme, #FFFA00) !important;
+}
+
+/* 画布旁清除电场/磁场小按钮 */
+.sim-stage > .btn.btn-default,
+.sim-stage > .btn.btn-sm {
+    border-radius: 0 !important;
+    border: 1px solid var(--line-hard) !important;
+    background: var(--color-card) !important;
+    color: var(--color-ink) !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
 }
 
 .proton-toolbar {
@@ -217,11 +319,6 @@ body.proton-page.page-container {
     height: 0;
     width: 0;
     border: 3px solid #333;
-}
-
-.dragger .glyphicon {
-    transform: translate(-8.6px, -5px);
-    transform-origin: 0 -4px;
 }
 
 .g-svg-wrap {

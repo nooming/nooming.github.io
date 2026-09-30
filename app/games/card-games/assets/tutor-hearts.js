@@ -75,7 +75,7 @@ function heartsTutor(step) {
         return remaining
     }
     function getButton(type, text, onclick, glyph = 0) {
-        const icon = glyph ? `<span class="glyphicon glyphicon-${glyph}"></span> ` : ''
+        const icon = glyph && window.UIButtons ? UIButtons.glyph(glyph) : ''
         return `<button class="btn btn-${type}" onclick="${onclick}">${icon}${text}</button>`
     }
 

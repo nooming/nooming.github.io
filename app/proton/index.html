@@ -5,12 +5,12 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#FFFA00">
-    <title>质子世界</title>
+    <title>质子 · noomings</title>
     <meta name="description" content="平面内带电粒子：电场、磁场与阻力可视化。">
     <meta name="author" content="nooming">
     <link rel="canonical" href="https://noomings.com/app/proton/">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="质子世界">
+    <meta property="og:title" content="质子 · noomings">
     <meta property="og:description" content="电场、磁场与阻力下的粒子轨迹。">
     <meta property="og:url" content="https://noomings.com/app/proton/">
     <link rel="apple-touch-icon" sizes="180x180" href="../../assets/icons/apple-touch-icon.png">
@@ -18,35 +18,33 @@
     <link rel="icon" type="image/png" sizes="16x16" href="../../assets/icons/favicon-16x16.png">
     <link rel="manifest" href="../../assets/icons/site.webmanifest">
     <link rel="shortcut icon" href="../../assets/icons/favicon.ico">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="../../assets/css/common.css">
     <link rel="stylesheet" href="assets/css/proton.css">
 </head>
 <body class="page-container proton-page">
     <div class="page-header">
         <div class="header-top">
-            <a href="../../index.html#practice" class="back-btn">返回上一级</a>
-            <a href="../../index.html" class="back-btn">返回</a>
+            <a href="../../index.html#practice" class="back-btn">返回</a>
         </div>
         <div class="section-header section-header--page">
-            <h1>质子世界</h1>
+            <h1>质子</h1>
             <p>平面内电场、磁场与阻力可视化。</p>
         </div>
     </div>
 
     <div class="proton-toolbar">
         <span class="proton-toolbar__cell">
-            <button type="button" class="spf btn btn-default btn-primary" onclick="$(this).toggleClass('btn-primary');$(this).hasClass('btn-primary')?$('.dragger').show():$('.dragger').hide();isfr=$(this).hasClass('btn-primary')">阻力</button><br> [F]
+            <button type="button" class="spf btn btn-default btn-primary" onclick="toggleFriction(this)">阻力</button><br> [F]
         </span>
         <span class="proton-toolbar__cell proton-toolbar__cell--gap">
-            <button type="button" class="sps btn btn-default" onclick="$(this).toggleClass('btn-primary');bound=!bound;setMiddle();drawBound()">边界</button><br> [S]
+            <button type="button" class="sps btn btn-default" onclick="toggleBound(this)">边界</button><br> [S]
         </span>
         <span class="proton-toolbar__cell proton-toolbar__cell--gap">
             <div class="btn-group">
-                <button type="button" class="sp1 btn btn-default" onclick="$(this).addClass('btn-primary').siblings().removeClass('btn-primary');t=0"><span class="glyphicon glyphicon-pause"></span></button>
-                <button type="button" class="sp2 btn btn-default" onclick="$(this).addClass('btn-primary').siblings().removeClass('btn-primary');t=0.1">0.1x</button>
-                <button type="button" class="sp3 btn btn-default" onclick="$(this).addClass('btn-primary').siblings().removeClass('btn-primary');t=0.5">0.5x</button>
-                <button type="button" class="sp4 btn btn-default btn-primary" onclick="$(this).addClass('btn-primary').siblings().removeClass('btn-primary');t=1"><span class="glyphicon glyphicon-play"></span></button>
+                <button type="button" class="sp1 btn btn-default" onclick="setSpeed(this, 0)" aria-label="暂停"><svg class="icon-svg" viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="1" width="3" height="10"/><rect x="7" y="1" width="3" height="10"/></svg></button>
+                <button type="button" class="sp2 btn btn-default" onclick="setSpeed(this, 0.1)">0.1x</button>
+                <button type="button" class="sp3 btn btn-default" onclick="setSpeed(this, 0.5)">0.5x</button>
+                <button type="button" class="sp4 btn btn-default btn-primary" onclick="setSpeed(this, 1)" aria-label="播放"><svg class="icon-svg" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1 L11 6 L3 11 Z"/></svg></button>
             </div><br> [1~4]
         </span>
         <span class="proton-toolbar__speed" aria-live="polite" title="速率标量 |v|">速度 <span class="v">0.00</span></span>
@@ -54,8 +52,8 @@
 
     <div class="bodypad sim-root">
         <div class="sim-stage">
-        <button type="button" class="rmE rm-e btn btn-sm btn-default" onclick="setE(0,1)"><span class="grey key-hint">[E]</span><span class="glyphicon glyphicon-remove"></span></button>
-        <button type="button" class="rmB rm-b btn btn-sm btn-default" onclick="setB(0,1)"><span class="grey key-hint">[B]</span><span class="glyphicon glyphicon-remove"></span></button>
+        <button type="button" class="rmE rm-e btn btn-sm btn-default" onclick="setE(0,1)" hidden><span class="grey key-hint">[E]</span><span class="icon-close" aria-hidden="true">×</span></button>
+        <button type="button" class="rmB rm-b btn btn-sm btn-default" onclick="setB(0,1)" hidden><span class="grey key-hint">[B]</span><span class="icon-close" aria-hidden="true">×</span></button>
         <span class="label-force">受<br>力</span>
         <span class="label-e">电场</span>
         <span class="label-b">磁场</span>
@@ -71,7 +69,7 @@
             <div class="axis-dot"></div>
             <div class="bounder"></div>
             <div class="forcer"></div>
-            <div class="dragger"><span class="glyphicon glyphicon-arrow-down"></span></div>
+            <div class="dragger"><svg class="icon-svg icon-arrow-down" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1 V9 M2 6 L6 10 L10 6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></div>
             <svg class="g-svg g-svg-wrap" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"></svg>
         </div>
 
@@ -88,7 +86,7 @@
     <div class="help-block bodypad">
         <h3>说明</h3>
         <p>鼠标在框中点击，可设置 <span style="color:#27c63a">电场</span> 和 <span style="color:#4d70c2">磁场</span>，也可在受力图中临时施加一个力。<br>
-            设置 <span style="color:#27c63a">电场</span>、<span style="color:#4d70c2">磁场</span> 后，可点击 <span class="glyphicon glyphicon-remove"></span> 或用快捷键 <span style="color:#27c63a">[E]</span>、<span style="color:#4d70c2">[B]</span> 取消。<br>
+            设置 <span style="color:#27c63a">电场</span>、<span style="color:#4d70c2">磁场</span> 后，可点击 <span class="icon-close">×</span> 或用快捷键 <span style="color:#27c63a">[E]</span>、<span style="color:#4d70c2">[B]</span> 取消。<br>
             目前仅支持平面内的匀强电场和垂直于平面的匀强磁场。
         </p>
         <p>[S] 键开启边界，越过边界后粒子会被反弹。由于技术困难，边界与磁场同时开启时，能量可能不守恒。</p>
@@ -101,8 +99,6 @@
         <p>© 2026 noomings · 非商业使用</p>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"></script>
     <script src="assets/js/proton.js"></script>
 </body>
 </html>

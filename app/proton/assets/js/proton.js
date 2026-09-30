@@ -8,8 +8,65 @@ let isfr = 1, bound = 0
 const lx = 0, rx = 500, ly = 0, ry = 500, fr = 0.01, mFr = 0.2
 let t = 1
 let delay = 0
-            function loop() {
-                $('.v').text(Math.sqrt(vx * vx + vy * vy).toFixed(2))
+
+function qs(sel) {
+    return document.querySelector(sel)
+}
+function setText(sel, text) {
+    const el = qs(sel)
+    if (el) el.textContent = text
+}
+function setHtml(sel, html) {
+    const el = qs(sel)
+    if (el) el.innerHTML = html
+}
+function setStyle(sel, prop, val) {
+    document.querySelectorAll(sel).forEach(function (el) {
+        el.style[prop] = val
+    })
+}
+function showEl(sel) {
+    document.querySelectorAll(sel).forEach(function (el) {
+        el.hidden = false
+        el.style.display = ''
+    })
+}
+function hideEl(sel) {
+    document.querySelectorAll(sel).forEach(function (el) {
+        el.hidden = true
+        el.style.display = 'none'
+    })
+}
+function clickEl(sel) {
+    const el = qs(sel)
+    if (el) el.click()
+}
+
+function toggleFriction(btn) {
+    btn.classList.toggle('btn-primary')
+    const on = btn.classList.contains('btn-primary')
+    if (on) showEl('.dragger')
+    else hideEl('.dragger')
+    isfr = on
+}
+
+function toggleBound(btn) {
+    btn.classList.toggle('btn-primary')
+    bound = !bound
+    setMiddle()
+    drawBound()
+}
+
+function setSpeed(btn, speed) {
+    btn.classList.add('btn-primary')
+    Array.prototype.forEach.call(btn.parentNode.children, function (sib) {
+        if (sib !== btn) sib.classList.remove('btn-primary')
+    })
+    t = speed
+}
+
+function loop() {
+                setText('.v', Math.sqrt(vx * vx + vy * vy).toFixed(2))
                 let dvx = 0, dvy = 0, gstr = `<defs><marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" fill="#2de842" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" /></marker>
                     <marker id="arr" fill="#333" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" /></marker>
                     <marker id="arr-r" fill="red" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" /></marker>
@@ -106,67 +163,66 @@ let delay = 0
                             str += getx(i, j, b <= 0, vx, vy)
                         }
                     }
-                    $('.m-svg').html(str)
-                    $('.cursor').css('margin-left', `${250 + 100}px`)
-                        .css('margin-top', `${247 + 80}px`)
-                    $('.cursor').css('border-color', `#333`)
+                    setHtml('.m-svg', str)
+                    setStyle('.cursor', 'marginLeft', `${250 + 100}px`)
+                    setStyle('.cursor', 'marginTop', `${247 + 80}px`)
+                    setStyle('.cursor', 'borderColor', `#333`)
                 }
                 else {
                     let bx = Math.pow(Math.max(0, lx - x) * 0.04, 2) - Math.pow(Math.max(0, x - rx) * 0.04, 2)
                     let by = Math.pow(Math.max(0, ly - y) * 0.04, 2) - Math.pow(Math.max(0, y - ry) * 0.04, 2)
                     dvx += bx
                     dvy += by
-                    $('.m-div').css('border-color', '#ddd')
+                    setStyle('.m-div', 'borderColor', '#ddd')
                     if (cbx != cbx) cbx = 0
                     if (cby != cby) cby = 0
                     if (x < cbx + lx || x > cbx + rx) {
                         let k = Math.min(lx, x) + Math.max(0, x - rx)
                         vbx = (k - cbx) / t
                         cbx = Math.min(lx, x) + Math.max(0, x - rx)
-                        $('.m-div').css('border-color', '#ebb')
+                        setStyle('.m-div', 'borderColor', '#ebb')
                     } else cbx += vbx * t
                     if (y < cby + ly || y > cby + ry) {
                         let k = Math.min(ly, y) + Math.max(0, y - ry)
                         vby = (k - cby) / t
                         cby = Math.min(ly, y) + Math.max(0, y - ry)
-                        $('.m-div').css('border-color', '#ebb')
+                        setStyle('.m-div', 'borderColor', '#ebb')
                     } else cby += vby * t
                     vbx -= bx * t * 0.1, vby -= by * t * 0.1
                     vbx -= cbx * 0.1 * t, vby -= cby * 0.1 * t
                     vbx -= vbx * 0.1 * t, vby -= vby * 0.1 * t
-                    $('.m-div')
-                        .css('margin-left', `${120 + cbx}px`)
-                        .css('top', `${80 + cby}px`)
-                    $('.cursor').css('margin-left', `${x + 100}px`)
-                        .css('margin-top', `${y + 80}px`)
-                    if (x < lx || x > rx || y < ly || y > ry) $('.cursor').css('border-color', `red`)
-                    else $('.cursor').css('border-color', `#333`)
+                    setStyle('.m-div', 'marginLeft', `${120 + cbx}px`)
+                    setStyle('.m-div', 'top', `${80 + cby}px`)
+                    setStyle('.cursor', 'marginLeft', `${x + 100}px`)
+                    setStyle('.cursor', 'marginTop', `${y + 80}px`)
+                    if (x < lx || x > rx || y < ly || y > ry) setStyle('.cursor', 'borderColor', `red`)
+                    else setStyle('.cursor', 'borderColor', `#333`)
 
                     gstr += `<line x1="50" y1="50" x2="${bx * 100 + 50}" y2="${by * 100 + 50}" stroke="red" marker-end="url(#arr-r)"/>`
                 }
                 gstr += `<line x1="50" y1="50" x2="${forcex * 100 + 50}" y2="${forcey * 100 + 50}" stroke="#333" marker-end="url(#arr)"/>`
-                $('.g-svg').html(gstr)
+                setHtml('.g-svg', gstr)
                 vx += dvx * t, vy += dvy * t
                 if (eleft) {
                     cex += vex * t, cey += vey * t
                     vex -= cex * 0.1 * t, vey -= cey * 0.1 * t
                     vex -= vex * 0.1 * t, vey -= vey * 0.1 * t
                 }
-                $('.E-div').css('margin-left', `${cex}px`)
-                $('.E-div').css('top', `${170 + cey}px`)
+                setStyle('.E-div', 'marginLeft', `${cex}px`)
+                setStyle('.E-div', 'top', `${170 + cey}px`)
                 if (fleft) {
                     cfx += vfx * t, cfy += vfy * t
                     vfx -= cfx * 0.1 * t, vfy -= cfy * 0.1 * t
                     vfx -= vfx * 0.1 * t, vfy -= vfy * 0.1 * t
                 }
-                $('.f-div').css('margin-left', `${cfx}px`)
-                $('.f-div').css('top', `${280 + cfy}px`)
+                setStyle('.f-div', 'marginLeft', `${cfx}px`)
+                setStyle('.f-div', 'top', `${280 + cfy}px`)
                 if (bleft) {
                     cb += vb * t
                     vb -= cb * 0.1 * t
                     vb -= vb * 0.1 * t
                 }
-                $('.B-div').css('top', `${390 + cb}px`)
+                setStyle('.B-div', 'top', `${390 + cb}px`)
             }
             function setforce(e, leave = 0) {
                 if (delay) return
@@ -187,11 +243,11 @@ let delay = 0
                 if (!e) {
                     if (set) ex = 0, ey = 0
                     else ex = tex, ey = tey
-                    if (!ex && !ey) $('.rmE').hide()
+                    if (!ex && !ey) hideEl('.rmE')
                 } else {
                     ex = 0.01 * (e.offsetX - 50)
                     ey = 0.01 * (e.offsetY - 51)
-                    $('.rmE').show()
+                    showEl('.rmE')
                 }
                 if (set) tex = ex, tey = ey
                 if (ex || ey) {
@@ -213,8 +269,11 @@ let delay = 0
                                 str += `<line x1="${i}" y1="100" x2="${i + 125 * Math.cos(r)}" y2="0" stroke="#2de842" marker-end="url(#arrow)" />`
                         }
                     }
-                    $('.E-svg').html(str)
-                } else $('.E-svg').html(''), $('.E').css('opacity', '0')
+                    setHtml('.E-svg', str)
+                } else {
+                    setHtml('.E-svg', '')
+                    setStyle('.E', 'opacity', '0')
+                }
                 if (leave) {
                     vex = cex - ex * 5
                     vey = cey - ey * 5
@@ -239,17 +298,22 @@ let delay = 0
                 if (!e) {
                     if (set) b = 0
                     else b = tb
-                    if (!b) $('.rmB').hide()
-                    $('.lB').css('border-color', 'transparent')
+                    if (!b) hideEl('.rmB')
+                    setStyle('.lB', 'borderColor', 'transparent')
                 } else {
                     b = 0.02 * (e.offsetY - 51)
-                    $('.rmB').show()
+                    showEl('.rmB')
                 }
                 if (set) tb = b
                 if (b) {
-                    if (b > 0) $('.lB').css('margin-top', '440px').css('height', `${b / 0.02}px`)
-                    else $('.lB').css('margin-top', `${440 + b / 0.02}px`).css('height', `${-b / 0.02}px`)
-                    $('.lB').css('border-color', '#4d70c2')
+                    if (b > 0) {
+                        setStyle('.lB', 'marginTop', '440px')
+                        setStyle('.lB', 'height', `${b / 0.02}px`)
+                    } else {
+                        setStyle('.lB', 'marginTop', `${440 + b / 0.02}px`)
+                        setStyle('.lB', 'height', `${-b / 0.02}px`)
+                    }
+                    setStyle('.lB', 'borderColor', '#4d70c2')
                     let str = ''
                     let dd = Math.abs(5 / b) + 0.1
                     for (let i = 50; i < 110; i += dd) {
@@ -268,8 +332,11 @@ let delay = 0
                             str += getx(i, j, b < 0)
                         }
                     }
-                    $('.B-svg').html(str)
-                } else $('.B-svg').html(''), $('.B').css('opacity', '0')
+                    setHtml('.B-svg', str)
+                } else {
+                    setHtml('.B-svg', '')
+                    setStyle('.B', 'opacity', '0')
+                }
                 if (leave) {
                     vb = cb - b * 5
                     bleft = delay = 1
@@ -279,10 +346,9 @@ let delay = 0
                 drawBound()
             }
             function setMiddle() {
-                $('.m-div')
-                    .css('margin-left', `${120}px`)
-                    .css('top', `${80}px`)
-                    .css('border-color', '#ddd')
+                setStyle('.m-div', 'marginLeft', `${120}px`)
+                setStyle('.m-div', 'top', `${80}px`)
+                setStyle('.m-div', 'borderColor', '#ddd')
                 while (x < lx) x += (rx - lx)
                 while (x > rx) x -= (rx - lx)
                 while (y < ly) y += (ry - ly)
@@ -323,38 +389,59 @@ let delay = 0
                         }
                     }
                 }
-                $('.m-svg').html(str)
+                setHtml('.m-svg', str)
             }
             let fst = 0
-            $(() => {
-                $('.rmE').hide()
-                $('.rmB').hide()
+            function initProton() {
+                hideEl('.rmE')
+                hideEl('.rmB')
                 setInterval(loop, 10)
-                $('body')[0].addEventListener("keydown", function (event) {
+                document.body.addEventListener("keydown", function (event) {
                     let g = event.key
-                    if (g == 1) $('.sp1').click()
-                    if (g == 2) $('.sp2').click()
-                    if (g == 3) $('.sp3').click()
-                    if (g == 4) $('.sp4').click()
+                    if (g == 1) clickEl('.sp1')
+                    if (g == 2) clickEl('.sp2')
+                    if (g == 3) clickEl('.sp3')
+                    if (g == 4) clickEl('.sp4')
                     if (g == 'f') {
-                        if (fst) isfr = 10, $('.spf').text('刹车').addClass('btn-danger').removeClass('btn-primary'), $('.dragger').show()
-                        else $('.spf').text('阻力')
+                        const spf = qs('.spf')
+                        if (fst) {
+                            isfr = 10
+                            if (spf) {
+                                spf.textContent = '刹车'
+                                spf.classList.add('btn-danger')
+                                spf.classList.remove('btn-primary')
+                            }
+                            showEl('.dragger')
+                        } else if (spf) {
+                            spf.textContent = '阻力'
+                        }
                         fst = 1
                     }
-                    if (g == 's') $('.sps').click()
-                    if (g == 'e') $('.rmE').click()
-                    if (g == 'b') $('.rmB').click()
+                    if (g == 's') clickEl('.sps')
+                    if (g == 'e') clickEl('.rmE')
+                    if (g == 'b') clickEl('.rmB')
                 });
-                $('body')[0].addEventListener("keyup", function (event) {
+                document.body.addEventListener("keyup", function (event) {
                     let g = event.key
                     if (g == 'f') {
-                        if ($('.spf').hasClass('btn-danger')) {
-                            $('.spf').text('阻力').removeClass('btn-danger').addClass('btn-primary')
+                        const spf = qs('.spf')
+                        if (!spf) return
+                        if (spf.classList.contains('btn-danger')) {
+                            spf.textContent = '阻力'
+                            spf.classList.remove('btn-danger')
+                            spf.classList.add('btn-primary')
                             isfr = 1
                         } else {
-                            $('.spf').text('阻力').removeClass('btn-danger').click()
+                            spf.textContent = '阻力'
+                            spf.classList.remove('btn-danger')
+                            spf.click()
                         }
                         fst = 0
                     }
                 });
-            })
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initProton)
+            } else {
+                initProton()
+            }

@@ -1,4 +1,13 @@
 /* ========== 图片识字页 ========== */
+.ocr-cdn-fail {
+    margin: 0 0 14px;
+    padding: 10px 14px;
+    border: 1px solid var(--line-hard);
+    background: #fff8e6;
+    color: var(--color-ink);
+    font-size: 0.95rem;
+}
+
 .ocr-toolbar {
     margin-bottom: 18px;
 }

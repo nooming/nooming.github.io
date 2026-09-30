@@ -339,7 +339,45 @@ const PIECE_VALUES = {
     'K': 10000, 'A': 20, 'B': 20, 'N': 40, 'R': 90, 'C': 45, 'P': 10
 };
 
-// 评估棋盘局面
+function squareFileOpen(board, col, color) {
+    // 开放线：该列无己方兵阻挡（简化）
+    for (let row = 0; row < BOARD_HEIGHT; row++) {
+        const piece = board[row][col];
+        if (piece && piece.color === color && piece.type.toUpperCase() === 'P') return false;
+    }
+    return true;
+}
+
+function kingExposurePenalty(board, color) {
+    let kingRow = -1, kingCol = -1;
+    let advisors = 0, elephants = 0;
+    for (let row = 0; row < BOARD_HEIGHT; row++) {
+        for (let col = 0; col < BOARD_WIDTH; col++) {
+            const piece = board[row][col];
+            if (!piece || piece.color !== color) continue;
+            const t = piece.type.toUpperCase();
+            if (t === 'K') { kingRow = row; kingCol = col; }
+            if (t === 'A') advisors++;
+            if (t === 'B') elephants++;
+        }
+    }
+    if (kingRow < 0) return 50;
+    let penalty = 0;
+    if (advisors === 0) penalty += 8;
+    if (elephants === 0) penalty += 6;
+    // 帅/将偏出九宫中线
+    if (kingCol !== 4) penalty += 3;
+    // 所在列较空，容易被车炮直瞄
+    let blockers = 0;
+    for (let row = 0; row < BOARD_HEIGHT; row++) {
+        if (row === kingRow) continue;
+        if (board[row][kingCol]) blockers++;
+    }
+    if (blockers <= 1) penalty += 5;
+    return penalty;
+}
+
+// 评估棋盘局面（红方为正）
 function evaluatePosition() {
     const board = xiangqi.board();
     let score = 0;
@@ -347,14 +385,56 @@ function evaluatePosition() {
     for (let row = 0; row < BOARD_HEIGHT; row++) {
         for (let col = 0; col < BOARD_WIDTH; col++) {
             const piece = board[row][col];
-            if (piece) {
-                const value = PIECE_VALUES[piece.type.toUpperCase()] || 0;
-                score += piece.color === 'r' ? value : -value;
+            if (!piece) continue;
+            const type = piece.type.toUpperCase();
+            let value = PIECE_VALUES[type] || 0;
+            // 简单位置分
+            if (type === 'R' && squareFileOpen(board, col, piece.color)) value += 6;
+            if (type === 'N' && col >= 2 && col <= 6 && row >= 2 && row <= 7) value += 4;
+            if (type === 'P') {
+                // 兵过河：黑朝下行增大，红朝上行减小
+                if (piece.color === 'b' && row >= 5) value += 8;
+                if (piece.color === 'r' && row <= 4) value += 8;
             }
+            score += piece.color === 'r' ? value : -value;
         }
     }
-    
+    score -= kingExposurePenalty(board, 'r');
+    score += kingExposurePenalty(board, 'b');
     return score;
+}
+
+function isCaptureProtected(move) {
+    if (!move.captured) return false;
+    xiangqi.move(move);
+    const replies = xiangqi.moves({ verbose: true });
+    const recapture = replies.some(m => m.to === move.to && m.captured);
+    xiangqi.undo();
+    return recapture;
+}
+
+function scoreMovePriority(move) {
+    let s = 0;
+    if (move.captured) s += (PIECE_VALUES[(move.captured + '').toUpperCase()] || 20) + 30;
+    if (move.flags === 'c' || move.captured) s += 10;
+    return s;
+}
+
+function selectHardCandidates(moves) {
+    const inCheckNow = xiangqi.in_check();
+    const scored = moves.map(m => {
+        let bonus = scoreMovePriority(m);
+        xiangqi.move(m);
+        if (xiangqi.in_checkmate()) bonus += 100000;
+        else if (xiangqi.in_check()) bonus += 25;
+        if (inCheckNow) bonus += 40; // 逃将优先
+        xiangqi.undo();
+        return { move: m, bonus };
+    });
+    scored.sort((a, b) => b.bonus - a.bonus);
+    const forced = scored.filter(x => x.bonus >= 40 || x.move.captured || x.bonus >= 25);
+    const pool = forced.length >= 6 ? forced : scored;
+    return pool.slice(0, Math.min(12, pool.length)).map(x => x.move);
 }
 
 // AI移动
@@ -368,55 +448,68 @@ function aiMove() {
     let bestScore = -Infinity;
     
     if (aiDifficulty === 'easy') {
-        // 简单难度：随机选择，但优先吃子
-        const captureMoves = moves.filter(m => m.captured);
-        if (captureMoves.length > 0 && Math.random() > 0.3) {
-            bestMove = captureMoves[Math.floor(Math.random() * captureMoves.length)];
+        // 简单：偏随机，但尽量不吃被保护的子
+        const safeCaptures = moves.filter(m => m.captured && !isCaptureProtected(m));
+        const unsafeCaptures = moves.filter(m => m.captured && isCaptureProtected(m));
+        const quiet = moves.filter(m => !m.captured);
+        if (safeCaptures.length && Math.random() > 0.35) {
+            bestMove = safeCaptures[Math.floor(Math.random() * safeCaptures.length)];
+        } else if (quiet.length) {
+            bestMove = quiet[Math.floor(Math.random() * quiet.length)];
+        } else if (unsafeCaptures.length && Math.random() > 0.7) {
+            bestMove = unsafeCaptures[Math.floor(Math.random() * unsafeCaptures.length)];
         } else {
             bestMove = moves[Math.floor(Math.random() * moves.length)];
         }
     } else if (aiDifficulty === 'medium') {
-        // 中等难度：评估所有移动，选择最好的
         for (const move of moves) {
             xiangqi.move(move);
-            const score = -evaluatePosition(); // 负号因为评估是从红方角度
+            const score = -evaluatePosition();
             xiangqi.undo();
-            
             if (score > bestScore) {
                 bestScore = score;
                 bestMove = move;
             }
         }
     } else {
-        // 困难难度：考虑对手的最佳回应（简单minimax）
-        for (const move of moves) {
+        // 困难：截断候选 + 1 层对手回应；将军不等于赢，避免为将送子
+        const candidates = selectHardCandidates(moves);
+        for (const move of candidates) {
             xiangqi.move(move);
-            
-            // 如果AI能获胜，直接选择
-            if (xiangqi.in_checkmate() || xiangqi.in_check()) {
+            if (xiangqi.in_checkmate()) {
                 xiangqi.undo();
                 bestMove = move;
+                bestScore = 1e9;
                 break;
             }
-            
-            // 评估对手的最佳回应
             const opponentMoves = xiangqi.moves({ verbose: true });
             let worstScore = Infinity;
-            
-            for (const oppMove of opponentMoves) {
-                xiangqi.move(oppMove);
-                const score = -evaluatePosition();
-                xiangqi.undo();
-                worstScore = Math.min(worstScore, score);
+            // 对手也截断，避免爆炸
+            const oppCandidates = opponentMoves
+                .map(m => ({ m, s: scoreMovePriority(m) }))
+                .sort((a, b) => b.s - a.s)
+                .slice(0, Math.min(10, opponentMoves.length));
+            if (!oppCandidates.length) {
+                worstScore = -evaluatePosition() + 500;
+            } else {
+                for (const { m: oppMove } of oppCandidates) {
+                    xiangqi.move(oppMove);
+                    let score = -evaluatePosition();
+                    // 若这步吃掉了我们刚动的子价值过高，视为送子惩罚已体现在子力分
+                    if (xiangqi.in_checkmate()) score = -1e9;
+                    xiangqi.undo();
+                    worstScore = Math.min(worstScore, score);
+                }
             }
-            
+            // 单纯将军给小加分，但远小于子力
+            if (xiangqi.in_check()) worstScore += 8;
             xiangqi.undo();
-            
             if (worstScore > bestScore) {
                 bestScore = worstScore;
                 bestMove = move;
             }
         }
+        if (!bestMove) bestMove = candidates[0] || moves[0];
     }
     
     if (bestMove) {

@@ -98,6 +98,17 @@ button {
     transition: background-color 0.2s;
 }
 
+button.btn-quiet {
+    border: 1px solid var(--line-hard);
+    background: var(--color-card);
+    color: var(--color-ink);
+}
+
+button.btn-quiet:hover {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: var(--color-ink);
+}
+
 .convert-btn {
     background: var(--gradient-theme);
     color: var(--color-theme-ink);
@@ -105,15 +116,6 @@ button {
 
 .convert-btn:hover {
     background: var(--gradient-theme-reverse);
-}
-
-.clear-btn {
-    background-color: #95a5a6;
-    color: white;
-}
-
-.clear-btn:hover {
-    background-color: #7f8c8d;
 }
 
 /* 结果区域样式 */

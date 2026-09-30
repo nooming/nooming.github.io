@@ -493,9 +493,9 @@ function aiMove() {
     }
 }
 
-// 简单难度AI（改进：增加基本评估和1层搜索）
+// 简单难度：只挡必赢/自己能赢，其余从较好候选里随机（不跑完整威胁评估）
 function aiMoveEasy() {
-    const candidateMoves = getSmartCandidateMoves(2);
+    const candidateMoves = getSmartCandidateMoves(1);
     
     if (candidateMoves.size === 0) {
         return { row: Math.floor(BOARD_SIZE / 2), col: Math.floor(BOARD_SIZE / 2) };
@@ -506,17 +506,7 @@ function aiMoveEasy() {
         return { row: r, col: c };
     });
     
-    // 1. 优先阻止玩家获胜
-    for (let move of movesArray) {
-        board[move.row][move.col] = 1;
-        if (checkWin(move.row, move.col, 1)) {
-            board[move.row][move.col] = 0;
-            return move;
-        }
-        board[move.row][move.col] = 0;
-    }
-    
-    // 2. 自己获胜
+    // 1. 自己能赢
     for (let move of movesArray) {
         board[move.row][move.col] = 2;
         if (checkWin(move.row, move.col, 2)) {
@@ -526,32 +516,33 @@ function aiMoveEasy() {
         board[move.row][move.col] = 0;
     }
     
-    // 3. 使用评估函数选择最佳走法（提升简单模式强度）
-    const movesWithScores = [];
+    // 2. 只挡对手必赢（连五）
     for (let move of movesArray) {
-        const aiScore = evaluateThreat(move.row, move.col, 2);
-        const playerScore = evaluateThreat(move.row, move.col, 1);
-        // 防守和进攻并重，但防守权重稍高
-        const totalScore = aiScore * 1.0 + playerScore * 1.2;
-        movesWithScores.push({ ...move, score: totalScore });
+        board[move.row][move.col] = 1;
+        if (checkWin(move.row, move.col, 1)) {
+            board[move.row][move.col] = 0;
+            return move;
+        }
+        board[move.row][move.col] = 0;
     }
     
-    // 按分数排序
-    movesWithScores.sort((a, b) => b.score - a.score);
+    // 3. 轻量“较好候选”：靠近已有棋子 / 偏中心，然后随机
+    const center = Math.floor(BOARD_SIZE / 2);
+    const soft = movesArray.map(move => {
+        let near = 0;
+        for (let dr = -1; dr <= 1; dr++) {
+            for (let dc = -1; dc <= 1; dc++) {
+                if (!dr && !dc) continue;
+                const r = move.row + dr, c = move.col + dc;
+                if (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE && board[r][c] !== 0) near++;
+            }
+        }
+        const dist = Math.abs(move.row - center) + Math.abs(move.col - center);
+        return { ...move, score: near * 3 - dist };
+    }).sort((a, b) => b.score - a.score);
     
-    // 从高分走法中选择（增加一些随机性，但偏向好走法）
-    const topCount = Math.min(5, movesWithScores.length);
-    const topMoves = movesWithScores.slice(0, topCount);
-    
-    // 70%概率选择最佳走法，30%概率从前5个中随机选择
-    if (Math.random() > 0.3 && topMoves.length > 0) {
-        return topMoves[0];
-    } else if (topMoves.length > 0) {
-        return topMoves[Math.floor(Math.random() * topMoves.length)];
-    }
-    
-    // 如果评估分数都很低，随机选择
-    return movesArray[Math.floor(Math.random() * movesArray.length)];
+    const pool = soft.slice(0, Math.min(8, soft.length));
+    return pool[Math.floor(Math.random() * pool.length)];
 }
 
 // 中等难度AI（基于成熟算法：3层Negamax）
@@ -645,11 +636,23 @@ function aiMoveHard() {
         board[r][c] = 0;
     }
     
-    // 3. 检查是否有必杀（活四、双活三等）
+    // 3. 必杀点：活四 / 双活三 / 冲四组合（用现有 evaluateThreat 阈值）
+    // 先挡对手必杀，再走自己的
+    let bestForce = null;
+    let bestForceScore = 0;
+    for (let move of candidateMoves) {
+        const [r, c] = move.split(',').map(Number);
+        const oppThreat = evaluateThreat(r, c, 1);
+        if (oppThreat >= 30000 && oppThreat > bestForceScore) {
+            bestForceScore = oppThreat;
+            bestForce = { row: r, col: c };
+        }
+    }
+    if (bestForce) return bestForce;
     for (let move of candidateMoves) {
         const [r, c] = move.split(',').map(Number);
         const threat = evaluateThreat(r, c, 2);
-        if (threat >= 500000) { // 活四或更高威胁
+        if (threat >= 30000) { // 双冲四/冲四活三/双活三/活四
             return { row: r, col: c };
         }
     }

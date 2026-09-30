@@ -100,6 +100,7 @@
 .md-toolbar-btn[aria-pressed="true"] {
     background: var(--gradient-theme);
     color: var(--color-theme-ink) !important;
+    border-color: var(--color-ink);
 }
 
 .md-status {

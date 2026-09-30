@@ -74,6 +74,10 @@
     border-bottom: none;
 }
 
+.dim-fill-left {
+    background: linear-gradient(90deg, #e74c3c, #c0392b);
+}
+
 @media (max-width: 767.98px) {
     .result-animal-svg {
         width: 72px;

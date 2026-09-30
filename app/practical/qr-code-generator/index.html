@@ -18,20 +18,16 @@
     <link rel="stylesheet" href="../../../assets/css/common.css">
     <!-- 本地样式文件 -->
     <link rel="stylesheet" href="assets/css/qr-code.css">
-    
-    <style>
-        /* 页面特定样式 - 已提取通用样式到 common.css */
-    </style>
+    <title>二维码 · noomings</title>
 </head>
 <body class="page-container">
     <!-- 页面头部 -->
     <div class="page-header">
         <div class="header-top">
-            <a href="../" class="back-btn">返回上一级</a>
-            <a href="../../../index.html" class="back-btn">返回</a>
+            <a href="../" class="back-btn">返回</a>
         </div>
         <div class="section-header section-header--page">
-            <h1>二维码生成器</h1>
+            <h1>二维码</h1>
             <p>文本或网址生成；支持识别图片。</p>
         </div>
     </div>
@@ -73,7 +69,7 @@
             <!-- 功能按钮 -->
             <div class="btn-group">
                 <button id="generateBtn" class="generate-btn">生成二维码</button>
-                <button id="clearBtn" class="clear-btn">清空</button>
+                <button id="clearBtn" class="btn-quiet clear-btn">清空</button>
             </div>
 
             <!-- 二维码展示区域 -->
@@ -97,7 +93,7 @@
                 <label for="decodeFile" class="decode-label">选择二维码图片：</label>
                 <input type="file" id="decodeFile" accept="image/*">
                 <button id="decodeBtn" class="decode-btn">开始识别</button>
-                <button id="decodeClearBtn" class="decode-clear-btn">清空</button>
+                <button id="decodeClearBtn" class="btn-quiet decode-clear-btn">清空</button>
             </div>
             <p id="decodeErrorTip" class="error-tip">请选择要识别的二维码图片！</p>
 

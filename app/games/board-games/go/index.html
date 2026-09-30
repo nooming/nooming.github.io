@@ -7,6 +7,7 @@
     <meta name="description" content="围棋：双人或本地 AI。">
     <meta name="keywords" content="围棋,在线游戏,双人对战">
     <meta name="author" content="nooming">
+    <title>围棋 · noomings</title>
 
     <!-- Favicon -->
     <link rel="apple-touch-icon" sizes="180x180" href="../../../../assets/icons/apple-touch-icon.png">
@@ -222,8 +223,7 @@
     <!-- 页面头部 -->
     <div class="page-header">
         <div class="header-top">
-            <a href="../" class="back-btn">返回上一级</a>
-            <a href="../../../../index.html" class="back-btn">返回</a>
+            <a href="../" class="back-btn">返回</a>
         </div>
         <div class="section-header section-header--page">
             <h1>围棋</h1>
@@ -757,6 +757,47 @@
             return eyeCount;
         }
 
+        // 当前空点是否已是己方真眼（落子=填眼）
+        // 复用 hasEyePotential 的阈值：空点周围己方 ≥2 即眼潜力
+        function isFillingOwnEye(row, col, player) {
+            if (board[row][col] !== 0) return false;
+            const neighbors = getNeighbors(row, col);
+            let friendly = 0, enemy = 0;
+            for (let [nr, nc] of neighbors) {
+                if (board[nr][nc] === player) friendly++;
+                else if (board[nr][nc] !== 0) enemy++;
+            }
+            if (enemy > 0) return false;
+            if (friendly < 2) return false;
+            // 几乎被己方围死的空点视为真眼
+            return friendly >= neighbors.length - 1;
+        }
+
+        // 落子后是否自送吃（只剩一口气且未吃子）
+        function isSelfAtari(row, col, player) {
+            board[row][col] = player;
+            let captured = false;
+            const opponent = player === 1 ? 2 : 1;
+            for (let [nr, nc] of getNeighbors(row, col)) {
+                if (board[nr][nc] === opponent) {
+                    const oppGroup = findGroup(nr, nc);
+                    if (oppGroup.liberties.length === 0) { captured = true; break; }
+                }
+            }
+            const group = findGroup(row, col);
+            const libs = group.liberties.length;
+            board[row][col] = 0;
+            return !captured && libs <= 1;
+        }
+
+        // AI 无好手时是否允许停着（避免与玩家连续双 pass 立刻终局）
+        function aiShouldPass(bestScore) {
+            if (bestScore > 15) return false;
+            // 上一手已是 pass 时，除非分数极差，否则仍下最不差的一手
+            if (consecutivePasses >= 1 && bestScore > -200) return false;
+            return bestScore < 5;
+        }
+
         // 评估位置价值（围棋思路 - 改进版）
         function evaluatePosition(row, col, player) {
             if (!canPlace(row, col, player)) return -1;
@@ -895,9 +936,15 @@
                 score += 15; // 星位额外价值
             }
             
-            // 8. 眼的潜力（改进：更准确的眼识别）
+            // 8. 眼的潜力；重罚填自己的真眼
             const eyePotential = hasEyePotential(row, col, player);
             score += eyePotential * 30;
+            if (isFillingOwnEye(row, col, player) && captureSize === 0) {
+                score -= 800;
+            }
+            if (isSelfAtari(row, col, player)) {
+                score -= 400;
+            }
             
             // 9. 形状价值：避免坏形状，追求好形状
             board[row][col] = player;
@@ -1022,13 +1069,12 @@
             }
             
             if (bestMove) {
+                if (aiShouldPass(bestScore)) return null;
                 return bestMove;
             }
             
-            // 如果没有找到，返回星位
-            const starPositions = [3, 9, 15];
-            const star = starPositions[Math.floor(Math.random() * starPositions.length)];
-            return { row: star, col: star };
+            // 无好候选则停着，而不是乱填星位
+            return null;
         }
 
         // 获取智能候选走法（改进：考虑全局热点，优化性能）
@@ -1247,9 +1293,7 @@
             // 3. 使用评估函数+1层搜索
             const candidateMoves = getSmartCandidateMoves(2, 3);
             if (candidateMoves.size === 0) {
-                const starPositions = [3, 9, 15];
-                const star = starPositions[Math.floor(Math.random() * starPositions.length)];
-                return { row: star, col: star };
+                return null;
             }
             
             // 先按评估函数排序，取前8个
@@ -1258,7 +1302,7 @@
                 const [r, c] = move.split(',').map(Number);
                 if (!canPlace(r, c, 2)) continue;
                 const score = evaluatePosition(r, c, 2);
-                if (score > 0) {
+                if (score > -100) {
                     movesWithScores.push({ row: r, col: c, score });
                 }
             }
@@ -1267,11 +1311,7 @@
             const topMoves = movesWithScores.slice(0, 8);
             
             if (topMoves.length === 0) {
-                const movesArray = Array.from(candidateMoves).map(m => {
-                    const [r, c] = m.split(',').map(Number);
-                    return { row: r, col: c };
-                });
-                return movesArray[Math.floor(Math.random() * movesArray.length)];
+                return null;
             }
             
             // 对前8个走法使用1层Negamax评估
@@ -1304,7 +1344,9 @@
                 }
             }
             
-            return bestMove || topMoves[0];
+            if (!bestMove) return null;
+            if (aiShouldPass(Math.max(bestScore, topMoves[0].score))) return null;
+            return bestMove;
         }
 
         // 困难难度AI：使用评估函数+2层搜索
@@ -1359,9 +1401,7 @@
             // 3. 使用评估函数+2层搜索
             const candidateMoves = getSmartCandidateMoves(2, 4);
             if (candidateMoves.size === 0) {
-                const starPositions = [3, 9, 15];
-                const star = starPositions[Math.floor(Math.random() * starPositions.length)];
-                return { row: star, col: star };
+                return null;
             }
             
             // 先按评估函数排序，取前10个
@@ -1370,7 +1410,7 @@
                 const [r, c] = move.split(',').map(Number);
                 if (!canPlace(r, c, 2)) continue;
                 const score = evaluatePosition(r, c, 2);
-                if (score > 0) {
+                if (score > -100) {
                     movesWithScores.push({ row: r, col: c, score });
                 }
             }
@@ -1379,11 +1419,7 @@
             const topMoves = movesWithScores.slice(0, 10);
             
             if (topMoves.length === 0) {
-                const movesArray = Array.from(candidateMoves).map(m => {
-                    const [r, c] = m.split(',').map(Number);
-                    return { row: r, col: c };
-                });
-                return movesArray[Math.floor(Math.random() * movesArray.length)];
+                return null;
             }
             
             // 对前10个走法使用2层Negamax评估
@@ -1416,7 +1452,9 @@
                 }
             }
             
-            return bestMove || topMoves[0];
+            if (!bestMove) return null;
+            if (aiShouldPass(Math.max(bestScore, topMoves[0].score))) return null;
+            return bestMove;
         }
 
         // 获取点击坐标（处理移动端缩放）

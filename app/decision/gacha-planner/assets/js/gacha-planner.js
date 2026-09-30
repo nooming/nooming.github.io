@@ -315,16 +315,45 @@ document.addEventListener("DOMContentLoaded", () => {
         };
     }
 
-    function estimateSingleProbability(simCount, seedStart, hitTrial) {
+    const SIM_BATCH = 2000;
+
+    function yieldToMain() {
+        return new Promise((resolve) => {
+            requestAnimationFrame(() => resolve());
+        });
+    }
+
+    async function runSimBatches(simCount, stepFn) {
+        for (let i = 0; i < simCount; i++) {
+            stepFn(i);
+            if ((i + 1) % SIM_BATCH === 0 && i + 1 < simCount) {
+                await yieldToMain();
+            }
+        }
+    }
+
+    async function estimateSingleProbability(simCount, seedStart, hitTrial) {
         let hits = 0;
         let seed = seedStart;
-        for (let i = 0; i < simCount; i++) {
+        await runSimBatches(simCount, () => {
             const rng = mulberry32((seed = (seed + 0x9e3779b9) >>> 0));
             if (hitTrial(rng)) {
                 hits++;
             }
-        }
+        });
         return hits / simCount;
+    }
+
+    async function withCalcButton(btn, work) {
+        if (!btn || btn.disabled) {
+            return;
+        }
+        btn.disabled = true;
+        try {
+            await work();
+        } finally {
+            btn.disabled = false;
+        }
     }
 
     function limitedTokenBonus(pulls) {
@@ -478,217 +507,232 @@ document.addEventListener("DOMContentLoaded", () => {
     const simC = G.SIM_CHART;
 
     document.getElementById("up-calc-summary").addEventListener("click", () => {
-        const baseN = getNonNegativeInt("up-n");
-        const sixRemain = getBoundedInt("shared-pity-six-remain", 1, G.HARD_SIX, G.HARD_SIX);
-        const fiveRemain = getBoundedInt("shared-pity-five-remain", 1, 10, 10);
-        const initialSixFail = G.HARD_SIX - sixRemain;
-        const initialFiveFail = 10 - fiveRemain;
-        const useBaozhang = getBool("shared-use-baozhang");
-        const initBaozhang = getNonNegativeInt("shared-init-baozhang");
-        const rngSix = mulberry32(0x9e3779b9);
-        const samplesSix = [];
-        const samplesBaozhang = [];
-        const samplesWuku = [];
-        const samplesExchange = [];
-        const samplesTotalPulls = [];
+        const btn = document.getElementById("up-calc-summary");
+        withCalcButton(btn, async () => {
+            const baseN = getNonNegativeInt("up-n");
+            const sixRemain = getBoundedInt("shared-pity-six-remain", 1, G.HARD_SIX, G.HARD_SIX);
+            const fiveRemain = getBoundedInt("shared-pity-five-remain", 1, 10, 10);
+            const initialSixFail = G.HARD_SIX - sixRemain;
+            const initialFiveFail = 10 - fiveRemain;
+            const useBaozhang = getBool("shared-use-baozhang");
+            const initBaozhang = getNonNegativeInt("shared-init-baozhang");
+            const rngSix = mulberry32(0x9e3779b9);
+            const samplesSix = [];
+            const samplesBaozhang = [];
+            const samplesWuku = [];
+            const samplesExchange = [];
+            const samplesTotalPulls = [];
 
-        for (let i = 0; i < simN; i++) {
-            const r = simulateCharacterSessionWithExchange(
-                baseN,
-                p,
-                ss,
-                si,
-                h6,
-                G.HARD_UP,
-                G.UP_RATE,
-                G.MILESTONE_FREE_AT,
-                G.MILESTONE_FREE_COUNT,
-                initialSixFail,
-                initialFiveFail,
-                useBaozhang,
-                initBaozhang,
-                rngSix
-            );
-            samplesSix.push(r.sixTotal + limitedTokenBonus(r.paidPullsDone));
-            samplesBaozhang.push(r.baozhangTotal);
-            samplesWuku.push(r.wukuTotal);
-            samplesExchange.push(r.exchangedPulls);
-            samplesTotalPulls.push(r.totalPulls);
-        }
+            await runSimBatches(simN, () => {
+                const r = simulateCharacterSessionWithExchange(
+                    baseN,
+                    p,
+                    ss,
+                    si,
+                    h6,
+                    G.HARD_UP,
+                    G.UP_RATE,
+                    G.MILESTONE_FREE_AT,
+                    G.MILESTONE_FREE_COUNT,
+                    initialSixFail,
+                    initialFiveFail,
+                    useBaozhang,
+                    initBaozhang,
+                    rngSix
+                );
+                samplesSix.push(r.sixTotal + limitedTokenBonus(r.paidPullsDone));
+                samplesBaozhang.push(r.baozhangTotal);
+                samplesWuku.push(r.wukuTotal);
+                samplesExchange.push(r.exchangedPulls);
+                samplesTotalPulls.push(r.totalPulls);
+            });
 
-        const rngUp = mulberry32(0xdeadbeef);
-        const samplesUp = [];
-        for (let i = 0; i < simN; i++) {
-            const r = simulateCharacterSessionWithExchange(
-                baseN,
-                p,
-                ss,
-                si,
-                h6,
-                G.HARD_UP,
-                G.UP_RATE,
-                G.MILESTONE_FREE_AT,
-                G.MILESTONE_FREE_COUNT,
-                initialSixFail,
-                initialFiveFail,
-                useBaozhang,
-                initBaozhang,
-                rngUp
-            );
-            samplesUp.push(r.upTotal + limitedTokenBonus(r.paidPullsDone));
-        }
+            const rngUp = mulberry32(0xdeadbeef);
+            const samplesUp = [];
+            await runSimBatches(simN, () => {
+                const r = simulateCharacterSessionWithExchange(
+                    baseN,
+                    p,
+                    ss,
+                    si,
+                    h6,
+                    G.HARD_UP,
+                    G.UP_RATE,
+                    G.MILESTONE_FREE_AT,
+                    G.MILESTONE_FREE_COUNT,
+                    initialSixFail,
+                    initialFiveFail,
+                    useBaozhang,
+                    initBaozhang,
+                    rngUp
+                );
+                samplesUp.push(r.upTotal + limitedTokenBonus(r.paidPullsDone));
+            });
 
-        document.getElementById("up-out-summary").innerHTML =
-            `<div><strong>六星（含当期与信物折算）</strong>：期望 <strong>${mean(samplesSix).toFixed(3)}</strong>，中位数 <strong>${medianSorted(samplesSix.slice())}</strong></div>` +
-            `<div style="margin-top:8px"><strong>当期（含 240 抽信物）</strong>：期望 <strong>${mean(samplesUp).toFixed(3)}</strong>，中位数 <strong>${medianSorted(samplesUp.slice())}</strong></div>` +
-            `<div style="margin-top:8px"><strong>保障配额（估算）</strong>：期望 <strong>${mean(samplesBaozhang).toFixed(2)}</strong>，中位数 <strong>${medianSorted(samplesBaozhang.slice()).toFixed(0)}</strong></div>` +
-            `<div style="margin-top:8px"><strong>武库配额（估算）</strong>：期望 <strong>${mean(samplesWuku).toFixed(0)}</strong>，中位数 <strong>${medianSorted(samplesWuku.slice()).toFixed(0)}</strong></div>` +
-            `<div style="margin-top:8px;font-size:0.75rem;color:#666666">${simN.toLocaleString()} 次模拟；基础抽数 ${baseN}，6星保底剩余 ${sixRemain}，5星保底剩余 ${fiveRemain}；保障换抽 ${useBaozhang ? "开启" : "关闭"}（初始 ${initBaozhang}，期望额外换抽 ${mean(samplesExchange).toFixed(2)}），平均总抽数 ${mean(samplesTotalPulls).toFixed(2)}；规则详见上方「抽卡口径」。</div>`;
+            document.getElementById("up-out-summary").innerHTML =
+                `<div><strong>六星（含当期与信物折算）</strong>：期望 <strong>${mean(samplesSix).toFixed(3)}</strong>，中位数 <strong>${medianSorted(samplesSix.slice())}</strong></div>` +
+                `<div style="margin-top:8px"><strong>当期（含 240 抽信物）</strong>：期望 <strong>${mean(samplesUp).toFixed(3)}</strong>，中位数 <strong>${medianSorted(samplesUp.slice())}</strong></div>` +
+                `<div style="margin-top:8px"><strong>保障配额（估算）</strong>：期望 <strong>${mean(samplesBaozhang).toFixed(2)}</strong>，中位数 <strong>${medianSorted(samplesBaozhang.slice()).toFixed(0)}</strong></div>` +
+                `<div style="margin-top:8px"><strong>武库配额（估算）</strong>：期望 <strong>${mean(samplesWuku).toFixed(0)}</strong>，中位数 <strong>${medianSorted(samplesWuku.slice()).toFixed(0)}</strong></div>` +
+                `<div style="margin-top:8px;font-size:0.75rem;color:#666666">${simN.toLocaleString()} 次模拟；基础抽数 ${baseN}，6星保底剩余 ${sixRemain}，5星保底剩余 ${fiveRemain}；保障换抽 ${useBaozhang ? "开启" : "关闭"}（初始 ${initBaozhang}，期望额外换抽 ${mean(samplesExchange).toFixed(2)}），平均总抽数 ${mean(samplesTotalPulls).toFixed(2)}；规则详见上方「抽卡口径」。</div>`;
+        });
     });
 
     document.getElementById("up-up-calc").addEventListener("click", () => {
-        const k = Math.max(1, Math.floor(Number(document.getElementById("up-up-k").value)));
-        const baseN = getNonNegativeInt("up-up-n");
-        const sixRemain = getBoundedInt("shared-pity-six-remain", 1, G.HARD_SIX, G.HARD_SIX);
-        const initialSixFail = G.HARD_SIX - sixRemain;
-        const initialFiveFail = 10 - getBoundedInt("shared-pity-five-remain", 1, 10, 10);
-        const useBaozhang = getBool("shared-use-baozhang");
-        const initBaozhang = getNonNegativeInt("shared-init-baozhang");
-        const pullSamples = [];
-        const tokenSamples = [];
+        const btn = document.getElementById("up-up-calc");
+        withCalcButton(btn, async () => {
+            const k = Math.max(1, Math.floor(Number(document.getElementById("up-up-k").value)));
+            const baseN = getNonNegativeInt("up-up-n");
+            const sixRemain = getBoundedInt("shared-pity-six-remain", 1, G.HARD_SIX, G.HARD_SIX);
+            const initialSixFail = G.HARD_SIX - sixRemain;
+            const initialFiveFail = 10 - getBoundedInt("shared-pity-five-remain", 1, 10, 10);
+            const useBaozhang = getBool("shared-use-baozhang");
+            const initBaozhang = getNonNegativeInt("shared-init-baozhang");
+            const pullSamples = [];
+            const tokenSamples = [];
 
-        const prob = estimateSingleProbability(simC, 0xbadcafe, (rng) => {
-            const r = simulateCharacterSessionWithExchange(
-                baseN,
-                p,
-                ss,
-                si,
-                h6,
-                G.HARD_UP,
-                G.UP_RATE,
-                G.MILESTONE_FREE_AT,
-                G.MILESTONE_FREE_COUNT,
-                initialSixFail,
-                initialFiveFail,
-                useBaozhang,
-                initBaozhang,
-                rng
-            );
-            pullSamples.push(r.totalPulls);
-            const tokenBonus = limitedTokenBonus(r.paidPullsDone);
-            tokenSamples.push(tokenBonus);
-            const upCount = r.upTotal + tokenBonus;
-            return upCount >= k;
+            const prob = await estimateSingleProbability(simC, 0xbadcafe, (rng) => {
+                const r = simulateCharacterSessionWithExchange(
+                    baseN,
+                    p,
+                    ss,
+                    si,
+                    h6,
+                    G.HARD_UP,
+                    G.UP_RATE,
+                    G.MILESTONE_FREE_AT,
+                    G.MILESTONE_FREE_COUNT,
+                    initialSixFail,
+                    initialFiveFail,
+                    useBaozhang,
+                    initBaozhang,
+                    rng
+                );
+                pullSamples.push(r.totalPulls);
+                const tokenBonus = limitedTokenBonus(r.paidPullsDone);
+                tokenSamples.push(tokenBonus);
+                const upCount = r.upTotal + tokenBonus;
+                return upCount >= k;
+            });
+
+            const avgToken = mean(tokenSamples);
+            document.getElementById("up-up-out").innerHTML =
+                `<strong>基础抽数 n = ${baseN}</strong>（6星保底剩余 ${sixRemain}）时，<strong>当期个数 ≥ ${k}</strong> 的概率约为 <strong>${(prob * 100).toFixed(2)}%</strong>` +
+                `<div style="margin-top:8px;font-size:0.75rem;color:#666666">已计入信物约 ${Math.round(avgToken)} 个</div>` +
+                `<div style="margin-top:8px;font-size:0.75rem;color:#666666">${simC.toLocaleString()} 次模拟；保障换抽${useBaozhang ? "开启" : "关闭"}（初始 ${initBaozhang}），平均总抽数 ${mean(pullSamples).toFixed(2)}；规则详见上方「抽卡口径」。</div>`;
         });
-
-        const avgToken = mean(tokenSamples);
-        document.getElementById("up-up-out").innerHTML =
-            `<strong>基础抽数 n = ${baseN}</strong>（6星保底剩余 ${sixRemain}）时，<strong>当期个数 ≥ ${k}</strong> 的概率约为 <strong>${(prob * 100).toFixed(2)}%</strong>` +
-            `<div style="margin-top:8px;font-size:0.75rem;color:#666666">已计入信物约 ${Math.round(avgToken)} 个</div>` +
-            `<div style="margin-top:8px;font-size:0.75rem;color:#666666">${simC.toLocaleString()} 次模拟；保障换抽${useBaozhang ? "开启" : "关闭"}（初始 ${initBaozhang}），平均总抽数 ${mean(pullSamples).toFixed(2)}；规则详见上方「抽卡口径」。</div>`;
     });
 
     document.getElementById("wp-calc").addEventListener("click", () => {
-        const T = getNonNegativeInt("wp-t");
-        const reward = weaponRewardSummary(T);
-        const rngSix = mulberry32(0xc2b2ae35);
-        const samplesSix = [];
+        const btn = document.getElementById("wp-calc");
+        withCalcButton(btn, async () => {
+            const T = getNonNegativeInt("wp-t");
+            const reward = weaponRewardSummary(T);
+            const rngSix = mulberry32(0xc2b2ae35);
+            const samplesSix = [];
 
-        for (let i = 0; i < simN; i++) {
-            const r = simulateWeaponSession(T, wp, wup, wah, wakho, rngSix);
-            samplesSix.push(r.sixTotal + reward.upBonus + reward.nonUpSixBonus);
-        }
+            await runSimBatches(simN, () => {
+                const r = simulateWeaponSession(T, wp, wup, wah, wakho, rngSix);
+                samplesSix.push(r.sixTotal + reward.upBonus + reward.nonUpSixBonus);
+            });
 
-        const rngUp = mulberry32(0x7f4a7c15);
-        const samplesUp = [];
-        for (let i = 0; i < simN; i++) {
-            samplesUp.push(simulateWeaponSession(T, wp, wup, wah, wakho, rngUp).upTotal + reward.upBonus);
-        }
+            const rngUp = mulberry32(0x7f4a7c15);
+            const samplesUp = [];
+            await runSimBatches(simN, () => {
+                samplesUp.push(simulateWeaponSession(T, wp, wup, wah, wakho, rngUp).upTotal + reward.upBonus);
+            });
 
-        document.getElementById("wp-out").innerHTML =
-            `<div><strong>六星武器</strong>：期望 <strong>${mean(samplesSix).toFixed(3)}</strong>，中位数 <strong>${medianSorted(samplesSix.slice())}</strong></div>` +
-            `<div style="margin-top:8px"><strong>当期武器</strong>：期望 <strong>${mean(samplesUp).toFixed(3)}</strong>，中位数 <strong>${medianSorted(samplesUp.slice())}</strong></div>` +
-            `<div style="margin-top:8px;font-size:0.75rem;color:#666666">${simN.toLocaleString()} 次模拟；${T} 次申领（总 ${10 * T} 件）；已计入限定赠礼额外当期 UP 武器 ${reward.upBonus} 把与补充武库箱 ${reward.nonUpSixBonus} 把（计入非当期六星）；规则详见上方「抽卡口径」。</div>`;
+            document.getElementById("wp-out").innerHTML =
+                `<div><strong>六星武器</strong>：期望 <strong>${mean(samplesSix).toFixed(3)}</strong>，中位数 <strong>${medianSorted(samplesSix.slice())}</strong></div>` +
+                `<div style="margin-top:8px"><strong>当期武器</strong>：期望 <strong>${mean(samplesUp).toFixed(3)}</strong>，中位数 <strong>${medianSorted(samplesUp.slice())}</strong></div>` +
+                `<div style="margin-top:8px;font-size:0.75rem;color:#666666">${simN.toLocaleString()} 次模拟；${T} 次申领（总 ${10 * T} 件）；已计入限定赠礼额外当期 UP 武器 ${reward.upBonus} 把与补充武库箱 ${reward.nonUpSixBonus} 把（计入非当期六星）；规则详见上方「抽卡口径」。</div>`;
+        });
     });
 
     document.getElementById("wp-up-calc-prob").addEventListener("click", () => {
-        const k = Math.max(1, Math.floor(Number(document.getElementById("wp-up-k").value)));
-        const t = getNonNegativeInt("wp-up-t-prob");
-        const reward = weaponRewardSummary(t);
+        const btn = document.getElementById("wp-up-calc-prob");
+        withCalcButton(btn, async () => {
+            const k = Math.max(1, Math.floor(Number(document.getElementById("wp-up-k").value)));
+            const t = getNonNegativeInt("wp-up-t-prob");
+            const reward = weaponRewardSummary(t);
 
-        const prob = estimateSingleProbability(simC, 0x1f123bb5, (rng) => {
-            const upCount = simulateWeaponSession(t, wp, wup, wah, wakho, rng).upTotal + reward.upBonus;
-            return upCount >= k;
+            const prob = await estimateSingleProbability(simC, 0x1f123bb5, (rng) => {
+                const upCount = simulateWeaponSession(t, wp, wup, wah, wakho, rng).upTotal + reward.upBonus;
+                return upCount >= k;
+            });
+
+            document.getElementById("wp-up-prob-out").innerHTML =
+                `<strong>申领 T = ${t}</strong>（总 ${10 * t} 件）时，<strong>当期武器个数 ≥ ${k}</strong> 的概率约为 <strong>${(prob * 100).toFixed(2)}%</strong>` +
+                `<div style="margin-top:8px;font-size:0.75rem;color:#666666">${simC.toLocaleString()} 次模拟；已计入限定赠礼额外当期 UP 武器 ${reward.upBonus} 把；规则详见上方「抽卡口径」。</div>`;
         });
-
-        document.getElementById("wp-up-prob-out").innerHTML =
-            `<strong>申领 T = ${t}</strong>（总 ${10 * t} 件）时，<strong>当期武器个数 ≥ ${k}</strong> 的概率约为 <strong>${(prob * 100).toFixed(2)}%</strong>` +
-            `<div style="margin-top:8px;font-size:0.75rem;color:#666666">${simC.toLocaleString()} 次模拟；已计入限定赠礼额外当期 UP 武器 ${reward.upBonus} 把；规则详见上方「抽卡口径」。</div>`;
     });
 
     document.getElementById("combo-calc").addEventListener("click", () => {
-        const baseN = getNonNegativeInt("combo-char-n");
-        const initWuku = getNonNegativeInt("combo-wuku-init");
-        const useBaozhang = getBool("shared-use-baozhang");
-        const initBaozhang = getNonNegativeInt("shared-init-baozhang");
-        const sixRemain = getBoundedInt("shared-pity-six-remain", 1, G.HARD_SIX, G.HARD_SIX);
-        const fiveRemain = getBoundedInt("shared-pity-five-remain", 1, 10, 10);
-        const initialSixFail = G.HARD_SIX - sixRemain;
-        const initialFiveFail = 10 - fiveRemain;
+        const btn = document.getElementById("combo-calc");
+        withCalcButton(btn, async () => {
+            const baseN = getNonNegativeInt("combo-char-n");
+            const initWuku = getNonNegativeInt("combo-wuku-init");
+            const useBaozhang = getBool("shared-use-baozhang");
+            const initBaozhang = getNonNegativeInt("shared-init-baozhang");
+            const sixRemain = getBoundedInt("shared-pity-six-remain", 1, G.HARD_SIX, G.HARD_SIX);
+            const fiveRemain = getBoundedInt("shared-pity-five-remain", 1, 10, 10);
+            const initialSixFail = G.HARD_SIX - sixRemain;
+            const initialFiveFail = 10 - fiveRemain;
 
-        let hits = 0;
-        let sumUpChar = 0;
-        let sumUpWeapon = 0;
-        let sumApply = 0;
-        let sumWuku = 0;
-        let sumExchange = 0;
-        let charSeed = 0x5f3759df;
-        let weaponSeed = 0x9e3779b1;
+            let hits = 0;
+            let sumUpChar = 0;
+            let sumUpWeapon = 0;
+            let sumApply = 0;
+            let sumWuku = 0;
+            let sumExchange = 0;
+            let charSeed = 0x5f3759df;
+            let weaponSeed = 0x9e3779b1;
 
-        for (let i = 0; i < simC; i++) {
-            const rngChar = mulberry32((charSeed = (charSeed + 0x9e3779b9) >>> 0));
-            const charR = simulateCharacterSessionWithExchange(
-                baseN,
-                p,
-                ss,
-                si,
-                h6,
-                G.HARD_UP,
-                G.UP_RATE,
-                G.MILESTONE_FREE_AT,
-                G.MILESTONE_FREE_COUNT,
-                initialSixFail,
-                initialFiveFail,
-                useBaozhang,
-                initBaozhang,
-                rngChar
-            );
+            await runSimBatches(simC, () => {
+                const rngChar = mulberry32((charSeed = (charSeed + 0x9e3779b9) >>> 0));
+                const charR = simulateCharacterSessionWithExchange(
+                    baseN,
+                    p,
+                    ss,
+                    si,
+                    h6,
+                    G.HARD_UP,
+                    G.UP_RATE,
+                    G.MILESTONE_FREE_AT,
+                    G.MILESTONE_FREE_COUNT,
+                    initialSixFail,
+                    initialFiveFail,
+                    useBaozhang,
+                    initBaozhang,
+                    rngChar
+                );
 
-            const upCharTotal = charR.upTotal + limitedTokenBonus(charR.paidPullsDone);
-            const totalWuku = initWuku + charR.wukuTotal;
-            const applyCount = Math.floor(totalWuku / G.WUKU_PER_APPLY);
-            const reward = weaponRewardSummary(applyCount);
+                const upCharTotal = charR.upTotal + limitedTokenBonus(charR.paidPullsDone);
+                const totalWuku = initWuku + charR.wukuTotal;
+                const applyCount = Math.floor(totalWuku / G.WUKU_PER_APPLY);
+                const reward = weaponRewardSummary(applyCount);
 
-            const rngWeapon = mulberry32((weaponSeed = (weaponSeed + 0x85ebca6b) >>> 0));
-            const weaponR = simulateWeaponSession(applyCount, wp, wup, wah, wakho, rngWeapon);
-            const upWeaponTotal = weaponR.upTotal + reward.upBonus;
+                const rngWeapon = mulberry32((weaponSeed = (weaponSeed + 0x85ebca6b) >>> 0));
+                const weaponR = simulateWeaponSession(applyCount, wp, wup, wah, wakho, rngWeapon);
+                const upWeaponTotal = weaponR.upTotal + reward.upBonus;
 
-            if (upCharTotal >= 6 && upWeaponTotal >= 6) {
-                hits++;
-            }
+                if (upCharTotal >= 6 && upWeaponTotal >= 6) {
+                    hits++;
+                }
 
-            sumUpChar += upCharTotal;
-            sumUpWeapon += upWeaponTotal;
-            sumApply += applyCount;
-            sumWuku += totalWuku;
-            sumExchange += charR.exchangedPulls;
-        }
+                sumUpChar += upCharTotal;
+                sumUpWeapon += upWeaponTotal;
+                sumApply += applyCount;
+                sumWuku += totalWuku;
+                sumExchange += charR.exchangedPulls;
+            });
 
-        const prob = hits / simC;
-        document.getElementById("combo-out").innerHTML =
-            `<div><strong>5+6 达成概率</strong>：<strong>${(prob * 100).toFixed(2)}%</strong></div>` +
-            `<div style="margin-top:8px"><strong>当期角色期望</strong>：${(sumUpChar / simC).toFixed(3)}，<strong>当期武器期望</strong>：${(sumUpWeapon / simC).toFixed(3)}</div>` +
-            `<div style="margin-top:8px"><strong>总武库配额期望</strong>：${(sumWuku / simC).toFixed(0)}，<strong>可申领次数期望</strong>：${(sumApply / simC).toFixed(2)}</div>` +
-            `<div style="margin-top:8px;font-size:0.75rem;color:#666666">${simC.toLocaleString()} 次模拟；角色基础抽数 ${baseN}，现有武库配额 ${initWuku}；保障换抽${useBaozhang ? "开启" : "关闭"}（初始 ${initBaozhang}，角色侧期望额外换抽 ${(sumExchange / simC).toFixed(2)}）；角色产出的武库配额已计入武器申领。规则详见上方「抽卡口径」。</div>`;
+            const prob = hits / simC;
+            document.getElementById("combo-out").innerHTML =
+                `<div><strong>5+6 达成概率</strong>：<strong>${(prob * 100).toFixed(2)}%</strong></div>` +
+                `<div style="margin-top:8px"><strong>当期角色期望</strong>：${(sumUpChar / simC).toFixed(3)}，<strong>当期武器期望</strong>：${(sumUpWeapon / simC).toFixed(3)}</div>` +
+                `<div style="margin-top:8px"><strong>总武库配额期望</strong>：${(sumWuku / simC).toFixed(0)}，<strong>可申领次数期望</strong>：${(sumApply / simC).toFixed(2)}</div>` +
+                `<div style="margin-top:8px;font-size:0.75rem;color:#666666">${simC.toLocaleString()} 次模拟；角色基础抽数 ${baseN}，现有武库配额 ${initWuku}；保障换抽${useBaozhang ? "开启" : "关闭"}（初始 ${initBaozhang}，角色侧期望额外换抽 ${(sumExchange / simC).toFixed(2)}）；角色产出的武库配额已计入武器申领。规则详见上方「抽卡口径」。</div>`;
+        });
     });
 });

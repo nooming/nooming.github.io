@@ -73,3 +73,73 @@ function saveState() {
     }
 }
 
+// 导出笔记（下载 JSON，不上传）
+function exportNotesData() {
+    try {
+        const payload = JSON.stringify(state, null, 2);
+        const blob = new Blob([payload], { type: 'application/json;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+        a.href = url;
+        a.download = `handwrite-note-data-${stamp}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        if (typeof showToast === 'function') {
+            showToast('已导出备份文件', 'success');
+        }
+    } catch (err) {
+        console.error('导出失败:', err);
+        alert('导出失败，请重试。');
+    }
+}
+
+// 触发导入文件选择
+function triggerImportNotes() {
+    const input = document.getElementById('notesImportInput');
+    if (input) {
+        input.value = '';
+        input.click();
+    }
+}
+
+// 从 JSON 文件导入（覆盖前确认；只写本机 localStorage）
+function importNotesData(file) {
+    if (!file) return;
+    if (!confirm('导入将覆盖当前本机笔记，确定继续？')) {
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = function () {
+        try {
+            const loaded = JSON.parse(String(reader.result || ''));
+            if (!loaded || typeof loaded !== 'object') {
+                throw new Error('格式无效');
+            }
+            // 先清空再按 loadState 同逻辑灌入
+            state.pages = [];
+            state.activePageId = null;
+            localStorage.setItem('handwrite-note-data', JSON.stringify(loaded));
+            loadState();
+            saveState();
+            if (typeof multiSelectMode !== 'undefined') {
+                multiSelectMode = false;
+                selectedPageIds = [];
+            }
+            render();
+            if (typeof showToast === 'function') {
+                showToast('导入成功', 'success');
+            }
+        } catch (err) {
+            console.error('导入失败:', err);
+            alert('导入失败：文件不是有效的笔记备份。');
+        }
+    };
+    reader.onerror = function () {
+        alert('读取文件失败，请重试。');
+    };
+    reader.readAsText(file, 'utf-8');
+}
+

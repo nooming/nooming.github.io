@@ -140,20 +140,15 @@ h1 {
 
 .tips-tag, .feature-tag {
     display: inline-block;
-    padding: 6px 14px;
-    font-size: 0.85rem;
-    margin-bottom: 15px;
+    padding: 2px 8px;
+    font-size: 0.75rem;
+    margin-bottom: 10px;
     font-weight: 600;
-}
-
-.tips-tag {
-    background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
-    color: #d63031;
-}
-
-.feature-tag {
-    background: linear-gradient(135deg, #a8e6cf 0%, #88d8a3 100%);
-    color: #00b894;
+    letter-spacing: 0.02em;
+    line-height: 1.4;
+    background: transparent;
+    color: var(--color-ink);
+    border: 1px solid var(--color-ink);
 }
 
 .tips-btn, .tool-btn {
@@ -263,56 +258,54 @@ h1 {
     min-width: 0;
 }
 
-#practice .tips-cards.tips-cards--practice {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    max-width: 1200px;
-}
-
-#tools .features.features--tools {
+#practice .features.features--practice,
+#tools .features.features--tools,
+#other .features.features--other {
     grid-template-columns: 1fr;
+    max-width: 920px;
 }
 
 @media (min-width: 768px) {
-    #tools .features.features--tools {
+    #practice .features.features--practice,
+    #tools .features.features--tools,
+    #other .features.features--other {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
-#other .tips-cards.tips-cards--other {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    max-width: 1200px;
-}
-
-.tips-card--compact {
+.feature-card--compact {
     padding: 14px 16px;
 }
 
-.tips-card--compact .card-icon-title {
-    margin-bottom: 4px;
+.feature-card--compact .card-icon-title {
+    margin-bottom: 0;
 }
 
-.tips-card--compact .card-icon {
+.feature-card--compact .card-icon {
     width: 1.6rem;
     height: 1.6rem;
 }
 
-.tips-card--compact .tips-title,
-.tips-card--compact .feature-title {
+.feature-card--compact .feature-title {
     font-size: 1.05rem;
 }
 
-.tips-card--compact .tips-btn,
-.tips-card--compact .tool-btn {
-    margin-top: 10px;
-    padding: 8px 16px;
-    font-size: 0.85rem;
+.other-articles {
+    margin-top: 18px;
+    max-width: 920px;
+}
+
+.other-articles-title {
+    margin: 0 0 8px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--color-theme-ink);
 }
 
 .other-links {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    margin-top: 8px;
 }
 
 .other-links a {
@@ -328,17 +321,10 @@ h1 {
     text-decoration: underline;
 }
 
-@media (max-width: 900px) {
-    #practice .tips-cards.tips-cards--practice,
-    #other .tips-cards.tips-cards--other {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
 @media (max-width: 575.98px) {
-    #practice .tips-cards.tips-cards--practice,
+    #practice .features.features--practice,
     #tools .features.features--tools,
-    #other .tips-cards.tips-cards--other,
+    #other .features.features--other,
     .tips-cards.tips-cards--pair {
         grid-template-columns: 1fr;
     }
@@ -408,7 +394,7 @@ h1 {
 
     footer.site-footer {
         margin-top: 30px;
-        padding: 16px;
+        padding: 12px 4px 4px;
         font-size: 0.85rem;
     }
 }
@@ -447,7 +433,8 @@ h1 {
     overflow: visible;
 }
 
-.hub-home a.tips-card--compact .card-icon-title {
+.hub-home a.tips-card--compact .card-icon-title,
+.hub-home a.feature-card--compact .card-icon-title {
     margin-bottom: 0;
 }
 

@@ -282,6 +282,44 @@ function unoAiSkipAction() {
     return unoAiApplyTurnAdvance(unoAiNextPlayer(uid))
 }
 
+function unoCurrentColor(cen) {
+    if (!cen) return 'R'
+    if (cen[0] === '!') return cen[2] || 'R'
+    return cen[0]
+}
+
+function unoIsActionCard(card) {
+    const n = card[1]
+    return n === '-' || n === 'R' || n === '+'
+}
+
+function chooseUnoAiCard(uid, playable) {
+    if (!playable.length) return null
+    const nextUid = unoAiNextPlayer(uid)
+    const nextLeft = (cur.cards[nextUid] || []).length
+    const color = unoCurrentColor(cur.cen)
+
+    if (nextLeft === 1) {
+        const attacks = playable.filter(c => unoIsActionCard(c) || c[0] === '!')
+        // 优先禁止/转向/+2，其次 +4
+        const soft = attacks.filter(c => c[0] !== '!' && (c[1] === '-' || c[1] === 'R' || c[1] === '+'))
+        if (soft.length) return soft[0]
+        const wildPlus = attacks.find(c => c[0] === '!' && c[1] === '+')
+        if (wildPlus) return wildPlus
+        if (attacks.length) return attacks[0]
+    }
+
+    const nonWild = playable.filter(c => c[0] !== '!')
+    if (nonWild.length) {
+        const sameColor = nonWild.filter(c => c[0] === color)
+        const pool = sameColor.length ? sameColor : nonWild
+        // 普通牌优先于功能牌，能减手牌即可
+        const normals = pool.filter(c => !unoIsActionCard(c))
+        return (normals.length ? normals : pool)[0]
+    }
+    return playable[0]
+}
+
 function scheduleUnoAiTurn() {
     stopUnoAiTimer()
     if (!unoAi.enabled || tt != 1 || cur.now == cur.you) return
@@ -294,12 +332,13 @@ function scheduleUnoAiTurn() {
         }
         const playable = (cur.cards[uid] || []).filter(c => validCard(cur.cen, c))
         if (playable.length) {
-            const nonWild = playable.filter(c => c[0] != '!')
-            return unoAiPlayCard(uid, (nonWild.length ? nonWild[0] : playable[0]), false)
+            return unoAiPlayCard(uid, chooseUnoAiCard(uid, playable), false)
         }
         cur.cards[uid].push(unoAiDrawCard())
         const afterDrawPlayable = (cur.cards[uid] || []).filter(c => validCard(cur.cen, c))
-        if (afterDrawPlayable.length) return unoAiPlayCard(uid, afterDrawPlayable[0], false)
+        if (afterDrawPlayable.length) {
+            return unoAiPlayCard(uid, chooseUnoAiCard(uid, afterDrawPlayable), false)
+        }
         return unoAiApplyTurnAdvance(unoAiNextPlayer(uid))
     }, 650)
 }
