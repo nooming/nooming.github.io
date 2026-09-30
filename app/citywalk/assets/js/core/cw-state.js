@@ -19,7 +19,7 @@ const CW = {
     poiTypeLocked: false,      // 用户点击偏好芯片后为 true，提交时优先生效
     selectedRouteStyle: "balanced",
     selectedVisitPace: "checkin", // checkin | relaxed
-    selectedTimeOfDay: "now",  // now | afternoon | evening | night
+    selectedTimeOfDay: "now",  // now | morning | afternoon | evening | night
     pinnedSeeds: [],           // 必去点，最多 3 个 {name,lng,lat,...}
     skippedPoiKeys: {},        // 结果页跳过的可选站 key -> true
     walkProgressIndex: -1,     // 逐站导航进度：-1=在起点

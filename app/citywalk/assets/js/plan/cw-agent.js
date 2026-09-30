@@ -296,9 +296,9 @@ function applyAgentParsedParams(parsed, routeData) {
     }
 
     if (parsed.time_of_day) {
-        const todMap = { '现在': 'now', '午后': 'afternoon', '傍晚': 'evening', '夜晚': 'night' };
+        const todMap = { '现在': 'now', '上午': 'morning', '午后': 'afternoon', '傍晚': 'evening', '夜晚': 'night' };
         const tod = todMap[parsed.time_of_day] || parsed.time_of_day;
-        if (['now', 'afternoon', 'evening', 'night'].includes(tod)) {
+        if (['now', 'morning', 'afternoon', 'evening', 'night'].includes(tod)) {
             CW.selectedTimeOfDay = tod;
             document.querySelectorAll('.time-of-day-btn').forEach(b => {
                 const on = b.getAttribute('data-tod') === tod;

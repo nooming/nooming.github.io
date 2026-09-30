@@ -138,6 +138,11 @@
         </nav>
 
         <div class="panel-body">
+            <div class="share-restore-banner" id="shareRestoreBanner" hidden>
+                <span id="shareRestoreText">已从链接载入参数</span>
+                <button type="button" class="btn btn-agent-plan" id="btnShareReplan">按此规划</button>
+            </div>
+
             <section id="panel-shared" class="panel-shared plan-mode-route" aria-label="选点与模式">
                 <div class="search-box search-box--compact">
                     <label for="searchInput" class="sr-only">搜索地址</label>
@@ -186,6 +191,7 @@
                     <div class="filter-title" id="timeOfDayTitle">出行时段</div>
                     <div class="time-of-day-group poi-type-group" role="group" aria-labelledby="timeOfDayTitle">
                         <button type="button" class="time-of-day-btn poi-type-btn active" data-tod="now" aria-pressed="true">现在</button>
+                        <button type="button" class="time-of-day-btn poi-type-btn" data-tod="morning" aria-pressed="false">上午</button>
                         <button type="button" class="time-of-day-btn poi-type-btn" data-tod="afternoon" aria-pressed="false">午后</button>
                         <button type="button" class="time-of-day-btn poi-type-btn" data-tod="evening" aria-pressed="false">傍晚</button>
                         <button type="button" class="time-of-day-btn poi-type-btn" data-tod="night" aria-pressed="false">夜晚</button>
@@ -206,11 +212,6 @@
                         <button type="button" class="recent-routes-clear" id="btnClearRecentMain">清空</button>
                     </div>
                     <div class="recent-routes-list" id="recentRoutesListMain"></div>
-                </div>
-
-                <div class="share-restore-banner" id="shareRestoreBanner" hidden>
-                    <span id="shareRestoreText">已从链接载入参数</span>
-                    <button type="button" class="btn btn-agent-plan" id="btnShareReplan">按此重新规划</button>
                 </div>
             </section>
 

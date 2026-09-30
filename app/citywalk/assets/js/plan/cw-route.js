@@ -406,9 +406,11 @@ function generateRoute() {
 
     let poiType = (CW.selectedPoiType || '无偏好').trim();
     const tod = CW.selectedTimeOfDay || 'now';
-    // 手动规划无 LLM：傍晚/夜晚且未锁定偏好时，轻量偏室内咖啡
+    // 手动规划无 LLM：时段且未锁定偏好时，轻量偏置
     if ((tod === 'evening' || tod === 'night') && poiType === '无偏好' && !CW.poiTypeLocked) {
         poiType = '咖啡甜品';
+    } else if (tod === 'morning' && poiType === '无偏好' && !CW.poiTypeLocked) {
+        poiType = '自然';
     }
 
     const start = [parseFloat(CW.startPoint.lng.toFixed(6)), parseFloat(CW.startPoint.lat.toFixed(6))];

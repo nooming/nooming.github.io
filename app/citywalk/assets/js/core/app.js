@@ -363,12 +363,15 @@ ${poiText}
         bindClick('btnShareReplan', () => {
             const banner = document.getElementById('shareRestoreBanner');
             if (banner) banner.hidden = true;
-            if (typeof agentPlanCanSubmit === 'function' && agentPlanCanSubmit()) {
-                generateSmartRoute();
-            } else if (CW.startPoint && (CW.planMode === 'loop' || CW.endPoint)) {
-                generateRoute();
+            const coordsReady = CW.planMode === 'loop'
+                ? !!CW.startPoint
+                : !!(CW.startPoint && CW.endPoint);
+            // 分享链接不含描述框；有起终点（或环线中心）即可规划
+            if (coordsReady) {
+                if (typeof generateSmartRoute === 'function') generateSmartRoute();
+                else if (typeof generateRoute === 'function') generateRoute();
             } else {
-                showToast('请先确认起终点与描述，再规划');
+                showToast('请先确认起终点，再规划');
             }
         });
         bindClick('btnBackToPlan', () => {
@@ -482,6 +485,10 @@ ${poiText}
         // ===== 地图初始化（通过 index.html 的就绪桥接，取代 setTimeout 猜测）=====
         window.__cwOnAMapReady = function() {
             if (!CW.map) initMap();
+            // 分享起终点须在地图存在后落点（init 早期可能已解析偏好）
+            if (typeof finishShareRestoreAfterMapReady === 'function') {
+                finishShareRestoreAfterMapReady();
+            }
         };
         if (window.AMap || window.__amapReady) {
             window.__cwOnAMapReady();

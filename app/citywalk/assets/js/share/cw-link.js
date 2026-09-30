@@ -150,8 +150,20 @@ function parseShareableRouteFromLocation() {
     return null;
 }
 
-function applyShareableRouteForm(payload) {
+/** 待恢复的分享载荷；起终点须等地图就绪后再落点 */
+let _cwPendingSharePayload = null;
+let _cwSharePrefsApplied = false;
+let _cwShareEndpointsApplied = false;
+
+function sharePayloadNeedsEndpoints(payload) {
     if (!payload) return false;
+    if (!(Number.isFinite(payload.slng) && Number.isFinite(payload.slat))) return false;
+    if (payload.mode === 'loop') return true;
+    return Number.isFinite(payload.elng) && Number.isFinite(payload.elat);
+}
+
+function applyShareableRoutePrefs(payload) {
+    if (!payload || _cwSharePrefsApplied) return false;
     if (payload.city) {
         CW.currentCity = payload.city;
         const cityEl = document.getElementById('currentCity');
@@ -173,27 +185,6 @@ function applyShareableRouteForm(payload) {
     });
     if (payload.locked) CW.poiTypeLocked = true;
 
-    if (Number.isFinite(payload.slng) && Number.isFinite(payload.slat)) {
-        setStartPoint({
-            lng: payload.slng,
-            lat: payload.slat,
-            address: payload.sn || '',
-        });
-        if (payload.sn && typeof setPickupStatusText === 'function') {
-            setPickupStatusText('startValue', payload.sn);
-        }
-    }
-    if (payload.mode !== 'loop' && Number.isFinite(payload.elng) && Number.isFinite(payload.elat)) {
-        setEndPoint({
-            lng: payload.elng,
-            lat: payload.elat,
-            address: payload.en || '',
-        });
-        if (payload.en && typeof setPickupStatusText === 'function') {
-            setPickupStatusText('endValue', payload.en);
-        }
-    }
-
     CW.pinnedSeeds = Array.isArray(payload.seeds)
         ? payload.seeds.map(s => ({
             name: s.n || s.name,
@@ -203,18 +194,93 @@ function applyShareableRouteForm(payload) {
         : [];
     if (typeof renderPinnedSeeds === 'function') renderPinnedSeeds();
     updateBtnStatus();
+    _cwSharePrefsApplied = true;
     return true;
+}
+
+/** 地图就绪后落点；地图缺失时不抛错、不标成功 */
+function applyShareableRouteEndpoints(payload) {
+    if (!payload || _cwShareEndpointsApplied) return _cwShareEndpointsApplied;
+    if (!sharePayloadNeedsEndpoints(payload)) {
+        _cwShareEndpointsApplied = true;
+        return true;
+    }
+    if (!CW.map || !window.AMap) return false;
+
+    try {
+        if (Number.isFinite(payload.slng) && Number.isFinite(payload.slat)) {
+            setStartPoint({
+                lng: payload.slng,
+                lat: payload.slat,
+                address: payload.sn || '',
+            });
+            if (payload.sn && typeof setPickupStatusText === 'function') {
+                setPickupStatusText('startValue', payload.sn);
+            }
+        }
+        if (payload.mode !== 'loop' && Number.isFinite(payload.elng) && Number.isFinite(payload.elat)) {
+            setEndPoint({
+                lng: payload.elng,
+                lat: payload.elat,
+                address: payload.en || '',
+            });
+            if (payload.en && typeof setPickupStatusText === 'function') {
+                setPickupStatusText('endValue', payload.en);
+            }
+        }
+        if (payload.city && CITY_COORDS[payload.city] && CW.map) {
+            CW.map.setCenter(CITY_COORDS[payload.city]);
+        }
+        updateBtnStatus();
+        _cwShareEndpointsApplied = true;
+        return true;
+    } catch (e) {
+        console.warn('分享起终点落点失败（地图可能未就绪）', e);
+        return false;
+    }
+}
+
+function showShareRestoreBanner(payload) {
+    if (!payload) return;
+    const banner = document.getElementById('shareRestoreBanner');
+    const text = document.getElementById('shareRestoreText');
+    if (text) {
+        text.textContent = `已载入分享参数：${payload.city || CW.currentCity} · ${payload.duration || 60} 分钟`;
+    }
+    if (banner) banner.hidden = false;
+}
+
+/**
+ * 地图就绪后重试起终点落点；成功后再显示横幅。
+ * 无坐标的分享仅展示偏好横幅。
+ */
+function finishShareRestoreAfterMapReady() {
+    const payload = _cwPendingSharePayload;
+    if (!payload) return;
+    applyShareableRoutePrefs(payload);
+    const endpointsOk = applyShareableRouteEndpoints(payload);
+    if (!endpointsOk) return;
+    showShareRestoreBanner(payload);
+    // 不自动请求 API
+}
+
+function applyShareableRouteForm(payload) {
+    if (!payload) return false;
+    _cwPendingSharePayload = payload;
+    applyShareableRoutePrefs(payload);
+    return applyShareableRouteEndpoints(payload);
 }
 
 function initShareableRouteFromUrl() {
     const payload = parseShareableRouteFromLocation();
     if (!payload) return;
-    applyShareableRouteForm(payload);
-    const banner = document.getElementById('shareRestoreBanner');
-    const text = document.getElementById('shareRestoreText');
-    if (banner) banner.hidden = false;
-    if (text) {
-        text.textContent = `已载入分享参数：${payload.city || CW.currentCity} · ${payload.duration || 60} 分钟`;
+    _cwPendingSharePayload = payload;
+    applyShareableRoutePrefs(payload);
+    // 有坐标：等地图就绪再落点并显示横幅；无坐标：直接显示横幅
+    if (!sharePayloadNeedsEndpoints(payload)) {
+        showShareRestoreBanner(payload);
+        return;
     }
-    // 不自动请求 API
+    if (CW.map) finishShareRestoreAfterMapReady();
+    // 否则由 __cwOnAMapReady / initMap 末尾重试
 }

@@ -2106,6 +2106,9 @@
             box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
             transition: var(--transition);
         }
+        .btn-route-action + .btn-route-action {
+            margin-top: var(--space-3);
+        }
         .btn-route-action:hover { transform: translateY(-1px); }
 
         /* 灵感种草开关 */
@@ -2575,7 +2578,7 @@
             border-top: 1px solid var(--border-light);
         }
         .share-restore-banner {
-            margin-top: 10px;
+            margin: 0 0 10px;
             padding: 10px;
             border-radius: var(--radius-sm);
             background: rgba(var(--primary-rgb, 255,126,95), 0.08);
@@ -2583,6 +2586,9 @@
             flex-direction: column;
             gap: 8px;
             font-size: 13px;
+        }
+        .share-restore-banner[hidden] {
+            display: none !important;
         }
         .share-restore-banner .btn { margin: 0; }
 
