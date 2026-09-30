@@ -2,20 +2,18 @@
 
 ## v2.3
 
-枢纽页改为「入口 / 实践 / 工具 / 其它」，访客站名为 **noomings**；`app/` 下文件夹未按栏目搬迁。
+枢纽页改为「入口 / 实践 / 工具 / 其它」，访客站名为 noomings，`app/` 下文件夹未按栏目搬迁；本版同步上线 Markdown 阅读、图片识字，并优化 Citywalk。
 
 1. 首页（`index.html`）：四栏分组、整卡链接、条目更紧凑；标题 / canonical / og 为 `https://noomings.com/`；简介区分浏览器内完成与需联网。实践区增加外链「物理探究」（`https://physics.noomings.com`）。
 2. 新增 Markdown 阅读（`app/markdown/`）：全宽预览，粘贴或拖入 `.md`，目录见 `catalog.json`。
-3. 新增图片识字（`app/ocr/`）：引擎可选「标准（PaddleOCR）」与「轻量（Tesseract）」；默认为标准。图仍不离开浏览器。标准引擎首次下载检测/识别模型（约 20MB）及 ONNX Runtime WASM，之后由浏览器缓存；识别可能要几秒。标准引擎加载失败时自动改用轻量引擎。
-4. 未采用官方 `@paddleocr/paddleocr-js`：该包依赖 OpenCV.js 与打包器，多线程 WASM 还需 COOP/COEP，GitHub Pages 不易配置。改为 vendored `@ocr-web/core` + jsDelivr 上的 PP-OCRv5 ONNX / `onnxruntime-web` 单线程 WASM。轻量引擎为 Tesseract.js（按需加载 CDN，canvas 预处理保留）；首页工具卡与 `docs/README.md` 同步为双引擎表述。
-5. 音频转换（`app/practical/audio-converter/`）改为本地 `lamejs`，修复转码失败。
-6. 枢纽页返回改为「返回」；合集页整卡可点；页脚「© 2026 noomings · 非商业使用」。删除 `articles/parking-pso/` 占位，应用仍在 `app/parking-pso/`。
-7. **Citywalk 体验优化**（`app/citywalk/` + `noomings_backend/citywalk/`）：
-   - 主路径前置偏好 / 逛法节奏（密集打卡 · 慢慢逛）/ 出行时段；显式偏好芯片提交时优先生效，不再被默认「无偏好」静默覆盖。
-   - 结果页默认叙事（为何这些站、可选站、计划 vs 预计）；雨雪/极端气温在统计旁提供室内重规划；对话输入默认可见。
-   - 逐站「下一站」高德步行导航（含环线）；可选站可跳过而不整线重规划；必去点（最多 3）可从搜索或地图长按订入。
-   - 诚实加载文案与失败重试；主题持久化；viewport 允许双指缩放；成功后可复制分享链接（query / 过长则 sessionStorage）；地图 Key 优先拉取公共配置并以现有 Key 为回退。
-   - 最近路线出现在规划主界面；灵感卡片仅展示地理编码成功的点；灵感联网选点改用博查（Bocha），已移除 Tavily。
+3. 新增图片识字（`app/ocr/`）：默认在浏览器内跑标准引擎（PP-OCRv5），失败则改用轻量 Tesseract；图不离开浏览器。标准引擎首次下载模型（约 20MB），之后缓存；首页工具卡与 `docs/README.md` 同步为双引擎表述。
+4. 音频转换（`app/practical/audio-converter/`）改为本地 `lamejs`，修复转码失败。
+5. 枢纽页返回改为「返回」；合集页整卡可点；页脚「© 2026 noomings · 非商业使用」。删除 `articles/parking-pso/` 占位，应用仍在 `app/parking-pso/`。
+6. Citywalk：偏好、逛法节奏（密集打卡 / 慢慢逛）与出行时段在规划前可见；显式偏好芯片优先生效，不再被默认「无偏好」覆盖。
+7. Citywalk 结果页：默认一行叙事（为何这些站、可选站、计划 vs 预计）；雨雪或极端气温时在统计旁提供室内重规划；对话输入默认可见。
+8. Citywalk：逐站「下一站」高德步行导航（含环线）；可选站可跳过而不整线重规划；必去点最多 3 个，可从搜索或地图长按订入。
+9. Citywalk：诚实加载文案与失败重试；主题持久化；允许双指缩放；成功后可复制分享链接。地图 Key 优先公共配置，现有 Key 为回退。
+10. Citywalk：最近路线出现在规划主界面；灵感卡片仅展示地理编码成功的点；灵感联网改用博查，已移除 Tavily。
 
 ## v2.2
 
