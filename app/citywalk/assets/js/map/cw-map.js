@@ -107,11 +107,16 @@ function initMap() {
     }
 }
 
-/** 浏览器定位：授权则返回 {lng,lat}，拒绝 / 超时 / 不支持则 null（不弹阻塞错误） */
+/**
+ * 浏览器定位。
+ * 成功：{ coords: {lng,lat}, failCode: null }
+ * 失败：{ coords: null, failCode }（1 拒绝 / 2 不可用 / 3 超时；不支持为 null）
+ * 不弹阻塞错误 toast。
+ */
 function getBrowserPosition() {
     return new Promise((resolve) => {
         if (!navigator.geolocation) {
-            resolve(null);
+            resolve({ coords: null, failCode: null });
             return;
         }
         navigator.geolocation.getCurrentPosition(
@@ -119,15 +124,44 @@ function getBrowserPosition() {
                 const lng = pos.coords.longitude;
                 const lat = pos.coords.latitude;
                 if (!Number.isFinite(lng) || !Number.isFinite(lat)) {
-                    resolve(null);
+                    resolve({ coords: null, failCode: null });
                     return;
                 }
-                resolve({ lng, lat });
+                resolve({ coords: { lng, lat }, failCode: null });
             },
-            () => resolve(null),
+            (err) => {
+                const code = err && err.code != null ? err.code : 0;
+                resolve({ coords: null, failCode: code });
+            },
             { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
         );
     });
+}
+
+function _queryGeolocationPermission() {
+    if (!navigator.permissions || typeof navigator.permissions.query !== 'function') {
+        return Promise.resolve(null);
+    }
+    return navigator.permissions.query({ name: 'geolocation' }).catch(() => null);
+}
+
+/** 权限仍为 prompt 时：等用户点允许后再真正用坐标定位（清掉已 settled 的 promise） */
+function _watchGeolocationGrant(locateGen, status) {
+    if (CW._geoLocateRetryArmed) return;
+    CW._geoLocateRetryArmed = true;
+    const onChange = () => {
+        if (status.state === 'granted') {
+            status.removeEventListener('change', onChange);
+            if ((CW.cityLocateGen || 0) !== locateGen) return;
+            if (_shareCityLocksLocate()) return;
+            CW.cityLocatePromise = null;
+            CW.cityLocateReady = false;
+            locateUserCity({ isRetry: true });
+        } else if (status.state === 'denied') {
+            status.removeEventListener('change', onChange);
+        }
+    };
+    status.addEventListener('change', onChange);
 }
 
 function _shareCityLocksLocate() {
@@ -160,8 +194,9 @@ function _applyLocatedCity(data, locateGen) {
     getCityWeather(CW.currentCity, true);
 }
 
-async function locateUserCity() {
-    if (CW.cityLocatePromise) {
+async function locateUserCity(opts) {
+    const isRetry = !!(opts && opts.isRetry);
+    if (CW.cityLocatePromise && !isRetry) {
         return CW.cityLocatePromise;
     }
     CW.cityLocatePromise = (async () => {
@@ -177,10 +212,27 @@ async function locateUserCity() {
         }
 
         try {
-            const coords = await getBrowserPosition();
+            let { coords, failCode } = await getBrowserPosition();
             if ((CW.cityLocateGen || 0) !== locateGen) {
                 return;
             }
+
+            // 首次超时/失败且非明确拒绝：权限已 granted 则立刻再取一次；
+            // 仍为 prompt 则监听 change→granted 后重试；无 Permissions API 则单次重试。
+            if (!coords && failCode !== 1 && !isRetry) {
+                const permStatus = await _queryGeolocationPermission();
+                if ((CW.cityLocateGen || 0) !== locateGen) return;
+
+                if (permStatus && permStatus.state === 'granted') {
+                    ({ coords, failCode } = await getBrowserPosition());
+                } else if (permStatus && permStatus.state === 'prompt') {
+                    _watchGeolocationGrant(locateGen, permStatus);
+                } else if (!permStatus && failCode === 3) {
+                    ({ coords, failCode } = await getBrowserPosition());
+                }
+                if ((CW.cityLocateGen || 0) !== locateGen) return;
+            }
+
             let url = `${CW_API}/locate_city`;
             if (coords) {
                 url += `?lng=${encodeURIComponent(coords.lng)}&lat=${encodeURIComponent(coords.lat)}`;
