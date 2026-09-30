@@ -51,6 +51,54 @@ function initMap() {
             }
         });
 
+        // 长按地图：订为必去点（桌面右键 / 移动端长按）
+        let longPressTimer = null;
+        const clearLongPress = () => {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+        };
+        CW.map.on('rightclick', function(e) {
+            const lng = parseFloat(e.lnglat.lng.toFixed(6));
+            const lat = parseFloat(e.lnglat.lat.toFixed(6));
+            reverseGeocode(lng, lat, function(address) {
+                if (typeof pinMustGoSpot === 'function') {
+                    pinMustGoSpot({
+                        name: address || `地图点 (${lng.toFixed(4)}, ${lat.toFixed(4)})`,
+                        lng, lat,
+                    });
+                }
+            });
+        });
+        const mapContainer = document.getElementById('container');
+        if (mapContainer) {
+            mapContainer.addEventListener('touchstart', function(ev) {
+                if (!ev.touches || ev.touches.length !== 1) return;
+                const touch = ev.touches[0];
+                clearLongPress();
+                longPressTimer = setTimeout(function() {
+                    if (!CW.map) return;
+                    const rect = mapContainer.getBoundingClientRect();
+                    const local = new AMap.Pixel(touch.clientX - rect.left, touch.clientY - rect.top);
+                    const lnglat = CW.map.containerToLngLat(local);
+                    if (!lnglat) return;
+                    const lng = parseFloat(lnglat.lng.toFixed(6));
+                    const lat = parseFloat(lnglat.lat.toFixed(6));
+                    reverseGeocode(lng, lat, function(address) {
+                        if (typeof pinMustGoSpot === 'function') {
+                            pinMustGoSpot({
+                                name: address || `地图点 (${lng.toFixed(4)}, ${lat.toFixed(4)})`,
+                                lng, lat,
+                            });
+                        }
+                    });
+                }, 650);
+            }, { passive: true });
+            mapContainer.addEventListener('touchend', clearLongPress, { passive: true });
+            mapContainer.addEventListener('touchmove', clearLongPress, { passive: true });
+        }
+
         startWeatherRefresh();
         locateUserCity();
     } catch (e) {
@@ -289,15 +337,33 @@ function searchAddress(keyword) {
                 CW.infoWindow.setContent(`<div class="search-infowin">
                     <strong>${cwEscapeHtml(poi.name)}</strong><br/>
                     <span class="search-infowin-addr">${cwEscapeHtml(poi.address || '')}</span><br/>
-                    <span class="search-infowin-hint">点击地图设为起点或终点</span>
+                    <span class="search-infowin-hint">点击地图设为起点或终点</span><br/>
+                    <button type="button" class="btn-pin-mustgo" id="btnPinSearchMustGo">订为必去</button>
                 </div>`);
                 CW.infoWindow.open(CW.map, [poi.location.lng, poi.location.lat]);
-                showToast(`✅ 找到 "${poi.name}"，点击地图选择为起点或终点`);
+                showToast(`✅ 找到 "${poi.name}"，可订为必去或点地图设起终点`);
+                setTimeout(() => {
+                    const pinBtn = document.getElementById('btnPinSearchMustGo');
+                    if (pinBtn) {
+                        pinBtn.addEventListener('click', (ev) => {
+                            ev.preventDefault();
+                            ev.stopPropagation();
+                            if (typeof pinMustGoSpot === 'function') {
+                                pinMustGoSpot({
+                                    name: poi.name,
+                                    lng: parseFloat(poi.location.lng.toFixed(6)),
+                                    lat: parseFloat(poi.location.lat.toFixed(6)),
+                                    category: poi.type || '',
+                                });
+                            }
+                        });
+                    }
+                }, 0);
 
                 setTimeout(() => {
                     if (CW.searchMarker) { CW.map.remove(CW.searchMarker); CW.searchMarker = null; }
                     CW.infoWindow.close();
-                }, 5000);
+                }, 8000);
             } else {
                 tryGeocodeSearch(keyword);
             }

@@ -47,12 +47,25 @@ async function fetchInspirationCards() {
     }
 }
 
-function renderInspirationEmpty(message) {
+function inspirationSourceHint(source, hasSpots) {
+    if (source === 'web') return '本次来自公开网页';
+    if (hasSpots) return '本次未搜到网页，以下为估计';
+    return '';
+}
+
+function renderInspirationEmpty(message, source) {
     const wrap = document.getElementById('inspireCards');
     if (!wrap) return;
     CW.inspireCandidates = [];
     wrap.hidden = false;
     wrap.innerHTML = '';
+    const hint = inspirationSourceHint(source, false);
+    if (hint) {
+        const note = document.createElement('div');
+        note.className = 'inspire-source-hint';
+        note.textContent = hint;
+        wrap.appendChild(note);
+    }
     const empty = document.createElement('div');
     empty.className = 'inspire-empty';
     empty.textContent = message || '这次没找到合适的候选点，换个说法或片区再试试';
@@ -67,9 +80,10 @@ function renderInspirationCards(data) {
         s => s && s.name && typeof s.lng === 'number' && typeof s.lat === 'number'
     ) : [];
     CW.inspireCandidates = spots;
+    const source = data && (data.source === 'web' || data.source === 'llm') ? data.source : '';
 
     if (spots.length === 0) {
-        renderInspirationEmpty('这次没找到可定位的候选点，换个说法或片区再试试');
+        renderInspirationEmpty('这次没找到可定位的候选点，换个说法或片区再试试', source);
         return;
     }
 
@@ -84,6 +98,14 @@ function renderInspirationCards(data) {
         ? `灵感主题：${themes.join(' · ')}　勾选想去的点`
         : '勾选想去的点，再用选中的点规划';
     wrap.appendChild(head);
+
+    const sourceHint = inspirationSourceHint(source, true);
+    if (sourceHint) {
+        const note = document.createElement('div');
+        note.className = 'inspire-source-hint';
+        note.textContent = sourceHint;
+        wrap.appendChild(note);
+    }
 
     const list = document.createElement('div');
     list.className = 'inspire-card-list';
@@ -200,7 +222,9 @@ async function planWithSelectedInspiration() {
                 plan_time_min: parseInt(document.getElementById('planTimeSlider')?.value, 10) || 60,
                 selected_spots: seeds,
             };
-        body.selected_spots = seeds;
+        body.selected_spots = typeof getCombinedPlanSeeds === 'function'
+            ? getCombinedPlanSeeds()
+            : seeds;
         const response = await fetch(`${CW_API}/agent/plan_inspired`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },

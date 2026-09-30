@@ -2,20 +2,32 @@
         // 状态变量与常量已在 cw-state.js 中声明
         // 地图/天气/路线/分享函数已在 cw-map.js / cw-weather.js / cw-route.js / cw-share.js 中声明
 
-        // ===== 主题 =====
-        function setRandomTheme() {
-            CW.currentTheme = colorThemes[Math.floor(Math.random() * colorThemes.length)];
+        // ===== 主题（持久化，刷新不重随）=====
+        const CW_THEME_KEY = 'cw_theme_v1';
+
+        function applyTheme(theme) {
+            if (!theme) return;
+            CW.currentTheme = theme;
             const root = document.documentElement;
-            root.style.setProperty('--primary', CW.currentTheme.primary);
-            root.style.setProperty('--primary-light', CW.currentTheme.primaryLight);
-            root.style.setProperty('--primary-dark', CW.currentTheme.primaryDark);
-            if (CW.currentTheme.primaryRgb) {
-                root.style.setProperty('--primary-rgb', CW.currentTheme.primaryRgb);
+            root.style.setProperty('--primary', theme.primary);
+            root.style.setProperty('--primary-light', theme.primaryLight);
+            root.style.setProperty('--primary-dark', theme.primaryDark);
+            if (theme.primaryRgb) {
+                root.style.setProperty('--primary-rgb', theme.primaryRgb);
+            }
+            if (theme.name) {
+                try { localStorage.setItem(CW_THEME_KEY, theme.name); } catch (_) { /* ignore */ }
             }
         }
 
-        // 页面加载时设置随机主题
-        setRandomTheme();
+        function initPersistedTheme() {
+            let savedName = null;
+            try { savedName = localStorage.getItem(CW_THEME_KEY); } catch (_) { /* ignore */ }
+            const found = savedName ? colorThemes.find(t => t.name === savedName) : null;
+            applyTheme(found || colorThemes[Math.floor(Math.random() * colorThemes.length)]);
+        }
+
+        initPersistedTheme();
 
         // ===== 城市切换 =====
         function switchCity() {
@@ -297,14 +309,25 @@ ${poiText}
             });
         }
 
-        // 打卡偏好（仅 .poi-type-group 内、非路线风格按钮）
-        bindSingleSelectGroup('.poi-type-group .poi-type-btn:not(.route-style-btn)', (el) => {
+        // 打卡偏好（共享区芯片；点击即锁定，提交时优先生效）
+        bindSingleSelectGroup('.poi-type-group .poi-type-btn:not(.route-style-btn):not(.visit-pace-btn):not(.time-of-day-btn)', (el) => {
             CW.selectedPoiType = el.dataset.type;
+            CW.poiTypeLocked = true;
         });
 
         // 路线风格
         bindSingleSelectGroup('.route-style-btn', (el) => {
             CW.selectedRouteStyle = el.dataset.style || 'balanced';
+        });
+
+        // 逛法节奏
+        bindSingleSelectGroup('.visit-pace-btn', (el) => {
+            CW.selectedVisitPace = el.dataset.pace === 'relaxed' ? 'relaxed' : 'checkin';
+        });
+
+        // 出行时段
+        bindSingleSelectGroup('.time-of-day-btn', (el) => {
+            CW.selectedTimeOfDay = el.dataset.tod || 'now';
         });
 
         if (typeof initPanelTabs === 'function') initPanelTabs();
@@ -330,8 +353,24 @@ ${poiText}
         bindClick('modeBtnLoop', () => switchPlanMode('loop'));
         bindClick('btnGeneratePlan', generatePlanText);
         bindClick('btnShareImage', generateShareImage);
+        bindClick('btnCopyShareLink', () => {
+            if (typeof copyShareableRouteLink === 'function') copyShareableRouteLink();
+        });
         bindClick('btnOpenAmap', openRouteInAmap);
+        bindClick('btnNextStop', openNextStopInAmap);
         bindClick('btnClearRecent', clearRouteHistory);
+        bindClick('btnClearRecentMain', clearRouteHistory);
+        bindClick('btnShareReplan', () => {
+            const banner = document.getElementById('shareRestoreBanner');
+            if (banner) banner.hidden = true;
+            if (typeof agentPlanCanSubmit === 'function' && agentPlanCanSubmit()) {
+                generateSmartRoute();
+            } else if (CW.startPoint && (CW.planMode === 'loop' || CW.endPoint)) {
+                generateRoute();
+            } else {
+                showToast('请先确认起终点与描述，再规划');
+            }
+        });
         bindClick('btnBackToPlan', () => {
             const tab = CW.lastPlanTab === 'manual' ? 'manual' : 'agent';
             if (typeof switchPanelTab === 'function') switchPanelTab(tab);
@@ -342,10 +381,10 @@ ${poiText}
             try { sessionStorage.setItem('cw_dismiss_tips', '1'); } catch (_) { /* ignore */ }
         });
 
-        // 最近路线 / 收藏：事件委托（恢复 / 收藏 / 删除）
-        const recentList = document.getElementById('recentRoutesList');
-        if (recentList) {
-            recentList.addEventListener('click', (e) => {
+        // 最近路线 / 收藏：事件委托（主列表 + 手动历史）
+        function bindRecentList(el) {
+            if (!el) return;
+            el.addEventListener('click', (e) => {
                 const fav = e.target.closest('.recent-route-fav');
                 if (fav) { toggleFavoriteRoute(fav.dataset.id); return; }
                 const del = e.target.closest('.recent-route-del');
@@ -353,14 +392,18 @@ ${poiText}
                 const main = e.target.closest('.recent-route-main');
                 if (main) { restoreRouteFromHistory(main.dataset.id); }
             });
-            recentList.addEventListener('keydown', (e) => {
+            el.addEventListener('keydown', (e) => {
                 if (e.key !== 'Enter' && e.key !== ' ') return;
                 const main = e.target.closest('.recent-route-main');
                 if (main) { e.preventDefault(); restoreRouteFromHistory(main.dataset.id); }
             });
         }
+        bindRecentList(document.getElementById('recentRoutesList'));
+        bindRecentList(document.getElementById('recentRoutesListMain'));
         // 首屏渲染历史
         if (typeof renderRecentRoutes === 'function') renderRecentRoutes();
+        if (typeof initShareableRouteFromUrl === 'function') initShareableRouteFromUrl();
+        if (typeof renderPinnedSeeds === 'function') renderPinnedSeeds();
 
         // 城市输入框回车切换
         const cityInputEl = document.getElementById('cityInput');

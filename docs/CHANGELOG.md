@@ -10,6 +10,12 @@
 4. 未采用官方 `@paddleocr/paddleocr-js`：该包依赖 OpenCV.js 与打包器，多线程 WASM 还需 COOP/COEP，GitHub Pages 不易配置。改为 vendored `@ocr-web/core` + jsDelivr 上的 PP-OCRv5 ONNX / `onnxruntime-web` 单线程 WASM。轻量引擎为 Tesseract.js（按需加载 CDN，canvas 预处理保留）；首页工具卡与 `docs/README.md` 同步为双引擎表述。
 5. 音频转换（`app/practical/audio-converter/`）改为本地 `lamejs`，修复转码失败。
 6. 枢纽页返回改为「返回」；合集页整卡可点；页脚「© 2026 noomings · 非商业使用」。删除 `articles/parking-pso/` 占位，应用仍在 `app/parking-pso/`。
+7. **Citywalk 体验优化**（`app/citywalk/` + `noomings_backend/citywalk/`）：
+   - 主路径前置偏好 / 逛法节奏（密集打卡 · 慢慢逛）/ 出行时段；显式偏好芯片提交时优先生效，不再被默认「无偏好」静默覆盖。
+   - 结果页默认叙事（为何这些站、可选站、计划 vs 预计）；雨雪/极端气温在统计旁提供室内重规划；对话输入默认可见。
+   - 逐站「下一站」高德步行导航（含环线）；可选站可跳过而不整线重规划；必去点（最多 3）可从搜索或地图长按订入。
+   - 诚实加载文案与失败重试；主题持久化；viewport 允许双指缩放；成功后可复制分享链接（query / 过长则 sessionStorage）；地图 Key 优先拉取公共配置并以现有 Key 为回退。
+   - 最近路线出现在规划主界面；灵感卡片仅展示地理编码成功的点；灵感联网选点改用博查（Bocha），已移除 Tavily。
 
 ## v2.2
 

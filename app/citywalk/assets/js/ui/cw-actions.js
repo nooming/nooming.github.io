@@ -36,6 +36,167 @@ function openRouteInAmap() {
     window.open(url, '_blank', 'noopener');
 }
 
+function getNextStopNavTarget() {
+    const pois = (CW.routeData && Array.isArray(CW.routeData.pois)) ? CW.routeData.pois : [];
+    if (!pois.length) return null;
+    const progress = Number.isFinite(CW.walkProgressIndex) ? CW.walkProgressIndex : -1;
+    let nextIndex = -1;
+    for (let i = progress + 1; i < pois.length; i++) {
+        const poi = pois[i];
+        if (!poi) continue;
+        if (typeof isPoiSkipped === 'function' && isPoiSkipped(poi, i)) continue;
+        if (!Array.isArray(poi.location) || poi.location.length !== 2) continue;
+        nextIndex = i;
+        break;
+    }
+    if (nextIndex < 0) return null;
+
+    let fromLng = CW.startPoint ? CW.startPoint.lng : null;
+    let fromLat = CW.startPoint ? CW.startPoint.lat : null;
+    if (progress >= 0) {
+        for (let i = progress; i >= 0; i--) {
+            const prev = pois[i];
+            if (!prev || (typeof isPoiSkipped === 'function' && isPoiSkipped(prev, i))) continue;
+            if (Array.isArray(prev.location) && prev.location.length === 2) {
+                fromLng = prev.location[0];
+                fromLat = prev.location[1];
+                break;
+            }
+        }
+    }
+    const poi = pois[nextIndex];
+    return {
+        toLng: poi.location[0],
+        toLat: poi.location[1],
+        toName: poi.name || '下一站',
+        fromLng,
+        fromLat,
+        index: nextIndex,
+    };
+}
+
+function updateNextStopButton() {
+    const btn = document.getElementById('btnNextStop');
+    const actions = document.getElementById('routeActions');
+    if (!btn) return;
+    const target = getNextStopNavTarget();
+    if (!target) {
+        btn.disabled = true;
+        btn.textContent = '🚶 暂无下一站';
+        if (actions && CW.routeData) actions.style.display = 'block';
+        return;
+    }
+    btn.disabled = false;
+    btn.textContent = `🚶 下一站：${String(target.toName).slice(0, 12)}`;
+}
+
+function openNextStopInAmap() {
+    const target = getNextStopNavTarget();
+    if (!target) {
+        showToast('当前没有可前往的下一站');
+        return;
+    }
+    const url = amapNavUrl(
+        target.toLng, target.toLat, target.toName,
+        target.fromLng, target.fromLat
+    );
+    CW.walkProgressIndex = target.index;
+    updateNextStopButton();
+    window.open(url, '_blank', 'noopener');
+}
+
+// ---------- 必去点（seed） ----------
+const CW_PIN_MAX = 3;
+
+function getCombinedPlanSeeds() {
+    const pinned = Array.isArray(CW.pinnedSeeds) ? CW.pinnedSeeds.slice(0, CW_PIN_MAX) : [];
+    const insp = typeof getSelectedInspirationSeeds === 'function' ? getSelectedInspirationSeeds() : [];
+    const out = [];
+    const seen = new Set();
+    function pushSeed(s) {
+        if (!s || !s.name) return;
+        const key = `${s.name}|${s.lng}|${s.lat}`;
+        if (seen.has(key)) return;
+        if (typeof s.lng !== 'number' || typeof s.lat !== 'number') return;
+        seen.add(key);
+        out.push({
+            name: s.name,
+            reason: s.reason || '必去点',
+            category: s.category || '',
+            lng: s.lng,
+            lat: s.lat,
+        });
+    }
+    pinned.forEach(pushSeed);
+    insp.forEach(pushSeed);
+    return out;
+}
+
+function renderPinnedSeeds() {
+    const panel = document.getElementById('pinnedSeedsPanel');
+    const list = document.getElementById('pinnedSeedsList');
+    if (!panel || !list) return;
+    const seeds = Array.isArray(CW.pinnedSeeds) ? CW.pinnedSeeds : [];
+    if (seeds.length === 0) {
+        panel.hidden = true;
+        list.innerHTML = '';
+        return;
+    }
+    panel.hidden = false;
+    list.innerHTML = '';
+    seeds.forEach((s, i) => {
+        const row = document.createElement('div');
+        row.className = 'pinned-seed-item';
+        const name = document.createElement('span');
+        name.className = 'pinned-seed-name';
+        name.textContent = s.name || '未命名';
+        const del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'pinned-seed-del';
+        del.setAttribute('aria-label', '移除必去点');
+        del.textContent = '✕';
+        del.addEventListener('click', () => removePinnedSeed(i));
+        row.appendChild(name);
+        row.appendChild(del);
+        list.appendChild(row);
+    });
+}
+
+function pinMustGoSpot(spot) {
+    if (!spot || typeof spot.lng !== 'number' || typeof spot.lat !== 'number') {
+        showToast('无法订为必去：缺少坐标');
+        return false;
+    }
+    if (!Array.isArray(CW.pinnedSeeds)) CW.pinnedSeeds = [];
+    const exists = CW.pinnedSeeds.some(s =>
+        s.name === spot.name && Math.abs(s.lng - spot.lng) < 1e-5 && Math.abs(s.lat - spot.lat) < 1e-5
+    );
+    if (exists) {
+        showToast('该点已在必去列表');
+        return false;
+    }
+    if (CW.pinnedSeeds.length >= CW_PIN_MAX) {
+        showToast(`必去点最多 ${CW_PIN_MAX} 个，请先移除再添加`);
+        return false;
+    }
+    CW.pinnedSeeds.push({
+        name: spot.name || '必去点',
+        lng: spot.lng,
+        lat: spot.lat,
+        reason: spot.reason || '用户指定必去',
+        category: spot.category || '',
+    });
+    renderPinnedSeeds();
+    showToast(`已订为必去：${spot.name || '地点'}`);
+    return true;
+}
+
+function removePinnedSeed(index) {
+    if (!Array.isArray(CW.pinnedSeeds)) return;
+    CW.pinnedSeeds.splice(index, 1);
+    renderPinnedSeeds();
+}
+
 // ---------- ① 景点增强：出路线后懒加载图片+描述 ----------
 function enrichPoiList(pois) {
     if (!Array.isArray(pois) || pois.length === 0) return;
@@ -168,13 +329,22 @@ function renderRouteFeedback(data) {
 
 // ---------- 结果·天气联动 ----------
 function renderWeatherNudge(data) {
-    const el = document.getElementById('weatherNudge');
-    if (!el) return;
-    el.style.display = 'none';
-    el.innerHTML = '';
+    const elNotes = document.getElementById('weatherNudge');
+    const elResult = document.getElementById('weatherNudgeResult');
+    [elNotes, elResult].forEach(el => {
+        if (!el) return;
+        el.style.display = 'none';
+        el.innerHTML = '';
+    });
 
-    if (!CW.liveWeatherData || CW.liveWeatherData.weather == null) return;
-    if (INDOOR_POI_TYPES.includes(CW.selectedPoiType)) return; // 已是室内偏好
+    if (!CW.liveWeatherData || CW.liveWeatherData.weather == null) {
+        syncResultNotesVisibility();
+        return;
+    }
+    if (INDOOR_POI_TYPES.includes(CW.selectedPoiType)) {
+        syncResultNotesVisibility();
+        return;
+    }
 
     const wx = String(CW.liveWeatherData.weather);
     const t = parseInt(CW.liveWeatherData.temperature, 10);
@@ -187,25 +357,37 @@ function renderWeatherNudge(data) {
         return;
     }
 
-    el.innerHTML = `
-        <span class="weather-nudge-text">${reason}，要不要改走偏室内的「咖啡甜品」路线？</span>
-        <button type="button" class="weather-nudge-btn" id="btnWeatherIndoor">改室内</button>`;
-    el.style.display = 'flex';
-    const btn = document.getElementById('btnWeatherIndoor');
-    if (btn) btn.addEventListener('click', applyWeatherIndoorRoute);
+    const html = `
+        <span class="weather-nudge-text">${reason}，建议改走偏室内的「咖啡甜品」路线</span>
+        <button type="button" class="weather-nudge-btn" data-weather-indoor="1">改室内重规划</button>`;
+
+    // 结果统计旁优先展示，便于发现；notes 内保留一份（隐藏以免重复）
+    if (elResult) {
+        elResult.innerHTML = html;
+        elResult.style.display = 'flex';
+        const btn = elResult.querySelector('[data-weather-indoor]');
+        if (btn) btn.addEventListener('click', applyWeatherIndoorRoute);
+    }
+    if (elNotes) {
+        elNotes.style.display = 'none';
+        elNotes.innerHTML = '';
+    }
     syncResultNotesVisibility();
 }
 
 function applyWeatherIndoorRoute() {
     CW.selectedPoiType = '咖啡甜品';
-    document.querySelectorAll('.poi-type-group .poi-type-btn:not(.route-style-btn)').forEach(b => {
+    CW.poiTypeLocked = true;
+    document.querySelectorAll('.poi-type-group .poi-type-btn:not(.route-style-btn):not(.visit-pace-btn):not(.time-of-day-btn)').forEach(b => {
         const on = b.getAttribute('data-type') === '咖啡甜品';
         b.classList.toggle('active', on);
         b.setAttribute('aria-pressed', on ? 'true' : 'false');
     });
     const nudge = document.getElementById('weatherNudge');
     if (nudge) nudge.style.display = 'none';
-    if (CW.startPoint && CW.endPoint) {
+    const nudgeR = document.getElementById('weatherNudgeResult');
+    if (nudgeR) nudgeR.style.display = 'none';
+    if (CW.startPoint && (CW.planMode === 'loop' || CW.endPoint)) {
         showToast('已切到室内偏好，正在重规划');
         generateRoute();
     } else {
@@ -259,6 +441,8 @@ function addRouteToHistory(data) {
         endName,
         poiType: CW.selectedPoiType,
         routeStyle: CW.selectedRouteStyle,
+        visitPace: CW.selectedVisitPace || 'checkin',
+        timeOfDay: CW.selectedTimeOfDay || 'now',
         planTime: parseInt(document.getElementById('planTimeSlider')?.value, 10) || 60,
         distanceKm: (data.distance / 1000).toFixed(2),
         poiCount: pois.length,
@@ -285,38 +469,47 @@ function renderRecentRoutes() {
     const wrap = document.getElementById('recentRoutes');
     const listEl = document.getElementById('recentRoutesList');
     const detailsEl = document.getElementById('manualHistoryDetails');
-    if (!wrap || !listEl) return;
+    const mainWrap = document.getElementById('recentRoutesMain');
+    const mainList = document.getElementById('recentRoutesListMain');
 
     const list = loadRouteHistory()
-        .sort((a, b) => (b.fav ? 1 : 0) - (a.fav ? 1 : 0) || b.ts - a.ts)
-        .slice(0, 6);
+        .sort((a, b) => (b.fav ? 1 : 0) - (a.fav ? 1 : 0) || b.ts - a.ts);
+
+    function fillList(targetEl, items, limit) {
+        if (!targetEl) return;
+        targetEl.innerHTML = '';
+        items.slice(0, limit).forEach(rec => {
+            const item = document.createElement('div');
+            item.className = 'recent-route-item';
+            const date = new Date(rec.ts);
+            const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
+            const isLoop = rec.mode === 'loop';
+            const title = isLoop
+                ? `${rec.city} · 探索 · ${shortPlaceName(rec.startName, 18)}`
+                : `${rec.city} · ${shortPlaceName(rec.startName, 12)} → ${shortPlaceName(rec.endName, 12)}`;
+            item.innerHTML = `
+                <button type="button" class="recent-route-fav" data-id="${rec.id}" title="收藏" aria-label="收藏">${rec.fav ? '⭐' : '☆'}</button>
+                <div class="recent-route-main" data-id="${rec.id}" role="button" tabindex="0">
+                    <div class="recent-route-title">${title}</div>
+                    <div class="recent-route-sub">${rec.poiType || '无偏好'} · ${rec.visitPace === 'relaxed' ? '慢慢逛' : '密集打卡'} · ${rec.distanceKm}km · ${rec.poiCount}点 · ${dateStr}</div>
+                </div>
+                <button type="button" class="recent-route-del" data-id="${rec.id}" title="删除" aria-label="删除">✕</button>`;
+            targetEl.appendChild(item);
+        });
+    }
 
     if (list.length === 0) {
-        listEl.innerHTML = '';
+        if (listEl) listEl.innerHTML = '';
         if (detailsEl) detailsEl.style.display = 'none';
+        if (mainWrap) mainWrap.hidden = true;
+        if (mainList) mainList.innerHTML = '';
         return;
     }
 
-    listEl.innerHTML = '';
-    list.forEach(rec => {
-        const item = document.createElement('div');
-        item.className = 'recent-route-item';
-        const date = new Date(rec.ts);
-        const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
-        const isLoop = rec.mode === 'loop';
-        const title = isLoop
-            ? `${rec.city} · 探索 · ${shortPlaceName(rec.startName, 18)}`
-            : `${rec.city} · ${shortPlaceName(rec.startName, 12)} → ${shortPlaceName(rec.endName, 12)}`;
-        item.innerHTML = `
-            <button type="button" class="recent-route-fav" data-id="${rec.id}" title="收藏" aria-label="收藏">${rec.fav ? '⭐' : '☆'}</button>
-            <div class="recent-route-main" data-id="${rec.id}" role="button" tabindex="0">
-                <div class="recent-route-title">${title}</div>
-                <div class="recent-route-sub">${rec.poiType || '无偏好'} · ${rec.distanceKm}km · ${rec.poiCount}点 · ${dateStr}</div>
-            </div>
-            <button type="button" class="recent-route-del" data-id="${rec.id}" title="删除" aria-label="删除">✕</button>`;
-        listEl.appendChild(item);
-    });
+    fillList(listEl, list, 6);
     if (detailsEl) detailsEl.style.display = '';
+    fillList(mainList, list, 3);
+    if (mainWrap) mainWrap.hidden = false;
 }
 
 function toggleFavoriteRoute(id) {
@@ -362,7 +555,10 @@ function restoreRouteFromHistory(id) {
         poi_type: rec.poiType,
         route_style: rec.routeStyle,
         plan_time: rec.planTime,
+        visit_pace: rec.visitPace || 'checkin',
+        time_of_day: rec.timeOfDay || 'now',
     });
+    if (rec.poiType && rec.poiType !== '无偏好') CW.poiTypeLocked = true;
 
     setStartPoint({ lng: rec.start.lng, lat: rec.start.lat, address: rec.start.address });
     if (rec.start.address) {

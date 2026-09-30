@@ -2147,6 +2147,12 @@
             text-align: center;
             padding: 12px 8px;
         }
+        .inspire-source-hint {
+            margin: 6px 0 2px;
+            font-size: 12px;
+            color: var(--text-muted, #888);
+            line-height: 1.4;
+        }
         .inspire-head {
             font-size: 12px;
             font-weight: 600;
@@ -2484,3 +2490,166 @@
             color: #fff;
             font-weight: 700;
         }
+
+        /* ---- v2.3 Citywalk 优化 ---- */
+        .loading-spinner {
+            width: 36px;
+            height: 36px;
+            margin: 0 auto 16px;
+            border: 3px solid rgba(var(--primary-rgb, 255,126,95), 0.25);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: cw-spin 0.8s linear infinite;
+        }
+        @keyframes cw-spin {
+            to { transform: rotate(360deg); }
+        }
+        .loading-sub {
+            margin: 0;
+            font-size: 13px;
+            color: var(--text-light);
+            line-height: 1.45;
+        }
+        .loading-retry {
+            margin-top: 14px;
+            padding: 8px 16px;
+            border: 1px solid var(--primary);
+            background: transparent;
+            color: var(--primary);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .loading-retry:hover { background: rgba(var(--primary-rgb, 255,126,95), 0.08); }
+
+        .plan-prefs {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-light);
+        }
+        .plan-prefs .filter-title {
+            margin-top: 8px;
+        }
+        .plan-prefs .filter-title:first-child {
+            margin-top: 0;
+        }
+
+        .pinned-seeds {
+            margin-top: 10px;
+            padding: 8px 10px;
+            border: 1px dashed var(--border-light);
+            border-radius: var(--radius-sm);
+            background: var(--bg-light);
+        }
+        .pinned-seeds-head {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 6px 10px;
+            margin-bottom: 6px;
+        }
+        .pinned-seeds-hint {
+            font-size: 11px;
+            color: var(--text-light);
+        }
+        .pinned-seed-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+            font-size: 13px;
+        }
+        .pinned-seed-name { flex: 1; min-width: 0; }
+        .pinned-seed-del {
+            border: none;
+            background: transparent;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 2px 6px;
+        }
+        .pinned-seed-del:hover { color: #ef4444; }
+
+        .recent-routes--main {
+            margin-top: 12px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border-light);
+        }
+        .share-restore-banner {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: var(--radius-sm);
+            background: rgba(var(--primary-rgb, 255,126,95), 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 13px;
+        }
+        .share-restore-banner .btn { margin: 0; }
+
+        .result-narrative {
+            margin: 0 0 10px;
+            font-size: 13px;
+            line-height: 1.55;
+            color: var(--text-medium);
+        }
+        .weather-nudge--result {
+            margin: 8px 0 12px;
+        }
+        .result-chat--open {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-light);
+        }
+        .result-chat-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-medium);
+            margin-bottom: 6px;
+        }
+        .route-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .poi-item-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 6px;
+            align-items: center;
+        }
+        .poi-skip-btn {
+            border: 1px solid var(--border-light);
+            background: #fff;
+            color: var(--text-medium);
+            border-radius: 6px;
+            padding: 2px 8px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .poi-item--skipped {
+            opacity: 0.55;
+        }
+        .poi-skipped-tag {
+            display: inline-block;
+            font-size: 11px;
+            color: #64748b;
+            background: #e2e8f0;
+            border-radius: 4px;
+            padding: 0 4px;
+            margin-right: 4px;
+        }
+        .btn-pin-mustgo {
+            margin-top: 8px;
+            padding: 4px 10px;
+            font-size: 12px;
+            border: 1px solid var(--primary);
+            background: #fff;
+            color: var(--primary);
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .btn-copy-link {
+            order: -1;
+        }
+

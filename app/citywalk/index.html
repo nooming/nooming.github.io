@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -10,16 +10,15 @@
     <meta name="description" content="全国Citywalk定制路线规划，发现城市之美，支持北京、上海、广州、深圳、成都、杭州、香港、澳门等城市">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚶</text></svg>">
     <title>全国Citywalk · 定制路线规划</title>
-    <!-- 提前与第三方域名建连，缩短首屏地图/分享脚本建连耗时 -->
     <link rel="preconnect" href="https://webapi.amap.com">
     <link rel="preconnect" href="https://restapi.amap.com">
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
     <script type="text/javascript">
-        window._AMapSecurityConfig = {
+        // 高德 Key：优先 /api/citywalk/config/public，失败时回退到内置值（保障 GitHub Pages 离线可用）
+        window.__CW_AMAP_FALLBACK = {
+            key: '4ade0b9a9942f8c1d5b470525887a258',
             securityJsCode: 'dd98c8e83161c0d87e596a17f2d29750'
         };
-        // 地图脚本就绪桥接：AMap(async/defer) 与 app.js 谁先到都能可靠初始化，
-        // 取代旧的 setTimeout(2000) 猜测。
         window.__amapReady = false;
         function onAMapLoaded() {
             window.__amapReady = true;
@@ -27,7 +26,6 @@
                 window.__cwOnAMapReady();
             }
         }
-        // 地图加载失败兜底：此时 app.js / showToast 未必就绪，直接操作 DOM
         function mapLoadError() {
             var toast = document.getElementById('errorToast');
             if (toast) {
@@ -35,45 +33,58 @@
                 toast.classList.add('show');
             }
         }
+        (function loadAmapPreferConfig() {
+            var fb = window.__CW_AMAP_FALLBACK;
+            var host = window.location.hostname;
+            var apiBase = (host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host === '::1')
+                ? 'http://localhost:5000'
+                : 'https://noomings-backend.zeabur.app';
+            function inject(key, security) {
+                window._AMapSecurityConfig = { securityJsCode: security || fb.securityJsCode };
+                var s = document.createElement('script');
+                s.src = 'https://webapi.amap.com/maps?v=2.0&key=' + encodeURIComponent(key)
+                    + '&plugin=AMap.Marker,AMap.InfoWindow,AMap.Geocoder,AMap.Weather';
+                s.async = true;
+                s.defer = true;
+                s.onload = onAMapLoaded;
+                s.onerror = mapLoadError;
+                document.head.appendChild(s);
+            }
+            var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+            var tid = setTimeout(function () {
+                if (ctrl) try { ctrl.abort(); } catch (_) {}
+            }, 2500);
+            fetch(apiBase + '/api/citywalk/config/public', {
+                method: 'GET',
+                headers: { 'Accept': 'application/json' },
+                signal: ctrl ? ctrl.signal : undefined
+            }).then(function (r) { return r.json(); }).then(function (data) {
+                clearTimeout(tid);
+                var key = data && data.amap_js_key ? String(data.amap_js_key).trim() : '';
+                var sec = data && data.amap_js_security_code ? String(data.amap_js_security_code).trim() : '';
+                if (key) inject(key, sec || fb.securityJsCode);
+                else inject(fb.key, fb.securityJsCode);
+            }).catch(function () {
+                clearTimeout(tid);
+                inject(fb.key, fb.securityJsCode);
+            });
+        })();
     </script>
-    <script src="https://webapi.amap.com/maps?v=2.0&key=4ade0b9a9942f8c1d5b470525887a258&plugin=AMap.Marker,AMap.InfoWindow,AMap.Geocoder,AMap.Weather" async defer onload="onAMapLoaded()" onerror="mapLoadError()"></script>
     <link rel="stylesheet" href="assets/css/styles.css">
-    <!-- html2canvas 按需懒加载（见 cw-share.js 的 ensureHtml2canvas），首屏不加载 -->
 </head>
 <body>
     <div id="container"></div>
 
-    <!-- 悬浮「重新开始」按钮（清空选择/结果并露出地图） -->
     <button class="back-home-fab" type="button" aria-label="返回站内首页" title="返回首页" onclick="window.location.href='../../'">
         ←
     </button>
 
-    <!-- 分步骤加载动画 -->
     <div class="loading-overlay" id="loadingOverlay" role="status" aria-live="polite" aria-hidden="true">
         <div class="loading-card">
-            <div class="loading-title">🚶 正在为你规划专属路线</div>
-            <div class="loading-steps">
-                <div class="loading-step" id="step1">
-                    <span class="step-icon">🗺️</span>
-                    <span class="step-text">计算最优路径</span>
-                    <span class="step-status"></span>
-                </div>
-                <div class="loading-step" id="step2">
-                    <span class="step-icon">☕</span>
-                    <span class="step-text">寻找沿途好去处</span>
-                    <span class="step-status"></span>
-                </div>
-                <div class="loading-step" id="step3">
-                    <span class="step-icon">🚶</span>
-                    <span class="step-text">优化打卡顺序</span>
-                    <span class="step-status"></span>
-                </div>
-                <div class="loading-step" id="step4">
-                    <span class="step-icon">✨</span>
-                    <span class="step-text">生成专属路线</span>
-                    <span class="step-status"></span>
-                </div>
-            </div>
+            <div class="loading-spinner" aria-hidden="true"></div>
+            <div class="loading-title" id="loadingTitle">正在规划步行路线，可能需要十几秒</div>
+            <p class="loading-sub" id="loadingSub">请稍候，结果就绪后会自动展示</p>
+            <button type="button" class="loading-retry" id="btnLoadingRetry" hidden>重试</button>
         </div>
     </div>
 
@@ -155,22 +166,67 @@
                     <input type="range" id="planTimeSlider" min="30" max="240" value="60">
                     <span id="planTimeValue" class="time-slider-value plan-time-mini-value">60 分钟</span>
                 </div>
+
+                <div class="plan-prefs" aria-label="偏好与节奏">
+                    <div class="filter-title" id="poiPrefTitleShared">打卡偏好</div>
+                    <div class="poi-type-group" role="group" aria-labelledby="poiPrefTitleShared">
+                        <button type="button" class="poi-type-btn active" data-type="无偏好" aria-pressed="true">无偏好</button>
+                        <button type="button" class="poi-type-btn" data-type="自然" aria-pressed="false">🌳 自然</button>
+                        <button type="button" class="poi-type-btn" data-type="历史" aria-pressed="false">🏛️ 历史</button>
+                        <button type="button" class="poi-type-btn" data-type="文创" aria-pressed="false">✨ 文创</button>
+                        <button type="button" class="poi-type-btn" data-type="花店" aria-pressed="false">💐 花店</button>
+                        <button type="button" class="poi-type-btn" data-type="咖啡甜品" aria-pressed="false">☕ 咖啡甜品</button>
+                        <button type="button" class="poi-type-btn" data-type="商场" aria-pressed="false">🛍️ 商场</button>
+                    </div>
+                    <div class="filter-title" id="visitPaceTitle">逛法节奏</div>
+                    <div class="visit-pace-group poi-type-group" role="group" aria-labelledby="visitPaceTitle">
+                        <button type="button" class="visit-pace-btn poi-type-btn active" data-pace="checkin" aria-pressed="true">密集打卡</button>
+                        <button type="button" class="visit-pace-btn poi-type-btn" data-pace="relaxed" aria-pressed="false">慢慢逛</button>
+                    </div>
+                    <div class="filter-title" id="timeOfDayTitle">出行时段</div>
+                    <div class="time-of-day-group poi-type-group" role="group" aria-labelledby="timeOfDayTitle">
+                        <button type="button" class="time-of-day-btn poi-type-btn active" data-tod="now" aria-pressed="true">现在</button>
+                        <button type="button" class="time-of-day-btn poi-type-btn" data-tod="afternoon" aria-pressed="false">午后</button>
+                        <button type="button" class="time-of-day-btn poi-type-btn" data-tod="evening" aria-pressed="false">傍晚</button>
+                        <button type="button" class="time-of-day-btn poi-type-btn" data-tod="night" aria-pressed="false">夜晚</button>
+                    </div>
+                </div>
+
+                <div class="pinned-seeds" id="pinnedSeedsPanel" hidden>
+                    <div class="pinned-seeds-head">
+                        <span class="filter-title">必去点（最多 3 个）</span>
+                        <span class="pinned-seeds-hint">搜索结果或长按地图可订为必去</span>
+                    </div>
+                    <div class="pinned-seeds-list" id="pinnedSeedsList"></div>
+                </div>
+
+                <div class="recent-routes recent-routes--main" id="recentRoutesMain" hidden>
+                    <div class="recent-routes-header">
+                        <span class="filter-title">最近路线</span>
+                        <button type="button" class="recent-routes-clear" id="btnClearRecentMain">清空</button>
+                    </div>
+                    <div class="recent-routes-list" id="recentRoutesListMain"></div>
+                </div>
+
+                <div class="share-restore-banner" id="shareRestoreBanner" hidden>
+                    <span id="shareRestoreText">已从链接载入参数</span>
+                    <button type="button" class="btn btn-agent-plan" id="btnShareReplan">按此重新规划</button>
+                </div>
             </section>
 
             <section class="tab-panel tab-panel--active" id="tab-panel-agent" data-tab-panel="agent" role="tabpanel" aria-labelledby="tabBtnAgent">
                 <div class="agent-box">
-                    <p class="agent-hint">可用上方搜索/地图选点或环线模式；已在地图选起终点时，描述可只写玩法偏好。计划时长以侧栏滑块为准；勾选灵感卡片会纳入打卡点。</p>
+                    <p class="agent-hint">描述玩法偏好即可；起终点可在地图或搜索选定。上方偏好与节奏会随规划一并提交。</p>
                     <label for="agentQueryInput" class="sr-only">智能规划需求描述</label>
                     <textarea id="agentQueryInput" class="agent-query-input" rows="3" placeholder="例：静安寺—南京西路，约90分钟，偏好咖啡馆"></textarea>
                     <section class="agent-inspire" aria-label="灵感推荐">
                         <div class="agent-inspire-row">
                             <label class="inspire-toggle">
                                 <input type="checkbox" id="inspireToggle" checked>
-                                <span>灵感推荐（真实 POI）</span>
+                                <span>灵感推荐</span>
                             </label>
                             <button type="button" class="btn-inspire-cards" id="btnInspireCards">浏览推荐地点</button>
                         </div>
-                        <p class="agent-inspire-hint">勾选想去的点再点「智能规划路线」会优先串入；未勾选时若开启灵感推荐则自动联网选点。也可点「浏览推荐地点」展开卡片。</p>
                         <div class="inspire-cards" id="inspireCards" hidden></div>
                     </section>
                     <button type="button" class="btn btn-agent-plan" id="btnAgentPlan">智能规划路线</button>
@@ -189,19 +245,8 @@
                 <button class="btn btn-ghost btn-reset" id="btnReset" type="button">重置选择</button>
 
                 <details class="manual-filters">
-                    <summary>打卡偏好与路线风格</summary>
+                    <summary>路线风格</summary>
                     <div class="filter-group">
-                        <div class="filter-title" id="poiPrefTitle">打卡偏好</div>
-                        <div class="poi-type-group" role="group" aria-labelledby="poiPrefTitle">
-                            <button type="button" class="poi-type-btn active" data-type="无偏好" aria-pressed="true">无偏好</button>
-                            <button type="button" class="poi-type-btn" data-type="自然" aria-pressed="false">🌳 自然</button>
-                            <button type="button" class="poi-type-btn" data-type="历史" aria-pressed="false">🏛️ 历史</button>
-                            <button type="button" class="poi-type-btn" data-type="文创" aria-pressed="false">✨ 文创</button>
-                            <button type="button" class="poi-type-btn" data-type="花店" aria-pressed="false">💐 花店</button>
-                            <button type="button" class="poi-type-btn" data-type="咖啡甜品" aria-pressed="false">☕ 咖啡甜品</button>
-                            <button type="button" class="poi-type-btn" data-type="商场" aria-pressed="false">🛍️ 商场</button>
-                        </div>
-                        <p class="filter-pace-hint">默认以快速打卡为主；结果中标「可选」的点可按体力跳过。</p>
                         <div class="filter-title" id="routeStyleTitle">路线风格</div>
                         <div class="route-style-group poi-type-group" role="group" aria-labelledby="routeStyleTitle">
                             <button type="button" class="route-style-btn poi-type-btn active" data-style="balanced" aria-pressed="true">均衡</button>
@@ -212,7 +257,7 @@
                 </details>
 
                 <details class="manual-history" id="manualHistoryDetails" style="display:none;">
-                    <summary>历史路线</summary>
+                    <summary>全部历史路线</summary>
                     <div class="recent-routes" id="recentRoutes">
                         <div class="recent-routes-header">
                             <button type="button" class="recent-routes-clear" id="btnClearRecent">清空</button>
@@ -229,6 +274,7 @@
 
                 <div class="result-area" id="resultArea" style="display:none;">
                     <div class="result-header">路线规划完成</div>
+                    <p class="result-narrative" id="resultNarrative"></p>
                     <div class="result-stats-row">
                         <div class="result-stat">
                             <div class="label">距离</div>
@@ -247,19 +293,22 @@
                             <div class="value highlight" id="poiCountValue">0</div>
                         </div>
                     </div>
+                    <div class="weather-nudge weather-nudge--result" id="weatherNudgeResult" style="display:none;"></div>
                     <div class="poi-list" id="poiList"></div>
                     <div class="route-actions" id="routeActions" style="display:none;">
-                        <button type="button" class="btn-route-action" id="btnOpenAmap">🧭 在高德地图打开</button>
+                        <button type="button" class="btn-route-action" id="btnNextStop">🚶 下一站</button>
+                        <button type="button" class="btn-route-action" id="btnOpenAmap">🧭 起终点导航</button>
                     </div>
                     <div class="result-share-block">
                         <div class="result-share-label">分享与导出</div>
                         <div class="result-actions-row">
+                            <button class="btn-generate-plan btn-copy-link" id="btnCopyShareLink" type="button">复制链接</button>
                             <button class="btn-generate-plan" id="btnGeneratePlan" type="button">生成游记攻略</button>
                             <button class="btn-generate-plan btn-share-image" id="btnShareImage" type="button">导出分享图</button>
                         </div>
                     </div>
-                    <details class="result-chat" id="resultChatDetails">
-                        <summary>对话优化路线</summary>
+                    <div class="result-chat result-chat--open" id="resultChatDetails">
+                        <div class="result-chat-label">对话优化路线</div>
                         <div class="agent-chat-section">
                             <p class="result-chat-hint">用一句话微调时长、顺序或打卡偏好</p>
                             <div class="agent-chat-log" id="agentChatLog" role="log" aria-live="polite"></div>
@@ -269,7 +318,7 @@
                                 <button type="button" class="btn-agent-chat-send" id="btnAgentChat">发送</button>
                             </div>
                         </div>
-                    </details>
+                    </div>
                     <details class="result-notes" id="resultNotesDetails" hidden>
                         <summary>路线说明</summary>
                         <div class="result-notes-body">
@@ -290,6 +339,7 @@
     <script src="assets/js/plan/cw-route.js"></script>
     <script src="assets/js/plan/cw-agent.js"></script>
     <script src="assets/js/share/cw-share.js"></script>
+    <script src="assets/js/share/cw-link.js"></script>
     <script src="assets/js/ui/cw-actions.js"></script>
     <script src="assets/js/plan/cw-inspire.js"></script>
     <script src="assets/js/core/app.js"></script>

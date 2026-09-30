@@ -16,7 +16,13 @@ const CW = {
 
     // --- 业务状态 ---
     selectedPoiType: "无偏好",
+    poiTypeLocked: false,      // 用户点击偏好芯片后为 true，提交时优先生效
     selectedRouteStyle: "balanced",
+    selectedVisitPace: "checkin", // checkin | relaxed
+    selectedTimeOfDay: "now",  // now | afternoon | evening | night
+    pinnedSeeds: [],           // 必去点，最多 3 个 {name,lng,lat,...}
+    skippedPoiKeys: {},        // 结果页跳过的可选站 key -> true
+    walkProgressIndex: -1,     // 逐站导航进度：-1=在起点
     routeData: null,
     debounceTimer: null,
     agentSessionId: null,
@@ -24,6 +30,7 @@ const CW = {
     submittedPlanTimeMin: null, // 最近一次智能规划提交的滑块时长
     planMode: 'route',         // route | loop（探索模式）
     lastPlanTab: 'agent',      // 上次规划所在 Tab，供「返回修改选点」
+    loadingRetryHandler: null,
 
     // --- 天气 ---
     liveWeatherData: null,

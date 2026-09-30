@@ -30,8 +30,12 @@ function formatRouteTipForDisplay(tip) {
 }
 
 function openResultChatOnPlan() {
+    // 对话输入默认可见（不再依赖两层折叠）
     const chat = document.getElementById('resultChatDetails');
-    if (chat) chat.open = true;
+    if (chat) {
+        chat.hidden = false;
+        if ('open' in chat) chat.open = true;
+    }
 }
 
 function expandControlPanelForResult() {
@@ -95,7 +99,14 @@ function presentRouteToUser(data) {
     }
     if (poiCountEl) poiCountEl.textContent = pois.length + '个';
 
+    if (typeof renderResultNarrative === 'function') {
+        renderResultNarrative(data, pois, planMin, activityMin, freeMin);
+    }
+
+    CW.skippedPoiKeys = {};
+    CW.walkProgressIndex = -1;
     renderPoiList(pois);
+    if (typeof updateNextStopButton === 'function') updateNextStopButton();
 
     const routeEndHint = document.getElementById('routeEndHint');
     if (routeEndHint) {
@@ -134,13 +145,45 @@ function presentRouteToUser(data) {
         switchPanelTab('result', { auto: true, force: true });
     }
 
-    // 整条路线「在高德地图打开」依赖起终点；环线模式无终点，隐藏该按钮（逐点「导航到这」仍可用）。
+    // 起终点导航仅在直线路线可用；「下一站」环线与直线均提供
     const routeActions = document.getElementById('routeActions');
-    if (routeActions) routeActions.style.display = data.mode === 'loop' ? 'none' : 'block';
+    const btnOpenAmap = document.getElementById('btnOpenAmap');
+    if (routeActions) routeActions.style.display = 'block';
+    if (btnOpenAmap) btnOpenAmap.style.display = data.mode === 'loop' ? 'none' : '';
 
     if (resultHeader && typeof resultHeader.scrollIntoView === 'function') {
         resultHeader.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
+}
+
+function renderResultNarrative(data, pois, planMin, activityMin, freeMin) {
+    const el = document.getElementById('resultNarrative');
+    if (!el) return;
+    const list = Array.isArray(pois) ? pois : [];
+    const optionalCount = list.filter(p => p && p.optional).length;
+    const reasons = list
+        .map(p => (p && p.recommendation_reason) ? String(p.recommendation_reason).trim() : '')
+        .filter(Boolean);
+    const why = reasons[0]
+        ? reasons[0].slice(0, 48) + (reasons[0].length > 48 ? '…' : '')
+        : (CW.selectedPoiType && CW.selectedPoiType !== '无偏好'
+            ? `按「${CW.selectedPoiType}」偏好串联`
+            : '沿途综合氛围与绕路成本筛选');
+    const tip = data && data.route_tip ? formatRouteTipForDisplay(data.route_tip) : '';
+    const parts = [];
+    parts.push(`为何这些站：${why}`);
+    if (optionalCount > 0) {
+        parts.push(`其中 ${optionalCount} 个标「可选」，可按体力跳过`);
+    }
+    if (planMin != null) {
+        let timeLine = `计划 ${planMin} 分钟 · 预计步行+打卡约 ${activityMin} 分钟`;
+        if (Number.isFinite(freeMin) && freeMin > 10) {
+            timeLine += ` · 自由安排约 ${Math.round(freeMin)} 分钟`;
+        }
+        parts.push(timeLine);
+    }
+    if (tip && tip.length < 60) parts.push(tip);
+    el.textContent = parts.join('。') + '。';
 }
 
 function ensureResultTabVisible() {
@@ -296,17 +339,42 @@ function resetSelection() {
     const planTimeSlider = document.getElementById('planTimeSlider');
     planTimeSlider.value = 60;
     document.getElementById('planTimeValue').textContent = '60 分钟';
-    document.querySelectorAll('.poi-type-group .poi-type-btn:not(.route-style-btn)')
+    document.querySelectorAll('.poi-type-group .poi-type-btn:not(.route-style-btn):not(.visit-pace-btn):not(.time-of-day-btn)')
         .forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
     const defaultPoi = document.querySelector('.poi-type-btn[data-type="无偏好"]');
     if (defaultPoi) { defaultPoi.classList.add('active'); defaultPoi.setAttribute('aria-pressed', 'true'); }
     CW.selectedPoiType = "无偏好";
+    CW.poiTypeLocked = false;
 
     document.querySelectorAll('.route-style-btn')
         .forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
     const defaultStyle = document.querySelector('.route-style-btn[data-style="balanced"]');
     if (defaultStyle) { defaultStyle.classList.add('active'); defaultStyle.setAttribute('aria-pressed', 'true'); }
     CW.selectedRouteStyle = "balanced";
+
+    document.querySelectorAll('.visit-pace-btn')
+        .forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
+    const defaultPace = document.querySelector('.visit-pace-btn[data-pace="checkin"]');
+    if (defaultPace) { defaultPace.classList.add('active'); defaultPace.setAttribute('aria-pressed', 'true'); }
+    CW.selectedVisitPace = 'checkin';
+
+    document.querySelectorAll('.time-of-day-btn')
+        .forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
+    const defaultTod = document.querySelector('.time-of-day-btn[data-tod="now"]');
+    if (defaultTod) { defaultTod.classList.add('active'); defaultTod.setAttribute('aria-pressed', 'true'); }
+    CW.selectedTimeOfDay = 'now';
+
+    CW.pinnedSeeds = [];
+    CW.skippedPoiKeys = {};
+    if (typeof renderPinnedSeeds === 'function') renderPinnedSeeds();
+
+    const narrativeReset = document.getElementById('resultNarrative');
+    if (narrativeReset) narrativeReset.textContent = '';
+    const weatherResultReset = document.getElementById('weatherNudgeResult');
+    if (weatherResultReset) {
+        weatherResultReset.style.display = 'none';
+        weatherResultReset.innerHTML = '';
+    }
 
     CW.agentSessionId = null;
 
@@ -336,14 +404,22 @@ function generateRoute() {
         return;
     }
 
+    let poiType = (CW.selectedPoiType || '无偏好').trim();
+    const tod = CW.selectedTimeOfDay || 'now';
+    // 手动规划无 LLM：傍晚/夜晚且未锁定偏好时，轻量偏室内咖啡
+    if ((tod === 'evening' || tod === 'night') && poiType === '无偏好' && !CW.poiTypeLocked) {
+        poiType = '咖啡甜品';
+    }
+
     const start = [parseFloat(CW.startPoint.lng.toFixed(6)), parseFloat(CW.startPoint.lat.toFixed(6))];
     const payload = {
         start: start,
         plan_time: planTime,
-        poi_type: CW.selectedPoiType.trim(),
+        poi_type: poiType,
         route_style: CW.selectedRouteStyle,
-        ambience_profile: CW.selectedPoiType.trim(),
-        visit_pace: 'checkin',
+        ambience_profile: poiType,
+        visit_pace: CW.selectedVisitPace || 'checkin',
+        time_of_day: tod,
         city: CW.currentCity,
         mode: isLoop ? 'loop' : 'route',
     };
@@ -352,6 +428,10 @@ function generateRoute() {
             parseFloat(CW.endPoint.lng.toFixed(6)),
             parseFloat(CW.endPoint.lat.toFixed(6)),
         ];
+    }
+    const seeds = typeof getCombinedPlanSeeds === 'function' ? getCombinedPlanSeeds() : [];
+    if (seeds.length > 0) {
+        payload.seed_pois = seeds;
     }
 
     showLoadingSteps();
@@ -385,7 +465,6 @@ function generateRoute() {
     })
     .catch(error => {
         clearTimeout(timeoutId);
-        hideLoadingSteps();
         let errorMsg = '';
         if (error.name === 'AbortError') {
             errorMsg = "规划用时有点久，试试缩短路线或稍后再来";
@@ -396,7 +475,12 @@ function generateRoute() {
         } else {
             errorMsg = "路线没能规划出来，请再试一次";
         }
-        showToast(errorMsg);
+        if (typeof showLoadingFailure === 'function') {
+            showLoadingFailure(errorMsg, generateRoute);
+        } else {
+            hideLoadingSteps();
+            showToast(errorMsg);
+        }
         console.error('路线规划错误：', error);
     });
 }
@@ -477,6 +561,25 @@ function applyRouteResult(data) {
     }
 }
 
+function poiSkipKey(poi, index) {
+    if (poi && poi.id) return String(poi.id);
+    if (poi && Array.isArray(poi.location) && poi.location.length === 2) {
+        return `${poi.name || ''}@${poi.location[0]},${poi.location[1]}`;
+    }
+    return `idx:${index}`;
+}
+
+function isPoiSkipped(poi, index) {
+    return !!(CW.skippedPoiKeys && CW.skippedPoiKeys[poiSkipKey(poi, index)]);
+}
+
+function getActiveRoutePois() {
+    const pois = (CW.routeData && Array.isArray(CW.routeData.pois)) ? CW.routeData.pois : [];
+    return pois
+        .map((poi, index) => ({ poi, index }))
+        .filter(({ poi, index }) => poi && !isPoiSkipped(poi, index));
+}
+
 function renderPoiList(pois) {
     const poiList = document.getElementById('poiList');
     if (!poiList) return;
@@ -495,8 +598,10 @@ function renderPoiList(pois) {
         const poiType = poi.type || '未知类型';
         const reason  = poi.recommendation_reason || '综合氛围与绕路成本推荐';
         const score   = (typeof poi.final_score === 'number') ? poi.final_score.toFixed(1) : null;
+        const skipped = isPoiSkipped(poi, index);
         const poiItem = document.createElement('div');
-        poiItem.className = 'poi-item';
+        poiItem.className = 'poi-item' + (skipped ? ' poi-item--skipped' : '');
+        poiItem.dataset.poiIndex = String(index);
         poiItem.setAttribute('role', 'button');
         poiItem.tabIndex = 0;
         poiItem.setAttribute('aria-label', `第 ${index + 1} 个打卡点 ${poiName}，在地图上定位`);
@@ -520,77 +625,110 @@ function renderPoiList(pois) {
         const navLink = navUrl
             ? `<a class="poi-nav" href="${navUrl}" target="_blank" rel="noopener">🧭 导航到这</a>`
             : '';
+        const skipBtn = poi.optional
+            ? `<button type="button" class="poi-skip-btn" data-poi-index="${index}">${skipped ? '恢复此站' : '跳过此站'}</button>`
+            : '';
         const safeIcon = cwEscapeHtml(poi.icon || '📍');
         const safeName = cwEscapeHtml(poiName);
         const safeType = cwEscapeHtml(poiType);
         const safeReason = cwEscapeHtml(reason);
         const seedTag = poi.is_seed ? '<span class="poi-seed-tag">种草</span> ' : '';
         const optionalTag = poi.optional ? '<span class="poi-optional-tag">可选</span> ' : '';
+        const skippedTag = skipped ? '<span class="poi-skipped-tag">已跳过</span> ' : '';
         poiItem.innerHTML = `
             <div class="poi-item-content">
                 <span class="poi-item-icon">${safeIcon}</span>
                 <div class="poi-item-body">
-                    <strong class="poi-item-name">${index+1}. ${seedTag}${optionalTag}${safeName}</strong>
+                    <strong class="poi-item-name">${index+1}. ${seedTag}${optionalTag}${skippedTag}${safeName}</strong>
                     <div class="poi-item-type">${safeType}</div>
                     <div class="poi-item-reason">${safeReason}${score ? ` · 氛围分 ${score}` : ''}${poi.stay_time ? ` · 建议停留 ${poi.stay_time} 分钟` : ''}</div>
-                    ${navLink}
+                    <div class="poi-item-actions">${navLink}${skipBtn}</div>
                 </div>
             </div>`;
-        // 导航链接不应触发列表项的高亮/居中
         const navEl = poiItem.querySelector('.poi-nav');
         if (navEl) navEl.addEventListener('click', (e) => e.stopPropagation());
+        const skipEl = poiItem.querySelector('.poi-skip-btn');
+        if (skipEl) {
+            skipEl.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleSkipOptionalPoi(index);
+            });
+        }
         poiList.appendChild(poiItem);
     });
 }
 
-// 加载动画：诚实表达「处理中」——循环高亮当前环节，不伪造按时完成的进度。
-// 真正完成（拿到结果）时再由 hideLoadingSteps 统一标记完成。
-const LOADING_STEP_IDS = ['step1', 'step2', 'step3', 'step4'];
+function toggleSkipOptionalPoi(index) {
+    if (!CW.routeData || !Array.isArray(CW.routeData.pois)) return;
+    const poi = CW.routeData.pois[index];
+    if (!poi || !poi.optional) return;
+    const key = poiSkipKey(poi, index);
+    if (!CW.skippedPoiKeys) CW.skippedPoiKeys = {};
+    if (CW.skippedPoiKeys[key]) delete CW.skippedPoiKeys[key];
+    else CW.skippedPoiKeys[key] = true;
+    renderPoiList(CW.routeData.pois);
+    if (typeof updateNextStopButton === 'function') updateNextStopButton();
+    showToast(CW.skippedPoiKeys[key] ? '已跳过该可选站' : '已恢复该站');
+}
 
-function showLoadingSteps() {
+// 诚实加载：单一状态文案，不伪造「优化打卡顺序」等进度
+function showLoadingSteps(message) {
     const overlay = document.getElementById('loadingOverlay');
     if (!overlay) return;
+    const title = document.getElementById('loadingTitle');
+    const sub = document.getElementById('loadingSub');
+    const retry = document.getElementById('btnLoadingRetry');
+    if (title) title.textContent = message || '正在规划步行路线，可能需要十几秒';
+    if (sub) {
+        sub.textContent = '请稍候，结果就绪后会自动展示';
+        sub.hidden = false;
+    }
+    if (retry) {
+        retry.hidden = true;
+        retry.onclick = null;
+    }
+    CW.loadingRetryHandler = null;
     overlay.style.display = 'flex';
     overlay.setAttribute('aria-hidden', 'false');
-
-    LOADING_STEP_IDS.forEach(id => {
-        const step = document.getElementById(id);
-        if (step) step.className = 'loading-step';
-    });
-
-    let i = 0;
-    function tick() {
-        LOADING_STEP_IDS.forEach((id, idx) => {
-            const step = document.getElementById(id);
-            if (step) step.classList.toggle('active', idx === i);
-        });
-        i = (i + 1) % LOADING_STEP_IDS.length;
-    }
-    tick();
-    if (window.loadingProgressInterval) clearInterval(window.loadingProgressInterval);
-    window.loadingProgressInterval = setInterval(tick, 900);
 }
 
 function hideLoadingSteps() {
     const overlay = document.getElementById('loadingOverlay');
     if (!overlay) return;
-    if (window.loadingProgressInterval) {
-        clearInterval(window.loadingProgressInterval);
-        window.loadingProgressInterval = null;
+    overlay.style.display = 'none';
+    overlay.setAttribute('aria-hidden', 'true');
+    const retry = document.getElementById('btnLoadingRetry');
+    if (retry) {
+        retry.hidden = true;
+        retry.onclick = null;
     }
+}
 
-    LOADING_STEP_IDS.forEach(id => {
-        const step = document.getElementById(id);
-        if (step) {
-            step.classList.remove('active');
-            step.classList.add('done');
+function showLoadingFailure(message, retryFn) {
+    const overlay = document.getElementById('loadingOverlay');
+    if (!overlay) return;
+    const title = document.getElementById('loadingTitle');
+    const sub = document.getElementById('loadingSub');
+    const retry = document.getElementById('btnLoadingRetry');
+    if (title) title.textContent = message || '规划未成功，请重试';
+    if (sub) {
+        sub.textContent = '可检查网络后重试，或缩短路线再试';
+        sub.hidden = false;
+    }
+    overlay.style.display = 'flex';
+    overlay.setAttribute('aria-hidden', 'false');
+    if (retry) {
+        if (typeof retryFn === 'function') {
+            retry.hidden = false;
+            CW.loadingRetryHandler = retryFn;
+            retry.onclick = () => {
+                hideLoadingSteps();
+                retryFn();
+            };
+        } else {
+            retry.hidden = true;
         }
-    });
-
-    setTimeout(() => {
-        overlay.style.display = 'none';
-        overlay.setAttribute('aria-hidden', 'true');
-    }, 400);
+    }
 }
 
 // 按消息内容自动判定语义类型（可被第三参显式覆盖）

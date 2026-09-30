@@ -41,7 +41,8 @@ function buildAgentContext() {
             plan_time: planTime,
             poi_type: CW.selectedPoiType,
             route_style: CW.selectedRouteStyle,
-            visit_pace: 'checkin',
+            visit_pace: CW.selectedVisitPace || 'checkin',
+            time_of_day: CW.selectedTimeOfDay || 'now',
         },
         route_summary: {},
     };
@@ -215,8 +216,10 @@ function buildAgentPlanPayload(query, cityHint) {
         plan_time_min: planTime,
         mode: isLoop ? 'loop' : 'route',
         poi_type: (CW.selectedPoiType || '无偏好').trim(),
+        poi_type_locked: !!CW.poiTypeLocked,
         route_style: CW.selectedRouteStyle || 'balanced',
-        visit_pace: 'checkin',
+        visit_pace: CW.selectedVisitPace || 'checkin',
+        time_of_day: CW.selectedTimeOfDay || 'now',
     };
     if (CW.startPoint) {
         payload.start = [
@@ -232,8 +235,9 @@ function buildAgentPlanPayload(query, cityHint) {
         ];
         if (CW.endPoint.address) payload.end_label = CW.endPoint.address;
     }
-    const seeds = typeof getSelectedInspirationSeeds === 'function'
-        ? getSelectedInspirationSeeds() : [];
+    const seeds = typeof getCombinedPlanSeeds === 'function'
+        ? getCombinedPlanSeeds()
+        : (typeof getSelectedInspirationSeeds === 'function' ? getSelectedInspirationSeeds() : []);
     if (seeds.length > 0) {
         payload.selected_spots = seeds;
     }
@@ -266,7 +270,7 @@ function applyAgentParsedParams(parsed, routeData) {
 
     if (parsed.poi_type) {
         CW.selectedPoiType = normalizePoiType(parsed.poi_type);
-        document.querySelectorAll('.poi-type-group .poi-type-btn:not(.route-style-btn)').forEach(b => {
+        document.querySelectorAll('.poi-type-group .poi-type-btn:not(.route-style-btn):not(.visit-pace-btn):not(.time-of-day-btn)').forEach(b => {
             const on = b.getAttribute('data-type') === CW.selectedPoiType;
             b.classList.toggle('active', on);
             b.setAttribute('aria-pressed', on ? 'true' : 'false');
@@ -280,6 +284,28 @@ function applyAgentParsedParams(parsed, routeData) {
             b.classList.toggle('active', on);
             b.setAttribute('aria-pressed', on ? 'true' : 'false');
         });
+    }
+
+    if (parsed.visit_pace) {
+        CW.selectedVisitPace = parsed.visit_pace === 'relaxed' ? 'relaxed' : 'checkin';
+        document.querySelectorAll('.visit-pace-btn').forEach(b => {
+            const on = b.getAttribute('data-pace') === CW.selectedVisitPace;
+            b.classList.toggle('active', on);
+            b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+    }
+
+    if (parsed.time_of_day) {
+        const todMap = { '现在': 'now', '午后': 'afternoon', '傍晚': 'evening', '夜晚': 'night' };
+        const tod = todMap[parsed.time_of_day] || parsed.time_of_day;
+        if (['now', 'afternoon', 'evening', 'night'].includes(tod)) {
+            CW.selectedTimeOfDay = tod;
+            document.querySelectorAll('.time-of-day-btn').forEach(b => {
+                const on = b.getAttribute('data-tod') === tod;
+                b.classList.toggle('active', on);
+                b.setAttribute('aria-pressed', on ? 'true' : 'false');
+            });
+        }
     }
 }
 
@@ -404,8 +430,9 @@ async function generateSmartRoute() {
     }
     const query = queryRaw || (hasMap ? '沿地图所选起终点漫步，无特别偏好' : '');
 
-    const seeds = typeof getSelectedInspirationSeeds === 'function'
-        ? getSelectedInspirationSeeds() : [];
+    const seeds = typeof getCombinedPlanSeeds === 'function'
+        ? getCombinedPlanSeeds()
+        : (typeof getSelectedInspirationSeeds === 'function' ? getSelectedInspirationSeeds() : []);
     const useInspire = !!document.getElementById('inspireToggle')?.checked;
     const needInspired = useInspire || seeds.length > 0;
 
@@ -444,7 +471,6 @@ async function generateSmartRoute() {
         await applyInspiredPlanResponse(data, needInspired);
     } catch (error) {
         clearTimeout(timeoutId);
-        hideLoadingSteps();
         let errorMsg = '';
         if (error.name === 'AbortError') {
             errorMsg = '智能规划想久了，描述短一点或稍后再来';
@@ -455,7 +481,12 @@ async function generateSmartRoute() {
         } else {
             errorMsg = '智能规划没成功，请再试一次';
         }
-        showToast(errorMsg);
+        if (typeof showLoadingFailure === 'function') {
+            showLoadingFailure(errorMsg, generateSmartRoute);
+        } else {
+            hideLoadingSteps();
+            showToast(errorMsg);
+        }
         console.error('智能规划错误：', error);
     } finally {
         if (btn) btn.textContent = '智能规划路线';
