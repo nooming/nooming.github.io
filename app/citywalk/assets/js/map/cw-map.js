@@ -51,7 +51,7 @@ function initMap() {
             }
         });
 
-        // 长按地图：订为必去点（桌面右键 / 移动端长按）
+        // 右键 / 长按：先弹出「订为必去」确认，不立刻写入
         let longPressTimer = null;
         const clearLongPress = () => {
             if (longPressTimer) {
@@ -62,14 +62,7 @@ function initMap() {
         CW.map.on('rightclick', function(e) {
             const lng = parseFloat(e.lnglat.lng.toFixed(6));
             const lat = parseFloat(e.lnglat.lat.toFixed(6));
-            reverseGeocode(lng, lat, function(address) {
-                if (typeof pinMustGoSpot === 'function') {
-                    pinMustGoSpot({
-                        name: address || `地图点 (${lng.toFixed(4)}, ${lat.toFixed(4)})`,
-                        lng, lat,
-                    });
-                }
-            });
+            openMustGoConfirm(lng, lat);
         });
         const mapContainer = document.getElementById('container');
         if (mapContainer) {
@@ -85,14 +78,7 @@ function initMap() {
                     if (!lnglat) return;
                     const lng = parseFloat(lnglat.lng.toFixed(6));
                     const lat = parseFloat(lnglat.lat.toFixed(6));
-                    reverseGeocode(lng, lat, function(address) {
-                        if (typeof pinMustGoSpot === 'function') {
-                            pinMustGoSpot({
-                                name: address || `地图点 (${lng.toFixed(4)}, ${lat.toFixed(4)})`,
-                                lng, lat,
-                            });
-                        }
-                    });
+                    openMustGoConfirm(lng, lat);
                 }, 650);
             }, { passive: true });
             mapContainer.addEventListener('touchend', clearLongPress, { passive: true });
@@ -338,6 +324,50 @@ function reverseGeocode(lng, lat, callback) {
     });
 }
 
+/** 右键 / 长按后弹出确认，再订为必去（搜索气泡仍直接 pin） */
+function openMustGoConfirm(lng, lat) {
+    if (!CW.map || !CW.infoWindow) return;
+    const confirmToken = (CW._mustGoConfirmToken = (CW._mustGoConfirmToken || 0) + 1);
+    const fallbackName = `地图点 (${lng.toFixed(4)}, ${lat.toFixed(4)})`;
+    let resolvedName = fallbackName;
+
+    const renderConfirm = (name) => {
+        if (CW._mustGoConfirmToken !== confirmToken || !CW.infoWindow || !CW.map) return;
+        CW.infoWindow.setContent(`<div class="mustgo-confirm-infowin">
+            <div class="mustgo-confirm-name">${cwEscapeHtml(name)}</div>
+            <button type="button" class="btn-pin-mustgo" id="btnConfirmMapMustGo">订为必去</button>
+        </div>`);
+        CW.infoWindow.open(CW.map, [lng, lat]);
+        setTimeout(() => {
+            if (CW._mustGoConfirmToken !== confirmToken) return;
+            const btn = document.getElementById('btnConfirmMapMustGo');
+            if (!btn) return;
+            btn.addEventListener('click', (ev) => {
+                ev.preventDefault();
+                ev.stopPropagation();
+                if (CW._mustGoConfirmToken !== confirmToken) return;
+                if (typeof pinMustGoSpot === 'function') {
+                    pinMustGoSpot({ name: resolvedName, lng, lat });
+                }
+                CW._mustGoConfirmToken = 0;
+                if (CW.infoWindow) CW.infoWindow.close();
+            });
+        }, 0);
+    };
+
+    renderConfirm(fallbackName);
+
+    reverseGeocode(lng, lat, function(address) {
+        if (CW._mustGoConfirmToken !== confirmToken) return;
+        resolvedName = address || fallbackName;
+        const stillOpen = typeof CW.infoWindow.getIsOpen === 'function'
+            ? CW.infoWindow.getIsOpen()
+            : true;
+        if (!stillOpen) return;
+        renderConfirm(resolvedName);
+    });
+}
+
 function clearPoiMarkers() {
     CW.poiMarkers.forEach(marker => {
         CW.map.remove(marker);
@@ -398,6 +428,7 @@ function addPoiMarkers(pois) {
                     <p class="poi-infowin-row poi-infowin-stay" style="color:${themeColor}"><span>⏱️</span> 建议停留 ${poi.stay_time || 5} 分钟${poi.optional ? ' · 可选打卡' : ''}</p>
                 </div>
             `);
+            CW._mustGoConfirmToken = 0;
             CW.infoWindow.open(CW.map, poi.location);
         });
 
@@ -459,6 +490,7 @@ function searchAddress(keyword) {
                     <span class="search-infowin-hint">点击地图设为起点或终点</span><br/>
                     <button type="button" class="btn-pin-mustgo" id="btnPinSearchMustGo">订为必去</button>
                 </div>`);
+                CW._mustGoConfirmToken = 0;
                 CW.infoWindow.open(CW.map, [poi.location.lng, poi.location.lat]);
                 showToast(`✅ 找到 "${poi.name}"，可订为必去或点地图设起终点`);
                 setTimeout(() => {

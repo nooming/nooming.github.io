@@ -2548,11 +2548,22 @@
         }
 
         .pinned-seeds {
-            margin-top: 10px;
+            margin-top: 4px;
             padding: 8px 10px;
             border: 1px dashed var(--border-light);
             border-radius: var(--radius-sm);
             background: var(--bg-light);
+        }
+        .pinned-seeds[hidden] {
+            display: none !important;
+        }
+        .mustgo-hint {
+            margin: 6px 0 0;
+            padding: 0;
+            font-size: 11px;
+            line-height: 1.4;
+            color: var(--text-light);
+            font-weight: 400;
         }
         .pinned-seeds-head {
             display: flex;
@@ -2561,9 +2572,30 @@
             gap: 6px 10px;
             margin-bottom: 6px;
         }
+        .pinned-seeds-head .filter-title {
+            margin: 0;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-medium);
+        }
         .pinned-seeds-hint {
             font-size: 11px;
             color: var(--text-light);
+        }
+        .mustgo-confirm-infowin {
+            min-width: 120px;
+            max-width: 220px;
+            padding: 2px 0;
+        }
+        .mustgo-confirm-name {
+            font-size: 12px;
+            line-height: 1.4;
+            color: var(--text-medium);
+            margin-bottom: 6px;
+            word-break: break-word;
+        }
+        .mustgo-confirm-infowin .btn-pin-mustgo {
+            margin-top: 0;
         }
         .pinned-seed-item {
             display: flex;
