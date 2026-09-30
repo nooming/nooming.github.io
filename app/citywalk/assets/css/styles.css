@@ -666,8 +666,6 @@
             font-size: 14px;
         }
 
-        .manual-filters,
-        .manual-history,
         .result-notes,
         .result-chat {
             margin-top: 10px;
@@ -677,8 +675,6 @@
             background: var(--bg-light);
         }
 
-        .manual-filters summary,
-        .manual-history summary,
         .result-notes summary,
         .result-chat summary {
             padding: 10px 0;
@@ -2257,7 +2253,19 @@
             color: var(--text-medium);
             margin-bottom: 8px;
         }
-        .recent-routes-clear {
+        .recent-routes-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-light);
+            letter-spacing: 0.02em;
+        }
+        .recent-routes-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .recent-routes-clear,
+        .recent-routes-expand {
             font-size: 11px;
             color: var(--text-light);
             background: none;
@@ -2265,7 +2273,9 @@
             cursor: pointer;
             font-family: inherit;
         }
-        .recent-routes-clear:hover { color: var(--primary); }
+        .recent-routes-clear:hover,
+        .recent-routes-expand:hover { color: var(--primary); }
+        .recent-routes-expand[hidden] { display: none; }
         .recent-route-item {
             display: flex;
             align-items: center;
@@ -2572,10 +2582,30 @@
         }
         .pinned-seed-del:hover { color: #ef4444; }
 
-        .recent-routes--main {
-            margin-top: 12px;
-            padding-top: 8px;
+        .recent-routes--main,
+        .recent-routes--resume {
+            margin: 10px 0 0;
+            padding: 8px 0 0;
+            background: transparent;
+            border: none;
+            border-radius: 0;
             border-top: 1px solid var(--border-light);
+        }
+        .recent-routes--resume .recent-routes-header {
+            margin-bottom: 4px;
+        }
+        .recent-routes--resume .recent-route-item {
+            border-top: none;
+            padding: 4px 0;
+        }
+        .recent-routes--resume .recent-route-item--resume .recent-route-sub {
+            display: none;
+        }
+        .recent-routes--resume.recent-routes--expanded .recent-route-item + .recent-route-item {
+            border-top: 1px solid var(--border-light);
+        }
+        .recent-routes--resume[hidden] {
+            display: none !important;
         }
         .share-restore-banner {
             margin: 0 0 10px;

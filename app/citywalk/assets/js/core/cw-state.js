@@ -43,6 +43,8 @@ const CW = {
     currentCityCenter: [116.4074, 39.9042],
     cityLocateReady: false,
     cityLocatePromise: null,
+    /** 用户手动切城或分享指定城市后递增，用于丢弃迟到的自动定位结果 */
+    cityLocateGen: 0,
 };
 
 /** 与后端 MAX_CITYWALK_SPAN_M 一致 */

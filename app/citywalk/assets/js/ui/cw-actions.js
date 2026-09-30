@@ -465,22 +465,69 @@ function addRouteToHistory(data) {
     renderRecentRoutes();
 }
 
+const CW_HISTORY_PREVIEW = 1;
+let cwHistoryExpanded = false;
+
+/** 将唯一的最近路线节点挂到当前规划 Tab 的主操作按钮下方；结果 Tab 不挂载。 */
+function placeRecentRoutesBlock(tabName) {
+    const wrap = document.getElementById('recentRoutesMain');
+    if (!wrap) return;
+    const name = tabName || CW.activePanelTab || 'agent';
+    if (name === 'result') {
+        // 留在上一规划 Tab 内，随该面板一并隐藏，不进入结果叙事区
+        return;
+    }
+    if (name === 'manual') {
+        const resetBtn = document.getElementById('btnReset');
+        const manualPanel = document.getElementById('tab-panel-manual');
+        if (resetBtn && resetBtn.parentNode) {
+            resetBtn.parentNode.insertBefore(wrap, resetBtn.nextSibling);
+        } else if (manualPanel) {
+            manualPanel.appendChild(wrap);
+        }
+        return;
+    }
+    const agentBtn = document.getElementById('btnAgentPlan');
+    const agentBox = document.querySelector('#tab-panel-agent .agent-box')
+        || document.getElementById('tab-panel-agent');
+    if (agentBtn && agentBtn.parentNode) {
+        agentBtn.parentNode.insertBefore(wrap, agentBtn.nextSibling);
+    } else if (agentBox) {
+        agentBox.appendChild(wrap);
+    }
+}
+
 function renderRecentRoutes() {
-    const wrap = document.getElementById('recentRoutes');
-    const listEl = document.getElementById('recentRoutesList');
-    const detailsEl = document.getElementById('manualHistoryDetails');
     const mainWrap = document.getElementById('recentRoutesMain');
     const mainList = document.getElementById('recentRoutesListMain');
+    const expandBtn = document.getElementById('btnExpandRecent');
+    const labelEl = document.getElementById('recentRoutesLabel');
 
     const list = loadRouteHistory()
         .sort((a, b) => (b.fav ? 1 : 0) - (a.fav ? 1 : 0) || b.ts - a.ts);
 
-    function fillList(targetEl, items, limit) {
-        if (!targetEl) return;
-        targetEl.innerHTML = '';
-        items.slice(0, limit).forEach(rec => {
+    if (list.length === 0) {
+        cwHistoryExpanded = false;
+        if (mainWrap) mainWrap.hidden = true;
+        if (mainList) mainList.innerHTML = '';
+        if (expandBtn) expandBtn.hidden = true;
+        if (labelEl) labelEl.textContent = '继续上次';
+        return;
+    }
+
+    const canExpand = list.length > CW_HISTORY_PREVIEW;
+    if (!canExpand) cwHistoryExpanded = false;
+    const limit = (canExpand && cwHistoryExpanded) ? list.length : Math.min(list.length, CW_HISTORY_PREVIEW);
+
+    if (labelEl) {
+        labelEl.textContent = cwHistoryExpanded ? '最近路线' : '继续上次';
+    }
+
+    if (mainList) {
+        mainList.innerHTML = '';
+        list.slice(0, limit).forEach(rec => {
             const item = document.createElement('div');
-            item.className = 'recent-route-item';
+            item.className = 'recent-route-item' + (cwHistoryExpanded ? '' : ' recent-route-item--resume');
             const date = new Date(rec.ts);
             const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
             const isLoop = rec.mode === 'loop';
@@ -494,22 +541,29 @@ function renderRecentRoutes() {
                     <div class="recent-route-sub">${rec.poiType || '无偏好'} · ${rec.visitPace === 'relaxed' ? '慢慢逛' : '密集打卡'} · ${rec.distanceKm}km · ${rec.poiCount}点 · ${dateStr}</div>
                 </div>
                 <button type="button" class="recent-route-del" data-id="${rec.id}" title="删除" aria-label="删除">✕</button>`;
-            targetEl.appendChild(item);
+            mainList.appendChild(item);
         });
     }
 
-    if (list.length === 0) {
-        if (listEl) listEl.innerHTML = '';
-        if (detailsEl) detailsEl.style.display = 'none';
-        if (mainWrap) mainWrap.hidden = true;
-        if (mainList) mainList.innerHTML = '';
-        return;
+    if (expandBtn) {
+        if (canExpand) {
+            expandBtn.hidden = false;
+            expandBtn.textContent = cwHistoryExpanded ? '收起' : '全部';
+        } else {
+            expandBtn.hidden = true;
+        }
     }
 
-    fillList(listEl, list, 6);
-    if (detailsEl) detailsEl.style.display = '';
-    fillList(mainList, list, 3);
-    if (mainWrap) mainWrap.hidden = false;
+    // 结果 Tab 下宿主面板已隐藏；有历史时在规划 Tab 显示
+    if (mainWrap) {
+        mainWrap.hidden = CW.activePanelTab === 'result';
+        mainWrap.classList.toggle('recent-routes--expanded', !!cwHistoryExpanded);
+    }
+}
+
+function toggleRecentRoutesExpand() {
+    cwHistoryExpanded = !cwHistoryExpanded;
+    renderRecentRoutes();
 }
 
 function toggleFavoriteRoute(id) {

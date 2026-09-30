@@ -107,27 +107,94 @@ function initMap() {
     }
 }
 
+/** 浏览器定位：授权则返回 {lng,lat}，拒绝 / 超时 / 不支持则 null（不弹阻塞错误） */
+function getBrowserPosition() {
+    return new Promise((resolve) => {
+        if (!navigator.geolocation) {
+            resolve(null);
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const lng = pos.coords.longitude;
+                const lat = pos.coords.latitude;
+                if (!Number.isFinite(lng) || !Number.isFinite(lat)) {
+                    resolve(null);
+                    return;
+                }
+                resolve({ lng, lat });
+            },
+            () => resolve(null),
+            { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
+        );
+    });
+}
+
+function _shareCityLocksLocate() {
+    try {
+        if (typeof _cwPendingSharePayload !== 'undefined'
+            && _cwPendingSharePayload
+            && _cwPendingSharePayload.city) {
+            return true;
+        }
+    } catch (_) { /* ignore */ }
+    return false;
+}
+
+function _applyLocatedCity(data, locateGen) {
+    if ((CW.cityLocateGen || 0) !== locateGen) return;
+    if (_shareCityLocksLocate()) return;
+    if (!(data && data.success && data.city)) {
+        const el = document.getElementById('currentCity');
+        if (el) el.textContent = CW.currentCity;
+        getCityWeather(CW.currentCity, true);
+        return;
+    }
+    CW.currentCity = data.city;
+    CW.currentCityCenter = data.center || CITY_COORDS[data.city] || [116.4074, 39.9042];
+    const cityEl = document.getElementById('currentCity');
+    if (cityEl) cityEl.textContent = CW.currentCity;
+    if (CW.map) {
+        CW.map.setCenter(CW.currentCityCenter);
+    }
+    getCityWeather(CW.currentCity, true);
+}
+
 async function locateUserCity() {
     if (CW.cityLocatePromise) {
         return CW.cityLocatePromise;
     }
     CW.cityLocatePromise = (async () => {
+        const locateGen = CW.cityLocateGen || 0;
+
+        // 分享链接已指定城市：不覆盖，只标记定位完成
+        if (_shareCityLocksLocate()) {
+            const cityEl = document.getElementById('currentCity');
+            if (cityEl) cityEl.textContent = CW.currentCity;
+            getCityWeather(CW.currentCity, true);
+            CW.cityLocateReady = true;
+            return;
+        }
+
         try {
-            const response = await fetch(`${CW_API}/locate_city`);
+            const coords = await getBrowserPosition();
+            if ((CW.cityLocateGen || 0) !== locateGen) {
+                return;
+            }
+            let url = `${CW_API}/locate_city`;
+            if (coords) {
+                url += `?lng=${encodeURIComponent(coords.lng)}&lat=${encodeURIComponent(coords.lat)}`;
+            }
+            const response = await fetch(url);
             const data = await response.json();
-            if (data.success && data.city) {
-                CW.currentCity = data.city;
-                CW.currentCityCenter = data.center || CITY_COORDS[data.city] || [116.4074, 39.9042];
-                document.getElementById('currentCity').textContent = CW.currentCity;
-                if (CW.map) {
-                    CW.map.setCenter(CW.currentCityCenter);
-                }
+            _applyLocatedCity(data, locateGen);
+        } catch (e) {
+            console.error('城市定位失败：', e);
+            if ((CW.cityLocateGen || 0) === locateGen && !_shareCityLocksLocate()) {
+                const el = document.getElementById('currentCity');
+                if (el) el.textContent = CW.currentCity;
                 getCityWeather(CW.currentCity, true);
             }
-        } catch (e) {
-            console.error('IP定位失败：', e);
-            document.getElementById('currentCity').textContent = CW.currentCity;
-            getCityWeather(CW.currentCity, true);
         } finally {
             CW.cityLocateReady = true;
         }

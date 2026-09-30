@@ -102,6 +102,10 @@
 
         // 应用城市切换
         function applyCitySwitch(cityName, center) {
+            // 丢弃进行中的自动定位结果，避免晚到的 locate 覆盖用户选择
+            CW.cityLocateGen = (CW.cityLocateGen || 0) + 1;
+            CW.cityLocateReady = true;
+
             document.getElementById('currentCity').textContent = cityName;
             document.getElementById('cityInput').value = '';
 
@@ -358,8 +362,10 @@ ${poiText}
         });
         bindClick('btnOpenAmap', openRouteInAmap);
         bindClick('btnNextStop', openNextStopInAmap);
-        bindClick('btnClearRecent', clearRouteHistory);
         bindClick('btnClearRecentMain', clearRouteHistory);
+        bindClick('btnExpandRecent', () => {
+            if (typeof toggleRecentRoutesExpand === 'function') toggleRecentRoutesExpand();
+        });
         bindClick('btnShareReplan', () => {
             const banner = document.getElementById('shareRestoreBanner');
             if (banner) banner.hidden = true;
@@ -384,7 +390,7 @@ ${poiText}
             try { sessionStorage.setItem('cw_dismiss_tips', '1'); } catch (_) { /* ignore */ }
         });
 
-        // 最近路线 / 收藏：事件委托（主列表 + 手动历史）
+        // 最近路线 / 收藏：事件委托（主列表）
         function bindRecentList(el) {
             if (!el) return;
             el.addEventListener('click', (e) => {
@@ -401,9 +407,9 @@ ${poiText}
                 if (main) { e.preventDefault(); restoreRouteFromHistory(main.dataset.id); }
             });
         }
-        bindRecentList(document.getElementById('recentRoutesList'));
         bindRecentList(document.getElementById('recentRoutesListMain'));
-        // 首屏渲染历史
+        // 首屏：挂到智能规划按钮下方并渲染历史
+        if (typeof placeRecentRoutesBlock === 'function') placeRecentRoutesBlock(CW.activePanelTab || 'agent');
         if (typeof renderRecentRoutes === 'function') renderRecentRoutes();
         if (typeof initShareableRouteFromUrl === 'function') initShareableRouteFromUrl();
         if (typeof renderPinnedSeeds === 'function') renderPinnedSeeds();

@@ -196,6 +196,12 @@
                         <button type="button" class="time-of-day-btn poi-type-btn" data-tod="evening" aria-pressed="false">傍晚</button>
                         <button type="button" class="time-of-day-btn poi-type-btn" data-tod="night" aria-pressed="false">夜晚</button>
                     </div>
+                    <div class="filter-title" id="routeStyleTitle">路线风格</div>
+                    <div class="route-style-group poi-type-group" role="group" aria-labelledby="routeStyleTitle">
+                        <button type="button" class="route-style-btn poi-type-btn active" data-style="balanced" aria-pressed="true">均衡</button>
+                        <button type="button" class="route-style-btn poi-type-btn" data-style="atmosphere_first" aria-pressed="false">氛围优先</button>
+                        <button type="button" class="route-style-btn poi-type-btn" data-style="efficiency_first" aria-pressed="false">省力直达</button>
+                    </div>
                 </div>
 
                 <div class="pinned-seeds" id="pinnedSeedsPanel" hidden>
@@ -204,14 +210,6 @@
                         <span class="pinned-seeds-hint">搜索结果或长按地图可订为必去</span>
                     </div>
                     <div class="pinned-seeds-list" id="pinnedSeedsList"></div>
-                </div>
-
-                <div class="recent-routes recent-routes--main" id="recentRoutesMain" hidden>
-                    <div class="recent-routes-header">
-                        <span class="filter-title">最近路线</span>
-                        <button type="button" class="recent-routes-clear" id="btnClearRecentMain">清空</button>
-                    </div>
-                    <div class="recent-routes-list" id="recentRoutesListMain"></div>
                 </div>
             </section>
 
@@ -231,6 +229,16 @@
                         <div class="inspire-cards" id="inspireCards" hidden></div>
                     </section>
                     <button type="button" class="btn btn-agent-plan" id="btnAgentPlan">智能规划路线</button>
+                    <div class="recent-routes recent-routes--resume" id="recentRoutesMain" hidden>
+                        <div class="recent-routes-header">
+                            <span class="recent-routes-label" id="recentRoutesLabel">继续上次</span>
+                            <div class="recent-routes-actions">
+                                <button type="button" class="recent-routes-expand" id="btnExpandRecent" hidden>全部</button>
+                                <button type="button" class="recent-routes-clear" id="btnClearRecentMain">清空</button>
+                            </div>
+                        </div>
+                        <div class="recent-routes-list" id="recentRoutesListMain"></div>
+                    </div>
                 </div>
             </section>
 
@@ -244,28 +252,6 @@
                     <button class="btn btn-plan" id="btnPlan" type="button" disabled>先在地图上选起终点</button>
                 </div>
                 <button class="btn btn-ghost btn-reset" id="btnReset" type="button">重置选择</button>
-
-                <details class="manual-filters">
-                    <summary>路线风格</summary>
-                    <div class="filter-group">
-                        <div class="filter-title" id="routeStyleTitle">路线风格</div>
-                        <div class="route-style-group poi-type-group" role="group" aria-labelledby="routeStyleTitle">
-                            <button type="button" class="route-style-btn poi-type-btn active" data-style="balanced" aria-pressed="true">均衡</button>
-                            <button type="button" class="route-style-btn poi-type-btn" data-style="atmosphere_first" aria-pressed="false">氛围优先</button>
-                            <button type="button" class="route-style-btn poi-type-btn" data-style="efficiency_first" aria-pressed="false">省力直达</button>
-                        </div>
-                    </div>
-                </details>
-
-                <details class="manual-history" id="manualHistoryDetails" style="display:none;">
-                    <summary>全部历史路线</summary>
-                    <div class="recent-routes" id="recentRoutes">
-                        <div class="recent-routes-header">
-                            <button type="button" class="recent-routes-clear" id="btnClearRecent">清空</button>
-                        </div>
-                        <div class="recent-routes-list" id="recentRoutesList"></div>
-                    </div>
-                </details>
             </section>
 
             <section class="tab-panel" id="tab-panel-result" data-tab-panel="result" role="tabpanel" aria-labelledby="tabBtnResult" hidden>

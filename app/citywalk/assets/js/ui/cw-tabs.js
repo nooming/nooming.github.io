@@ -90,6 +90,13 @@ function switchPanelTab(name, options) {
         shared.classList.toggle('panel-shared--tab-agent', name === 'agent');
     }
 
+    if (typeof placeRecentRoutesBlock === 'function') {
+        placeRecentRoutesBlock(name);
+    }
+    if (typeof renderRecentRoutes === 'function') {
+        renderRecentRoutes();
+    }
+
     if (opts.auto && typeof showToast === 'function') {
         showToast('路线已生成，可在「路线结果」中查看', 2800, 'success');
     }

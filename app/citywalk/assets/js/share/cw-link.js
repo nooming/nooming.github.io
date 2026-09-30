@@ -162,15 +162,83 @@ function sharePayloadNeedsEndpoints(payload) {
     return Number.isFinite(payload.elng) && Number.isFinite(payload.elat);
 }
 
+/** 去掉尾缀「市」后查 CITY_COORDS；命中则返回表内短名，否则空串 */
+function normalizeShareCityKey(city) {
+    if (!city) return '';
+    const raw = String(city).trim();
+    if (!raw) return '';
+    const short = raw.replace(/市$/, '');
+    if (CITY_COORDS[short]) return short;
+    if (CITY_COORDS[raw]) return raw;
+    return '';
+}
+
+/** 展示用城市名：表内命中用短名，否则去掉尾「市」 */
+function displayShareCityName(city) {
+    const key = normalizeShareCityKey(city);
+    if (key) return key;
+    const raw = String(city || '').trim();
+    return raw.replace(/市$/, '') || raw;
+}
+
+/** 无起终点坐标时：表内城市直接居中，未知则 Geocoder 全国检索后再居中 */
+function centerMapOnShareCity(city) {
+    if (!CW.map || !city) return;
+    const key = normalizeShareCityKey(city);
+    if (key && CITY_COORDS[key]) {
+        CW.currentCityCenter = CITY_COORDS[key];
+        CW.map.setCenter(CW.currentCityCenter);
+        CW.map.setZoom(13);
+        return;
+    }
+    if (!window.AMap) return;
+    const query = displayShareCityName(city) || String(city).trim();
+    AMap.plugin('AMap.Geocoder', function() {
+        const geocoder = new AMap.Geocoder({ city: '全国' });
+        geocoder.getLocation(query, function(status, result) {
+            if (status !== 'complete' || !result.geocodes || !result.geocodes.length) return;
+            // 仍受分享锁约束：避免定位链路中途解锁后迟到的 geocode 改视野
+            try {
+                if (typeof _shareCityLocksLocate === 'function' && !_shareCityLocksLocate()) return;
+            } catch (_) { /* ignore */ }
+            const loc = result.geocodes[0].location;
+            if (!loc || !CW.map) return;
+            CW.currentCityCenter = [loc.lng, loc.lat];
+            CW.map.setCenter(CW.currentCityCenter);
+            CW.map.setZoom(13);
+        });
+    });
+}
+
+/** 落点后把起终点（环线仅起点）纳入视野 */
+function fitShareEndpointMarkers(payload) {
+    if (!CW.map) return;
+    const fitTargets = [];
+    if (CW.startMarker) fitTargets.push(CW.startMarker);
+    if (payload && payload.mode !== 'loop' && CW.endMarker) fitTargets.push(CW.endMarker);
+    if (!fitTargets.length) return;
+    CW.map.setFitView(fitTargets, {
+        padding: [50, 50, 50, 50],
+        animate: true
+    });
+}
+
 function applyShareableRoutePrefs(payload) {
     if (!payload || _cwSharePrefsApplied) return false;
     if (payload.city) {
-        CW.currentCity = payload.city;
+        // 分享指定城市优先；递增 gen 使迟到的自动定位失效
+        CW.cityLocateGen = (CW.cityLocateGen || 0) + 1;
+        CW.cityLocateReady = true;
+        const cityKey = normalizeShareCityKey(payload.city);
+        CW.currentCity = displayShareCityName(payload.city);
         const cityEl = document.getElementById('currentCity');
         if (cityEl) cityEl.textContent = CW.currentCity;
-        if (CITY_COORDS[CW.currentCity]) {
-            CW.currentCityCenter = CITY_COORDS[CW.currentCity];
-            if (CW.map) CW.map.setCenter(CW.currentCityCenter);
+        if (cityKey && CITY_COORDS[cityKey]) {
+            CW.currentCityCenter = CITY_COORDS[cityKey];
+            if (CW.map) {
+                CW.map.setCenter(CW.currentCityCenter);
+                CW.map.setZoom(13);
+            }
         }
     }
     if (typeof switchPlanMode === 'function') {
@@ -198,10 +266,13 @@ function applyShareableRoutePrefs(payload) {
     return true;
 }
 
-/** 地图就绪后落点；地图缺失时不抛错、不标成功 */
+/** 地图就绪后落点并调整视野；地图缺失时不抛错、不标成功 */
 function applyShareableRouteEndpoints(payload) {
     if (!payload || _cwShareEndpointsApplied) return _cwShareEndpointsApplied;
+    // 仅城市、无坐标：仍须等地图就绪后居中，避免停在默认北京
     if (!sharePayloadNeedsEndpoints(payload)) {
+        if (!CW.map || !window.AMap) return false;
+        if (payload.city) centerMapOnShareCity(payload.city);
         _cwShareEndpointsApplied = true;
         return true;
     }
@@ -228,9 +299,8 @@ function applyShareableRouteEndpoints(payload) {
                 setPickupStatusText('endValue', payload.en);
             }
         }
-        if (payload.city && CITY_COORDS[payload.city] && CW.map) {
-            CW.map.setCenter(CITY_COORDS[payload.city]);
-        }
+        // 有起终点时 fit 标记，不单靠城市中心 setCenter
+        fitShareEndpointMarkers(payload);
         updateBtnStatus();
         _cwShareEndpointsApplied = true;
         return true;
