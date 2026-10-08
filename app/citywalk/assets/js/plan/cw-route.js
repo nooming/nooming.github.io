@@ -516,6 +516,7 @@ function clearRouteOverlays() {
     });
     CW.routeLines = [];
     CW.routeLine = null;
+    CW.routeRetrace = null;
 }
 
 function cwMeters(a, b) {
@@ -537,36 +538,101 @@ function cwLngLat(p) {
     return null;
 }
 
+const RETRACE_CORRIDOR_M = 36;
+const RETRACE_GAP_M = 18;
+const RETRACE_MIN_M = 55;
+const RETURN_OFFSET_PX = 24;
+
+function distToSegmentM(point, a, b) {
+    const ab = cwMeters(a, b);
+    if (ab < 0.4) return cwMeters(point, a);
+    const ac = cwMeters(a, point);
+    const bc = cwMeters(b, point);
+    const t = Math.max(0, Math.min(1, (ac * ac + ab * ab - bc * bc) / (2 * ab * ab)));
+    const proj = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+    return cwMeters(point, proj);
+}
+
 function distToPathM(point, path) {
     let best = Infinity;
     for (let i = 0; i < path.length - 1; i++) {
-        const a = path[i];
-        const b = path[i + 1];
-        const ab = cwMeters(a, b) || 1;
-        const ac = cwMeters(a, point);
-        const bc = cwMeters(b, point);
-        const t = Math.max(0, Math.min(1, (ac * ac + ab * ab - bc * bc) / (2 * ab * ab)));
-        const proj = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
-        const d = cwMeters(point, proj);
+        const d = distToSegmentM(point, path[i], path[i + 1]);
         if (d < best) best = d;
     }
     return best;
 }
 
-function legsRetrace(outbound, inbound) {
-    let close = 0;
-    let n = 0;
-    const step = Math.max(1, Math.floor(inbound.length / 18));
-    for (let i = step; i < inbound.length; i += step) {
-        n += 1;
-        if (distToPathM(inbound[i], outbound) <= 20) close += 1;
-    }
-    return n >= 3 && close / n >= 0.65;
+function pathCum(pts) {
+    const c = new Array(pts.length);
+    c[0] = 0;
+    for (let i = 1; i < pts.length; i++) c[i] = c[i - 1] + cwMeters(pts[i - 1], pts[i]);
+    return c;
 }
 
-function loopLegsIfRetrace(path) {
-    const pts = (path || []).map(cwLngLat).filter((p) => p && Number.isFinite(p[0]) && Number.isFinite(p[1]));
-    if (pts.length < 6) return null;
+function dirBetween(a, b) {
+    const lat = ((a[1] + b[1]) * 0.5) * Math.PI / 180;
+    const dx = (b[0] - a[0]) * Math.cos(lat);
+    const dy = b[1] - a[1];
+    const len = Math.hypot(dx, dy);
+    if (len < 1e-12) return null;
+    return [dx / len, dy / len];
+}
+
+function dirAt(pts, cum, i) {
+    const target = 10;
+    let a = i;
+    let b = i;
+    while (a > 0 && cum[i] - cum[a] < target) a--;
+    while (b < pts.length - 1 && cum[b] - cum[i] < target) b++;
+    if (a === b) return null;
+    return dirBetween(pts[a], pts[b]);
+}
+
+function isRetraceVertex(pts, cum, i) {
+    const limit = cum[i] - RETRACE_GAP_M;
+    if (limit < 20) return false;
+    const dir = dirAt(pts, cum, i);
+    if (!dir) return false;
+    const lat = pts[i][1];
+    const lng = pts[i][0];
+    const cosLat = Math.cos(lat * Math.PI / 180) || 1;
+    const padLat = 70 / 111320;
+    const padLng = 70 / (111320 * cosLat);
+    for (let j = 0; j < pts.length - 1 && cum[j] <= limit; j++) {
+        if (cum[j + 1] > limit) continue;
+        const a = pts[j];
+        const b = pts[j + 1];
+        if (a[1] < lat - padLat && b[1] < lat - padLat) continue;
+        if (a[1] > lat + padLat && b[1] > lat + padLat) continue;
+        if (a[0] < lng - padLng && b[0] < lng - padLng) continue;
+        if (a[0] > lng + padLng && b[0] > lng + padLng) continue;
+        if (distToSegmentM(pts[i], a, b) > RETRACE_CORRIDOR_M) continue;
+        const segDir = dirBetween(a, b);
+        if (!segDir) continue;
+        if (dir[0] * segDir[0] + dir[1] * segDir[1] < -0.25) return true;
+    }
+    return false;
+}
+
+function spansFromMarks(mark, cum) {
+    const spans = [];
+    let start = -1;
+    let last = -1;
+    for (let i = 0; i < mark.length; i++) {
+        if (mark[i]) {
+            if (start < 0) start = i;
+            last = i;
+        } else if (start >= 0 && cum[i] - cum[last] > 32) {
+            if (cum[last] - cum[start] >= RETRACE_MIN_M) spans.push({ start, end: last });
+            start = -1;
+            last = -1;
+        }
+    }
+    if (start >= 0 && cum[last] - cum[start] >= RETRACE_MIN_M) spans.push({ start, end: last });
+    return spans;
+}
+
+function halfRetraceSpan(pts) {
     let far = 0;
     let farD = -1;
     for (let i = 0; i < pts.length; i++) {
@@ -576,27 +642,46 @@ function loopLegsIfRetrace(path) {
             far = i;
         }
     }
-    if (far < 2 || far > pts.length - 3 || farD < 40) return null;
+    if (far < 2 || far >= pts.length - 1 || farD < 40) return null;
     const outbound = pts.slice(0, far + 1);
     const inbound = pts.slice(far);
-    if (!legsRetrace(outbound, inbound)) return null;
-    return { outbound, inbound };
+    const samples = [];
+    const step = Math.max(1, Math.floor(inbound.length / 24));
+    for (let i = step; i < inbound.length; i += step) samples.push(distToPathM(inbound[i], outbound));
+    if (samples.length < 2) return null;
+    samples.sort((a, b) => a - b);
+    const median = samples[Math.floor(samples.length / 2)];
+    if (median > RETRACE_CORRIDOR_M) return null;
+    return [{ start: far, end: pts.length - 1 }];
 }
 
-function offsetPathMeters(points, meters) {
-    const latRef = points[0][1];
-    const mLng = 111320 * Math.cos(latRef * Math.PI / 180);
-    const mLat = 111320;
-    return points.map((p, i) => {
-        const prev = points[Math.max(0, i - 1)];
-        const next = points[Math.min(points.length - 1, i + 1)];
-        let dx = (next[0] - prev[0]) * mLng;
-        let dy = (next[1] - prev[1]) * mLat;
-        const len = Math.hypot(dx, dy) || 1;
-        const px = -dy / len;
-        const py = dx / len;
-        return [p[0] + (px * meters) / mLng, p[1] + (py * meters) / mLat];
+function findRetraceSpans(pts) {
+    if (!pts || pts.length < 6) return [];
+    const byHalf = halfRetraceSpan(pts);
+    if (byHalf) return byHalf;
+    const cum = pathCum(pts);
+    if (cum[cum.length - 1] < RETRACE_MIN_M + RETRACE_GAP_M) return [];
+    const mark = new Array(pts.length).fill(false);
+    let nextCheck = RETRACE_GAP_M;
+    for (let i = 1; i < pts.length; i++) {
+        if (cum[i] + 0.01 < nextCheck && i !== pts.length - 1) continue;
+        nextCheck = cum[i] + 8;
+        if (isRetraceVertex(pts, cum, i)) mark[i] = true;
+    }
+    return spansFromMarks(mark, cum);
+}
+
+function solidRanges(pointCount, spans) {
+    const ranges = [];
+    let cursor = 0;
+    spans.slice().sort((a, b) => a.start - b.start).forEach((sp) => {
+        const a = Math.max(0, Math.min(pointCount - 1, sp.start));
+        const b = Math.max(0, Math.min(pointCount - 1, sp.end));
+        if (a > cursor) ranges.push([cursor, a]);
+        cursor = Math.max(cursor, b);
     });
+    if (cursor < pointCount - 1) ranges.push([cursor, pointCount - 1]);
+    return ranges.filter(([a, b]) => b > a);
 }
 
 function medianOffsetMeters(a, b) {
@@ -608,32 +693,138 @@ function medianOffsetMeters(a, b) {
     return ds.length ? ds[Math.floor(ds.length / 2)] : 0;
 }
 
-function offsetPathScreen(points, pixels) {
-    if (!CW.map || typeof CW.map.lngLatToContainer !== 'function' || typeof AMap === 'undefined') {
-        return points;
-    }
-    return points.map((p, i) => {
-        const prev = points[Math.max(0, i - 1)];
-        const next = points[Math.min(points.length - 1, i + 1)];
-        const a = CW.map.lngLatToContainer(prev);
-        const b = CW.map.lngLatToContainer(next);
-        const cur = CW.map.lngLatToContainer(p);
-        if (!a || !b || !cur) return p;
-        let dx = b.x - a.x;
-        let dy = b.y - a.y;
-        const len = Math.hypot(dx, dy) || 1;
-        const ll = CW.map.containerToLngLat(new AMap.Pixel(cur.x + (-dy / len) * pixels, cur.y + (dx / len) * pixels));
-        if (!ll) return p;
-        const lng = typeof ll.getLng === 'function' ? ll.getLng() : ll.lng;
-        const lat = typeof ll.getLat === 'function' ? ll.getLat() : ll.lat;
-        return [lng, lat];
-    });
+function meterScales(lat) {
+    return {
+        mLng: 111320 * Math.cos(lat * Math.PI / 180) || 1,
+        mLat: 111320,
+    };
 }
 
-function offsetReturnLeg(points) {
-    const shifted = offsetPathMeters(points, 13);
-    if (medianOffsetMeters(points, shifted) >= 4) return shifted;
-    return offsetPathScreen(points, 12);
+function nearestRefFrame(point, reference) {
+    let best = Infinity;
+    let ax = 0;
+    let ay = 0;
+    let bx = 0;
+    let by = 0;
+    const scales = meterScales(point[1]);
+    for (let j = 0; j < reference.length - 1; j++) {
+        const a = reference[j];
+        const b = reference[j + 1];
+        const d = distToSegmentM(point, a, b);
+        if (d >= best) continue;
+        const dx = (b[0] - a[0]) * scales.mLng;
+        const dy = (b[1] - a[1]) * scales.mLat;
+        if (Math.hypot(dx, dy) < 1) continue;
+        best = d;
+        ax = a[0];
+        ay = a[1];
+        bx = b[0];
+        by = b[1];
+    }
+    if (!Number.isFinite(best) || best === Infinity) return null;
+    return { a: [ax, ay], b: [bx, by] };
+}
+
+function offsetReturnMeters(inbound, reference, meters) {
+    if (!inbound || inbound.length < 2 || !reference || reference.length < 2) return null;
+    const scales = meterScales(inbound[0][1]);
+    let lock = null;
+    const shifted = inbound.map((p) => {
+        const frame = nearestRefFrame(p, reference);
+        if (!frame) return null;
+        const dx = (frame.b[0] - frame.a[0]) * scales.mLng;
+        const dy = (frame.b[1] - frame.a[1]) * scales.mLat;
+        const len = Math.hypot(dx, dy) || 1;
+        let nx = -dy / len;
+        let ny = dx / len;
+        if (lock && nx * lock[0] + ny * lock[1] < 0) {
+            nx = -nx;
+            ny = -ny;
+        }
+        if (!lock) lock = [nx, ny];
+        return [p[0] + (nx * meters) / scales.mLng, p[1] + (ny * meters) / scales.mLat];
+    });
+    if (shifted.some((p) => !p)) return null;
+    if (medianOffsetMeters(inbound, shifted) < Math.max(2, meters * 0.45)) return null;
+    return shifted;
+}
+
+function screenPoint(lnglat) {
+    if (!CW.map || typeof CW.map.lngLatToContainer !== 'function') return null;
+    const p = CW.map.lngLatToContainer(lnglat);
+    if (!p) return null;
+    const x = typeof p.getX === 'function' ? p.getX() : p.x;
+    const y = typeof p.getY === 'function' ? p.getY() : p.y;
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+    return { x, y };
+}
+
+function screenToLngLat(x, y) {
+    if (!CW.map || typeof CW.map.containerToLngLat !== 'function' || typeof AMap === 'undefined') return null;
+    const ll = CW.map.containerToLngLat(new AMap.Pixel(x, y));
+    if (!ll) return null;
+    const lng = typeof ll.getLng === 'function' ? ll.getLng() : ll.lng;
+    const lat = typeof ll.getLat === 'function' ? ll.getLat() : ll.lat;
+    if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null;
+    return [lng, lat];
+}
+
+function medianScreenPx(a, b) {
+    const ds = [];
+    const n = Math.min(a.length, b.length);
+    const step = Math.max(1, Math.floor(n / 12));
+    for (let i = 0; i < n; i += step) {
+        const p = screenPoint(a[i]);
+        const q = screenPoint(b[i]);
+        if (!p || !q) continue;
+        ds.push(Math.hypot(p.x - q.x, p.y - q.y));
+    }
+    ds.sort((x, y) => x - y);
+    return ds.length ? ds[Math.floor(ds.length / 2)] : 0;
+}
+
+function metersPerPixel(lat) {
+    const zoom = CW.map && typeof CW.map.getZoom === 'function' ? Number(CW.map.getZoom()) : 15;
+    const z = Number.isFinite(zoom) ? zoom : 15;
+    return 156543.03392 * Math.cos((lat || 0) * Math.PI / 180) / Math.pow(2, z);
+}
+
+function offsetReturnScreen(inbound, reference, pixels) {
+    if (!inbound || inbound.length < 2) return null;
+    let lock = null;
+    const shifted = [];
+    for (let i = 0; i < inbound.length; i++) {
+        const p = inbound[i];
+        const cur = screenPoint(p);
+        const frame = nearestRefFrame(p, reference);
+        if (!cur || !frame) return null;
+        const a = screenPoint(frame.a);
+        const b = screenPoint(frame.b);
+        if (!a || !b) return null;
+        let dx = b.x - a.x;
+        let dy = b.y - a.y;
+        const len = Math.hypot(dx, dy);
+        if (len < 0.4) return null;
+        let nx = -dy / len;
+        let ny = dx / len;
+        if (lock && nx * lock[0] + ny * lock[1] < 0) {
+            nx = -nx;
+            ny = -ny;
+        }
+        if (!lock) lock = [nx, ny];
+        const ll = screenToLngLat(cur.x + nx * pixels, cur.y + ny * pixels);
+        if (!ll) return null;
+        shifted.push(ll);
+    }
+    if (medianScreenPx(inbound, shifted) < 14) return null;
+    return shifted;
+}
+
+function offsetReturnBeside(inbound, reference) {
+    const screen = offsetReturnScreen(inbound, reference, RETURN_OFFSET_PX);
+    if (screen) return screen;
+    const meters = metersPerPixel(inbound[0][1]) * RETURN_OFFSET_PX;
+    return offsetReturnMeters(inbound, reference, meters);
 }
 
 function makeRouteLine(path, options) {
@@ -644,65 +835,114 @@ function makeRouteLine(path, options) {
     }, options));
 }
 
+function outboundLineOptions(primary) {
+    return {
+        strokeColor: primary,
+        strokeWeight: 6,
+        strokeOpacity: 0.95,
+        strokeStyle: 'solid',
+        showDir: true,
+        dirColor: '#ffffff',
+        isOutline: true,
+        outlineColor: '#ffffff',
+        borderWeight: 2,
+        zIndex: 60,
+    };
+}
+
+function returnLineOptions(primaryLight, primaryDark) {
+    return {
+        strokeColor: primaryLight,
+        strokeWeight: 5,
+        strokeOpacity: 0.95,
+        strokeStyle: 'dashed',
+        strokeDasharray: [12, 9],
+        showDir: true,
+        dirColor: primaryDark,
+        zIndex: 80,
+    };
+}
+
+function refreshRetraceOffset() {
+    const stored = CW.routeRetrace;
+    if (!stored || !Array.isArray(stored.legs) || !CW.map) return;
+    stored.legs.forEach((leg) => {
+        if (!leg || !leg.line || !leg.inbound || !leg.reference) return;
+        const shifted = offsetReturnBeside(leg.inbound, leg.reference);
+        if (!shifted || medianOffsetMeters(leg.inbound, shifted) < 0.5) return;
+        try {
+            if (typeof leg.line.setPath === 'function') leg.line.setPath(shifted);
+        } catch (e) { /* 线已从地图移除 */ }
+    });
+}
+
+function ensureRetraceZoom() {
+    if (!CW.map || CW._retraceZoomMap === CW.map) return;
+    if (CW._retraceZoomMap && CW._onRetraceZoom && typeof CW._retraceZoomMap.off === 'function') {
+        try { CW._retraceZoomMap.off('zoomend', CW._onRetraceZoom); } catch (e) { /* 旧地图已销毁 */ }
+    }
+    CW._onRetraceZoom = function () { refreshRetraceOffset(); };
+    CW._retraceZoomMap = CW.map;
+    CW.map.on('zoomend', CW._onRetraceZoom);
+}
+
 function drawPlannedRoute(path, mode) {
     clearRouteOverlays();
     const primary = CW.currentTheme ? CW.currentTheme.primary : '#ff7e5f';
     const primaryLight = CW.currentTheme ? CW.currentTheme.primaryLight : '#feb47b';
     const primaryDark = CW.currentTheme ? CW.currentTheme.primaryDark : '#e85d40';
-    const legs = mode === 'loop' ? loopLegsIfRetrace(path) : null;
+    const pts = (path || []).map(cwLngLat).filter((p) => p && Number.isFinite(p[0]) && Number.isFinite(p[1]));
+    const spans = mode === 'loop' ? findRetraceSpans(pts) : [];
     const lines = [];
-    if (legs) {
-        lines.push(makeRouteLine(legs.outbound, {
-            strokeColor: primary,
-            strokeWeight: 6,
-            strokeOpacity: 0.95,
-            strokeStyle: 'solid',
-            showDir: true,
-            dirColor: '#ffffff',
-            isOutline: true,
-            outlineColor: '#ffffff',
-            borderWeight: 2,
-            zIndex: 60,
-        }));
-        lines.push(makeRouteLine(offsetReturnLeg(legs.inbound), {
-            strokeColor: primaryLight,
-            strokeWeight: 5,
-            strokeOpacity: 0.92,
-            strokeStyle: 'dashed',
-            strokeDasharray: [10, 8],
-            showDir: true,
-            dirColor: primaryDark,
-            isOutline: true,
-            outlineColor: '#ffffff',
-            borderWeight: 2,
-            zIndex: 55,
-        }));
-    } else if (mode === 'loop') {
-        lines.push(makeRouteLine(path, {
-            strokeColor: primary,
-            strokeWeight: 7,
-            strokeOpacity: 0.92,
-            strokeStyle: 'solid',
-            showDir: true,
-            dirColor: '#ffffff',
-            isOutline: true,
-            outlineColor: '#ffffff',
-            borderWeight: 1,
-            zIndex: 50,
-        }));
-    } else {
-        lines.push(makeRouteLine(path, {
-            strokeColor: primary,
-            strokeWeight: 6,
-            strokeOpacity: 0.9,
-            strokeStyle: 'solid',
-            showDir: true,
-            zIndex: 50,
-        }));
+    const retraceLegs = [];
+    if (spans.length) {
+        solidRanges(pts.length, spans).forEach(([a, b]) => {
+            const piece = pts.slice(a, b + 1);
+            if (piece.length < 2) return;
+            lines.push(makeRouteLine(piece, outboundLineOptions(primary)));
+        });
+        spans.forEach((sp) => {
+            const inbound = pts.slice(sp.start, sp.end + 1);
+            const reference = pts.slice(0, sp.start + 1);
+            if (inbound.length < 2 || reference.length < 2) return;
+            const shifted = offsetReturnBeside(inbound, reference);
+            if (!shifted || medianOffsetMeters(inbound, shifted) < 0.5) return;
+            const line = makeRouteLine(shifted, returnLineOptions(primaryLight, primaryDark));
+            lines.push(line);
+            retraceLegs.push({ inbound, reference, line });
+        });
+    }
+    if (!retraceLegs.length) {
+        lines.length = 0;
+        if (mode === 'loop') {
+            lines.push(makeRouteLine(path, {
+                strokeColor: primary,
+                strokeWeight: 7,
+                strokeOpacity: 0.92,
+                strokeStyle: 'solid',
+                showDir: true,
+                dirColor: '#ffffff',
+                isOutline: true,
+                outlineColor: '#ffffff',
+                borderWeight: 1,
+                zIndex: 50,
+            }));
+        } else {
+            lines.push(makeRouteLine(path, {
+                strokeColor: primary,
+                strokeWeight: 6,
+                strokeOpacity: 0.9,
+                strokeStyle: 'solid',
+                showDir: true,
+                zIndex: 50,
+            }));
+        }
     }
     lines.forEach((line) => CW.map.add(line));
     CW.routeLines = lines;
     CW.routeLine = lines[0] || null;
+    CW.routeRetrace = retraceLegs.length ? { legs: retraceLegs } : null;
+    if (retraceLegs.length) ensureRetraceZoom();
 }
 
 function renderRouteStopEditor(poiList) {
