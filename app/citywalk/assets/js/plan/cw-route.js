@@ -895,7 +895,8 @@ function routeStrokeOptions(primary) {
         strokeWeight: 6,
         strokeOpacity: 0.9,
         strokeStyle: 'solid',
-        showDir: false,
+        showDir: true,
+        dirColor: '#ffffff',
         zIndex: 50,
     };
 }
