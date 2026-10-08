@@ -892,7 +892,7 @@ function drawPlannedRoute(path, mode) {
     const primaryLight = CW.currentTheme ? CW.currentTheme.primaryLight : '#feb47b';
     const primaryDark = CW.currentTheme ? CW.currentTheme.primaryDark : '#e85d40';
     const pts = (path || []).map(cwLngLat).filter((p) => p && Number.isFinite(p[0]) && Number.isFinite(p[1]));
-    const spans = mode === 'loop' ? findRetraceSpans(pts) : [];
+    const spans = findRetraceSpans(pts);
     const lines = [];
     const retraceLegs = [];
     if (spans.length) {
