@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#FFFA00" id="themeColor">
+    <meta name="description" content="全屏大字，可滚动。文字留在本机。">
+    <meta name="keywords" content="灯牌,应援,全屏,滚动,换算与媒体">
+    <meta name="author" content="nooming">
+
+    <link rel="apple-touch-icon" sizes="180x180" href="../../../assets/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../../assets/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../../assets/icons/favicon-16x16.png">
+    <link rel="manifest" href="../../../assets/icons/site.webmanifest">
+    <link rel="shortcut icon" href="../../../assets/icons/favicon.ico">
+
+    <link rel="stylesheet" href="../../../assets/css/common.css">
+    <link rel="stylesheet" href="assets/css/light-board.css?v=2">
+    <title>灯牌 · noomings</title>
+</head>
+<body class="page-container">
+    <div class="page-header" id="pageHeader">
+        <div class="header-top">
+            <a href="../" class="back-btn">返回</a>
+        </div>
+        <div class="section-header section-header--page">
+            <h1>灯牌</h1>
+            <p>全屏大字，可滚动。文字留在本机。</p>
+        </div>
+    </div>
+
+    <main class="app-panel lb-setup" id="setup">
+        <div class="lb-field">
+            <label for="boardText">内容</label>
+            <textarea id="boardText" rows="3" autocomplete="off" placeholder="写一句话"></textarea>
+            <div class="lb-chips" role="group" aria-label="填入常用语">
+                <button type="button" class="lb-chip" data-text="加油">加油</button>
+                <button type="button" class="lb-chip" data-text="到了">到了</button>
+                <button type="button" class="lb-chip" data-text="你好">你好</button>
+            </div>
+        </div>
+
+        <div class="lb-field">
+            <span class="lb-label" id="fontLabel">字体</span>
+            <div class="lb-seg" role="group" aria-labelledby="fontLabel" id="fontSeg">
+                <button type="button" data-font="hei" aria-pressed="true">黑体</button>
+                <button type="button" data-font="song" aria-pressed="false">宋体</button>
+                <button type="button" data-font="mono" aria-pressed="false">等宽</button>
+            </div>
+        </div>
+
+        <div class="lb-field">
+            <div class="lb-colors">
+                <div>
+                    <label for="textColor">字色</label>
+                    <input type="color" id="textColor" value="#FFFA00">
+                </div>
+                <div>
+                    <label for="bgColor">底色</label>
+                    <input type="color" id="bgColor" value="#0a0a0a">
+                </div>
+            </div>
+            <p class="lb-contrast" id="contrastHint" hidden>这样举起来会看不清</p>
+        </div>
+
+        <div class="lb-field">
+            <span class="lb-label" id="modeLabel">模式</span>
+            <div class="lb-seg" role="group" aria-labelledby="modeLabel" id="modeSeg">
+                <button type="button" data-mode="scroll" aria-pressed="true">滚动</button>
+                <button type="button" data-mode="static" aria-pressed="false">静止</button>
+            </div>
+        </div>
+
+        <div class="lb-field" id="speedField">
+            <label for="speed">速度</label>
+            <input type="range" id="speed" min="0" max="100" value="30">
+        </div>
+
+        <div class="lb-field">
+            <label for="size">字号</label>
+            <input type="range" id="size" min="0" max="100" value="40">
+        </div>
+
+        <button type="button" class="lb-go" id="goBtn">举牌</button>
+    </main>
+
+    <footer class="site-footer" id="pageFooter" role="contentinfo">
+        <p>© 2026 noomings · 非商业使用</p>
+    </footer>
+
+    <div class="lb-stage" id="stage" hidden>
+        <div class="lb-view" id="stageView">
+            <p class="lb-line" id="stageLine"></p>
+        </div>
+        <div class="lb-bar" id="stageBar" hidden>
+            <button type="button" class="lb-exit" id="exitBtn">退出</button>
+            <input type="text" id="barText" class="lb-bar-text" aria-label="内容" autocomplete="off">
+            <label class="lb-bar-color">字色<input type="color" id="barTextColor" aria-label="字色"></label>
+            <label class="lb-bar-color">底色<input type="color" id="barBgColor" aria-label="底色"></label>
+            <select id="barFont" aria-label="字体">
+                <option value="hei">黑体</option>
+                <option value="song">宋体</option>
+                <option value="mono">等宽</option>
+            </select>
+            <div class="lb-seg lb-seg--bar" role="group" aria-label="模式" id="barModeSeg">
+                <button type="button" data-mode="scroll" aria-pressed="true">滚动</button>
+                <button type="button" data-mode="static" aria-pressed="false">静止</button>
+            </div>
+            <label class="lb-bar-range">字号<input type="range" id="barSize" min="0" max="100" aria-label="字号"></label>
+            <label class="lb-bar-range" id="barSpeedWrap">速度<input type="range" id="barSpeed" min="0" max="100" aria-label="速度"></label>
+            <p class="lb-bar-hint" id="barContrast" hidden>这样举起来会看不清</p>
+        </div>
+    </div>
+
+    <script src="../../../assets/js/utils.js" defer></script>
+    <script src="assets/js/light-board.js?v=1" defer></script>
+</body>
+</html>
