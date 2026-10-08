@@ -324,6 +324,65 @@ function reverseGeocode(lng, lat, callback) {
     });
 }
 
+function mustGoActionLabel() {
+    return CW.addingRouteStop ? '加入此站' : '订为必去';
+}
+
+function confirmMapOrSearchSpot(spot) {
+    if (typeof confirmPinnedOrRouteStop === 'function') {
+        confirmPinnedOrRouteStop(spot);
+        return;
+    }
+    if (typeof pinMustGoSpot === 'function') pinMustGoSpot(spot);
+}
+
+function whenViewportSettled(done) {
+    const vv = window.visualViewport;
+    if (!vv) {
+        setTimeout(done, 320);
+        return;
+    }
+    let last = Math.round(vv.height);
+    let stable = 0;
+    const started = Date.now();
+    const step = () => {
+        const h = Math.round(vv.height);
+        if (h === last) stable += 1;
+        else {
+            stable = 0;
+            last = h;
+        }
+        if (stable >= 4 || Date.now() - started > 800) done();
+        else requestAnimationFrame(step);
+    };
+    setTimeout(() => requestAnimationFrame(step), 40);
+}
+
+function finishSearchCamera(lnglat) {
+    const point = [Number(lnglat[0]), Number(lnglat[1])];
+    CW._lastSearchLngLat = point;
+    CW._lastSearchAt = Date.now();
+    const settle = !!CW._recenterSearchAfterSettle;
+    CW._recenterSearchAfterSettle = false;
+    if (!settle) return;
+    whenViewportSettled(() => {
+        if (!CW.map) return;
+        if (typeof CW.map.resize === 'function') CW.map.resize();
+        CW.map.setCenter(point);
+    });
+}
+
+function recenterLastSearch() {
+    const point = CW._lastSearchLngLat;
+    if (!point || !CW.map || !CW._lastSearchAt) return;
+    if (Date.now() - CW._lastSearchAt > 20000) return;
+    whenViewportSettled(() => {
+        if (!CW.map || !CW._lastSearchLngLat) return;
+        if (typeof CW.map.resize === 'function') CW.map.resize();
+        CW.map.setCenter(CW._lastSearchLngLat);
+    });
+}
+
 /** 右键 / 长按后弹出确认，再订为必去（搜索气泡仍直接 pin） */
 function openMustGoConfirm(lng, lat) {
     if (!CW.map || !CW.infoWindow) return;
@@ -335,7 +394,7 @@ function openMustGoConfirm(lng, lat) {
         if (CW._mustGoConfirmToken !== confirmToken || !CW.infoWindow || !CW.map) return;
         CW.infoWindow.setContent(`<div class="mustgo-confirm-infowin">
             <div class="mustgo-confirm-name">${cwEscapeHtml(name)}</div>
-            <button type="button" class="btn-pin-mustgo" id="btnConfirmMapMustGo">订为必去</button>
+            <button type="button" class="btn-pin-mustgo" id="btnConfirmMapMustGo">${mustGoActionLabel()}</button>
         </div>`);
         CW.infoWindow.open(CW.map, [lng, lat]);
         setTimeout(() => {
@@ -346,9 +405,7 @@ function openMustGoConfirm(lng, lat) {
                 ev.preventDefault();
                 ev.stopPropagation();
                 if (CW._mustGoConfirmToken !== confirmToken) return;
-                if (typeof pinMustGoSpot === 'function') {
-                    pinMustGoSpot({ name: resolvedName, lng, lat });
-                }
+                confirmMapOrSearchSpot({ name: resolvedName, lng, lat });
                 CW._mustGoConfirmToken = 0;
                 if (CW.infoWindow) CW.infoWindow.close();
             });
@@ -481,14 +538,16 @@ function searchAddress(keyword) {
                     title: poi.name
                 });
                 CW.map.add(CW.searchMarker);
-                CW.map.setCenter([poi.location.lng, poi.location.lat]);
+                const found = [poi.location.lng, poi.location.lat];
+                CW.map.setCenter(found);
                 CW.map.setZoom(17);
+                finishSearchCamera(found);
 
                 CW.infoWindow.setContent(`<div class="search-infowin">
                     <strong>${cwEscapeHtml(poi.name)}</strong><br/>
                     <span class="search-infowin-addr">${cwEscapeHtml(poi.address || '')}</span><br/>
                     <span class="search-infowin-hint">点击地图设为起点或终点</span><br/>
-                    <button type="button" class="btn-pin-mustgo" id="btnPinSearchMustGo">订为必去</button>
+                    <button type="button" class="btn-pin-mustgo" id="btnPinSearchMustGo">${mustGoActionLabel()}</button>
                 </div>`);
                 CW._mustGoConfirmToken = 0;
                 CW.infoWindow.open(CW.map, [poi.location.lng, poi.location.lat]);
@@ -499,14 +558,12 @@ function searchAddress(keyword) {
                         pinBtn.addEventListener('click', (ev) => {
                             ev.preventDefault();
                             ev.stopPropagation();
-                            if (typeof pinMustGoSpot === 'function') {
-                                pinMustGoSpot({
-                                    name: poi.name,
-                                    lng: parseFloat(poi.location.lng.toFixed(6)),
-                                    lat: parseFloat(poi.location.lat.toFixed(6)),
-                                    category: poi.type || '',
-                                });
-                            }
+                            confirmMapOrSearchSpot({
+                                name: poi.name,
+                                lng: parseFloat(poi.location.lng.toFixed(6)),
+                                lat: parseFloat(poi.location.lat.toFixed(6)),
+                                category: poi.type || '',
+                            });
                         });
                     }
                 }, 0);
@@ -538,11 +595,14 @@ function tryGeocodeSearch(keyword) {
                     title: geocode.formattedAddress || keyword
                 });
                 CW.map.add(CW.searchMarker);
-                CW.map.setCenter([location.lng, location.lat]);
+                const found = [location.lng, location.lat];
+                CW.map.setCenter(found);
                 CW.map.setZoom(17);
+                finishSearchCamera(found);
                 showToast("✅ 已定位，请点击地图选择为起点或终点");
                 setTimeout(() => { if (CW.searchMarker) { CW.map.remove(CW.searchMarker); CW.searchMarker = null; } }, 3000);
             } else {
+                CW._recenterSearchAfterSettle = false;
                 showToast("没找到这个地点，换个关键词试试，比如 外滩、南京路");
             }
         });

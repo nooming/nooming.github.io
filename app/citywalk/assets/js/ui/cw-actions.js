@@ -162,6 +162,14 @@ function renderPinnedSeeds() {
     });
 }
 
+function confirmPinnedOrRouteStop(spot) {
+    if (CW.addingRouteStop && CW.routeData && typeof addStopToRouteAndReplan === 'function') {
+        addStopToRouteAndReplan(spot);
+        return;
+    }
+    pinMustGoSpot(spot);
+}
+
 function pinMustGoSpot(spot) {
     if (!spot || typeof spot.lng !== 'number' || typeof spot.lat !== 'number') {
         showToast('无法订为必去：缺少坐标');

@@ -182,7 +182,11 @@ function renderResultNarrative(data, pois, planMin, activityMin, freeMin) {
         }
         parts.push(timeLine);
     }
-    if (tip && tip.length < 60) parts.push(tip);
+    if (tip && tip.indexOf('已保留你指定的站点') !== -1) {
+        parts.push('已保留你指定的站点，预计会超过计划时长');
+    } else if (tip && tip.length < 60) {
+        parts.push(tip);
+    }
     el.textContent = parts.join('。') + '。';
 }
 
@@ -294,13 +298,16 @@ function resetSelection() {
     CW.endPoint = null;
     if (CW.startMarker) CW.map.remove(CW.startMarker);
     if (CW.endMarker) CW.map.remove(CW.endMarker);
-    if (CW.routeLine) CW.map.remove(CW.routeLine);
+    clearRouteOverlays();
     clearPoiMarkers();
 
     CW.startMarker = null;
     CW.endMarker = null;
-    CW.routeLine = null;
     CW.routeData = null;
+    CW.removedPoiNames = [];
+    CW.addingRouteStop = false;
+    const resetPanel = document.querySelector('.control-panel');
+    if (resetPanel) resetPanel.classList.remove('result-adding-stop', 'search-focused');
 
     document.getElementById('startCard').className = 'status-card';
     document.getElementById('endCard').className = 'status-card';
@@ -384,7 +391,14 @@ function resetSelection() {
     updateBtnStatus();
 }
 
-function generateRoute() {
+function generateRoute(options) {
+    const opts = options || {};
+    if (!opts.keepEdits) {
+        CW.removedPoiNames = [];
+        CW.addingRouteStop = false;
+        const panel = document.querySelector('.control-panel');
+        if (panel) panel.classList.remove('result-adding-stop');
+    }
     CW.lastPlanTab = 'manual';
     const isLoop = CW.planMode === 'loop';
     if (!CW.startPoint) {
@@ -431,9 +445,14 @@ function generateRoute() {
             parseFloat(CW.endPoint.lat.toFixed(6)),
         ];
     }
-    const seeds = typeof getCombinedPlanSeeds === 'function' ? getCombinedPlanSeeds() : [];
-    if (seeds.length > 0) {
-        payload.seed_pois = seeds;
+    if (Array.isArray(opts.seed_pois)) {
+        if (opts.seed_pois.length > 0) payload.seed_pois = opts.seed_pois;
+    } else {
+        const seeds = typeof getCombinedPlanSeeds === 'function' ? getCombinedPlanSeeds() : [];
+        if (seeds.length > 0) payload.seed_pois = seeds;
+    }
+    if (opts.keepEdits && Array.isArray(opts.excluded_poi_names) && opts.excluded_poi_names.length > 0) {
+        payload.excluded_poi_names = opts.excluded_poi_names;
     }
 
     showLoadingSteps();
@@ -487,6 +506,317 @@ function generateRoute() {
     });
 }
 
+function clearRouteOverlays() {
+    const lines = Array.isArray(CW.routeLines) ? CW.routeLines.slice() : [];
+    if (CW.routeLine && lines.indexOf(CW.routeLine) < 0) lines.push(CW.routeLine);
+    lines.forEach((line) => {
+        try {
+            if (CW.map && line) CW.map.remove(line);
+        } catch (e) { /* 覆盖物已不在地图上 */ }
+    });
+    CW.routeLines = [];
+    CW.routeLine = null;
+}
+
+function cwMeters(a, b) {
+    const R = 6371000;
+    const rad = Math.PI / 180;
+    const dLat = (b[1] - a[1]) * rad;
+    const dLng = (b[0] - a[0]) * rad;
+    const lat1 = a[1] * rad;
+    const lat2 = b[1] * rad;
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+function cwLngLat(p) {
+    if (!p) return null;
+    if (Array.isArray(p) && p.length >= 2) return [Number(p[0]), Number(p[1])];
+    if (typeof p.lng === 'number' && typeof p.lat === 'number') return [p.lng, p.lat];
+    if (typeof p.getLng === 'function') return [p.getLng(), p.getLat()];
+    return null;
+}
+
+function distToPathM(point, path) {
+    let best = Infinity;
+    for (let i = 0; i < path.length - 1; i++) {
+        const a = path[i];
+        const b = path[i + 1];
+        const ab = cwMeters(a, b) || 1;
+        const ac = cwMeters(a, point);
+        const bc = cwMeters(b, point);
+        const t = Math.max(0, Math.min(1, (ac * ac + ab * ab - bc * bc) / (2 * ab * ab)));
+        const proj = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+        const d = cwMeters(point, proj);
+        if (d < best) best = d;
+    }
+    return best;
+}
+
+function legsRetrace(outbound, inbound) {
+    let close = 0;
+    let n = 0;
+    const step = Math.max(1, Math.floor(inbound.length / 18));
+    for (let i = step; i < inbound.length; i += step) {
+        n += 1;
+        if (distToPathM(inbound[i], outbound) <= 20) close += 1;
+    }
+    return n >= 3 && close / n >= 0.65;
+}
+
+function loopLegsIfRetrace(path) {
+    const pts = (path || []).map(cwLngLat).filter((p) => p && Number.isFinite(p[0]) && Number.isFinite(p[1]));
+    if (pts.length < 6) return null;
+    let far = 0;
+    let farD = -1;
+    for (let i = 0; i < pts.length; i++) {
+        const d = cwMeters(pts[0], pts[i]);
+        if (d > farD) {
+            farD = d;
+            far = i;
+        }
+    }
+    if (far < 2 || far > pts.length - 3 || farD < 40) return null;
+    const outbound = pts.slice(0, far + 1);
+    const inbound = pts.slice(far);
+    if (!legsRetrace(outbound, inbound)) return null;
+    return { outbound, inbound };
+}
+
+function offsetPathMeters(points, meters) {
+    const latRef = points[0][1];
+    const mLng = 111320 * Math.cos(latRef * Math.PI / 180);
+    const mLat = 111320;
+    return points.map((p, i) => {
+        const prev = points[Math.max(0, i - 1)];
+        const next = points[Math.min(points.length - 1, i + 1)];
+        let dx = (next[0] - prev[0]) * mLng;
+        let dy = (next[1] - prev[1]) * mLat;
+        const len = Math.hypot(dx, dy) || 1;
+        const px = -dy / len;
+        const py = dx / len;
+        return [p[0] + (px * meters) / mLng, p[1] + (py * meters) / mLat];
+    });
+}
+
+function medianOffsetMeters(a, b) {
+    const ds = [];
+    const n = Math.min(a.length, b.length);
+    const step = Math.max(1, Math.floor(n / 12));
+    for (let i = 0; i < n; i += step) ds.push(cwMeters(a[i], b[i]));
+    ds.sort((x, y) => x - y);
+    return ds.length ? ds[Math.floor(ds.length / 2)] : 0;
+}
+
+function offsetPathScreen(points, pixels) {
+    if (!CW.map || typeof CW.map.lngLatToContainer !== 'function' || typeof AMap === 'undefined') {
+        return points;
+    }
+    return points.map((p, i) => {
+        const prev = points[Math.max(0, i - 1)];
+        const next = points[Math.min(points.length - 1, i + 1)];
+        const a = CW.map.lngLatToContainer(prev);
+        const b = CW.map.lngLatToContainer(next);
+        const cur = CW.map.lngLatToContainer(p);
+        if (!a || !b || !cur) return p;
+        let dx = b.x - a.x;
+        let dy = b.y - a.y;
+        const len = Math.hypot(dx, dy) || 1;
+        const ll = CW.map.containerToLngLat(new AMap.Pixel(cur.x + (-dy / len) * pixels, cur.y + (dx / len) * pixels));
+        if (!ll) return p;
+        const lng = typeof ll.getLng === 'function' ? ll.getLng() : ll.lng;
+        const lat = typeof ll.getLat === 'function' ? ll.getLat() : ll.lat;
+        return [lng, lat];
+    });
+}
+
+function offsetReturnLeg(points) {
+    const shifted = offsetPathMeters(points, 13);
+    if (medianOffsetMeters(points, shifted) >= 4) return shifted;
+    return offsetPathScreen(points, 12);
+}
+
+function makeRouteLine(path, options) {
+    return new AMap.Polyline(Object.assign({
+        path: path,
+        lineJoin: 'round',
+        lineCap: 'round',
+    }, options));
+}
+
+function drawPlannedRoute(path, mode) {
+    clearRouteOverlays();
+    const primary = CW.currentTheme ? CW.currentTheme.primary : '#ff7e5f';
+    const primaryLight = CW.currentTheme ? CW.currentTheme.primaryLight : '#feb47b';
+    const primaryDark = CW.currentTheme ? CW.currentTheme.primaryDark : '#e85d40';
+    const legs = mode === 'loop' ? loopLegsIfRetrace(path) : null;
+    const lines = [];
+    if (legs) {
+        lines.push(makeRouteLine(legs.outbound, {
+            strokeColor: primary,
+            strokeWeight: 6,
+            strokeOpacity: 0.95,
+            strokeStyle: 'solid',
+            showDir: true,
+            dirColor: '#ffffff',
+            isOutline: true,
+            outlineColor: '#ffffff',
+            borderWeight: 2,
+            zIndex: 60,
+        }));
+        lines.push(makeRouteLine(offsetReturnLeg(legs.inbound), {
+            strokeColor: primaryLight,
+            strokeWeight: 5,
+            strokeOpacity: 0.92,
+            strokeStyle: 'dashed',
+            strokeDasharray: [10, 8],
+            showDir: true,
+            dirColor: primaryDark,
+            isOutline: true,
+            outlineColor: '#ffffff',
+            borderWeight: 2,
+            zIndex: 55,
+        }));
+    } else if (mode === 'loop') {
+        lines.push(makeRouteLine(path, {
+            strokeColor: primary,
+            strokeWeight: 7,
+            strokeOpacity: 0.92,
+            strokeStyle: 'solid',
+            showDir: true,
+            dirColor: '#ffffff',
+            isOutline: true,
+            outlineColor: '#ffffff',
+            borderWeight: 1,
+            zIndex: 50,
+        }));
+    } else {
+        lines.push(makeRouteLine(path, {
+            strokeColor: primary,
+            strokeWeight: 6,
+            strokeOpacity: 0.9,
+            strokeStyle: 'solid',
+            showDir: true,
+            zIndex: 50,
+        }));
+    }
+    lines.forEach((line) => CW.map.add(line));
+    CW.routeLines = lines;
+    CW.routeLine = lines[0] || null;
+}
+
+function renderRouteStopEditor(poiList) {
+    const bar = document.createElement('div');
+    bar.className = 'poi-edit-bar';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'poi-add-stop';
+    btn.textContent = CW.addingRouteStop ? '取消添加' : '添加一站';
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleAddRouteStop();
+    });
+    bar.appendChild(btn);
+    if (CW.addingRouteStop) {
+        const hint = document.createElement('p');
+        hint.className = 'poi-add-hint';
+        hint.textContent = '搜索或长按地图，再点「加入此站」';
+        bar.appendChild(hint);
+    }
+    poiList.appendChild(bar);
+}
+
+function toggleAddRouteStop() {
+    const panel = document.querySelector('.control-panel');
+    if (CW.addingRouteStop) {
+        CW.addingRouteStop = false;
+        if (panel) panel.classList.remove('result-adding-stop');
+        if (CW.routeData && Array.isArray(CW.routeData.pois)) renderPoiList(CW.routeData.pois);
+        return;
+    }
+    CW.addingRouteStop = true;
+    if (panel) {
+        panel.classList.add('result-adding-stop');
+        if (window.matchMedia('(max-width: 768px)').matches) panel.classList.add('expanded');
+    }
+    if (CW.routeData && Array.isArray(CW.routeData.pois)) renderPoiList(CW.routeData.pois);
+    const input = document.getElementById('searchInput');
+    const narrow = window.matchMedia('(max-width: 768px) and (min-height: 501px)').matches;
+    if (input && !narrow) input.focus();
+}
+
+function collectKeptStopSeeds(extraSpot) {
+    const pois = (CW.routeData && Array.isArray(CW.routeData.pois)) ? CW.routeData.pois : [];
+    const removed = new Set(CW.removedPoiNames || []);
+    const seeds = [];
+    const seen = new Set();
+    pois.forEach((p) => {
+        if (!p || !p.name || removed.has(p.name) || seen.has(p.name)) return;
+        if (!Array.isArray(p.location) || p.location.length < 2) return;
+        seen.add(p.name);
+        seeds.push({
+            name: p.name,
+            lng: Number(p.location[0]),
+            lat: Number(p.location[1]),
+            reason: p.is_seed ? (p.recommendation_reason || '必去点') : '用户保留',
+            category: p.type || p.category || '',
+        });
+    });
+    if (extraSpot && extraSpot.name && !seen.has(extraSpot.name)) {
+        seeds.push({
+            name: extraSpot.name,
+            lng: Number(extraSpot.lng),
+            lat: Number(extraSpot.lat),
+            reason: extraSpot.reason || '用户添加',
+            category: extraSpot.category || '',
+        });
+    }
+    return seeds;
+}
+
+function replanFromResultStops(seeds) {
+    const excluded = (CW.removedPoiNames || []).filter((name) =>
+        !(seeds || []).some((s) => s && s.name === name)
+    );
+    generateRoute({
+        keepEdits: true,
+        seed_pois: seeds || [],
+        excluded_poi_names: excluded,
+    });
+}
+
+function removeRouteStopAndReplan(index) {
+    const pois = CW.routeData && Array.isArray(CW.routeData.pois) ? CW.routeData.pois : null;
+    const poi = pois && pois[index];
+    if (!poi) return;
+    const name = poi.name || '';
+    if (name) {
+        if (!Array.isArray(CW.removedPoiNames)) CW.removedPoiNames = [];
+        if (!CW.removedPoiNames.includes(name)) CW.removedPoiNames.push(name);
+    }
+    replanFromResultStops(collectKeptStopSeeds(null));
+}
+
+function addStopToRouteAndReplan(spot) {
+    if (!spot || typeof spot.lng !== 'number' || typeof spot.lat !== 'number' || !CW.routeData) {
+        if (typeof showToast === 'function') showToast('无法加入：缺少坐标');
+        return;
+    }
+    const name = spot.name || '地图点';
+    CW.addingRouteStop = false;
+    const panel = document.querySelector('.control-panel');
+    if (panel) panel.classList.remove('result-adding-stop');
+    CW.removedPoiNames = (CW.removedPoiNames || []).filter((n) => n !== name);
+    if (CW.infoWindow) CW.infoWindow.close();
+    replanFromResultStops(collectKeptStopSeeds({
+        name: name,
+        lng: spot.lng,
+        lat: spot.lat,
+        reason: '用户添加',
+        category: spot.category || '',
+    }));
+}
+
 function applyRouteResult(data) {
     if (!data.success) {
         showToast(data.message || '这条路线没能规划出来，换个起终点试试');
@@ -518,24 +848,11 @@ function applyRouteResult(data) {
         showToast(data.message || '已展示基础路线，完整串点请稍后重试', 4500);
     }
 
-    if (CW.routeLine) CW.map.remove(CW.routeLine);
-    const routeColor = CW.currentTheme ? CW.currentTheme.primary : '#ff7e5f';
-    CW.routeLine = new AMap.Polyline({
-        path: data.path,
-        strokeColor: routeColor,
-        strokeWeight: 6,
-        strokeOpacity: 0.9,
-        strokeStyle: 'solid',
-        lineJoin: 'round',
-        lineCap: 'round',
-        zIndex: 50,
-        showDir: true
-    });
-    CW.map.add(CW.routeLine);
+    drawPlannedRoute(data.path, data.mode);
 
     addPoiMarkers(data.pois);
 
-    const fitTargets = [CW.startMarker, CW.routeLine, ...CW.poiMarkers].filter(Boolean);
+    const fitTargets = [CW.startMarker, ...(CW.routeLines || []), ...CW.poiMarkers].filter(Boolean);
     if (CW.endMarker && data.mode !== 'loop') fitTargets.splice(1, 0, CW.endMarker);
     CW.map.setFitView(fitTargets, {
         padding: [50, 50, 50, 50],
@@ -586,6 +903,7 @@ function renderPoiList(pois) {
     const poiList = document.getElementById('poiList');
     if (!poiList) return;
     poiList.innerHTML = '';
+    renderRouteStopEditor(poiList);
 
     if (!Array.isArray(pois) || pois.length === 0) {
         poiList.innerHTML = `
@@ -630,6 +948,7 @@ function renderPoiList(pois) {
         const skipBtn = poi.optional
             ? `<button type="button" class="poi-skip-btn" data-poi-index="${index}">${skipped ? '恢复此站' : '跳过此站'}</button>`
             : '';
+        const removeBtn = `<button type="button" class="poi-remove-btn" data-poi-index="${index}">移除此站</button>`;
         const safeIcon = cwEscapeHtml(poi.icon || '📍');
         const safeName = cwEscapeHtml(poiName);
         const safeType = cwEscapeHtml(poiType);
@@ -644,7 +963,7 @@ function renderPoiList(pois) {
                     <strong class="poi-item-name">${index+1}. ${seedTag}${optionalTag}${skippedTag}${safeName}</strong>
                     <div class="poi-item-type">${safeType}</div>
                     <div class="poi-item-reason">${safeReason}${score ? ` · 氛围分 ${score}` : ''}${poi.stay_time ? ` · 建议停留 ${poi.stay_time} 分钟` : ''}</div>
-                    <div class="poi-item-actions">${navLink}${skipBtn}</div>
+                    <div class="poi-item-actions">${navLink}${skipBtn}${removeBtn}</div>
                 </div>
             </div>`;
         const navEl = poiItem.querySelector('.poi-nav');
@@ -654,6 +973,13 @@ function renderPoiList(pois) {
             skipEl.addEventListener('click', (e) => {
                 e.stopPropagation();
                 toggleSkipOptionalPoi(index);
+            });
+        }
+        const removeEl = poiItem.querySelector('.poi-remove-btn');
+        if (removeEl) {
+            removeEl.addEventListener('click', (e) => {
+                e.stopPropagation();
+                removeRouteStopAndReplan(index);
             });
         }
         poiList.appendChild(poiItem);

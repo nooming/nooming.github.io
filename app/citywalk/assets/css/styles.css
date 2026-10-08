@@ -1540,6 +1540,43 @@
             }
         }
 
+        /* 搜索聚焦：底栏只留标题和搜索行，贴在可视区域底部（键盘上方） */
+        @media (max-width: 768px) and (min-height: 501px) {
+            .control-panel.search-focused {
+                top: auto;
+                bottom: var(--cw-vv-bottom, 0px);
+            }
+
+            .control-panel.search-focused .panel-env,
+            .control-panel.search-focused .panel-tabs,
+            .control-panel.search-focused .share-restore-banner {
+                display: none;
+            }
+
+            .control-panel.search-focused .panel-body {
+                max-height: none;
+                overflow: hidden;
+                opacity: 1;
+                padding-top: 10px;
+                padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+            }
+
+            .control-panel.search-focused .panel-body > *:not(#panel-shared) {
+                display: none !important;
+            }
+
+            .control-panel.search-focused #panel-shared {
+                display: block !important;
+                margin: 0;
+                padding: 0;
+                border: none;
+            }
+
+            .control-panel.search-focused #panel-shared > *:not(.search-box) {
+                display: none !important;
+            }
+        }
+
         /* 超小屏幕适配 */
         @media (max-width: 375px) {
             .control-panel {
@@ -2686,14 +2723,38 @@
             margin-top: 6px;
             align-items: center;
         }
-        .poi-skip-btn {
+        .poi-skip-btn,
+        .poi-remove-btn,
+        .poi-add-stop {
             border: 1px solid var(--border-light);
-            background: #fff;
+            background: var(--bg-white);
             color: var(--text-medium);
             border-radius: 6px;
             padding: 2px 8px;
             font-size: 12px;
             cursor: pointer;
+        }
+        .poi-edit-bar {
+            margin: 0 0 10px;
+        }
+        .poi-add-stop {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+        .poi-add-hint {
+            margin: 6px 0 0;
+            font-size: 12px;
+            line-height: 1.45;
+            color: var(--text-light);
+        }
+        .control-panel.result-adding-stop #panel-shared.panel-shared--hidden {
+            display: block !important;
+            margin-bottom: 8px;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        .control-panel.result-adding-stop #panel-shared.panel-shared--hidden > *:not(.search-box) {
+            display: none !important;
         }
         .poi-item--skipped {
             opacity: 0.55;

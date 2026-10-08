@@ -456,16 +456,61 @@ ${poiText}
         }
         if (typeof updateBtnStatus === 'function') updateBtnStatus();
 
-        // 搜索框功能
+        // 搜索框功能。窄屏聚焦时底栏收成标题+搜索行，贴在可视区域底部。
         const searchInput = document.getElementById('searchInput');
         if (searchInput) {
-            searchInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    const keyword = this.value.trim();
-                    if (keyword) {
-                        searchAddress(keyword);
+            const narrowSheetQuery = '(max-width: 768px) and (min-height: 501px)';
+            const syncSearchSheetToKeyboard = () => {
+                const panel = document.querySelector('.control-panel');
+                if (!panel || !panel.classList.contains('search-focused')) return;
+                const vv = window.visualViewport;
+                let bottom = 0;
+                if (vv) {
+                    bottom = Math.max(0, Math.round(window.innerHeight - vv.offsetTop - vv.height));
+                }
+                panel.style.setProperty('--cw-vv-bottom', bottom + 'px');
+                if (window.scrollX || window.scrollY) window.scrollTo(0, 0);
+            };
+            const onSearchViewport = () => syncSearchSheetToKeyboard();
+            searchInput.addEventListener('focus', () => {
+                if (!window.matchMedia(narrowSheetQuery).matches) return;
+                const panel = document.querySelector('.control-panel');
+                if (!panel) return;
+                panel.classList.add('expanded', 'search-focused');
+                syncSearchSheetToKeyboard();
+                if (window.visualViewport) {
+                    window.visualViewport.addEventListener('resize', onSearchViewport);
+                    window.visualViewport.addEventListener('scroll', onSearchViewport);
+                }
+                window.addEventListener('resize', onSearchViewport);
+            });
+            searchInput.addEventListener('blur', () => {
+                const panel = document.querySelector('.control-panel');
+                if (panel) {
+                    panel.classList.remove('search-focused');
+                    panel.style.removeProperty('--cw-vv-bottom');
+                }
+                if (window.visualViewport) {
+                    window.visualViewport.removeEventListener('resize', onSearchViewport);
+                    window.visualViewport.removeEventListener('scroll', onSearchViewport);
+                }
+                window.removeEventListener('resize', onSearchViewport);
+            });
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key !== 'Enter') return;
+                const keyword = this.value.trim();
+                if (!keyword) return;
+                e.preventDefault();
+                if (window.matchMedia(narrowSheetQuery).matches) {
+                    CW._recenterSearchAfterSettle = true;
+                    this.blur();
+                    const panel = document.querySelector('.control-panel');
+                    if (panel) {
+                        panel.classList.remove('expanded', 'search-focused');
+                        panel.style.removeProperty('--cw-vv-bottom');
                     }
                 }
+                searchAddress(keyword);
             });
         }
 
@@ -525,6 +570,7 @@ ${poiText}
                     controlPanel.classList.add('expanded');
                 } else {
                     controlPanel.classList.remove('expanded');
+                    if (typeof recenterLastSearch === 'function') recenterLastSearch();
                 }
             }
 
@@ -670,6 +716,7 @@ ${poiText}
                 // 如果面板是展开的，点击地图收起
                 if (controlPanel.classList.contains('expanded')) {
                     controlPanel.classList.remove('expanded');
+                    if (typeof recenterLastSearch === 'function') recenterLastSearch();
                 }
             }, { passive: true });
         })();

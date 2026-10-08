@@ -10,6 +10,7 @@ const CW = {
     startMarker: null,
     endMarker: null,
     routeLine: null,
+    routeLines: [],
     poiMarkers: [],
     infoWindow: null,
     searchMarker: null,
@@ -21,6 +22,8 @@ const CW = {
     selectedVisitPace: "checkin", // checkin | relaxed
     selectedTimeOfDay: "now",  // now | morning | afternoon | evening | night
     pinnedSeeds: [],           // 必去点，最多 3 个 {name,lng,lat,...}
+    removedPoiNames: [],       // 结果页删掉的站名，重规划时不再补回
+    addingRouteStop: false,    // 结果页「添加一站」：下一次确认加入路线
     skippedPoiKeys: {},        // 结果页跳过的可选站 key -> true
     walkProgressIndex: -1,     // 逐站导航进度：-1=在起点
     routeData: null,
