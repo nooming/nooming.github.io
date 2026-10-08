@@ -1039,11 +1039,10 @@ function outboundLineOptions(primary) {
 function returnLineOptions(primaryLight) {
     return {
         strokeColor: primaryLight,
-        strokeWeight: 5,
-        strokeOpacity: 0.95,
-        strokeStyle: 'dashed',
-        strokeDasharray: [12, 9],
-        // 虚线不逐顶点画箭头，避免缩放后箭头叠成一团；去程实线仍保留方向
+        strokeWeight: 4,
+        strokeOpacity: 0.9,
+        strokeStyle: 'solid',
+        // 浅色实线不画方向箭头，避免和去程箭头叠成一团；去程实线仍保留方向
         showDir: false,
         zIndex: 80,
     };
