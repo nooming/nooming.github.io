@@ -514,9 +514,12 @@ function clearRouteOverlays() {
             if (CW.map && line) CW.map.remove(line);
         } catch (e) { /* 覆盖物已不在地图上 */ }
     });
+    clearRouteArrowMarkers();
     CW.routeLines = [];
     CW.routeLine = null;
     CW.routeRetrace = null;
+    CW.routeArrowPath = null;
+    CW.routeArrowSpans = null;
 }
 
 function cwMeters(a, b) {
@@ -541,7 +544,6 @@ function cwLngLat(p) {
 const RETRACE_CORRIDOR_M = 36;
 const RETRACE_GAP_M = 18;
 const RETRACE_MIN_M = 55;
-const RETURN_OFFSET_PX = 24;
 // 终点附近这一小段是抵达，不是沿已画实线折返
 const ARRIVAL_NEAR_M = 70;
 const ARRIVAL_TAIL_M = 36;
@@ -732,212 +734,6 @@ function solidRanges(pointCount, spans) {
     return ranges.filter(([a, b]) => b > a);
 }
 
-function medianOffsetMeters(a, b) {
-    const ds = [];
-    const n = Math.min(a.length, b.length);
-    const step = Math.max(1, Math.floor(n / 12));
-    for (let i = 0; i < n; i += step) ds.push(cwMeters(a[i], b[i]));
-    ds.sort((x, y) => x - y);
-    return ds.length ? ds[Math.floor(ds.length / 2)] : 0;
-}
-
-function meterScales(lat) {
-    return {
-        mLng: 111320 * Math.cos(lat * Math.PI / 180) || 1,
-        mLat: 111320,
-    };
-}
-
-function xyDist(a, b) {
-    return Math.hypot(a.x - b.x, a.y - b.y);
-}
-
-function distPointSegXY(point, a, b) {
-    const dx = b.x - a.x;
-    const dy = b.y - a.y;
-    const len2 = dx * dx + dy * dy;
-    if (len2 < 1e-8) return xyDist(point, a);
-    let t = ((point.x - a.x) * dx + (point.y - a.y) * dy) / len2;
-    t = Math.max(0, Math.min(1, t));
-    return Math.hypot(point.x - (a.x + dx * t), point.y - (a.y + dy * t));
-}
-
-function distToPolylineXY(point, poly) {
-    if (!poly || poly.length < 2) return Infinity;
-    let best = Infinity;
-    for (let i = 0; i < poly.length - 1; i++) {
-        const d = distPointSegXY(point, poly[i], poly[i + 1]);
-        if (d < best) best = d;
-    }
-    return best;
-}
-
-function polyLengthXY(pts) {
-    let s = 0;
-    for (let i = 1; i < pts.length; i++) s += xyDist(pts[i - 1], pts[i]);
-    return s;
-}
-
-function resampleSpacing(pts, minStep) {
-    if (!pts || pts.length < 2) return pts ? pts.slice() : [];
-    const out = [pts[0]];
-    for (let i = 1; i < pts.length - 1; i++) {
-        if (xyDist(pts[i], out[out.length - 1]) >= minStep) out.push(pts[i]);
-    }
-    const last = pts[pts.length - 1];
-    if (xyDist(last, out[out.length - 1]) >= minStep * 0.35) out.push(last);
-    else out[out.length - 1] = last;
-    return out;
-}
-
-function xyTangent(pts, i, reach) {
-    let a = i;
-    let b = i;
-    while (a > 0 && xyDist(pts[i], pts[a]) < reach) a--;
-    while (b < pts.length - 1 && xyDist(pts[i], pts[b]) < reach) b++;
-    if (a === b) return null;
-    const dx = pts[b].x - pts[a].x;
-    const dy = pts[b].y - pts[a].y;
-    const len = Math.hypot(dx, dy);
-    if (len < 1e-6) return null;
-    return { x: dx / len, y: dy / len };
-}
-
-function fillTangents(pts, reach) {
-    const tangents = pts.map((_, i) => xyTangent(pts, i, reach));
-    for (let i = 0; i < tangents.length; i++) {
-        if (tangents[i]) continue;
-        tangents[i] = tangents[i - 1] || tangents[i + 1] || null;
-    }
-    return tangents;
-}
-
-function lockOffsetSide(center, tangents, reference, distance) {
-    if (!reference || reference.length < 2) return 1;
-    const score = (side) => {
-        const ds = [];
-        const step = Math.max(1, Math.floor(center.length / 10));
-        for (let i = 0; i < center.length; i += step) {
-            const t = tangents[i];
-            if (!t) continue;
-            const q = {
-                x: center[i].x + (-t.y * side) * distance,
-                y: center[i].y + (t.x * side) * distance,
-            };
-            ds.push(distToPolylineXY(q, reference));
-        }
-        if (!ds.length) return -1;
-        ds.sort((a, b) => a - b);
-        return ds[Math.floor(ds.length / 2)];
-    };
-    const left = score(1);
-    const right = score(-1);
-    if (right > left + Math.max(2, distance * 0.15)) return -1;
-    return 1;
-}
-
-function pruneOffsetPath(pts, minStep) {
-    if (!pts || pts.length < 2) return null;
-    const out = [pts[0]];
-    for (let i = 1; i < pts.length; i++) {
-        const prev = out[out.length - 1];
-        const dx = pts[i].x - prev.x;
-        const dy = pts[i].y - prev.y;
-        const len = Math.hypot(dx, dy);
-        if (len < minStep) continue;
-        if (out.length >= 2) {
-            const q = out[out.length - 2];
-            const pdx = prev.x - q.x;
-            const pdy = prev.y - q.y;
-            const plen = Math.hypot(pdx, pdy) || 1;
-            if ((pdx * dx + pdy * dy) / (plen * len) < 0) continue;
-        }
-        out.push(pts[i]);
-    }
-    return out.length >= 2 ? out : null;
-}
-
-function polylineCrosses(pts) {
-    const cross = (a, b, c) => (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
-    for (let i = 0; i < pts.length - 1; i++) {
-        for (let j = i + 2; j < pts.length - 1; j++) {
-            const c1 = cross(pts[i], pts[i + 1], pts[j]);
-            const c2 = cross(pts[i], pts[i + 1], pts[j + 1]);
-            const c3 = cross(pts[j], pts[j + 1], pts[i]);
-            const c4 = cross(pts[j], pts[j + 1], pts[i + 1]);
-            if (c1 === 0 || c2 === 0 || c3 === 0 || c4 === 0) continue;
-            if ((c1 > 0) !== (c2 > 0) && (c3 > 0) !== (c4 > 0)) return true;
-        }
-    }
-    return false;
-}
-
-function medianCenterDistance(shifted, center) {
-    const ds = [];
-    const step = Math.max(1, Math.floor(shifted.length / 12));
-    for (let i = 0; i < shifted.length; i += step) ds.push(distToPolylineXY(shifted[i], center));
-    ds.sort((a, b) => a - b);
-    return ds.length ? ds[Math.floor(ds.length / 2)] : 0;
-}
-
-function buildOffsetSide(center, tangents, side, distance, minStep) {
-    const shifted = [];
-    let prevT = null;
-    for (let i = 0; i < center.length; i++) {
-        const t = tangents[i];
-        if (!t) continue;
-        if (prevT && t.x * prevT.x + t.y * prevT.y < 0) continue;
-        prevT = t;
-        shifted.push({
-            x: center[i].x + (-t.y * side) * distance,
-            y: center[i].y + (t.x * side) * distance,
-        });
-    }
-    const clean = pruneOffsetPath(shifted, minStep);
-    if (!clean) return null;
-    const baseLen = polyLengthXY(center);
-    const outLen = polyLengthXY(clean);
-    if (!(baseLen > 1) || outLen < baseLen * 0.45 || outLen > baseLen * 1.45) return null;
-    if (polylineCrosses(clean)) return null;
-    const sep = medianCenterDistance(clean, center);
-    if (sep < distance * 0.55 || sep > distance * 1.65) return null;
-    return clean;
-}
-
-function offsetPolylineXY(center, reference, distance) {
-    if (!center || center.length < 2 || !(distance > 0)) return null;
-    const minStep = Math.max(6, distance * 0.34);
-    const simplified = resampleSpacing(center, minStep);
-    if (simplified.length < 2) return null;
-    const reach = Math.max(minStep * 2.2, distance);
-    const tangents = fillTangents(simplified, reach);
-    if (tangents.every((t) => !t)) return null;
-    const preferred = lockOffsetSide(simplified, tangents, reference, distance);
-    const built = buildOffsetSide(simplified, tangents, preferred, distance, minStep)
-        || buildOffsetSide(simplified, tangents, -preferred, distance, minStep);
-    return built || null;
-}
-
-function offsetReturnMeters(inbound, reference, meters) {
-    if (!inbound || inbound.length < 2 || !(meters > 0)) return null;
-    const origin = inbound[0];
-    const scales = meterScales(origin[1]);
-    const toXY = (p) => ({
-        x: (p[0] - origin[0]) * scales.mLng,
-        y: (p[1] - origin[1]) * scales.mLat,
-    });
-    const shifted = offsetPolylineXY(
-        inbound.map(toXY),
-        (reference || []).map(toXY),
-        meters
-    );
-    if (!shifted) return null;
-    return shifted.map((p) => [
-        origin[0] + p.x / scales.mLng,
-        origin[1] + p.y / scales.mLat,
-    ]);
-}
-
 function screenPoint(lnglat) {
     if (!CW.map || typeof CW.map.lngLatToContainer !== 'function') return null;
     const p = CW.map.lngLatToContainer(lnglat);
@@ -958,61 +754,6 @@ function screenToLngLat(x, y) {
     return [lng, lat];
 }
 
-function metersPerPixel(lat) {
-    const zoom = CW.map && typeof CW.map.getZoom === 'function' ? Number(CW.map.getZoom()) : 15;
-    const z = Number.isFinite(zoom) ? zoom : 15;
-    return 156543.03392 * Math.cos((lat || 0) * Math.PI / 180) / Math.pow(2, z);
-}
-
-function projectLngLatPath(path) {
-    if (!path || path.length < 2) return null;
-    const out = [];
-    for (let i = 0; i < path.length; i++) {
-        const q = screenPoint(path[i]);
-        if (!q) return null;
-        out.push(q);
-    }
-    return out;
-}
-
-function offsetReturnScreen(inbound, reference, pixels) {
-    if (!inbound || inbound.length < 2 || !(pixels > 0)) return null;
-    const center = projectLngLatPath(inbound);
-    if (!center) return null;
-    const ref = [];
-    if (reference) {
-        for (let i = 0; i < reference.length; i++) {
-            const q = screenPoint(reference[i]);
-            if (q) ref.push(q);
-        }
-    }
-    const shifted = offsetPolylineXY(center, ref, pixels);
-    if (!shifted) return null;
-    const out = [];
-    for (let i = 0; i < shifted.length; i++) {
-        const ll = screenToLngLat(shifted[i].x, shifted[i].y);
-        if (!ll) return null;
-        out.push(ll);
-    }
-    return out;
-}
-
-function screenOffsetAvailable() {
-    return !!(CW.map
-        && typeof CW.map.lngLatToContainer === 'function'
-        && typeof CW.map.containerToLngLat === 'function'
-        && typeof AMap !== 'undefined');
-}
-
-function offsetReturnBeside(inbound, reference) {
-    if (!inbound || inbound.length < 2) return null;
-    if (screenOffsetAvailable()) {
-        return offsetReturnScreen(inbound, reference, RETURN_OFFSET_PX);
-    }
-    const meters = metersPerPixel(inbound[0][1]) * RETURN_OFFSET_PX;
-    return offsetReturnMeters(inbound, reference, meters);
-}
-
 function makeRouteLine(path, options) {
     return new AMap.Polyline(Object.assign({
         path: path,
@@ -1021,123 +762,192 @@ function makeRouteLine(path, options) {
     }, options));
 }
 
-function outboundLineOptions(primary) {
-    return {
-        strokeColor: primary,
-        strokeWeight: 6,
-        strokeOpacity: 0.95,
-        strokeStyle: 'solid',
-        showDir: true,
-        dirColor: '#ffffff',
-        isOutline: true,
-        outlineColor: '#ffffff',
-        borderWeight: 2,
-        zIndex: 60,
-    };
-}
+const ARROW_SPACING_PX = 80;
+const ARROW_RIGHT_PX = 10;
+const ARROW_ZINDEX = 70;
 
-function returnLineOptions(primaryLight) {
-    return {
-        strokeColor: primaryLight,
-        strokeWeight: 4,
-        strokeOpacity: 0.9,
-        strokeStyle: 'solid',
-        // 浅色实线不画方向箭头，避免和去程箭头叠成一团；去程实线仍保留方向
-        showDir: false,
-        zIndex: 80,
-    };
-}
-
-function setRetraceLineShown(line, shown) {
-    if (!line) return;
-    if (shown && typeof line.show === 'function') line.show();
-    else if (!shown && typeof line.hide === 'function') line.hide();
-}
-
-function refreshRetraceOffset() {
-    const stored = CW.routeRetrace;
-    if (!stored || !Array.isArray(stored.legs) || !CW.map) return;
-    stored.legs.forEach((leg) => {
-        if (!leg || !leg.line || !leg.inbound || !leg.reference) return;
-        const shifted = offsetReturnBeside(leg.inbound, leg.reference);
-        const usable = shifted && medianOffsetMeters(leg.inbound, shifted) >= 0.5;
+function clearRouteArrowMarkers() {
+    const marks = Array.isArray(CW.routeArrows) ? CW.routeArrows.slice() : [];
+    marks.forEach((marker) => {
         try {
-            if (!usable) {
-                setRetraceLineShown(leg.line, false);
-                return;
-            }
-            if (typeof leg.line.setPath === 'function') leg.line.setPath(shifted);
-            setRetraceLineShown(leg.line, true);
-        } catch (e) { /* 线已从地图移除 */ }
+            if (CW.map && marker) CW.map.remove(marker);
+        } catch (e) { /* 覆盖物已不在地图上 */ }
+    });
+    CW.routeArrows = [];
+}
+
+function screenCumDist(pts) {
+    const c = new Array(pts.length);
+    c[0] = 0;
+    for (let i = 1; i < pts.length; i++) {
+        c[i] = c[i - 1] + Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+    }
+    return c;
+}
+
+function screenPointAt(pts, cum, dist) {
+    const last = pts.length - 1;
+    if (dist <= 0) return pts[0];
+    if (dist >= cum[last]) return pts[last];
+    let lo = 1;
+    let hi = last;
+    while (lo < hi) {
+        const mid = (lo + hi) >> 1;
+        if (cum[mid] < dist) lo = mid + 1;
+        else hi = mid;
+    }
+    const span = cum[lo] - cum[lo - 1];
+    const t = span > 1e-4 ? (dist - cum[lo - 1]) / span : 0;
+    return {
+        x: pts[lo - 1].x + (pts[lo].x - pts[lo - 1].x) * t,
+        y: pts[lo - 1].y + (pts[lo].y - pts[lo - 1].y) * t,
+    };
+}
+
+function screenTravelDir(pts, cum, dist) {
+    const total = cum[cum.length - 1];
+    const reach = 32;
+    const a = screenPointAt(pts, cum, Math.max(0, dist - reach));
+    const b = screenPointAt(pts, cum, Math.min(total, dist + reach));
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const len = Math.hypot(dx, dy);
+    if (len < 0.5) return null;
+    return { x: dx / len, y: dy / len };
+}
+
+function projectRun(pts) {
+    if (!pts || pts.length < 2) return null;
+    const out = [];
+    for (let i = 0; i < pts.length; i++) {
+        const q = screenPoint(pts[i]);
+        if (!q) return null;
+        if (out.length && Math.hypot(q.x - out[out.length - 1].x, q.y - out[out.length - 1].y) < 0.4) continue;
+        out.push(q);
+    }
+    return out.length >= 2 ? out : null;
+}
+
+function arrowsAlongRun(pts) {
+    const screen = projectRun(pts);
+    if (!screen) return [];
+    const cum = screenCumDist(screen);
+    const total = cum[cum.length - 1];
+    if (!(total >= 48)) return [];
+    const count = Math.max(1, Math.round((total - 36) / ARROW_SPACING_PX));
+    const span = (count - 1) * ARROW_SPACING_PX;
+    const start = (total - span) / 2;
+    const arrows = [];
+    for (let i = 0; i < count; i++) {
+        const d = start + i * ARROW_SPACING_PX;
+        const at = screenPointAt(screen, cum, d);
+        const dir = screenTravelDir(screen, cum, d);
+        if (!dir) continue;
+        // 屏幕 y 向下：行进方向右侧为 (-dy, dx)，箭头不压在中线上
+        const ll = screenToLngLat(
+            at.x + (-dir.y) * ARROW_RIGHT_PX,
+            at.y + dir.x * ARROW_RIGHT_PX
+        );
+        if (!ll) continue;
+        arrows.push({
+            position: ll,
+            angle: Math.atan2(dir.x, -dir.y) * 180 / Math.PI,
+        });
+    }
+    return arrows;
+}
+
+function routeArrowRuns(pts, spans) {
+    if (!spans || !spans.length) return [pts];
+    const runs = [];
+    solidRanges(pts.length, spans).forEach(([a, b]) => {
+        const piece = pts.slice(a, b + 1);
+        if (piece.length >= 2) runs.push(piece);
+    });
+    spans.forEach((sp) => {
+        const piece = pts.slice(sp.start, sp.end + 1);
+        if (piece.length >= 2) runs.push(piece);
+    });
+    return runs.length ? runs : [pts];
+}
+
+function makeRouteArrow(position, angle) {
+    const el = document.createElement('div');
+    el.className = 'cw-route-chevron';
+    el.style.transform = 'rotate(' + angle.toFixed(1) + 'deg)';
+    el.innerHTML = '<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false">'
+        + '<path d="M2.2 8.4 L6 3.1 L9.8 8.4" fill="none" stroke="#1e293b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'
+        + '<path d="M2.2 8.4 L6 3.1 L9.8 8.4" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>'
+        + '</svg>';
+    return new AMap.Marker({
+        position: position,
+        content: el,
+        anchor: 'center',
+        zIndex: ARROW_ZINDEX,
+        clickable: false,
+        bubble: true,
     });
 }
 
-function ensureRetraceZoom() {
-    if (!CW.map || CW._retraceZoomMap === CW.map) return;
-    if (CW._retraceZoomMap && CW._onRetraceZoom && typeof CW._retraceZoomMap.off === 'function') {
-        try { CW._retraceZoomMap.off('zoomend', CW._onRetraceZoom); } catch (e) { /* 旧地图已销毁 */ }
+function routeStrokeOptions(primary) {
+    return {
+        strokeColor: primary,
+        strokeWeight: 6,
+        strokeOpacity: 0.9,
+        strokeStyle: 'solid',
+        showDir: false,
+        zIndex: 50,
+    };
+}
+
+function drawRouteArrows() {
+    clearRouteArrowMarkers();
+    const pts = CW.routeArrowPath;
+    if (!pts || pts.length < 2 || !CW.map || typeof AMap === 'undefined') return;
+    const markers = [];
+    routeArrowRuns(pts, CW.routeArrowSpans).forEach((run) => {
+        arrowsAlongRun(run).forEach((arrow) => {
+            markers.push(makeRouteArrow(arrow.position, arrow.angle));
+        });
+    });
+    if (!markers.length) return;
+    CW.map.add(markers);
+    CW.routeArrows = markers;
+}
+
+function refreshRouteArrows() {
+    if (!CW.routeArrowPath || !CW.map) return;
+    drawRouteArrows();
+}
+
+function ensureRouteArrowZoom() {
+    if (!CW.map || typeof CW.map.on !== 'function') return;
+    if (CW._routeArrowZoomMap === CW.map && CW._onRouteArrowZoom) return;
+    if (CW._routeArrowZoomMap && CW._onRouteArrowZoom && typeof CW._routeArrowZoomMap.off === 'function') {
+        try { CW._routeArrowZoomMap.off('zoomend', CW._onRouteArrowZoom); } catch (e) { /* 旧地图已销毁 */ }
     }
-    CW._onRetraceZoom = function () { refreshRetraceOffset(); };
-    CW._retraceZoomMap = CW.map;
-    CW.map.on('zoomend', CW._onRetraceZoom);
+    CW._onRouteArrowZoom = function () { refreshRouteArrows(); };
+    CW._routeArrowZoomMap = CW.map;
+    CW.map.on('zoomend', CW._onRouteArrowZoom);
 }
 
 function drawPlannedRoute(path, mode) {
     clearRouteOverlays();
+    if (!CW.map || typeof AMap === 'undefined') return;
     const primary = CW.currentTheme ? CW.currentTheme.primary : '#ff7e5f';
-    const primaryLight = CW.currentTheme ? CW.currentTheme.primaryLight : '#feb47b';
     const pts = (path || []).map(cwLngLat).filter((p) => p && Number.isFinite(p[0]) && Number.isFinite(p[1]));
-    const spans = findRetraceSpans(pts);
-    const lines = [];
-    const retraceLegs = [];
-    if (spans.length) {
-        solidRanges(pts.length, spans).forEach(([a, b]) => {
-            const piece = pts.slice(a, b + 1);
-            if (piece.length < 2) return;
-            lines.push(makeRouteLine(piece, outboundLineOptions(primary)));
-        });
-        spans.forEach((sp) => {
-            const inbound = pts.slice(sp.start, sp.end + 1);
-            const reference = pts.slice(0, sp.start + 1);
-            if (inbound.length < 2 || reference.length < 2) return;
-            const shifted = offsetReturnBeside(inbound, reference);
-            if (!shifted || medianOffsetMeters(inbound, shifted) < 0.5) return;
-            const line = makeRouteLine(shifted, returnLineOptions(primaryLight));
-            lines.push(line);
-            retraceLegs.push({ inbound, reference, line });
-        });
-    }
-    if (!retraceLegs.length) {
-        lines.length = 0;
-        if (mode === 'loop') {
-            lines.push(makeRouteLine(path, {
-                strokeColor: primary,
-                strokeWeight: 7,
-                strokeOpacity: 0.92,
-                strokeStyle: 'solid',
-                showDir: true,
-                dirColor: '#ffffff',
-                isOutline: true,
-                outlineColor: '#ffffff',
-                borderWeight: 1,
-                zIndex: 50,
-            }));
-        } else {
-            lines.push(makeRouteLine(path, {
-                strokeColor: primary,
-                strokeWeight: 6,
-                strokeOpacity: 0.9,
-                strokeStyle: 'solid',
-                showDir: true,
-                zIndex: 50,
-            }));
-        }
-    }
-    lines.forEach((line) => CW.map.add(line));
-    CW.routeLines = lines;
-    CW.routeLine = lines[0] || null;
-    CW.routeRetrace = retraceLegs.length ? { legs: retraceLegs } : null;
-    if (retraceLegs.length) ensureRetraceZoom();
+    const linePath = pts.length >= 2 ? pts : (path || []);
+    if (!linePath || linePath.length < 2) return;
+    const line = makeRouteLine(linePath, routeStrokeOptions(primary));
+    CW.map.add(line);
+    CW.routeLines = [line];
+    CW.routeLine = line;
+    CW.routeRetrace = null;
+    if (pts.length < 2) return;
+    CW.routeArrowPath = pts;
+    CW.routeArrowSpans = findRetraceSpans(pts);
+    ensureRouteArrowZoom();
+    drawRouteArrows();
 }
 
 function renderRouteStopEditor(poiList) {

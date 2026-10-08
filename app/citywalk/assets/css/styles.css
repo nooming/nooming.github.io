@@ -2002,6 +2002,21 @@
             font-weight: 600;
         }
 
+        .cw-route-chevron {
+            width: 12px;
+            height: 12px;
+            line-height: 0;
+            pointer-events: none;
+            transform-origin: center center;
+            filter: drop-shadow(0 0 1px rgba(15, 23, 42, 0.85));
+        }
+
+        .cw-route-chevron svg {
+            display: block;
+            width: 12px;
+            height: 12px;
+        }
+
         /* 搜索结果信息窗口 */
         .search-infowin {
             padding: 10px;
