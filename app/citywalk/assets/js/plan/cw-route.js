@@ -542,6 +542,9 @@ const RETRACE_CORRIDOR_M = 36;
 const RETRACE_GAP_M = 18;
 const RETRACE_MIN_M = 55;
 const RETURN_OFFSET_PX = 24;
+// 终点附近这一小段是抵达，不是沿已画实线折返
+const ARRIVAL_NEAR_M = 70;
+const ARRIVAL_TAIL_M = 36;
 
 function distToSegmentM(point, a, b) {
     const ab = cwMeters(a, b);
@@ -588,16 +591,17 @@ function dirAt(pts, cum, i) {
     return dirBetween(pts[a], pts[b]);
 }
 
-function isRetraceVertex(pts, cum, i) {
+function oppositeSegmentIndex(pts, cum, i) {
     const limit = cum[i] - RETRACE_GAP_M;
-    if (limit < 20) return false;
+    if (limit < 20) return -1;
     const dir = dirAt(pts, cum, i);
-    if (!dir) return false;
+    if (!dir) return -1;
     const lat = pts[i][1];
     const lng = pts[i][0];
     const cosLat = Math.cos(lat * Math.PI / 180) || 1;
     const padLat = 70 / 111320;
     const padLng = 70 / (111320 * cosLat);
+    let best = -1;
     for (let j = 0; j < pts.length - 1 && cum[j] <= limit; j++) {
         if (cum[j + 1] > limit) continue;
         const a = pts[j];
@@ -609,9 +613,50 @@ function isRetraceVertex(pts, cum, i) {
         if (distToSegmentM(pts[i], a, b) > RETRACE_CORRIDOR_M) continue;
         const segDir = dirBetween(a, b);
         if (!segDir) continue;
-        if (dir[0] * segDir[0] + dir[1] * segDir[1] < -0.25) return true;
+        if (dir[0] * segDir[0] + dir[1] * segDir[1] < -0.25) best = j;
     }
-    return false;
+    return best;
+}
+
+function isRetraceVertex(pts, cum, i) {
+    return oppositeSegmentIndex(pts, cum, i) >= 0;
+}
+
+function retracesSolidPrefix(pts, cum, i, spanStart) {
+    const partner = oppositeSegmentIndex(pts, cum, i);
+    return partner >= 0 && partner < spanStart;
+}
+
+function arrivalJoinIndex(pts, cum, spanStart, last) {
+    const dest = pts[last];
+    let end = last;
+    while (end > spanStart) {
+        const nearDest = cwMeters(pts[end], dest) <= ARRIVAL_NEAR_M;
+        const onSolid = retracesSolidPrefix(pts, cum, end, spanStart);
+        if (onSolid && !nearDest) break;
+        end--;
+    }
+    if (end >= last) {
+        while (end > spanStart && cum[last] - cum[end] < ARRIVAL_TAIL_M) end--;
+    }
+    if (end >= last) end = Math.max(spanStart, last - 1);
+    return end;
+}
+
+function trimDestinationArrival(pts, spans) {
+    if (!spans || !spans.length) return [];
+    const last = pts.length - 1;
+    const cum = pathCum(pts);
+    const out = [];
+    spans.forEach((sp) => {
+        let end = sp.end;
+        const reachesEnd = end >= last || (cum[last] - cum[Math.min(end, last)] <= ARRIVAL_TAIL_M);
+        if (reachesEnd) end = Math.min(end, arrivalJoinIndex(pts, cum, sp.start, last));
+        if (end > sp.start && cum[end] - cum[sp.start] >= RETRACE_MIN_M) {
+            out.push({ start: sp.start, end: end });
+        }
+    });
+    return out;
 }
 
 function spansFromMarks(mark, cum) {
@@ -658,7 +703,10 @@ function halfRetraceSpan(pts) {
 function findRetraceSpans(pts) {
     if (!pts || pts.length < 6) return [];
     const byHalf = halfRetraceSpan(pts);
-    if (byHalf) return byHalf;
+    if (byHalf) {
+        const trimmed = trimDestinationArrival(pts, byHalf);
+        if (trimmed.length) return trimmed;
+    }
     const cum = pathCum(pts);
     if (cum[cum.length - 1] < RETRACE_MIN_M + RETRACE_GAP_M) return [];
     const mark = new Array(pts.length).fill(false);
@@ -668,7 +716,7 @@ function findRetraceSpans(pts) {
         nextCheck = cum[i] + 8;
         if (isRetraceVertex(pts, cum, i)) mark[i] = true;
     }
-    return spansFromMarks(mark, cum);
+    return trimDestinationArrival(pts, spansFromMarks(mark, cum));
 }
 
 function solidRanges(pointCount, spans) {
@@ -700,53 +748,194 @@ function meterScales(lat) {
     };
 }
 
-function nearestRefFrame(point, reference) {
+function xyDist(a, b) {
+    return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function distPointSegXY(point, a, b) {
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const len2 = dx * dx + dy * dy;
+    if (len2 < 1e-8) return xyDist(point, a);
+    let t = ((point.x - a.x) * dx + (point.y - a.y) * dy) / len2;
+    t = Math.max(0, Math.min(1, t));
+    return Math.hypot(point.x - (a.x + dx * t), point.y - (a.y + dy * t));
+}
+
+function distToPolylineXY(point, poly) {
+    if (!poly || poly.length < 2) return Infinity;
     let best = Infinity;
-    let ax = 0;
-    let ay = 0;
-    let bx = 0;
-    let by = 0;
-    const scales = meterScales(point[1]);
-    for (let j = 0; j < reference.length - 1; j++) {
-        const a = reference[j];
-        const b = reference[j + 1];
-        const d = distToSegmentM(point, a, b);
-        if (d >= best) continue;
-        const dx = (b[0] - a[0]) * scales.mLng;
-        const dy = (b[1] - a[1]) * scales.mLat;
-        if (Math.hypot(dx, dy) < 1) continue;
-        best = d;
-        ax = a[0];
-        ay = a[1];
-        bx = b[0];
-        by = b[1];
+    for (let i = 0; i < poly.length - 1; i++) {
+        const d = distPointSegXY(point, poly[i], poly[i + 1]);
+        if (d < best) best = d;
     }
-    if (!Number.isFinite(best) || best === Infinity) return null;
-    return { a: [ax, ay], b: [bx, by] };
+    return best;
+}
+
+function polyLengthXY(pts) {
+    let s = 0;
+    for (let i = 1; i < pts.length; i++) s += xyDist(pts[i - 1], pts[i]);
+    return s;
+}
+
+function resampleSpacing(pts, minStep) {
+    if (!pts || pts.length < 2) return pts ? pts.slice() : [];
+    const out = [pts[0]];
+    for (let i = 1; i < pts.length - 1; i++) {
+        if (xyDist(pts[i], out[out.length - 1]) >= minStep) out.push(pts[i]);
+    }
+    const last = pts[pts.length - 1];
+    if (xyDist(last, out[out.length - 1]) >= minStep * 0.35) out.push(last);
+    else out[out.length - 1] = last;
+    return out;
+}
+
+function xyTangent(pts, i, reach) {
+    let a = i;
+    let b = i;
+    while (a > 0 && xyDist(pts[i], pts[a]) < reach) a--;
+    while (b < pts.length - 1 && xyDist(pts[i], pts[b]) < reach) b++;
+    if (a === b) return null;
+    const dx = pts[b].x - pts[a].x;
+    const dy = pts[b].y - pts[a].y;
+    const len = Math.hypot(dx, dy);
+    if (len < 1e-6) return null;
+    return { x: dx / len, y: dy / len };
+}
+
+function fillTangents(pts, reach) {
+    const tangents = pts.map((_, i) => xyTangent(pts, i, reach));
+    for (let i = 0; i < tangents.length; i++) {
+        if (tangents[i]) continue;
+        tangents[i] = tangents[i - 1] || tangents[i + 1] || null;
+    }
+    return tangents;
+}
+
+function lockOffsetSide(center, tangents, reference, distance) {
+    if (!reference || reference.length < 2) return 1;
+    const score = (side) => {
+        const ds = [];
+        const step = Math.max(1, Math.floor(center.length / 10));
+        for (let i = 0; i < center.length; i += step) {
+            const t = tangents[i];
+            if (!t) continue;
+            const q = {
+                x: center[i].x + (-t.y * side) * distance,
+                y: center[i].y + (t.x * side) * distance,
+            };
+            ds.push(distToPolylineXY(q, reference));
+        }
+        if (!ds.length) return -1;
+        ds.sort((a, b) => a - b);
+        return ds[Math.floor(ds.length / 2)];
+    };
+    const left = score(1);
+    const right = score(-1);
+    if (right > left + Math.max(2, distance * 0.15)) return -1;
+    return 1;
+}
+
+function pruneOffsetPath(pts, minStep) {
+    if (!pts || pts.length < 2) return null;
+    const out = [pts[0]];
+    for (let i = 1; i < pts.length; i++) {
+        const prev = out[out.length - 1];
+        const dx = pts[i].x - prev.x;
+        const dy = pts[i].y - prev.y;
+        const len = Math.hypot(dx, dy);
+        if (len < minStep) continue;
+        if (out.length >= 2) {
+            const q = out[out.length - 2];
+            const pdx = prev.x - q.x;
+            const pdy = prev.y - q.y;
+            const plen = Math.hypot(pdx, pdy) || 1;
+            if ((pdx * dx + pdy * dy) / (plen * len) < 0) continue;
+        }
+        out.push(pts[i]);
+    }
+    return out.length >= 2 ? out : null;
+}
+
+function polylineCrosses(pts) {
+    const cross = (a, b, c) => (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+    for (let i = 0; i < pts.length - 1; i++) {
+        for (let j = i + 2; j < pts.length - 1; j++) {
+            const c1 = cross(pts[i], pts[i + 1], pts[j]);
+            const c2 = cross(pts[i], pts[i + 1], pts[j + 1]);
+            const c3 = cross(pts[j], pts[j + 1], pts[i]);
+            const c4 = cross(pts[j], pts[j + 1], pts[i + 1]);
+            if (c1 === 0 || c2 === 0 || c3 === 0 || c4 === 0) continue;
+            if ((c1 > 0) !== (c2 > 0) && (c3 > 0) !== (c4 > 0)) return true;
+        }
+    }
+    return false;
+}
+
+function medianCenterDistance(shifted, center) {
+    const ds = [];
+    const step = Math.max(1, Math.floor(shifted.length / 12));
+    for (let i = 0; i < shifted.length; i += step) ds.push(distToPolylineXY(shifted[i], center));
+    ds.sort((a, b) => a - b);
+    return ds.length ? ds[Math.floor(ds.length / 2)] : 0;
+}
+
+function buildOffsetSide(center, tangents, side, distance, minStep) {
+    const shifted = [];
+    let prevT = null;
+    for (let i = 0; i < center.length; i++) {
+        const t = tangents[i];
+        if (!t) continue;
+        if (prevT && t.x * prevT.x + t.y * prevT.y < 0) continue;
+        prevT = t;
+        shifted.push({
+            x: center[i].x + (-t.y * side) * distance,
+            y: center[i].y + (t.x * side) * distance,
+        });
+    }
+    const clean = pruneOffsetPath(shifted, minStep);
+    if (!clean) return null;
+    const baseLen = polyLengthXY(center);
+    const outLen = polyLengthXY(clean);
+    if (!(baseLen > 1) || outLen < baseLen * 0.45 || outLen > baseLen * 1.45) return null;
+    if (polylineCrosses(clean)) return null;
+    const sep = medianCenterDistance(clean, center);
+    if (sep < distance * 0.55 || sep > distance * 1.65) return null;
+    return clean;
+}
+
+function offsetPolylineXY(center, reference, distance) {
+    if (!center || center.length < 2 || !(distance > 0)) return null;
+    const minStep = Math.max(6, distance * 0.34);
+    const simplified = resampleSpacing(center, minStep);
+    if (simplified.length < 2) return null;
+    const reach = Math.max(minStep * 2.2, distance);
+    const tangents = fillTangents(simplified, reach);
+    if (tangents.every((t) => !t)) return null;
+    const preferred = lockOffsetSide(simplified, tangents, reference, distance);
+    const built = buildOffsetSide(simplified, tangents, preferred, distance, minStep)
+        || buildOffsetSide(simplified, tangents, -preferred, distance, minStep);
+    return built || null;
 }
 
 function offsetReturnMeters(inbound, reference, meters) {
-    if (!inbound || inbound.length < 2 || !reference || reference.length < 2) return null;
-    const scales = meterScales(inbound[0][1]);
-    let lock = null;
-    const shifted = inbound.map((p) => {
-        const frame = nearestRefFrame(p, reference);
-        if (!frame) return null;
-        const dx = (frame.b[0] - frame.a[0]) * scales.mLng;
-        const dy = (frame.b[1] - frame.a[1]) * scales.mLat;
-        const len = Math.hypot(dx, dy) || 1;
-        let nx = -dy / len;
-        let ny = dx / len;
-        if (lock && nx * lock[0] + ny * lock[1] < 0) {
-            nx = -nx;
-            ny = -ny;
-        }
-        if (!lock) lock = [nx, ny];
-        return [p[0] + (nx * meters) / scales.mLng, p[1] + (ny * meters) / scales.mLat];
+    if (!inbound || inbound.length < 2 || !(meters > 0)) return null;
+    const origin = inbound[0];
+    const scales = meterScales(origin[1]);
+    const toXY = (p) => ({
+        x: (p[0] - origin[0]) * scales.mLng,
+        y: (p[1] - origin[1]) * scales.mLat,
     });
-    if (shifted.some((p) => !p)) return null;
-    if (medianOffsetMeters(inbound, shifted) < Math.max(2, meters * 0.45)) return null;
-    return shifted;
+    const shifted = offsetPolylineXY(
+        inbound.map(toXY),
+        (reference || []).map(toXY),
+        meters
+    );
+    if (!shifted) return null;
+    return shifted.map((p) => [
+        origin[0] + p.x / scales.mLng,
+        origin[1] + p.y / scales.mLat,
+    ]);
 }
 
 function screenPoint(lnglat) {
@@ -769,60 +958,57 @@ function screenToLngLat(x, y) {
     return [lng, lat];
 }
 
-function medianScreenPx(a, b) {
-    const ds = [];
-    const n = Math.min(a.length, b.length);
-    const step = Math.max(1, Math.floor(n / 12));
-    for (let i = 0; i < n; i += step) {
-        const p = screenPoint(a[i]);
-        const q = screenPoint(b[i]);
-        if (!p || !q) continue;
-        ds.push(Math.hypot(p.x - q.x, p.y - q.y));
-    }
-    ds.sort((x, y) => x - y);
-    return ds.length ? ds[Math.floor(ds.length / 2)] : 0;
-}
-
 function metersPerPixel(lat) {
     const zoom = CW.map && typeof CW.map.getZoom === 'function' ? Number(CW.map.getZoom()) : 15;
     const z = Number.isFinite(zoom) ? zoom : 15;
     return 156543.03392 * Math.cos((lat || 0) * Math.PI / 180) / Math.pow(2, z);
 }
 
-function offsetReturnScreen(inbound, reference, pixels) {
-    if (!inbound || inbound.length < 2) return null;
-    let lock = null;
-    const shifted = [];
-    for (let i = 0; i < inbound.length; i++) {
-        const p = inbound[i];
-        const cur = screenPoint(p);
-        const frame = nearestRefFrame(p, reference);
-        if (!cur || !frame) return null;
-        const a = screenPoint(frame.a);
-        const b = screenPoint(frame.b);
-        if (!a || !b) return null;
-        let dx = b.x - a.x;
-        let dy = b.y - a.y;
-        const len = Math.hypot(dx, dy);
-        if (len < 0.4) return null;
-        let nx = -dy / len;
-        let ny = dx / len;
-        if (lock && nx * lock[0] + ny * lock[1] < 0) {
-            nx = -nx;
-            ny = -ny;
-        }
-        if (!lock) lock = [nx, ny];
-        const ll = screenToLngLat(cur.x + nx * pixels, cur.y + ny * pixels);
-        if (!ll) return null;
-        shifted.push(ll);
+function projectLngLatPath(path) {
+    if (!path || path.length < 2) return null;
+    const out = [];
+    for (let i = 0; i < path.length; i++) {
+        const q = screenPoint(path[i]);
+        if (!q) return null;
+        out.push(q);
     }
-    if (medianScreenPx(inbound, shifted) < 14) return null;
-    return shifted;
+    return out;
+}
+
+function offsetReturnScreen(inbound, reference, pixels) {
+    if (!inbound || inbound.length < 2 || !(pixels > 0)) return null;
+    const center = projectLngLatPath(inbound);
+    if (!center) return null;
+    const ref = [];
+    if (reference) {
+        for (let i = 0; i < reference.length; i++) {
+            const q = screenPoint(reference[i]);
+            if (q) ref.push(q);
+        }
+    }
+    const shifted = offsetPolylineXY(center, ref, pixels);
+    if (!shifted) return null;
+    const out = [];
+    for (let i = 0; i < shifted.length; i++) {
+        const ll = screenToLngLat(shifted[i].x, shifted[i].y);
+        if (!ll) return null;
+        out.push(ll);
+    }
+    return out;
+}
+
+function screenOffsetAvailable() {
+    return !!(CW.map
+        && typeof CW.map.lngLatToContainer === 'function'
+        && typeof CW.map.containerToLngLat === 'function'
+        && typeof AMap !== 'undefined');
 }
 
 function offsetReturnBeside(inbound, reference) {
-    const screen = offsetReturnScreen(inbound, reference, RETURN_OFFSET_PX);
-    if (screen) return screen;
+    if (!inbound || inbound.length < 2) return null;
+    if (screenOffsetAvailable()) {
+        return offsetReturnScreen(inbound, reference, RETURN_OFFSET_PX);
+    }
     const meters = metersPerPixel(inbound[0][1]) * RETURN_OFFSET_PX;
     return offsetReturnMeters(inbound, reference, meters);
 }
@@ -850,17 +1036,23 @@ function outboundLineOptions(primary) {
     };
 }
 
-function returnLineOptions(primaryLight, primaryDark) {
+function returnLineOptions(primaryLight) {
     return {
         strokeColor: primaryLight,
         strokeWeight: 5,
         strokeOpacity: 0.95,
         strokeStyle: 'dashed',
         strokeDasharray: [12, 9],
-        showDir: true,
-        dirColor: primaryDark,
+        // 虚线不逐顶点画箭头，避免缩放后箭头叠成一团；去程实线仍保留方向
+        showDir: false,
         zIndex: 80,
     };
+}
+
+function setRetraceLineShown(line, shown) {
+    if (!line) return;
+    if (shown && typeof line.show === 'function') line.show();
+    else if (!shown && typeof line.hide === 'function') line.hide();
 }
 
 function refreshRetraceOffset() {
@@ -869,9 +1061,14 @@ function refreshRetraceOffset() {
     stored.legs.forEach((leg) => {
         if (!leg || !leg.line || !leg.inbound || !leg.reference) return;
         const shifted = offsetReturnBeside(leg.inbound, leg.reference);
-        if (!shifted || medianOffsetMeters(leg.inbound, shifted) < 0.5) return;
+        const usable = shifted && medianOffsetMeters(leg.inbound, shifted) >= 0.5;
         try {
+            if (!usable) {
+                setRetraceLineShown(leg.line, false);
+                return;
+            }
             if (typeof leg.line.setPath === 'function') leg.line.setPath(shifted);
+            setRetraceLineShown(leg.line, true);
         } catch (e) { /* 线已从地图移除 */ }
     });
 }
@@ -890,7 +1087,6 @@ function drawPlannedRoute(path, mode) {
     clearRouteOverlays();
     const primary = CW.currentTheme ? CW.currentTheme.primary : '#ff7e5f';
     const primaryLight = CW.currentTheme ? CW.currentTheme.primaryLight : '#feb47b';
-    const primaryDark = CW.currentTheme ? CW.currentTheme.primaryDark : '#e85d40';
     const pts = (path || []).map(cwLngLat).filter((p) => p && Number.isFinite(p[0]) && Number.isFinite(p[1]));
     const spans = findRetraceSpans(pts);
     const lines = [];
@@ -907,7 +1103,7 @@ function drawPlannedRoute(path, mode) {
             if (inbound.length < 2 || reference.length < 2) return;
             const shifted = offsetReturnBeside(inbound, reference);
             if (!shifted || medianOffsetMeters(inbound, shifted) < 0.5) return;
-            const line = makeRouteLine(shifted, returnLineOptions(primaryLight, primaryDark));
+            const line = makeRouteLine(shifted, returnLineOptions(primaryLight));
             lines.push(line);
             retraceLegs.push({ inbound, reference, line });
         });
