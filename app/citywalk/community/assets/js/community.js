@@ -21,34 +21,75 @@ function showImportGuideBanner(){
 
 function renderHeroBuddyPreview(){
   const list=document.getElementById('heroBuddyList');
-  if(!list || !Array.isArray(buddies) || !buddies.length) return;
-  list.innerHTML=buddies.slice(0,2).map(b=>{
+  if(!list) return;
+  const source=ugcBuddies;
+  if(!source.length){
+    list.innerHTML='<div class="hero-buddy-item"><span>暂无招募，</span><strong>点击「发起一次 Walk」</strong></div>';
+    return;
+  }
+  list.innerHTML=source.slice(0,2).map(b=>{
     const initial=String(b.user||'?').slice(0,1);
-    return `<div class="hero-buddy-item"><span class="hero-buddy-avatar hero-buddy-avatar--demo" data-demo="${safeText(initial)}"></span><div><strong>${safeText(b.city)} · ${safeText(b.title)}</strong><span>${safeText(b.date)} · ${safeText((b.tags||[])[0]||'Walk')} · ${safeText(b.people)}</span></div></div>`;
+    const isUgc=!!b.id;
+    return `<div class="hero-buddy-item"><span class="hero-buddy-avatar${isUgc?'':' hero-buddy-avatar--demo'}" data-demo="${safeText(initial)}"></span><div><strong>${safeText(b.city)} · ${safeText(b.title)}</strong><span>${safeText(b.date)} · ${safeText((b.tags||[])[0]||'Walk')} · ${safeText(b.people)}</span></div></div>`;
   }).join('');
 }
 
+function requireLoginForPost(){
+  if(typeof CitywalkAuth!=='undefined'&&CitywalkAuth.isLoggedIn()) return true;
+  showToast('请先登录（右上角头像）');
+  if(typeof CitywalkAuth!=='undefined') CitywalkAuth.openAuthModal('login');
+  return false;
+}
+
+async function loadCommunityUgc(){
+  if(!window.CitywalkCommunityApi) return;
+  try{
+    const data=await CitywalkCommunityApi.refreshAll();
+    ugcPosts=data.posts||[];
+    ugcBuddies=data.buddies||[];
+  }catch(e){
+    console.warn('loadCommunityUgc',e);
+    showToast('社区内容加载失败，请稍后刷新');
+  }
+  renderHeroBuddyPreview();
+  const countEl=document.querySelector('.hero-buddy-count');
+  if(countEl){
+    countEl.textContent=ugcBuddies.length
+      ? (ugcBuddies.length+' 组正在招募')
+      : '快来发起第一场 Walk';
+  }
+  renderFeed(document.querySelector('.feed-tab.active')?.dataset.type||'全部',document.getElementById('searchInput')?.value||'');
+  renderBuddies(document.querySelector('.buddy-filter.active')?.dataset.filter||'全部');
+}
+
 function renderRoutes(city='全部'){
-  const data=city==='全部'?routes:routes.filter(r=>r.city===city);
-  routeGrid.innerHTML=data.map((r,i)=>`\
-    <article class="route-card" onclick="openRoute(${routes.indexOf(r)})">\
+  rebuildRouteCityTabs();
+  const all=getImportedRoutes();
+  const data=city==='全部'?all:all.filter(r=>r.city===city);
+  if(!data.length){
+    routeGrid.innerHTML=`<div class="empty" style="display:block;grid-column:1/-1">还没有导入的路线。<a href="../">去 Citywalk 规划</a> 完成后点「记录到社区」，或使用 <code>?r=</code> 分享链导入。</div>`;
+    return;
+  }
+  routeGrid.innerHTML=data.map((r)=>`\
+    <article class="route-card" onclick="openRouteById('${safeText(r.id)}')">\
       <div class="route-media">\
-        <img src="${r.image}" alt="${r.title}">\
-        <span class="route-demo-ribbon">示例</span>\
-        <span class="route-badge">${r.city} · ${r.type}</span>\
+        <img src="${r.image||SPOT_PLACEHOLDER}" alt="${safeText(r.title)}">\
+        <span class="route-badge">${safeText(r.city)} · ${safeText(r.type)}</span>\
         <button class="route-save ${isRouteFavorite(r.id)?'liked':''}" aria-label="收藏路线" onclick="event.stopPropagation();toggleRouteFavorite('${r.id}',this)">${isRouteFavorite(r.id)?'♥':'♡'}</button>\
       </div>\
       <div class="route-body">\
-        <div class="route-title">${r.title}</div>\
-        <div class="route-sub">${r.desc}</div>\
-        <div class="route-stats"><span>📏 ${r.distance}</span><span>🕐 ${r.time}</span><span>◌ ${r.level}</span></div>\
-        <div class="node-row">${r.stops.slice(0,4).map((s,j)=>`<span class="node">${s}</span>${j<3?'<span class="arrow">→</span>':''}`).join('')}</div>\
+        <div class="route-title">${safeText(r.title)}</div>\
+        <div class="route-sub">${safeText(r.desc)}</div>\
+        <div class="route-stats"><span>📏 ${safeText(r.distance)}</span><span>🕐 ${safeText(r.time)}</span><span>◌ ${safeText(r.level)}</span></div>\
+        <div class="node-row">${(r.stops||[]).slice(0,4).map((s,j)=>`<span class="node">${safeText(s)}</span>${j<3?'<span class="arrow">→</span>':''}`).join('')}</div>\
         <div class="route-footer">\
-          <div class="author"><span class="avatar-initial" aria-hidden="true">${safeText((r.author||'?').slice(0,1))}</span><span>${r.author}</span></div>\
-          <div class="rating">♥ 示例</div>\
+          <div class="author"><span class="avatar-initial" aria-hidden="true">${safeText((r.author||'我').slice(0,1))}</span><span>${safeText(r.author||'我')}</span></div>\
         </div>\
       </div>\
     </article>`).join('');
+  document.querySelectorAll('#cityTabs .city-tab').forEach(btn=>{
+    btn.classList.toggle('active',btn.dataset.city===city);
+  });
 }
 
 let currentSpotRouteId = 'taipei-zhongshan-dadaocheng';
@@ -115,11 +156,35 @@ const POINT_LEVELS = [
   {min:1500,max:Infinity,icon:'✨',title:'城市漫游家',desc:'资深城市漫游者，总能在熟悉的街区发现新的故事。'}
 ];
 
-const sampleWalkedRoutes = [
-  {routeId:'taipei-zhongshan-dadaocheng',date:'2026-09-28',note:'和朋友一起走，最喜欢赤峰街的小店。'},
-  {routeId:'shanghai-wukang-anfu',date:'2026-09-12',note:'梧桐树下很适合慢慢拍照。'},
-  {routeId:'tokyo-shibuya-nakameguro',date:'2026-08-20',note:'傍晚出发，最后用拉面收尾。'}
-];
+const sampleWalkedRoutes = [];
+
+let ugcPosts = [];
+let ugcBuddies = [];
+let currentUgcPostId = null;
+
+function getImportedRoutes(){
+  return routes.filter(r=>r.type==='规划导入'||!!plannedRouteCatalog[r.id]);
+}
+
+function rebuildRouteCityTabs(){
+  const tabs=document.getElementById('cityTabs');
+  if(!tabs) return;
+  const cities=Array.from(new Set(getImportedRoutes().map(r=>r.city).filter(Boolean)));
+  tabs.innerHTML='<button type="button" class="city-tab active" data-city="全部">全部城市</button>'
+    +cities.map(c=>`<button type="button" class="city-tab" data-city="${safeText(c)}">${safeText(c)}</button>`).join('');
+}
+
+function openRouteById(routeId){
+  const idx=routes.findIndex(r=>r.id===routeId);
+  if(idx>=0) openRoute(idx);
+}
+
+function fillPublishRouteSelect(){
+  const sel=document.getElementById('publishRouteId');
+  if(!sel) return;
+  const opts=getImportedRoutes().map(r=>`<option value="${safeText(r.id)}">${safeText(r.title||r.id)}</option>`).join('');
+  sel.innerHTML='<option value="">不关联</option>'+opts;
+}
 
 function loadArray(key, fallback=[]){
   try{
@@ -821,39 +886,52 @@ window.CitywalkCommunity = {
   registerPlannedRoute
 };
 
+function postCoverUrl(p){
+  const img=p.image||'';
+  if(img) return img;
+  return (window.CitywalkCommunityApi&&CitywalkCommunityApi.PLACEHOLDER_POST_IMAGE)||SPOT_PLACEHOLDER;
+}
+
 function renderFeed(type='全部',keyword=''){
   const key=keyword.trim().toLowerCase();
-  const data=posts.filter(p=>{
+  const data=ugcPosts.filter(p=>{
     const hitType=type==='全部'||p.type===type;
-    const blob=[p.title,p.desc,p.city,p.type,...p.tags].join(' ').toLowerCase();
+    const tags=Array.isArray(p.tags)?p.tags:[];
+    const blob=[p.title,p.desc,p.city,p.type,...tags].join(' ').toLowerCase();
     return hitType&&(!key||blob.includes(key));
   });
-  feedGrid.innerHTML=data.map((p)=>`<article class="post" onclick="showPost(${posts.indexOf(p)})">\
+  feedGrid.innerHTML=data.map((p)=>{
+    const tags=Array.isArray(p.tags)?p.tags:[];
+    return `<article class="post" onclick="showPostById('${safeText(p.id)}')">\
     <span class="post-type-badge">${safeText(p.type||'动态')}</span>\
-    <span class="post-demo-ribbon">示例</span>\
-    <img class="post-cover" src="${p.image}" alt="${p.title}">\
-    <div class="post-body"><div class="post-title">${p.title}</div><div class="post-desc">${p.desc}</div><div class="tags">${p.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div></div>\
-    <div class="post-footer"><div class="post-user"><span class="avatar-initial" aria-hidden="true">${safeText((p.author||'?').slice(0,1))}</span><span>${p.author}</span></div><div class="post-actions"><span class="clickable" onclick="event.stopPropagation();toggleLike(this)">♡ 示例 ${p.likes}</span><span class="clickable" onclick="event.stopPropagation();toggleSaveText(this)">♧ 收藏</span></div></div>\
-  </article>`).join('');
+    <img class="post-cover" src="${postCoverUrl(p)}" alt="${safeText(p.title)}" loading="lazy">\
+    <div class="post-body"><div class="post-title">${safeText(p.title)}</div><div class="post-desc">${safeText(p.desc)}</div><div class="tags">${tags.map(t=>`<span class="tag">#${safeText(String(t).replace(/^#/,''))}</span>`).join('')}</div></div>\
+    <div class="post-footer"><div class="post-user"><span class="avatar-initial" aria-hidden="true">${safeText((p.author||'?').slice(0,1))}</span><span>${safeText(p.author)}</span></div><div class="post-actions"><button type="button" class="clickable post-like-btn${p.liked_by_me?' liked':''}" onclick="event.stopPropagation();toggleLikePost('${safeText(p.id)}',this)">${p.liked_by_me?'♥':'♡'} ${Number(p.like_count)||0}</button></div></div>\
+  </article>`;
+  }).join('');
   feedEmpty.style.display=data.length?'none':'block';
+  if(!data.length&&feedEmpty) feedEmpty.textContent=ugcPosts.length?'没有找到相关内容，换个关键词试试。':'还没有动态，登录后点「发布」做第一个分享吧。';
 }
 
 function renderBuddies(filter='全部'){
-  const data=filter==='全部'?buddies:buddies.filter(b=>b.filter===filter||b.tags.includes(filter));
-  buddyGrid.innerHTML=data.map((b,i)=>`<article class="buddy-card">\
+  const source=ugcBuddies;
+  const data=filter==='全部'?source:source.filter(b=>b.filter===filter||(b.tags||[]).includes(filter));
+  buddyGrid.innerHTML=data.length?data.map((b)=>`<article class="buddy-card">\
     <span class="status">● 正在招募</span>\
-    <div class="buddy-user"><span class="avatar-initial" aria-hidden="true">${safeText((b.user||'?').slice(0,1))}</span><div><strong>${b.user}</strong><span>${b.city} · CityWalk</span></div></div>\
-    <div class="buddy-title">${b.title}</div><div class="buddy-desc">${b.desc}</div>\
-    <div class="buddy-info"><div class="info-box"><span>出发时间</span><strong>${b.date}</strong></div><div class="info-box"><span>人数</span><strong>${b.people}</strong></div></div>\
-    <div class="buddy-tags">${b.tags.map(t=>`<span class="buddy-tag">#${t}</span>`).join('')}</div>\
-    <button class="join" onclick="openJoin(${buddies.indexOf(b)})">＋ 加入这次 Walk</button>\
-  </article>`).join('');
+    <div class="buddy-user"><span class="avatar-initial" aria-hidden="true">${safeText((b.user||'?').slice(0,1))}</span><div><strong>${safeText(b.user)}</strong><span>${safeText(b.city)} · CityWalk</span></div></div>\
+    <div class="buddy-title">${safeText(b.title)}</div><div class="buddy-desc">${safeText(b.desc)}</div>\
+    <div class="buddy-info"><div class="info-box"><span>出发时间</span><strong>${safeText(b.date)}</strong></div><div class="info-box"><span>人数</span><strong>${safeText(b.people)}</strong></div></div>\
+    <div class="buddy-tags">${(b.tags||[]).map(t=>`<span class="buddy-tag">#${safeText(t)}</span>`).join('')}</div>\
+    <button class="join" type="button" onclick="openJoin('${safeText(b.id||'')}')">＋ 加入这次 Walk</button>\
+  </article>`).join(''):'<p class="empty" style="display:block;grid-column:1/-1">暂无招募，登录后发起一次 Walk 吧。</p>';
 }
 
 let currentRouteId = null;
 
 function openRoute(index){
   const r=routes[index];
+  currentUgcPostId=null;
+  setPostModalMode(false);
   currentRouteId=r.id;
   currentSpotIndex=null;
   document.getElementById('spotFavoriteBtn').style.display='none';
@@ -930,40 +1008,191 @@ function showSpot(index){
   showModal('routeModal');
 }
 
-function showPost(index){
-  const p=posts[index];
+function setPostModalMode(on){
+  const postBar=document.getElementById('postUgcActions');
+  const routeBar=document.getElementById('routeModalActions');
+  if(postBar) postBar.hidden=!on;
+  if(routeBar) routeBar.hidden=!!on;
+}
+
+function showPostById(id){
+  const p=ugcPosts.find(x=>x.id===id);
+  if(!p) return;
+  currentUgcPostId=id;
   currentSpotIndex=null;
+  setPostModalMode(true);
   document.getElementById('spotFavoriteBtn').style.display='none';
   document.getElementById('spotJumpBtn').style.display='none';
   document.getElementById('routeFavoriteModalBtn').style.display='none';
-  document.getElementById('modalCover').src=p.image;
-  document.getElementById('modalKicker').textContent=`${p.city} · 社区 ${p.type} · ${p.author}`;
+  document.getElementById('modalCover').src=postCoverUrl(p);
+  document.getElementById('modalKicker').textContent=`${p.city} · ${p.type} · ${p.author}`;
   document.getElementById('modalTitle').textContent=p.title;
   document.getElementById('modalLead').textContent=p.desc;
-  document.getElementById('modalStats').innerHTML=[`♥ ${p.likes}`,`📍 ${p.city}`,...p.tags].map(x=>`<span class="modal-stat">${x}</span>`).join('');
-  document.getElementById('modalStops').innerHTML=['先看完整路线，再决定停留点','优先收藏真正适合自己节奏的路线','可以在找搭子区发布同行请求'].map(x=>`<li>${x}</li>`).join('');
-  document.getElementById('modalTips').innerHTML=['社区分享仅作路线灵感，具体营业时间、交通安排请以现场与官方信息为准。','请尊重店铺、居民区与公共空间的拍摄和通行规则。'].map(x=>`<li>${x}</li>`).join('');
+  const tags=Array.isArray(p.tags)?p.tags:[];
+  const linkBits=[];
+  if(p.route_id) linkBits.push('关联路线');
+  if(p.share_route_id) linkBits.push('分享链');
+  document.getElementById('modalStats').innerHTML=[`${p.liked_by_me?'♥':'♡'} ${Number(p.like_count)||0}`,`📍 ${p.city}`,...linkBits,...tags.map(t=>'#'+t)].map(x=>`<span class="modal-stat">${safeText(x)}</span>`).join('');
+  document.getElementById('modalStops').innerHTML=[p.desc].map(x=>`<li>${safeText(x)}</li>`).join('');
+  document.getElementById('modalTips').innerHTML=['内容仅供参考，出行前请确认营业时间与交通规则。','可在找搭子区发起同行，或使用 Citywalk 规划路线。'].map(x=>`<li>${x}</li>`).join('');
+  const likeBtn=document.getElementById('postLikeBtn');
+  if(likeBtn){
+    likeBtn.textContent=(p.liked_by_me?'♥ ':'♡ ')+'点赞 · '+(Number(p.like_count)||0);
+    likeBtn.classList.toggle('liked',!!p.liked_by_me);
+  }
+  const delBtn=document.getElementById('postDeleteBtn');
+  if(delBtn) delBtn.hidden=!p.is_mine;
+  const shareA=document.getElementById('postOpenShareLink');
+  if(shareA){
+    if(p.share_route_id){
+      shareA.hidden=false;
+      shareA.href='../?r='+encodeURIComponent(p.share_route_id);
+    }else{
+      shareA.hidden=true;
+    }
+  }
   showModal('routeModal');
 }
 
-function openJoin(index){
-  const b=buddies[index];
+async function toggleLikePost(postId,btn){
+  if(!requireLoginForPost()) return;
+  try{
+    const updated=await CitywalkCommunityApi.likePost(postId);
+    const idx=ugcPosts.findIndex(x=>x.id===postId);
+    if(idx>=0) ugcPosts[idx]=updated;
+    if(btn){
+      btn.classList.toggle('liked',!!updated.liked_by_me);
+      btn.textContent=(updated.liked_by_me?'♥':'♡')+' '+(Number(updated.like_count)||0);
+    }
+    if(currentUgcPostId===postId){
+      const likeBtn=document.getElementById('postLikeBtn');
+      if(likeBtn){
+        likeBtn.textContent=(updated.liked_by_me?'♥ ':'♡ ')+'点赞 · '+(Number(updated.like_count)||0);
+        likeBtn.classList.toggle('liked',!!updated.liked_by_me);
+      }
+    }
+  }catch(e){
+    showToast(e.message||'点赞失败');
+  }
+}
+
+function toggleLikeCurrentPost(){
+  if(currentUgcPostId) toggleLikePost(currentUgcPostId,document.getElementById('postLikeBtn'));
+}
+
+async function deleteCurrentPost(){
+  if(!currentUgcPostId||!requireLoginForPost()) return;
+  if(!confirm('确定删除这条动态？')) return;
+  try{
+    await CitywalkCommunityApi.deletePost(currentUgcPostId);
+    closeModal('routeModal');
+    showToast('已删除');
+    currentUgcPostId=null;
+    await loadCommunityUgc();
+  }catch(e){
+    showToast(e.message||'删除失败');
+  }
+}
+
+async function reportCurrentPost(){
+  if(!currentUgcPostId||!requireLoginForPost()) return;
+  const reason=prompt('请简要说明举报原因（可选）')||'';
+  try{
+    const res=await CitywalkCommunityApi.reportPost(currentUgcPostId,reason);
+    showToast(res.message||'已收到举报');
+  }catch(e){
+    showToast(e.message||'举报失败');
+  }
+}
+
+function setBuddyModalMode(mode){
+  const joinPane=document.getElementById('buddyJoinPane');
+  const createPane=document.getElementById('buddyCreatePane');
+  if(joinPane) joinPane.hidden=mode!=='join';
+  if(createPane) createPane.hidden=mode!=='create';
+}
+
+function openJoin(buddyId){
+  if(!buddyId){ showToast('该招募无法加入'); return; }
+  if(!requireLoginForPost()) return;
+  const b=ugcBuddies.find(x=>x.id===buddyId);
+  if(!b){ showToast('招募不存在或已下线'); return; }
+  setBuddyModalMode('join');
   document.getElementById('buddyModalTitle').textContent='加入这次 Walk';
-  document.getElementById('buddyModalDesc').textContent=`你正在申请加入 ${b.user} 发起的同行计划。`;
-  document.getElementById('buddyPreview').innerHTML=`<strong>${b.title}</strong><div style="font-size:12px;color:#666;line-height:1.8">📍 ${b.city}<br>🕐 ${b.date}<br>👥 ${b.people}<br>🏷️ ${b.tags.map(x=>'#'+x).join(' ')}</div>`;
-  document.getElementById('buddyConfirm').onclick=()=>{alert('已记录你的加入意向（演示交互）。');closeModal('buddyModal')};
+  document.getElementById('buddyModalDesc').textContent=`加入 ${b.user} 发起的同行计划。`;
+  document.getElementById('buddyPreview').innerHTML=`<strong>${safeText(b.title)}</strong><div style="font-size:12px;color:#666;line-height:1.8">📍 ${safeText(b.city)}<br>🕐 ${safeText(b.date)}<br>👥 ${safeText(b.people)}<br>🏷️ ${(b.tags||[]).map(x=>'#'+safeText(x)).join(' ')}</div>`;
+  document.getElementById('buddyConfirm').onclick=async()=>{
+    try{
+      await CitywalkCommunityApi.joinBuddy(buddyId);
+      closeModal('buddyModal');
+      showToast('已加入，祝你们 Walk 愉快');
+      await loadCommunityUgc();
+    }catch(e){
+      showToast(e.message||'加入失败');
+    }
+  };
   showModal('buddyModal');
 }
 
 function openCreateBuddy(){
-  document.getElementById('buddyModalTitle').textContent='发起一次 Walk';
-  document.getElementById('buddyModalDesc').textContent='在真实产品中，这里可以创建出发时间、路线、人数上限和兴趣标签。';
-  document.getElementById('buddyPreview').innerHTML='<strong>发起模板</strong><div style="font-size:12px;color:#666;line-height:1.9">路线：选择一条已有 CityWalk 或创建自定义路线<br>时间：今天 / 周末 / 自定义时间<br>人数：1–8 人<br>标签：摄影 / 美食 / 咖啡 / 夜游 / 轻徒步</div>';
-  document.getElementById('buddyConfirm').onclick=()=>{alert('已打开“发起 Walk”示例流程。');closeModal('buddyModal')};
+  if(!requireLoginForPost()) return;
+  setBuddyModalMode('create');
   showModal('buddyModal');
 }
 
-function openPublish(){showModal('publishModal')}
+function openPublish(){
+  if(!requireLoginForPost()) return;
+  fillPublishRouteSelect();
+  showModal('publishModal');
+}
+
+async function submitPublishPostForm(ev){
+  if(ev) ev.preventDefault();
+  if(!requireLoginForPost()) return;
+  const tagsRaw=(document.getElementById('publishTags')||{}).value||'';
+  const tags=tagsRaw.split(/[,，]/).map(s=>s.trim()).filter(Boolean);
+  try{
+    await CitywalkCommunityApi.createPost({
+      type:(document.getElementById('publishType')||{}).value,
+      city:(document.getElementById('publishCity')||{}).value,
+      title:(document.getElementById('publishTitle')||{}).value,
+      desc:(document.getElementById('publishDesc')||{}).value,
+      image_url:(document.getElementById('publishImage')||{}).value,
+      tags:tags,
+      route_id:(document.getElementById('publishRouteId')||{}).value||'',
+      share_route_id:(document.getElementById('publishShareRouteId')||{}).value||'',
+    });
+    closeModal('publishModal');
+    showToast('已发布');
+    await loadCommunityUgc();
+  }catch(e){
+    showToast(e.message||'发布失败');
+  }
+}
+
+async function submitBuddyCreateForm(ev){
+  if(ev) ev.preventDefault();
+  if(!requireLoginForPost()) return;
+  const tagsRaw=(document.getElementById('buddyCreateTags')||{}).value||'';
+  const tags=tagsRaw.split(/[,，]/).map(s=>s.trim()).filter(Boolean);
+  try{
+    await CitywalkCommunityApi.createBuddy({
+      city:(document.getElementById('buddyCreateCity')||{}).value,
+      title:(document.getElementById('buddyCreateTitle')||{}).value,
+      desc:(document.getElementById('buddyCreateDesc')||{}).value,
+      date:(document.getElementById('buddyCreateDate')||{}).value,
+      filter:(document.getElementById('buddyCreateFilter')||{}).value,
+      slots_max:(document.getElementById('buddyCreateMax')||{}).value,
+      tags:tags,
+    });
+    closeModal('buddyModal');
+    showToast('招募已发布');
+    await loadCommunityUgc();
+    openBuddiesPage();
+  }catch(e){
+    showToast(e.message||'发起失败');
+  }
+}
 function showModal(id){document.getElementById(id).classList.add('show');document.body.style.overflow='hidden'}
 function closeModal(id){document.getElementById(id).classList.remove('show');document.body.style.overflow=''}
 
@@ -1029,12 +1258,17 @@ function toggleLike(el){el.classList.toggle('liked');el.textContent=el.classList
 function toggleSaveText(el){el.classList.toggle('liked');el.textContent=el.classList.contains('liked')?'♣ 已收藏':'♧ 收藏'}
 function favoriteRoute(){if(!currentRouteId)return;toggleRouteFavorite(currentRouteId);document.getElementById('routeFavoriteModalBtn').textContent=isRouteFavorite(currentRouteId)?'♥ 已收藏路线':'♡ 收藏这条路线';}
 
-// city tabs
-Array.from(document.querySelectorAll('.city-tab')).forEach(btn=>btn.addEventListener('click',()=>{
-  document.querySelectorAll('.city-tab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderRoutes(btn.dataset.city);
-}));
+// city tabs（动态重建后仍可用事件委托）
+const cityTabsEl=document.getElementById('cityTabs');
+if(cityTabsEl){
+  cityTabsEl.addEventListener('click',(ev)=>{
+    const btn=ev.target.closest('.city-tab');
+    if(!btn) return;
+    document.querySelectorAll('#cityTabs .city-tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    renderRoutes(btn.dataset.city||'全部');
+  });
+}
 
 // feed tabs
 Array.from(document.querySelectorAll('.feed-tab')).forEach(btn=>btn.addEventListener('click',()=>{
@@ -1088,6 +1322,11 @@ renderBuddies();
 renderPointsBoard();
 renderHeroBuddyPreview();
 updateBuddyToggle(true);
+
+const publishPostForm=document.getElementById('publishPostForm');
+if(publishPostForm) publishPostForm.addEventListener('submit',submitPublishPostForm);
+const buddyCreateForm=document.getElementById('buddyCreateForm');
+if(buddyCreateForm) buddyCreateForm.addEventListener('submit',submitBuddyCreateForm);
 
 document.addEventListener('click',event=>{
   const popover=document.getElementById('pointsLevelPopover');
@@ -1148,4 +1387,8 @@ if(sharedRouteId&&/^[A-Za-z0-9_-]{6,24}$/.test(sharedRouteId)){
   },220);
 }
 
-if(typeof CitywalkAuth!=='undefined') CitywalkAuth.initAuth();
+if(typeof CitywalkAuth!=='undefined'){
+  CitywalkAuth.initAuth().then(function(){ return loadCommunityUgc(); });
+}else{
+  loadCommunityUgc();
+}

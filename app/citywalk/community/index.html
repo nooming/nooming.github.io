@@ -102,25 +102,19 @@
 
 <section class="section" id="routes">
     <div class="section-head">
-      <div><h2>推荐路线 <span class="demo-chip">示例</span></h2><p>不是景点清单，而是一条可以真正走起来的路线</p></div>
-      <button type="button" class="section-action" onclick="showDemoUnavailable('更多路线')">更多路线 →</button>
+      <div><h2>我的路线</h2><p>来自 Citywalk 规划页「记录到社区」或分享导入，不含示例假数据</p></div>
+      <a class="section-action" href="../">去规划 →</a>
     </div>
     <div class="city-tabs" id="cityTabs">
-      <button class="city-tab active" data-city="全部">全部城市</button>
-      <button class="city-tab" data-city="台北">台北</button>
-      <button class="city-tab" data-city="东京">东京</button>
-      <button class="city-tab" data-city="京都">京都</button>
-      <button class="city-tab" data-city="上海">上海</button>
-      <button class="city-tab" data-city="香港">香港</button>
+      <button type="button" class="city-tab active" data-city="全部">全部城市</button>
     </div>
     <div class="route-grid" id="routeGrid"></div>
   </section>
 
   <section class="section" id="feed">
     <div class="section-head">
-      <div><h2>WanderWalk 动态 <span class="demo-chip">示例</span></h2><p>看看别人最近在城市里发现了什么</p></div>
+      <div><h2>WanderWalk 动态</h2><p>登录后可发布；所有人可见最新分享</p></div>
       <div class="section-head-actions">
-        <button type="button" class="section-action" onclick="showDemoUnavailable('查看全部')">查看全部 →</button>
         <button type="button" class="publish publish--inline" onclick="openPublish()">＋ 发布</button>
       </div>
     </div>
@@ -152,7 +146,7 @@
         <button class="footprint-tab active" data-view="walks" onclick="setFootprintView('walks')">🚶 走过的路线</button>
         <button class="footprint-tab" data-view="routes" onclick="setFootprintView('routes')">♡ 收藏的路线</button>
         <button class="footprint-tab" data-view="spots" onclick="setFootprintView('spots')">📍 收藏的点位</button>
-        <span class="local-save-note">示例足迹 · 本地保存</span>
+        <span class="local-save-note">私人足迹 · 登录可云同步</span>
       </div>
       <div class="footprint-summary" id="footprintSummary"></div>
       <div class="footprint-grid" id="footprintGrid"></div>
@@ -249,24 +243,19 @@
         <div class="modal-stats" id="modalStats"></div>
         <div class="modal-section"><h4>🧭 路线顺序</h4><ul id="modalStops"></ul></div>
         <div class="modal-section"><h4>💡 Walk 提示</h4><ul id="modalTips"></ul></div>
-        <div class="route-modal-actions">
+        <div class="route-modal-actions" id="postUgcActions" hidden>
+          <button type="button" class="confirm secondary" id="postLikeBtn" onclick="toggleLikeCurrentPost()">♡ 点赞</button>
+          <button type="button" class="confirm secondary" id="postReportBtn" onclick="reportCurrentPost()">举报</button>
+          <button type="button" class="confirm secondary" id="postDeleteBtn" onclick="deleteCurrentPost()" hidden>删除</button>
+          <a class="confirm secondary" id="postOpenShareLink" href="#" target="_blank" rel="noopener" hidden>在规划页打开分享路线</a>
+        </div>
+        <div class="route-modal-actions" id="routeModalActions">
           <button class="confirm secondary" id="spotFavoriteBtn" onclick="toggleCurrentSpotFavorite()" style="display:none">♡ 收藏这个打卡点</button>
           <button class="confirm secondary" id="spotJumpBtn" onclick="openRouteSpots()">📍 查看这条路线的打卡点</button>
           <button class="confirm" id="routeFavoriteModalBtn" onclick="favoriteRoute()">♡ 收藏这条路线</button>
         </div>
       </div>
     </div>
-  </div>
-</div>
-
-<!-- 搭子弹窗 -->
-<div class="modal" id="buddyModal">
-  <div class="modal-box buddy-modal">
-    <button class="close" onclick="closeModal('buddyModal')">×</button>
-    <h2 id="buddyModalTitle">加入这次 Walk</h2>
-    <p id="buddyModalDesc"></p>
-    <div class="join-preview" id="buddyPreview"></div>
-    <button class="confirm" id="buddyConfirm">确认加入</button>
   </div>
 </div>
 
@@ -301,17 +290,76 @@
   </div>
 </div>
 
-<!-- 发布提示 -->
+<!-- 发布动态 -->
 <div class="modal" id="publishModal">
   <div class="modal-box buddy-modal">
-    <button class="close" onclick="closeModal('publishModal')">×</button>
-    <h2>发布你的 Walk</h2>
-    <p>这里可以继续接入真实的图片上传、路线绘制和账号系统。</p>
-    <div class="join-preview">
-      <strong>推荐发布结构</strong>
-      <div style="font-size:12px;color:#777;line-height:1.9">路线名称 → 城市/街区 → 距离与时长 → 沿途打卡点 → 图片 → 适合人群 → 注意事项</div>
+    <button type="button" class="close" onclick="closeModal('publishModal')" aria-label="关闭">×</button>
+    <h2>发布到社区动态</h2>
+    <p class="cw-auth-lead">需登录。分享路线灵感、打卡点或实用攻略（暂不支持图片上传，可填图片链接）。</p>
+    <form id="publishPostForm" class="cw-auth-form">
+      <label class="form-label" for="publishType">类型</label>
+      <select id="publishType" class="footprint-input">
+        <option value="路线">路线分享</option>
+        <option value="打卡">打卡安利</option>
+        <option value="攻略">实用攻略</option>
+        <option value="夜游">夜游</option>
+        <option value="拍照">拍照</option>
+      </select>
+      <label class="form-label" for="publishCity">城市</label>
+      <input id="publishCity" class="footprint-input" type="text" maxlength="24" placeholder="如：上海" required>
+      <label class="form-label" for="publishTitle">标题</label>
+      <input id="publishTitle" class="footprint-input" type="text" maxlength="80" required>
+      <label class="form-label" for="publishDesc">正文</label>
+      <textarea id="publishDesc" class="footprint-input" rows="4" maxlength="2000" required></textarea>
+      <label class="form-label" for="publishImage">封面图链接（选填）</label>
+      <input id="publishImage" class="footprint-input" type="url" placeholder="https://…">
+        <label class="form-label" for="publishTags">标签（选填，逗号分隔）</label>
+        <input id="publishTags" class="footprint-input" type="text" placeholder="摄影, 咖啡">
+        <label class="form-label" for="publishRouteId">关联已导入路线（选填）</label>
+        <select id="publishRouteId" class="footprint-input"><option value="">不关联</option></select>
+        <label class="form-label" for="publishShareRouteId">或分享短 id（选填，规划页 ?r= 后面那段）</label>
+        <input id="publishShareRouteId" class="footprint-input" type="text" maxlength="32" placeholder="如 p1a2b3c4d5e6f7">
+        <button type="submit" class="confirm footprint-save-btn">发布</button>
+    </form>
+  </div>
+</div>
+<!-- 找搭子：发起 / 加入 -->
+<div class="modal" id="buddyModal">
+  <div class="modal-box buddy-modal">
+    <button type="button" class="close" onclick="closeModal('buddyModal')" aria-label="关闭">×</button>
+    <div id="buddyJoinPane" hidden>
+      <h2 id="buddyModalTitle">加入这次 Walk</h2>
+      <p id="buddyModalDesc"></p>
+      <div class="join-preview" id="buddyPreview"></div>
+      <button type="button" class="confirm" id="buddyConfirm">确认加入</button>
     </div>
-    <button class="confirm" onclick="closeModal('publishModal')">知道了</button>
+    <div id="buddyCreatePane">
+      <h2>发起一次 Walk</h2>
+      <p class="cw-auth-lead">需登录。填写出发时间与人数，其他人可在找搭子区加入。</p>
+      <form id="buddyCreateForm" class="cw-auth-form">
+        <label class="form-label" for="buddyCreateCity">城市</label>
+        <input id="buddyCreateCity" class="footprint-input" type="text" maxlength="24" required>
+        <label class="form-label" for="buddyCreateTitle">标题</label>
+        <input id="buddyCreateTitle" class="footprint-input" type="text" maxlength="80" placeholder="如：周六下午 · 武康路慢走" required>
+        <label class="form-label" for="buddyCreateDesc">说明</label>
+        <textarea id="buddyCreateDesc" class="footprint-input" rows="3" maxlength="1200" required></textarea>
+        <label class="form-label" for="buddyCreateDate">出发时间</label>
+        <input id="buddyCreateDate" class="footprint-input" type="text" maxlength="64" placeholder="如：10/12 周六 14:00" required>
+        <label class="form-label" for="buddyCreateFilter">分类</label>
+        <select id="buddyCreateFilter" class="footprint-input">
+          <option value="周末">周末</option>
+          <option value="今天">今天</option>
+          <option value="摄影">摄影搭子</option>
+          <option value="美食">美食搭子</option>
+          <option value="轻徒步">轻徒步</option>
+        </select>
+        <label class="form-label" for="buddyCreateMax">人数上限</label>
+        <input id="buddyCreateMax" class="footprint-input" type="number" min="2" max="8" value="4">
+        <label class="form-label" for="buddyCreateTags">标签（选填，逗号分隔）</label>
+        <input id="buddyCreateTags" class="footprint-input" type="text" placeholder="摄影, 咖啡">
+        <button type="submit" class="confirm footprint-save-btn">发布招募</button>
+      </form>
+    </div>
   </div>
 </div>
 <div class="modal" id="cwAuthModal" role="dialog" aria-modal="true" aria-labelledby="cwAuthModalTitle">
@@ -361,6 +409,7 @@
 
 <script src="../assets/js/cw-bridge.js"></script>
 <script src="../assets/js/cw-auth.js"></script>
+<script src="assets/js/cw-community-api.js"></script>
 <script src="assets/js/cw-footprint-sync.js"></script>
 <script src="assets/js/data.js"></script>
 <script src="assets/js/community.js"></script>
