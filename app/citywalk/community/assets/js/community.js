@@ -99,6 +99,7 @@ function loadPlannedCatalog() {
 }
 function savePlannedCatalog() {
   try { localStorage.setItem(PLANNED_ROUTES_KEY, JSON.stringify(plannedRouteCatalog)); } catch (e) { /* ignore */ }
+  if(typeof CitywalkFootprintSync!=='undefined'&&CitywalkFootprintSync.schedulePush) CitywalkFootprintSync.schedulePush();
 }
 let plannedRouteCatalog = loadPlannedCatalog();
 Object.keys(plannedRouteCatalog).forEach(function (id) {
@@ -133,6 +134,11 @@ function loadArray(key, fallback=[]){
 }
 function saveArray(key, value){
   try{ localStorage.setItem(key,JSON.stringify(value)); }catch(e){}
+  if(typeof CitywalkFootprintSync!=='undefined'&&CitywalkFootprintSync.schedulePush){
+    if(key===FOOTPRINT_STORAGE.walked||key===FOOTPRINT_STORAGE.favoriteRoutes||key===FOOTPRINT_STORAGE.favoriteSpots){
+      CitywalkFootprintSync.schedulePush();
+    }
+  }
 }
 function loadNumber(key, fallback=0){
   try{
@@ -277,7 +283,8 @@ function renderFootprints(){
   document.getElementById('footprintArchivePanel').style.display='block';
   document.getElementById('routeSpotPanel').style.display='none';
   document.getElementById('footprintHeading').textContent='我的 Walk 足迹';
-  document.getElementById('footprintSubtitle').textContent='记录走过的路线，收藏沿途想再去的点位。所有记录保存在当前浏览器。';
+  const syncHint=document.getElementById('footprintSyncHint');
+  if(syncHint&&!syncHint.textContent) syncHint.textContent='登录后足迹与收藏会保存到账号；未登录时仍只在本浏览器。';
   document.getElementById('footprintTabs').style.display='flex';
   document.getElementById('footprintSummary').style.display='grid';
   document.getElementById('footprintHeadActions').style.display='flex';
@@ -1067,3 +1074,5 @@ if(integrationParams.get('import')==='1'){
     }catch(e){}
   },180);
 }
+
+if(typeof CitywalkAuth!=='undefined') CitywalkAuth.initAuth();

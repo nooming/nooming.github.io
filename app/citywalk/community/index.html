@@ -26,7 +26,7 @@
       <span>⌕</span>
       <input id="searchInput" placeholder="搜索动态（路线、街区、攻略）…" autocomplete="off" aria-label="搜索动态">
     </label>
-    <span class="user-avatar user-avatar--initial" aria-hidden="true">我</span>
+    <button type="button" class="user-avatar user-avatar--initial" id="cwAuthAvatarBtn" aria-label="登录或账号">我</button>
   </div>
 </header>
 
@@ -140,7 +140,7 @@
     <div class="section-head footprint-section-head">
       <div>
         <h2 id="footprintHeading">我的 Walk 足迹</h2>
-        <p id="footprintSubtitle">记录走过的路线，收藏沿途想再去的点位。所有记录保存在当前浏览器。</p>
+        <p id="footprintSubtitle"><span id="footprintSyncHint">登录后足迹与收藏会保存到账号；未登录时仍只在本浏览器。</span></p>
       </div>
       <div class="footprint-head-actions" id="footprintHeadActions">
         <button class="footprint-add" onclick="openAddFootprint()">＋ 记录一次 Walk</button>
@@ -314,7 +314,41 @@
     <button class="confirm" onclick="closeModal('publishModal')">知道了</button>
   </div>
 </div>
+<div class="modal" id="cwAuthModal" role="dialog" aria-modal="true" aria-labelledby="cwAuthModalTitle">
+  <div class="modal-box buddy-modal cw-auth-modal">
+    <button type="button" class="close" onclick="CitywalkAuth.closeAuthModal()" aria-label="关闭">×</button>
+    <h2 id="cwAuthModalTitle">WanderWalk 账号</h2>
+    <p class="cw-auth-lead">登录后足迹、收藏路线与规划导入会同步到云端。</p>
+    <div class="cw-auth-tabs">
+      <button type="button" class="cw-auth-tab" onclick="CitywalkAuth.openAuthModal('login')">登录</button>
+      <button type="button" class="cw-auth-tab" onclick="CitywalkAuth.openAuthModal('register')">注册</button>
+    </div>
+    <div id="cwAuthLoginPane">
+      <form id="cwAuthLoginForm" class="cw-auth-form">
+        <label class="form-label" for="cwAuthLoginEmail">邮箱</label>
+        <input id="cwAuthLoginEmail" class="footprint-input" type="email" autocomplete="username" required>
+        <label class="form-label" for="cwAuthLoginPassword">密码</label>
+        <input id="cwAuthLoginPassword" class="footprint-input" type="password" autocomplete="current-password" minlength="8" required>
+        <button type="submit" class="confirm footprint-save-btn">登录并同步</button>
+      </form>
+    </div>
+    <div id="cwAuthRegisterPane" hidden>
+      <form id="cwAuthRegisterForm" class="cw-auth-form">
+        <label class="form-label" for="cwAuthRegEmail">邮箱</label>
+        <input id="cwAuthRegEmail" class="footprint-input" type="email" autocomplete="email" required>
+        <label class="form-label" for="cwAuthRegName">昵称（选填）</label>
+        <input id="cwAuthRegName" class="footprint-input" type="text" maxlength="24" autocomplete="nickname">
+        <label class="form-label" for="cwAuthRegPassword">密码（至少 8 位）</label>
+        <input id="cwAuthRegPassword" class="footprint-input" type="password" autocomplete="new-password" minlength="8" required>
+        <button type="submit" class="confirm footprint-save-btn">注册并上传本地足迹</button>
+      </form>
+    </div>
+  </div>
+</div>
+
 <script src="../assets/js/cw-bridge.js"></script>
+<script src="../assets/js/cw-auth.js"></script>
+<script src="assets/js/cw-footprint-sync.js"></script>
 <script src="assets/js/data.js"></script>
 <script src="assets/js/community.js"></script>
 </body>

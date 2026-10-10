@@ -870,3 +870,12 @@ a:focus-visible,button:focus-visible,.hero-btn:focus-visible,.city-tab:focus-vis
 
 .hero-buddy-item strong{font-size:12px;line-height:1.45}
 .hero-buddy-item span{font-size:11px;color:#888}
+
+button.user-avatar{border:none;cursor:pointer;font:inherit;font-weight:800}
+.user-avatar--logged-in{background:linear-gradient(135deg,var(--cw-primary,#ff6f91),var(--cw-secondary,#a18cd1));color:#fff}
+.cw-auth-modal{max-width:420px;padding:28px 30px 32px}
+.cw-auth-lead{font-size:12px;color:#777;margin-bottom:16px;line-height:1.65}
+.cw-auth-tabs{display:flex;gap:8px;margin-bottom:18px}
+.cw-auth-tab{flex:1;padding:9px;border-radius:999px;border:1px solid #eddde4;background:#fff;font-size:12px;font-weight:700;color:#666}
+.cw-auth-form{display:flex;flex-direction:column;gap:8px}
+.cw-auth-form .footprint-save-btn{margin-top:10px}
