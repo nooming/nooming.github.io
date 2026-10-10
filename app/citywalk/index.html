@@ -6,10 +6,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#ff7e5f">
-    <meta name="description" content="全国Citywalk定制路线规划，发现城市之美，支持北京、上海、广州、深圳、成都、杭州、香港、澳门等城市">
+    <meta name="theme-color" content="#ff6f91">
+    <meta name="description" content="WanderWalk · Citywalk 路线规划：智能定制步行路线，支持多城起终点、必去点与社区足迹联动">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚶</text></svg>">
-    <title>全国Citywalk · 定制路线规划</title>
+    <title>WanderWalk · Citywalk 路线规划</title>
     <link rel="preconnect" href="https://webapi.amap.com">
     <link rel="preconnect" href="https://restapi.amap.com">
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
@@ -70,6 +70,7 @@
             });
         })();
     </script>
+    <link rel="stylesheet" href="assets/css/cw-brand.css">
     <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
@@ -94,8 +95,12 @@
         <div class="panel-header">
             <h2>
                 <span class="panel-header-icon">🚶</span>
-                <span class="panel-header-title-text">Citywalk</span>
+                <span class="panel-header-title-block">
+                    <span class="panel-header-title-text">WanderWalk</span>
+                    <span class="panel-header-subtitle">Citywalk 路线规划</span>
+                </span>
             </h2>
+            <a class="panel-header-community" href="community/" title="WanderWalk 社区 · 找搭子与足迹">社区</a>
         </div>
 
         <div class="panel-env">
@@ -261,6 +266,11 @@
 
                 <div class="result-area" id="resultArea" style="display:none;">
                     <div class="result-header">路线规划完成</div>
+                    <article class="cw-route-summary-card" id="cwRouteSummaryCard" hidden>
+                        <div class="cw-route-summary-kicker" id="cwRouteSummaryCity">—</div>
+                        <h3 class="cw-route-summary-title" id="cwRouteSummaryTitle">路线摘要</h3>
+                        <p class="cw-route-summary-meta" id="cwRouteSummaryMeta"></p>
+                    </article>
                     <p class="result-narrative" id="resultNarrative"></p>
                     <div class="result-stats-row">
                         <div class="result-stat">
@@ -289,6 +299,7 @@
                     <div class="result-share-block">
                         <div class="result-share-label">分享与导出</div>
                         <div class="result-actions-row">
+                            <button class="btn-generate-plan btn-record-community" id="btnRecordCommunity" type="button">记录到社区</button>
                             <button class="btn-generate-plan btn-copy-link" id="btnCopyShareLink" type="button">复制链接</button>
                             <button class="btn-generate-plan" id="btnGeneratePlan" type="button">生成游记攻略</button>
                             <button class="btn-generate-plan btn-share-image" id="btnShareImage" type="button">导出分享图</button>
@@ -320,6 +331,7 @@
     </div>
 
     <script src="assets/js/core/cw-state.js"></script>
+    <script src="assets/js/cw-bridge.js"></script>
     <script src="assets/js/map/cw-weather.js"></script>
     <script src="assets/js/map/cw-map.js"></script>
     <script src="assets/js/ui/cw-tabs.js"></script>

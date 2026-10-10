@@ -1,0 +1,321 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#ff6f91">
+<meta name="description" content="WanderWalk 社区：Citywalk 经验、找搭子、足迹，与 Citywalk 路线规划联动">
+<title>WanderWalk · 社区</title>
+<link rel="stylesheet" href="../assets/css/cw-brand.css">
+<link rel="stylesheet" href="assets/css/community.css">
+</head>
+<body class="cw-safe-bottom">
+
+<header class="navbar">
+  <div class="nav-inner">
+    <a class="logo" href="#home">Wander<b>Walk</b></a>
+    <nav class="nav-links" id="navLinks" aria-label="社区导航">
+      <a href="../" class="nav-plan">Citywalk 路线规划</a>
+      <a href="#home">首页</a>
+      <a href="#buddies" class="buddy-nav" onclick="openBuddiesPage(event)">👥 找搭子</a>
+      <a href="#routes">路线</a>
+      <a href="#feed">动态</a>
+      <a href="#spots">足迹</a>
+    </nav>
+    <label class="search">
+      <span>⌕</span>
+      <input id="searchInput" placeholder="搜索动态（路线、街区、攻略）…" autocomplete="off" aria-label="搜索动态">
+    </label>
+    <span class="user-avatar user-avatar--initial" aria-hidden="true">我</span>
+  </div>
+</header>
+
+<section class="hero-wrap" id="home">
+  <div class="hero">
+    <div class="hero-content">
+      <div class="hero-copy">
+        <div class="eyebrow">✦ 今天去哪里走走？</div>
+        <h1>不赶景点，<br>只走一段有意思的路。</h1>
+        <p>发现城市里的街区、咖啡、小店、建筑和隐藏机位。更重要的是，找到一个也想出门的人，一起把路线走完。</p>
+        <div class="hero-actions">
+          <button class="hero-btn primary" type="button" onclick="openBuddiesPage()"><span class="hero-btn-icon" aria-hidden="true">👥</span><span class="hero-btn-label">先找搭子</span></button>
+          <a class="hero-btn hero-btn-planner" href="../"><span class="hero-btn-label">Citywalk 路线规划</span><span class="hero-btn-suffix" aria-hidden="true">→</span></a>
+          <button class="hero-btn ghost" type="button" onclick="scrollToId('feed')"><span class="hero-btn-label">逛动态</span><span class="hero-btn-suffix" aria-hidden="true">→</span></button>
+        </div>
+      </div>
+      <div class="hero-buddy-card">
+        <div class="hero-buddy-top">
+          <span class="hero-buddy-label">FIND A WALK BUDDY</span>
+          <span class="hero-buddy-count">18 组正在招募</span>
+        </div>
+        <h3>今天有人一起走吗？</h3>
+        <p>按时间、城市和兴趣选择一场 Walk，直接加入。</p>
+        <div class="hero-buddy-list" id="heroBuddyList"></div>
+        <button class="hero-buddy-cta" onclick="openBuddiesPage()">查看全部同行计划 →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<main class="container">
+
+  <aside class="ww-planner-strip" aria-label="与路线规划联动">
+    <div class="ww-planner-strip-copy">
+      <strong>还没有路线？</strong>
+      <span>Citywalk 路线规划 → 记录到社区 → 在足迹里回看时间轴</span>
+    </div>
+    <a class="ww-planner-strip-btn" href="../">去规划</a>
+  </aside>
+
+  <aside class="import-guide-banner" id="importGuideBanner" hidden>
+    <div>
+      <strong>已从规划页载入路线</strong>
+      <p>在下方黑底时间轴查看站点；保存 Walk 足迹后可领取演示积分。</p>
+    </div>
+    <button type="button" class="import-guide-dismiss" onclick="dismissImportGuide()">知道了</button>
+  </aside>
+
+  <section class="section buddy-section-visible" id="buddies">
+    <div class="buddy-section-top">
+      <div class="buddy-section-note">✨ 主要功能 · 找到一起出发的人</div>
+      <button class="buddy-collapse" id="buddyCollapseBtn" onclick="toggleBuddiesPage(event)">收起搭子区 ↑</button>
+    </div>
+    <div class="buddy-shell">
+      <div style="display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid #eee0e6;color:#8c6e7d;padding:6px 9px;border-radius:999px;font-size:10px;font-weight:800;margin-bottom:14px;position:relative;z-index:1;box-shadow:0 5px 12px rgba(121,83,104,.06)">✨ 本周高活跃 · 找一个一起出发的人</div>
+      <div class="buddy-intro">
+        <div><h3>👥 找搭子</h3><p>一个人也想出门？发起一次 Walk，找到节奏刚好的同行者。</p></div>
+        <button class="buddy-cta" onclick="openCreateBuddy()">＋ 发起一次 Walk</button>
+      </div>
+      <div class="buddy-filters" id="buddyFilters">
+        <button class="buddy-filter active" data-filter="全部">全部</button>
+        <button class="buddy-filter" data-filter="今天">今天</button>
+        <button class="buddy-filter" data-filter="周末">周末</button>
+        <button class="buddy-filter" data-filter="摄影">摄影搭子</button>
+        <button class="buddy-filter" data-filter="美食">美食搭子</button>
+        <button class="buddy-filter" data-filter="轻徒步">轻徒步</button>
+      </div>
+      <div class="buddy-grid" id="buddyGrid"></div>
+    </div>
+  </section>
+
+
+
+<section class="section" id="routes">
+    <div class="section-head">
+      <div><h2>推荐路线 <span class="demo-chip">示例</span></h2><p>不是景点清单，而是一条可以真正走起来的路线</p></div>
+      <button type="button" class="section-action" onclick="showDemoUnavailable('更多路线')">更多路线 →</button>
+    </div>
+    <div class="city-tabs" id="cityTabs">
+      <button class="city-tab active" data-city="全部">全部城市</button>
+      <button class="city-tab" data-city="台北">台北</button>
+      <button class="city-tab" data-city="东京">东京</button>
+      <button class="city-tab" data-city="京都">京都</button>
+      <button class="city-tab" data-city="上海">上海</button>
+      <button class="city-tab" data-city="香港">香港</button>
+    </div>
+    <div class="route-grid" id="routeGrid"></div>
+  </section>
+
+  <section class="section" id="feed">
+    <div class="section-head">
+      <div><h2>WanderWalk 动态 <span class="demo-chip">示例</span></h2><p>看看别人最近在城市里发现了什么</p></div>
+      <div class="section-head-actions">
+        <button type="button" class="section-action" onclick="showDemoUnavailable('查看全部')">查看全部 →</button>
+        <button type="button" class="publish publish--inline" onclick="openPublish()">＋ 发布</button>
+      </div>
+    </div>
+    <div class="feed-tabs" id="feedTabs">
+      <button class="feed-tab active" data-type="全部">全部</button>
+      <button class="feed-tab" data-type="路线">路线分享</button>
+      <button class="feed-tab" data-type="打卡">打卡安利</button>
+      <button class="feed-tab" data-type="攻略">实用攻略</button>
+      <button class="feed-tab" data-type="夜游">夜游</button>
+      <button class="feed-tab" data-type="拍照">拍照</button>
+    </div>
+    <div class="feed" id="feedGrid"></div>
+    <div class="empty" id="feedEmpty">没有找到相关内容，换个关键词试试。</div>
+  </section>
+
+<section class="section" id="spots">
+    <div class="section-head footprint-section-head">
+      <div>
+        <h2 id="footprintHeading">我的 Walk 足迹</h2>
+        <p id="footprintSubtitle">记录走过的路线，收藏沿途想再去的点位。所有记录保存在当前浏览器。</p>
+      </div>
+      <div class="footprint-head-actions" id="footprintHeadActions">
+        <button class="footprint-add" onclick="openAddFootprint()">＋ 记录一次 Walk</button>
+      </div>
+    </div>
+
+    <div id="footprintArchivePanel">
+      <div class="footprint-tabs" id="footprintTabs">
+        <button class="footprint-tab active" data-view="walks" onclick="setFootprintView('walks')">🚶 走过的路线</button>
+        <button class="footprint-tab" data-view="routes" onclick="setFootprintView('routes')">♡ 收藏的路线</button>
+        <button class="footprint-tab" data-view="spots" onclick="setFootprintView('spots')">📍 收藏的点位</button>
+        <span class="local-save-note">示例足迹 · 本地保存</span>
+      </div>
+      <div class="footprint-summary" id="footprintSummary"></div>
+      <div class="footprint-grid" id="footprintGrid"></div>
+      <div class="footprint-empty" id="footprintEmpty" style="display:none"></div>
+    </div>
+
+    <div id="routeSpotPanel" class="route-spot-panel" style="display:none">
+      <div class="route-spot-toolbar">
+        <button class="back-footprints" onclick="showFootprintArchive()">← 返回我的足迹</button>
+        <span class="route-link-badge" id="routeLinkBadge">路线规划联动</span>
+      </div>
+      <div class="spot-layout">
+        <div class="spot-board">
+          <div class="spot-board-kicker" id="spotBoardKicker">路线打卡点 · 路线联动</div>
+          <h3 id="spotRouteTitle">中山 → 赤峰街 → 大稻埕</h3>
+          <p id="spotRouteMeta">台北 · 4.8 km · 约 2.5h · 轻松</p>
+          <div class="spot-path" id="spotPath"></div>
+        </div>
+        <div class="spot-list" id="spotList"></div>
+      </div>
+    </div>
+  </section>
+
+  <details class="section points-section points-section--fold" id="pointsSection">
+    <summary class="points-fold-summary">
+      <span class="points-fold-title">漫游积分 · 本地演示</span>
+      <span class="points-fold-meta">完成 Walk +50 · 当前 <strong id="walkPointsTotalFold">0</strong> 分</span>
+    </summary>
+    <div class="points-head">
+      <div><h2>我的漫游积分</h2><p>保存足迹后可领取演示积分，称号保存在本浏览器。</p></div>
+    </div>
+    <div class="walk-points-card" id="walkPointsCard">
+      <div class="points-card-topline">
+        <span class="points-card-eyebrow">完成一条 WanderWalk</span>
+        <span class="points-sync-label"><i aria-hidden="true"></i> Citywalk 路线规划同步</span>
+      </div>
+
+      <div class="points-reward-row">
+        <div class="points-reward-display"><strong>+50</strong><span>WALK 积分</span></div>
+        <div class="points-total-display"><span>当前累计</span><strong id="walkPointsTotal">0</strong><em>分</em></div>
+      </div>
+
+      <div class="points-progress-heading">
+        <button class="points-level-chip" id="pointsCurrentLevel" type="button" onclick="togglePointsLevels(event)" aria-controls="pointsLevelPopover" aria-expanded="false" title="点击查看漫游者全部称号与积分要求">
+          <span class="points-current-level-text">🌱 街巷新芽</span>
+          <span class="points-level-arrow" aria-hidden="true"></span>
+        </button>
+        <div class="points-next-summary">
+          <strong id="pointsNextLevel">下一等级 · 巷弄漫游者</strong>
+          <span id="pointsProgressLabel">还差 100 分</span>
+        </div>
+      </div>
+
+      <div class="points-progress-track points-progress-track-main" role="progressbar" aria-label="距离下一漫游等级的进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="pointsProgressTrack">
+        <i class="points-progress-fill" id="pointsProgressFill"></i>
+      </div>
+
+      <p class="points-inline-hint">在「Citywalk 路线规划」生成路线并记录到社区、保存足迹后，可领取本地演示积分。</p>
+
+      <div class="points-level-popover" id="pointsLevelPopover" hidden role="dialog" aria-label="漫游者等级、积分要求与操作指引">
+        <div class="points-popover-head">
+          <div><strong>漫游者称号</strong><p>累计积分越多，解锁的称号越高。</p></div>
+          <button class="points-popover-close" type="button" onclick="closePointsLevels(event)" aria-label="关闭称号说明">×</button>
+        </div>
+        <div class="points-popover-current"><span>你目前的称号</span><strong id="pointsPopoverCurrent">🌱 街巷新芽</strong></div>
+        <div class="points-level-ladder" id="pointsLevelLadder"></div>
+        <div class="points-howto">
+          <strong>操作指引 · 如何获得积分</strong>
+          <ol>
+            <li>打开 <a href="../">Citywalk 路线规划</a>，生成一条可执行的步行路线。</li>
+            <li>点「记录到社区」，在本页保存 Walk 足迹后，可领取 <b>50 积分</b>（本地演示）。</li>
+            <li>返回这里查看积分与称号；完成的路线也会记入「我的 Walk 足迹」，方便回看沿途打卡点。</li>
+          </ol>
+          <p class="points-howto-note">同一次完成事件只计分一次。当前版本将积分与足迹保存在此浏览器中，暂不跨设备同步。</p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+</main>
+
+<footer><b>WanderWalk</b> 社区 · <a href="../">Citywalk 路线规划</a> · <a href="../../">noomings 首页</a><br><br>城市不是用来赶路的，是用来慢慢走的。<br><br>© 2026 WanderWalk（演示数据）</footer>
+
+<!-- 路线详情弹窗 -->
+<div class="modal" id="routeModal">
+  <div class="modal-box">
+    <button class="close" onclick="closeModal('routeModal')">×</button>
+    <div class="route-modal">
+      <img id="modalCover" class="modal-cover" src="" alt="路线图片">
+      <div class="modal-info">
+        <div class="modal-kicker" id="modalKicker"></div>
+        <h2 id="modalTitle"></h2>
+        <p class="lead" id="modalLead"></p>
+        <div class="modal-stats" id="modalStats"></div>
+        <div class="modal-section"><h4>🧭 路线顺序</h4><ul id="modalStops"></ul></div>
+        <div class="modal-section"><h4>💡 Walk 提示</h4><ul id="modalTips"></ul></div>
+        <div class="route-modal-actions">
+          <button class="confirm secondary" id="spotFavoriteBtn" onclick="toggleCurrentSpotFavorite()" style="display:none">♡ 收藏这个打卡点</button>
+          <button class="confirm secondary" id="spotJumpBtn" onclick="openRouteSpots()">📍 查看这条路线的打卡点</button>
+          <button class="confirm" id="routeFavoriteModalBtn" onclick="favoriteRoute()">♡ 收藏这条路线</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 搭子弹窗 -->
+<div class="modal" id="buddyModal">
+  <div class="modal-box buddy-modal">
+    <button class="close" onclick="closeModal('buddyModal')">×</button>
+    <h2 id="buddyModalTitle">加入这次 Walk</h2>
+    <p id="buddyModalDesc"></p>
+    <div class="join-preview" id="buddyPreview"></div>
+    <button class="confirm" id="buddyConfirm">确认加入</button>
+  </div>
+</div>
+
+<!-- 记录一次 Walk -->
+<div class="modal" id="footprintModal">
+  <div class="modal-box buddy-modal footprint-modal">
+    <button class="close" onclick="closeModal('footprintModal')">×</button>
+    <h2>记录一次 Walk</h2>
+    <p>把走过的路线放进足迹里，之后可以随时回来查看沿途点位。</p>
+    <label class="form-label" for="footprintRouteSelect">走过哪条路线？</label>
+    <select id="footprintRouteSelect" class="footprint-input"></select>
+    <label class="form-label" for="footprintDateInput">完成日期</label>
+    <input id="footprintDateInput" class="footprint-input" type="date">
+    <label class="form-label" for="footprintNoteInput">这次的备注（选填）</label>
+    <textarea id="footprintNoteInput" class="footprint-input" rows="3" placeholder="比如：和朋友去的、最喜欢哪一站……"></textarea>
+    <button class="confirm footprint-save-btn" onclick="saveFootprintFromForm()">保存到我的足迹</button>
+  </div>
+</div>
+
+<!-- CityWalk 完成积分奖励 -->
+<div class="modal" id="walkRewardModal" role="dialog" aria-modal="true" aria-labelledby="walkRewardTitle">
+  <div class="modal-box points-reward-box">
+    <button class="close" onclick="closeModal('walkRewardModal')" aria-label="关闭">×</button>
+    <div class="points-reward-emblem">✦</div>
+    <div class="modal-kicker">WALK COMPLETED</div>
+    <h2 id="walkRewardTitle">这次 WanderWalk 完成啦！</h2>
+    <p id="walkRewardRoute">一段城市漫游，已经成为你的新足迹。</p>
+    <div class="points-reward-number">+50<span>积分</span></div>
+    <p id="walkRewardMessage">积分已计入你的 WanderWalk 账户。</p>
+    <div class="points-reward-level"><span>当前称号</span><strong id="walkRewardLevel">🌱 街巷新芽</strong></div>
+    <button class="confirm" onclick="closeModal('walkRewardModal')">收下这份奖励</button>
+  </div>
+</div>
+
+<!-- 发布提示 -->
+<div class="modal" id="publishModal">
+  <div class="modal-box buddy-modal">
+    <button class="close" onclick="closeModal('publishModal')">×</button>
+    <h2>发布你的 Walk</h2>
+    <p>这里可以继续接入真实的图片上传、路线绘制和账号系统。</p>
+    <div class="join-preview">
+      <strong>推荐发布结构</strong>
+      <div style="font-size:12px;color:#777;line-height:1.9">路线名称 → 城市/街区 → 距离与时长 → 沿途打卡点 → 图片 → 适合人群 → 注意事项</div>
+    </div>
+    <button class="confirm" onclick="closeModal('publishModal')">知道了</button>
+  </div>
+</div>
+<script src="../assets/js/cw-bridge.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/community.js"></script>
+</body>
+</html>

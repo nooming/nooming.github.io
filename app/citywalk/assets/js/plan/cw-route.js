@@ -151,6 +151,11 @@ function presentRouteToUser(data) {
     if (routeActions) routeActions.style.display = 'block';
     if (btnOpenAmap) btnOpenAmap.style.display = data.mode === 'loop' ? 'none' : '';
 
+    if (typeof window.CitywalkBridge !== 'undefined') {
+        const summaryPayload = window.CitywalkBridge.buildRoutePayloadFromCW();
+        window.CitywalkBridge.updateRouteSummaryCard(summaryPayload);
+    }
+
     if (resultHeader && typeof resultHeader.scrollIntoView === 'function') {
         resultHeader.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
@@ -315,6 +320,9 @@ function resetSelection() {
     setPickupStatusText('endValue', '点击地图选择');
     const resultArea = document.getElementById('resultArea');
     if (resultArea) resultArea.style.display = 'none';
+    if (typeof window.CitywalkBridge !== 'undefined') {
+        window.CitywalkBridge.updateRouteSummaryCard(null);
+    }
     if (typeof setResultTabAvailable === 'function') {
         setResultTabAvailable(false);
         if (CW.activePanelTab === 'result' && typeof switchPanelTab === 'function') {

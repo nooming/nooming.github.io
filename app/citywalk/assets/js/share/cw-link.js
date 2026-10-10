@@ -3,6 +3,11 @@
 
 const CW_SHARE_SS_PREFIX = 'cw_share_payload_';
 const CW_SHARE_URL_SOFT_MAX = 1800;
+const CW_SHARE_ROUTE_ID_RE = /^[A-Za-z0-9_-]{6,24}$/;
+
+/** 服务端短链分享：待恢复的完整 snapshot */
+let _cwPendingSavedSnapshot = null;
+let _cwSavedShareApplied = false;
 
 function _cwRoundCoord(n) {
     return parseFloat(Number(n).toFixed(5));
@@ -67,6 +72,56 @@ function encodeShareQuery(payload) {
     return q.toString();
 }
 
+function buildSavedRouteSnapshot() {
+    if (!CW.routeData || !CW.routeData.success) return null;
+    const data = CW.routeData;
+    const result = {
+        success: true,
+        mode: data.mode || CW.planMode || 'route',
+        message: data.message || '',
+        route_tip: data.route_tip || '',
+        plan_time_min: data.plan_time_min,
+        visit_pace: data.visit_pace,
+        activity_total_min: data.activity_total_min,
+        estimated_total_min: data.estimated_total_min,
+        free_time_min: data.free_time_min,
+        degraded_route: !!data.degraded_route,
+        path: Array.isArray(data.path) ? data.path : [],
+        distance: data.distance,
+        duration: data.duration,
+        pois: Array.isArray(data.pois) ? data.pois : [],
+        center: data.center,
+    };
+    const snap = {
+        v: 1,
+        city: CW.currentCity || '',
+        start: CW.startPoint ? {
+            lng: CW.startPoint.lng,
+            lat: CW.startPoint.lat,
+            address: CW.startPoint.address || '',
+        } : null,
+        end: CW.endPoint ? {
+            lng: CW.endPoint.lng,
+            lat: CW.endPoint.lat,
+            address: CW.endPoint.address || '',
+        } : null,
+        plan_params: buildShareableRoutePayload(),
+        result,
+    };
+    return snap;
+}
+
+function parseSavedRouteIdFromLocation() {
+    const id = new URLSearchParams(location.search).get('r');
+    if (id && CW_SHARE_ROUTE_ID_RE.test(id)) return id;
+    return null;
+}
+
+function buildShareableRouteUrlFromServerId(id) {
+    const base = `${location.origin}${location.pathname}`;
+    return `${base}?r=${encodeURIComponent(id)}`;
+}
+
 function buildShareableRouteUrl() {
     const payload = buildShareableRoutePayload();
     const qs = encodeShareQuery(payload);
@@ -82,27 +137,57 @@ function buildShareableRouteUrl() {
     return `${base}#cwshare=${id}`;
 }
 
+async function _copyTextToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return;
+    }
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+}
+
 async function copyShareableRouteLink() {
     if (!CW.routeData || !CW.routeData.success) {
         showToast('请先规划一条路线');
         return;
     }
-    const url = buildShareableRouteUrl();
+    const snapshot = buildSavedRouteSnapshot();
+    if (!snapshot) {
+        showToast('当前路线无法分享');
+        return;
+    }
+    let url = '';
+    let serverOk = false;
     try {
-        if (navigator.clipboard && window.isSecureContext) {
-            await navigator.clipboard.writeText(url);
-        } else {
-            const ta = document.createElement('textarea');
-            ta.value = url;
-            document.body.appendChild(ta);
-            ta.select();
-            document.execCommand('copy');
-            document.body.removeChild(ta);
+        showToast('正在生成分享链接…', 2200);
+        const res = await fetch(`${CW_API}/routes/share`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ snapshot }),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (res.ok && body.success && body.id) {
+            url = buildShareableRouteUrlFromServerId(body.id);
+            serverOk = true;
         }
-        showToast('链接已复制，可分享给同伴');
+    } catch (e) {
+        console.warn('routes/share POST failed', e);
+    }
+    if (!url) {
+        url = buildShareableRouteUrl();
+    }
+    try {
+        await _copyTextToClipboard(url);
+        showToast(serverOk
+            ? '链接已复制，打开即可看到这条路线'
+            : '链接已复制（参数模式，对方需重新规划）');
     } catch (e) {
         console.warn(e);
-        showToast('复制失败，请手动选中地址栏参数');
+        showToast('复制失败，请手动复制地址栏链接');
     }
 }
 
@@ -310,14 +395,113 @@ function applyShareableRouteEndpoints(payload) {
     }
 }
 
-function showShareRestoreBanner(payload) {
+function showShareRestoreBanner(payload, extraLine) {
     if (!payload) return;
     const banner = document.getElementById('shareRestoreBanner');
     const text = document.getElementById('shareRestoreText');
     if (text) {
-        text.textContent = `已载入分享参数：${payload.city || CW.currentCity} · ${payload.duration || 60} 分钟`;
+        const city = payload.city || CW.currentCity || '';
+        const mins = payload.duration || payload.plan_time || (payload.plan_params && payload.plan_params.duration) || 60;
+        const base = extraLine || `已载入分享参数：${city} · ${mins} 分钟`;
+        text.textContent = base;
     }
     if (banner) banner.hidden = false;
+}
+
+function showSavedRouteRestoreBanner(snapshot) {
+    if (!snapshot) return;
+    const result = snapshot.result || {};
+    const pois = Array.isArray(result.pois) ? result.pois.length : 0;
+    const km = result.distance ? (result.distance / 1000).toFixed(2) : '--';
+    showShareRestoreBanner(
+        { city: snapshot.city, duration: result.plan_time_min },
+        `已载入分享的路线：${snapshot.city || CW.currentCity || ''} · ${km} km · ${pois} 站（无需重新规划）`
+    );
+}
+
+function applySavedRouteEndpoints(snapshot) {
+    if (!snapshot || !CW.map || !window.AMap) return false;
+    const start = snapshot.start;
+    const end = snapshot.end;
+    const mode = (snapshot.result && snapshot.result.mode) || 'route';
+    try {
+        if (start && Number.isFinite(start.lng) && Number.isFinite(start.lat)) {
+            setStartPoint({ lng: start.lng, lat: start.lat, address: start.address || '' });
+            if (start.address && typeof setPickupStatusText === 'function') {
+                setPickupStatusText('startValue', start.address);
+            }
+        }
+        if (mode !== 'loop' && end && Number.isFinite(end.lng) && Number.isFinite(end.lat)) {
+            setEndPoint({ lng: end.lng, lat: end.lat, address: end.address || '' });
+            if (end.address && typeof setPickupStatusText === 'function') {
+                setPickupStatusText('endValue', end.address);
+            }
+        }
+        updateBtnStatus();
+        return true;
+    } catch (e) {
+        console.warn('分享路线起终点落点失败', e);
+        return false;
+    }
+}
+
+function applySavedRouteSnapshot(snapshot) {
+    if (!snapshot || _cwSavedShareApplied) return false;
+    const result = snapshot.result;
+    if (!result || !result.success) return false;
+    if (snapshot.plan_params) {
+        applyShareableRoutePrefs(snapshot.plan_params);
+    } else if (snapshot.city) {
+        applyShareableRoutePrefs({ city: snapshot.city, mode: result.mode, duration: result.plan_time_min || 60 });
+    }
+    if (!applySavedRouteEndpoints(snapshot)) return false;
+    if (typeof applyRouteResult !== 'function') return false;
+    applyRouteResult(result);
+    if (typeof CitywalkBridge !== 'undefined' && typeof CitywalkBridge.updateRouteSummaryCard === 'function') {
+        const bridgePayload = typeof CitywalkBridge.buildRoutePayloadFromCW === 'function'
+            ? CitywalkBridge.buildRoutePayloadFromCW()
+            : null;
+        CitywalkBridge.updateRouteSummaryCard(bridgePayload);
+    }
+    showSavedRouteRestoreBanner(snapshot);
+    _cwSavedShareApplied = true;
+    _cwPendingSavedSnapshot = null;
+    return true;
+}
+
+function finishSavedRouteRestoreAfterMapReady() {
+    const snapshot = _cwPendingSavedSnapshot;
+    if (!snapshot || _cwSavedShareApplied) return;
+    if (!CW.map || !window.AMap) return;
+    applySavedRouteSnapshot(snapshot);
+}
+
+async function initSavedRouteShareFromUrl() {
+    const id = parseSavedRouteIdFromLocation();
+    if (!id) return;
+    _cwPendingSharePayload = null;
+    try {
+        showShareRestoreBanner({ city: '', duration: 0 }, '正在载入分享的路线…');
+    } catch (_) { /* ignore */ }
+    try {
+        const res = await fetch(`${CW_API}/routes/share/${encodeURIComponent(id)}`);
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok || !body.success || !body.snapshot) {
+            showToast(body.message || '分享链接无效或已过期');
+            const banner = document.getElementById('shareRestoreBanner');
+            if (banner) banner.hidden = true;
+            return;
+        }
+        _cwPendingSavedSnapshot = body.snapshot;
+        if (CW.map && window.AMap) {
+            finishSavedRouteRestoreAfterMapReady();
+        }
+    } catch (e) {
+        console.warn('load shared route failed', e);
+        showToast('无法加载分享路线，请检查网络');
+        const banner = document.getElementById('shareRestoreBanner');
+        if (banner) banner.hidden = true;
+    }
 }
 
 /**
@@ -342,6 +526,10 @@ function applyShareableRouteForm(payload) {
 }
 
 function initShareableRouteFromUrl() {
+    if (parseSavedRouteIdFromLocation()) {
+        initSavedRouteShareFromUrl();
+        return;
+    }
     const payload = parseShareableRouteFromLocation();
     if (!payload) return;
     _cwPendingSharePayload = payload;

@@ -1,10 +1,11 @@
-# Citywalk · 城市漫步路线规划
+# WanderWalk · Citywalk 路线规划
 
-多城步行路线定制：地图选点、偏好与时长、智能规划、灵感种草、天气与分享长图。生产环境前端托管于 GitHub Pages，API 由 Zeabur 提供。
+**WanderWalk** 为产品主名；**Citywalk 路线规划** 为规划能力说明。多城步行路线定制：地图选点、偏好与时长、智能规划、灵感种草、天气与分享长图。社区侧提供找搭子、足迹与经验分享（演示数据）。生产环境前端托管于 GitHub Pages，API 由 Zeabur 提供。
 
 ## 访问地址
 
-- **页面**：<https://noomings.com/app/citywalk/>（与 <https://nooming.github.io/app/citywalk/> 同源）
+- **Citywalk 路线规划**：<https://noomings.com/app/citywalk/>（与 <https://nooming.github.io/app/citywalk/> 同源）
+- **WanderWalk 社区**：<https://noomings.com/app/citywalk/community/>（Walk 经验、找搭子、足迹；规划结果可一键记录）
 - **API**：<https://noomings-backend.zeabur.app/api/citywalk/>（`CORS_ORIGINS` 须允许前端域名）
 
 ## 功能概览

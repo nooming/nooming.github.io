@@ -360,6 +360,11 @@ ${poiText}
         bindClick('btnCopyShareLink', () => {
             if (typeof copyShareableRouteLink === 'function') copyShareableRouteLink();
         });
+        bindClick('btnRecordCommunity', () => {
+            if (window.CitywalkBridge && typeof window.CitywalkBridge.navigateToCommunityWithImport === 'function') {
+                window.CitywalkBridge.navigateToCommunityWithImport();
+            }
+        });
         bindClick('btnOpenAmap', openRouteInAmap);
         bindClick('btnNextStop', openNextStopInAmap);
         bindClick('btnClearRecentMain', clearRouteHistory);
@@ -539,6 +544,9 @@ ${poiText}
             // 分享起终点须在地图存在后落点（init 早期可能已解析偏好）
             if (typeof finishShareRestoreAfterMapReady === 'function') {
                 finishShareRestoreAfterMapReady();
+            }
+            if (typeof finishSavedRouteRestoreAfterMapReady === 'function') {
+                finishSavedRouteRestoreAfterMapReady();
             }
         };
         if (window.AMap || window.__amapReady) {
