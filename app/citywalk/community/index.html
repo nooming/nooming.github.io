@@ -343,6 +343,19 @@
         <button type="submit" class="confirm footprint-save-btn">注册并上传本地足迹</button>
       </form>
     </div>
+    <div id="cwAuthAccountPane" hidden>
+      <p class="cw-auth-account-email">当前账号：<strong id="cwAuthAccountEmail">—</strong></p>
+      <form id="cwAuthChangePasswordForm" class="cw-auth-form">
+        <label class="form-label" for="cwAuthCurrentPassword">当前密码</label>
+        <input id="cwAuthCurrentPassword" class="footprint-input" type="password" autocomplete="current-password" minlength="8" required>
+        <label class="form-label" for="cwAuthNewPassword">新密码（至少 8 位）</label>
+        <input id="cwAuthNewPassword" class="footprint-input" type="password" autocomplete="new-password" minlength="8" required>
+        <label class="form-label" for="cwAuthNewPasswordConfirm">确认新密码</label>
+        <input id="cwAuthNewPasswordConfirm" class="footprint-input" type="password" autocomplete="new-password" minlength="8" required>
+        <button type="submit" class="confirm footprint-save-btn">保存新密码</button>
+      </form>
+      <button type="button" class="cw-auth-logout-btn" id="cwAuthLogoutBtn">退出登录</button>
+    </div>
   </div>
 </div>
 

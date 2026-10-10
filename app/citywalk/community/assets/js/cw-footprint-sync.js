@@ -1,10 +1,20 @@
 /**
- * 社区足迹/收藏：登录后云同步（替代仅 localStorage）
- * 依赖 community.js 中的 walkedRoutes、favoriteRouteIds 等全局变量。
+ * WanderWalk 账号云同步：足迹、收藏、规划导入、继续上次、积分
  */
 (function (global) {
     const SYNC_META_KEY = 'citywalk_footprint_sync_meta_v1';
+    const STORAGE_KEYS = {
+        walked: 'citywalk_walked_routes_v1',
+        favoriteRoutes: 'citywalk_favorite_routes_v1',
+        favoriteSpots: 'citywalk_favorite_spots_v1',
+        planned: 'citywalk_planned_routes_v1',
+        routeHistory: 'cw_route_history_v1',
+        pointsTotal: 'citywalk_points_total_v1',
+        pointsEvents: 'citywalk_completion_events_v1',
+    };
+
     let _syncing = false;
+    let _applyingCloud = false;
 
     function readMeta() {
         try {
@@ -21,38 +31,118 @@
         } catch (_) { /* ignore */ }
     }
 
+    function readJsonArray(key) {
+        try {
+            const raw = localStorage.getItem(key);
+            if (!raw) return [];
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (_) {
+            return [];
+        }
+    }
+
+    function readJsonObject(key) {
+        try {
+            const raw = localStorage.getItem(key);
+            if (!raw) return {};
+            const parsed = JSON.parse(raw);
+            return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+        } catch (_) {
+            return {};
+        }
+    }
+
+    function readPointsTotal() {
+        try {
+            const n = Number(localStorage.getItem(STORAGE_KEYS.pointsTotal));
+            return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0;
+        } catch (_) {
+            return 0;
+        }
+    }
+
     function collectPayload() {
         return {
-            walked: typeof walkedRoutes !== 'undefined' ? walkedRoutes : [],
-            favorite_routes: typeof favoriteRouteIds !== 'undefined' ? favoriteRouteIds : [],
-            favorite_spots: typeof favoriteSpotKeys !== 'undefined' ? favoriteSpotKeys : [],
-            planned_routes: typeof plannedRouteCatalog !== 'undefined' ? plannedRouteCatalog : {},
+            walked: typeof walkedRoutes !== 'undefined'
+                ? walkedRoutes
+                : readJsonArray(STORAGE_KEYS.walked),
+            favorite_routes: typeof favoriteRouteIds !== 'undefined'
+                ? favoriteRouteIds
+                : readJsonArray(STORAGE_KEYS.favoriteRoutes),
+            favorite_spots: typeof favoriteSpotKeys !== 'undefined'
+                ? favoriteSpotKeys
+                : readJsonArray(STORAGE_KEYS.favoriteSpots),
+            planned_routes: typeof plannedRouteCatalog !== 'undefined'
+                ? plannedRouteCatalog
+                : readJsonObject(STORAGE_KEYS.planned),
+            route_history: readJsonArray(STORAGE_KEYS.routeHistory),
+            points_total: typeof totalWalkPoints !== 'undefined'
+                ? totalWalkPoints
+                : readPointsTotal(),
+            points_events: typeof completionEvents !== 'undefined'
+                ? completionEvents
+                : readJsonArray(STORAGE_KEYS.pointsEvents),
         };
     }
 
-    function applyCloudFootprints(fp) {
+    function payloadHasLocalData(payload) {
+        if (!payload) return false;
+        return !!(payload.walked && payload.walked.length)
+            || !!(payload.favorite_routes && payload.favorite_routes.length)
+            || !!(payload.favorite_spots && payload.favorite_spots.length)
+            || !!(payload.planned_routes && Object.keys(payload.planned_routes).length)
+            || !!(payload.route_history && payload.route_history.length)
+            || (Number(payload.points_total) > 0)
+            || !!(payload.points_events && payload.points_events.length);
+    }
+
+    function applyCloudAccountData(fp) {
         if (!fp) return;
-        if (Array.isArray(fp.walked)) walkedRoutes = fp.walked;
-        if (Array.isArray(fp.favorite_routes)) favoriteRouteIds = fp.favorite_routes;
-        if (Array.isArray(fp.favorite_spots)) favoriteSpotKeys = fp.favorite_spots;
-        if (fp.planned_routes && typeof fp.planned_routes === 'object') {
-            plannedRouteCatalog = fp.planned_routes;
-            Object.keys(plannedRouteCatalog).forEach(function (id) {
-                const entry = plannedRouteCatalog[id];
-                if (entry && entry.routeSpot && typeof routeSpots !== 'undefined' && !routeSpots[id]) {
-                    routeSpots[id] = entry.routeSpot;
+        _applyingCloud = true;
+        try {
+            if (Array.isArray(fp.walked)) {
+                if (typeof walkedRoutes !== 'undefined') walkedRoutes = fp.walked;
+                try { localStorage.setItem(STORAGE_KEYS.walked, JSON.stringify(fp.walked)); } catch (_) { /* ignore */ }
+            }
+            if (Array.isArray(fp.favorite_routes)) {
+                if (typeof favoriteRouteIds !== 'undefined') favoriteRouteIds = fp.favorite_routes;
+                try { localStorage.setItem(STORAGE_KEYS.favoriteRoutes, JSON.stringify(fp.favorite_routes)); } catch (_) { /* ignore */ }
+            }
+            if (Array.isArray(fp.favorite_spots)) {
+                if (typeof favoriteSpotKeys !== 'undefined') favoriteSpotKeys = fp.favorite_spots;
+                try { localStorage.setItem(STORAGE_KEYS.favoriteSpots, JSON.stringify(fp.favorite_spots)); } catch (_) { /* ignore */ }
+            }
+            if (fp.planned_routes && typeof fp.planned_routes === 'object') {
+                if (typeof plannedRouteCatalog !== 'undefined') plannedRouteCatalog = fp.planned_routes;
+                try { localStorage.setItem(STORAGE_KEYS.planned, JSON.stringify(fp.planned_routes)); } catch (_) { /* ignore */ }
+                if (typeof routeSpots !== 'undefined') {
+                    Object.keys(fp.planned_routes).forEach(function (id) {
+                        const entry = fp.planned_routes[id];
+                        if (entry && entry.routeSpot && !routeSpots[id]) routeSpots[id] = entry.routeSpot;
+                    });
                 }
-            });
+            }
+            if (Array.isArray(fp.route_history)) {
+                try { localStorage.setItem(STORAGE_KEYS.routeHistory, JSON.stringify(fp.route_history)); } catch (_) { /* ignore */ }
+            }
+            if (typeof fp.points_total === 'number' || fp.points_total != null) {
+                const pt = Math.max(0, Math.floor(Number(fp.points_total) || 0));
+                if (typeof totalWalkPoints !== 'undefined') totalWalkPoints = pt;
+                try { localStorage.setItem(STORAGE_KEYS.pointsTotal, String(pt)); } catch (_) { /* ignore */ }
+            }
+            if (Array.isArray(fp.points_events)) {
+                if (typeof completionEvents !== 'undefined') completionEvents = fp.points_events;
+                try { localStorage.setItem(STORAGE_KEYS.pointsEvents, JSON.stringify(fp.points_events)); } catch (_) { /* ignore */ }
+            }
+            writeMeta({ updated_at: fp.updated_at || Date.now() / 1000 });
+            if (typeof renderFootprints === 'function') renderFootprints();
+            if (typeof renderRoutes === 'function') renderRoutes();
+            if (typeof renderPointsBoard === 'function') renderPointsBoard();
+            if (typeof renderRecentRoutes === 'function') renderRecentRoutes();
+        } finally {
+            _applyingCloud = false;
         }
-        if (typeof saveArray === 'function') {
-            saveArray(FOOTPRINT_STORAGE.walked, walkedRoutes);
-            saveArray(FOOTPRINT_STORAGE.favoriteRoutes, favoriteRouteIds);
-            saveArray(FOOTPRINT_STORAGE.favoriteSpots, favoriteSpotKeys);
-        }
-        if (typeof savePlannedCatalog === 'function') savePlannedCatalog();
-        writeMeta({ updated_at: fp.updated_at || Date.now() / 1000 });
-        if (typeof renderFootprints === 'function') renderFootprints();
-        if (typeof renderRoutes === 'function') renderRoutes();
     }
 
     async function pullFromCloud(opts) {
@@ -77,24 +167,21 @@
             const serverTs = Number(fp.updated_at) || 0;
             const localTs = Number(localMeta.updated_at) || 0;
             const localPayload = collectPayload();
-            const hasLocal = (localPayload.walked && localPayload.walked.length)
-                || (localPayload.favorite_routes && localPayload.favorite_routes.length)
-                || (localPayload.favorite_spots && localPayload.favorite_spots.length)
-                || (localPayload.planned_routes && Object.keys(localPayload.planned_routes).length);
+            const hasLocal = payloadHasLocalData(localPayload);
             if (serverTs === 0 && hasLocal) {
                 await pushToCloud({ force: true });
-                if (!silent && typeof showToast === 'function') showToast('本地足迹已上传到账号');
+                if (!silent && typeof showToast === 'function') showToast('本地数据已上传到账号');
                 return true;
             }
             if (serverTs > localTs) {
-                applyCloudFootprints(fp);
+                applyCloudAccountData(fp);
             } else if (serverTs < localTs && hasLocal) {
                 await pushToCloud({ silent: true });
             }
-            if (!silent && typeof showToast === 'function') showToast('已从云端载入足迹');
+            if (!silent && typeof showToast === 'function') showToast('已从云端同步');
             return true;
         } catch (e) {
-            console.warn('footprint pull', e);
+            console.warn('account sync pull', e);
             if (!silent && typeof showToast === 'function') showToast('无法连接同步服务');
             return false;
         } finally {
@@ -120,7 +207,7 @@
             const body = await res.json().catch(() => ({}));
             if (!res.ok || !body.success) {
                 if (!(opts && opts.silent) && typeof showToast === 'function') {
-                    showToast(body.message || '上传足迹失败');
+                    showToast(body.message || '上传失败');
                 }
                 return false;
             }
@@ -128,7 +215,7 @@
             writeMeta({ updated_at: fp.updated_at || Date.now() / 1000 });
             return true;
         } catch (e) {
-            console.warn('footprint push', e);
+            console.warn('account sync push', e);
             return false;
         } finally {
             _syncing = false;
@@ -137,6 +224,7 @@
 
     let _debounce = null;
     function schedulePush() {
+        if (_applyingCloud) return;
         if (!global.CitywalkAuth || !CitywalkAuth.isLoggedIn()) return;
         clearTimeout(_debounce);
         _debounce = setTimeout(function () {
@@ -148,7 +236,7 @@
         if (opts && opts.uploadLocalFirst) {
             const pushed = await pushToCloud({ silent: true });
             if (pushed) {
-                if (typeof showToast === 'function') showToast('本地足迹已上传');
+                if (typeof showToast === 'function') showToast('本地数据已上传');
                 return;
             }
         }
@@ -156,6 +244,7 @@
     }
 
     global.CitywalkFootprintSync = {
+        STORAGE_KEYS,
         pullFromCloud,
         pushToCloud,
         schedulePush,

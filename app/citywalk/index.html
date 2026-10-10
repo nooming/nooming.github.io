@@ -100,7 +100,10 @@
                     <span class="panel-header-subtitle">Citywalk 路线规划</span>
                 </span>
             </h2>
-            <a class="panel-header-community" href="community/" title="WanderWalk 社区 · 找搭子与足迹">社区</a>
+            <div class="panel-header-actions">
+                <button type="button" class="panel-header-auth" id="cwAuthAvatarBtn" title="登录同步足迹">我</button>
+                <a class="panel-header-community" href="community/" title="WanderWalk 社区 · 找搭子与足迹">社区</a>
+            </div>
         </div>
 
         <div class="panel-env">
@@ -330,7 +333,54 @@
         </div>
     </div>
 
+    <div class="modal cw-auth-modal-wrap" id="cwAuthModal" role="dialog" aria-modal="true" aria-labelledby="cwAuthModalTitle">
+        <div class="modal-box cw-auth-modal">
+            <button type="button" class="close cw-auth-close" onclick="CitywalkAuth.closeAuthModal()" aria-label="关闭">×</button>
+            <h2 id="cwAuthModalTitle">WanderWalk 账号</h2>
+            <p class="cw-auth-lead">登录后「继续上次」、社区足迹与积分会同步到云端。</p>
+            <div class="cw-auth-tabs">
+                <button type="button" class="cw-auth-tab" onclick="CitywalkAuth.openAuthModal('login')">登录</button>
+                <button type="button" class="cw-auth-tab" onclick="CitywalkAuth.openAuthModal('register')">注册</button>
+            </div>
+            <div id="cwAuthLoginPane">
+                <form id="cwAuthLoginForm" class="cw-auth-form">
+                    <label for="cwAuthLoginEmail">邮箱</label>
+                    <input id="cwAuthLoginEmail" type="email" autocomplete="username" required>
+                    <label for="cwAuthLoginPassword">密码</label>
+                    <input id="cwAuthLoginPassword" type="password" autocomplete="current-password" minlength="8" required>
+                    <button type="submit" class="btn-generate-plan">登录并同步</button>
+                </form>
+            </div>
+            <div id="cwAuthRegisterPane" hidden>
+                <form id="cwAuthRegisterForm" class="cw-auth-form">
+                    <label for="cwAuthRegEmail">邮箱</label>
+                    <input id="cwAuthRegEmail" type="email" autocomplete="email" required>
+                    <label for="cwAuthRegName">昵称（选填）</label>
+                    <input id="cwAuthRegName" type="text" maxlength="24" autocomplete="nickname">
+                    <label for="cwAuthRegPassword">密码（至少 8 位）</label>
+                    <input id="cwAuthRegPassword" type="password" autocomplete="new-password" minlength="8" required>
+                    <button type="submit" class="btn-generate-plan">注册并上传本地数据</button>
+                </form>
+            </div>
+            <div id="cwAuthAccountPane" hidden>
+                <p class="cw-auth-account-email">当前账号：<strong id="cwAuthAccountEmail">—</strong></p>
+                <form id="cwAuthChangePasswordForm" class="cw-auth-form">
+                    <label for="cwAuthCurrentPassword">当前密码</label>
+                    <input id="cwAuthCurrentPassword" type="password" autocomplete="current-password" minlength="8" required>
+                    <label for="cwAuthNewPassword">新密码（至少 8 位）</label>
+                    <input id="cwAuthNewPassword" type="password" autocomplete="new-password" minlength="8" required>
+                    <label for="cwAuthNewPasswordConfirm">确认新密码</label>
+                    <input id="cwAuthNewPasswordConfirm" type="password" autocomplete="new-password" minlength="8" required>
+                    <button type="submit" class="btn-generate-plan">保存新密码</button>
+                </form>
+                <button type="button" class="cw-auth-logout-btn" id="cwAuthLogoutBtn">退出登录</button>
+            </div>
+        </div>
+    </div>
+
     <script src="assets/js/core/cw-state.js"></script>
+    <script src="assets/js/cw-auth.js"></script>
+    <script src="community/assets/js/cw-footprint-sync.js"></script>
     <script src="assets/js/cw-bridge.js"></script>
     <script src="assets/js/map/cw-weather.js"></script>
     <script src="assets/js/map/cw-map.js"></script>

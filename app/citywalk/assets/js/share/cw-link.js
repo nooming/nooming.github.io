@@ -183,7 +183,7 @@ async function copyShareableRouteLink() {
     try {
         await _copyTextToClipboard(url);
         showToast(serverOk
-            ? '链接已复制，打开即可看到这条路线'
+            ? '链接已复制；规划页打开看路线，社区页 ?r= 同 id 可记入足迹'
             : '链接已复制（参数模式，对方需重新规划）');
     } catch (e) {
         console.warn(e);

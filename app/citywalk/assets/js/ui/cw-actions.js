@@ -421,6 +421,9 @@ function saveRouteHistory(list) {
     try {
         localStorage.setItem(CW_HISTORY_KEY, JSON.stringify(list.slice(0, CW_HISTORY_MAX)));
     } catch (_) { /* 隐私模式/超额，忽略 */ }
+    if (typeof CitywalkFootprintSync !== 'undefined' && CitywalkFootprintSync.schedulePush) {
+        CitywalkFootprintSync.schedulePush();
+    }
 }
 
 function shortPlaceName(name, maxLen) {

@@ -417,6 +417,7 @@ ${poiText}
         if (typeof placeRecentRoutesBlock === 'function') placeRecentRoutesBlock(CW.activePanelTab || 'agent');
         if (typeof renderRecentRoutes === 'function') renderRecentRoutes();
         if (typeof initShareableRouteFromUrl === 'function') initShareableRouteFromUrl();
+        if (typeof CitywalkAuth !== 'undefined' && CitywalkAuth.initAuth) CitywalkAuth.initAuth();
         if (typeof renderPinnedSeeds === 'function') renderPinnedSeeds();
 
         // 城市输入框回车切换

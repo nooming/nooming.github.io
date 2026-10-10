@@ -135,7 +135,7 @@ function loadArray(key, fallback=[]){
 function saveArray(key, value){
   try{ localStorage.setItem(key,JSON.stringify(value)); }catch(e){}
   if(typeof CitywalkFootprintSync!=='undefined'&&CitywalkFootprintSync.schedulePush){
-    if(key===FOOTPRINT_STORAGE.walked||key===FOOTPRINT_STORAGE.favoriteRoutes||key===FOOTPRINT_STORAGE.favoriteSpots){
+    if(key===FOOTPRINT_STORAGE.walked||key===FOOTPRINT_STORAGE.favoriteRoutes||key===FOOTPRINT_STORAGE.favoriteSpots||key===POINTS_STORAGE.events){
       CitywalkFootprintSync.schedulePush();
     }
   }
@@ -148,6 +148,9 @@ function loadNumber(key, fallback=0){
 }
 function saveNumber(key,value){
   try{localStorage.setItem(key,String(Math.max(0,Math.floor(Number(value)||0))));}catch(e){}
+  if(typeof CitywalkFootprintSync!=='undefined'&&CitywalkFootprintSync.schedulePush&&key===POINTS_STORAGE.total){
+    CitywalkFootprintSync.schedulePush();
+  }
 }
 migrateStorageOnce(FOOTPRINT_STORAGE.walked, FOOTPRINT_STORAGE_LEGACY.walked, sampleWalkedRoutes);
 migrateStorageOnce(FOOTPRINT_STORAGE.favoriteRoutes, FOOTPRINT_STORAGE_LEGACY.favoriteRoutes, []);
@@ -694,6 +697,63 @@ function importPlannedRouteFromSession(options={}){
   return applyImportedPlannerPayload(payload, options);
 }
 
+function payloadFromSharedRouteSnapshot(snapshot, shareId){
+  if(!snapshot || !snapshot.result || !snapshot.result.success) return null;
+  const result=snapshot.result;
+  const pois=Array.isArray(result.pois)?result.pois:[];
+  const act=Number(result.activity_total_min)||Number(result.duration)||0;
+  const distM=Number(result.distance)||0;
+  const routeId='cw-share-'+String(shareId||Date.now().toString(36));
+  const title=(snapshot.plan_params && snapshot.start && snapshot.end)
+    ? ((snapshot.start.address||'起点')+' → '+(snapshot.end.address||'终点'))
+    : (snapshot.city ? (snapshot.city+' · 分享路线') : '分享路线');
+  return {
+    id:routeId,
+    city:snapshot.city||'',
+    title:title.slice(0,48),
+    meta:(snapshot.city||'')+(distM?(' · '+(distM/1000).toFixed(2)+' km'):'')+(act?(' · 约 '+act+' 分钟'):''),
+    distanceM:distM,
+    durationActivityMin:act,
+    stops:pois.map(function(p,i){
+      return {
+        name:p.name||('站点 '+(i+1)),
+        type:p.poi_type||p.type||'打卡',
+        meta:p.stay_time?('约 '+p.stay_time+' 分钟'):'',
+        desc:p.recommendation_reason||'来自分享链接'
+      };
+    }),
+    savedAt:new Date().toISOString(),
+    eventId:'share-'+routeId
+  };
+}
+
+async function importSharedRouteById(shareId, options={}){
+  if(!shareId) return null;
+  const apiBase=(window.CitywalkAuth&&CitywalkAuth.CW_API)
+    ||((location.hostname==='localhost'||location.hostname==='127.0.0.1')
+      ?'http://localhost:5000/api/citywalk'
+      :'https://noomings-backend.zeabur.app/api/citywalk');
+  try{
+    showToast('正在载入分享的路线…');
+    const res=await fetch(apiBase+'/routes/share/'+encodeURIComponent(shareId));
+    const body=await res.json().catch(()=>({}));
+    if(!res.ok||!body.success||!body.snapshot){
+      showToast(body.message||'分享链接无效或已过期');
+      return null;
+    }
+    const payload=payloadFromSharedRouteSnapshot(body.snapshot, shareId);
+    if(!payload||!payload.stops.length){
+      showToast('分享路线没有可展示的站点');
+      return null;
+    }
+    return applyImportedPlannerPayload(payload, Object.assign({ awardPoints:false, openFootprintForm:true }, options));
+  }catch(e){
+    console.warn('importSharedRouteById',e);
+    showToast('无法加载分享路线');
+    return null;
+  }
+}
+
 function handleWalkCompletion(payload={}){
   if(payload.route && typeof payload.route === 'object'){
     const rid = registerPlannedRoute(payload.route);
@@ -757,6 +817,7 @@ window.WanderWalkRewards={
 };
 window.CitywalkCommunity = {
   importPlannedRouteFromSession,
+  importSharedRouteById,
   registerPlannedRoute
 };
 
@@ -1073,6 +1134,18 @@ if(integrationParams.get('import')==='1'){
       window.history.replaceState({},'',cleanUrl.toString());
     }catch(e){}
   },180);
+}
+
+const sharedRouteId=integrationParams.get('r');
+if(sharedRouteId&&/^[A-Za-z0-9_-]{6,24}$/.test(sharedRouteId)){
+  setTimeout(function(){
+    importSharedRouteById(sharedRouteId,{ openFootprintForm:true });
+    try{
+      const cleanUrl=new URL(window.location.href);
+      cleanUrl.searchParams.delete('r');
+      window.history.replaceState({},'',cleanUrl.toString());
+    }catch(e){}
+  },220);
 }
 
 if(typeof CitywalkAuth!=='undefined') CitywalkAuth.initAuth();
