@@ -25,3 +25,7 @@
 
 - 不要单独改节点颜色顺序（会破坏「旅程」叙事）
 - 不要在深色底使用彩色 mark，请用 `wanderwalk-mark-light.svg`
+
+## 文案
+
+用户可见用语见仓库根目录 `citywalk-后续.md` · **文案规范**；社区示例说明集中写在 `community/assets/js/community.js` 的 `WW_COPY`。

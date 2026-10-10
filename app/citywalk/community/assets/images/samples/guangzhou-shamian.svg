@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Þ†òW::">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff5f8"/>
+      <stop offset="100%" stop-color="#eef6ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="0" y="420" width="1200" height="210" fill="#d4e8f0" opacity=".6"/>
+  <rect x="160" y="200" width="90" height="220" fill="#f5f0e8" stroke="#c484ff" stroke-width="2" opacity=".9"/>
+  <rect x="270" y="170" width="100" height="250" fill="#fff" stroke="#9b8cff" stroke-width="2"/>
+  <path d="M320 170 v-40 h40 v40" fill="none" stroke="#9b8cff" stroke-width="3"/>
+  <rect x="400" y="220" width="85" height="200" fill="#f5f0e8" stroke="#ff6f91" stroke-width="2" opacity=".85"/>
+  <circle cx="520" cy="380" r="80" fill="#77d8c5" opacity=".25"/>
+  <text x="72" y="88" font-family="system-ui,sans-serif" font-size="28" fill="#8b6878" font-weight="700">:‹Â · :Mþ</text>
+  <text x="72" y="168" font-family="system-ui,sans-serif" font-size="56" fill="#3d3538" font-weight="800">Þ · †òW:</text>
+  <text x="72" y="228" font-family="system-ui,sans-serif" font-size="26" fill="#6f6871">™b ’ ¿_ï ’ 1¤'¦</text>
+</svg>

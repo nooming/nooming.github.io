@@ -27,7 +27,7 @@
       <a href="../" class="nav-plan">Citywalk 路线规划</a>
       <a href="#home">首页</a>
       <a href="#buddies" class="buddy-nav" onclick="openBuddiesPage(event)">👥 找搭子</a>
-      <a href="#routes">发现路线</a>
+      <a href="#routes">发现 Citywalk</a>
       <a href="#feed">动态</a>
       <a href="#spots">足迹</a>
     </nav>
@@ -111,8 +111,8 @@
 
 <section class="section" id="routes">
     <div class="section-head">
-      <div><h2>发现 CityWalk</h2><p>社区真实分享 + 明确标注的<strong>示例灵感</strong>；你规划或导入的路线在 <a href="#spots" onclick="setFootprintView('planned')">足迹 · 规划导入</a></p></div>
-      <a class="section-action" href="../">去规划 →</a>
+      <div><h2>发现 Citywalk</h2><p>社区分享与标注<strong>示例灵感</strong>，供你找路线参考；自己规划或导入的路线在 <a href="#spots" onclick="setFootprintView('planned')">足迹 · 规划导入</a>。</p></div>
+      <a class="section-action" href="../">Citywalk 路线规划 →</a>
     </div>
     <div class="city-tabs" id="cityTabs">
       <button type="button" class="city-tab active" data-city="全部">全部城市</button>
@@ -122,7 +122,7 @@
 
   <section class="section" id="feed">
     <div class="section-head">
-      <div><h2>WanderWalk 动态</h2><p>登录后可发布；所有人可见最新分享</p></div>
+      <div><h2>WanderWalk 动态</h2><p>登录后可发布；所有人可见最新分享。</p></div>
       <div class="section-head-actions">
         <button type="button" class="publish publish--inline" onclick="openPublish()">＋ 发布</button>
       </div>
@@ -158,6 +158,40 @@
         <button class="footprint-tab" data-view="spots" onclick="setFootprintView('spots')">📍 收藏的点位</button>
         <span class="local-save-note">私人足迹 · 登录可云同步</span>
       </div>
+      <div class="footprint-points-bar" id="footprintPointsWrap" hidden>
+        <div class="footprint-points-card walk-points-card" id="walkPointsCard">
+          <div class="footprint-points-row">
+            <button class="points-level-chip" id="pointsCurrentLevel" type="button" onclick="togglePointsLevels(event)" aria-controls="pointsLevelPopover" aria-expanded="false" title="查看称号与积分说明">
+              <span class="points-current-level-text">🌱 街巷新芽</span>
+              <span class="points-level-arrow" aria-hidden="true"></span>
+            </button>
+            <div class="footprint-points-total"><strong id="walkPointsTotal">0</strong><span>分</span></div>
+          </div>
+          <div class="footprint-points-progress-meta">
+            <strong id="pointsNextLevel">下一等级 · 巷弄漫游者</strong>
+            <span id="pointsProgressLabel">还差 100 分</span>
+          </div>
+          <div class="points-progress-track points-progress-track-main" role="progressbar" aria-label="距离下一漫游等级的进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="pointsProgressTrack">
+            <i class="points-progress-fill" id="pointsProgressFill"></i>
+          </div>
+          <div class="points-level-popover" id="pointsLevelPopover" hidden role="dialog" aria-label="漫游者等级与积分说明">
+            <div class="points-popover-head">
+              <div><strong>漫游者称号</strong><p>完成 Walk +50 演示积分，称号保存在本浏览器。</p></div>
+              <button class="points-popover-close" type="button" onclick="closePointsLevels(event)" aria-label="关闭">×</button>
+            </div>
+            <div class="points-popover-current"><span>当前称号</span><strong id="pointsPopoverCurrent">🌱 街巷新芽</strong></div>
+            <div class="points-level-ladder" id="pointsLevelLadder"></div>
+            <div class="points-howto">
+              <strong>如何获得积分</strong>
+              <ol>
+                <li><a href="../">Citywalk 路线规划</a> 生成路线 →「记录到社区」。</li>
+                <li>在「走过的路线」保存 Walk 足迹，领取 <b>50 分</b>（同一次事件只计一次）。</li>
+              </ol>
+              <p class="points-howto-note">演示积分，无服务端防刷；登录后字段可同步账号。</p>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="footprint-summary" id="footprintSummary"></div>
       <div class="footprint-grid" id="footprintGrid"></div>
       <div class="footprint-empty" id="footprintEmpty" style="display:none"></div>
@@ -179,62 +213,6 @@
       </div>
     </div>
   </section>
-
-  <details class="section points-section points-section--fold" id="pointsSection">
-    <summary class="points-fold-summary">
-      <span class="points-fold-title">漫游积分 · 本地演示</span>
-      <span class="points-fold-meta">完成 Walk +50 · 当前 <strong id="walkPointsTotalFold">0</strong> 分</span>
-    </summary>
-    <div class="points-head">
-      <div><h2>我的漫游积分</h2><p>保存足迹后可领取演示积分，称号保存在本浏览器。</p></div>
-    </div>
-    <div class="walk-points-card" id="walkPointsCard">
-      <div class="points-card-topline">
-        <span class="points-card-eyebrow">完成一条 WanderWalk</span>
-        <span class="points-sync-label"><i aria-hidden="true"></i> Citywalk 路线规划同步</span>
-      </div>
-
-      <div class="points-reward-row">
-        <div class="points-reward-display"><strong>+50</strong><span>WALK 积分</span></div>
-        <div class="points-total-display"><span>当前累计</span><strong id="walkPointsTotal">0</strong><em>分</em></div>
-      </div>
-
-      <div class="points-progress-heading">
-        <button class="points-level-chip" id="pointsCurrentLevel" type="button" onclick="togglePointsLevels(event)" aria-controls="pointsLevelPopover" aria-expanded="false" title="点击查看漫游者全部称号与积分要求">
-          <span class="points-current-level-text">🌱 街巷新芽</span>
-          <span class="points-level-arrow" aria-hidden="true"></span>
-        </button>
-        <div class="points-next-summary">
-          <strong id="pointsNextLevel">下一等级 · 巷弄漫游者</strong>
-          <span id="pointsProgressLabel">还差 100 分</span>
-        </div>
-      </div>
-
-      <div class="points-progress-track points-progress-track-main" role="progressbar" aria-label="距离下一漫游等级的进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="pointsProgressTrack">
-        <i class="points-progress-fill" id="pointsProgressFill"></i>
-      </div>
-
-      <p class="points-inline-hint">在「Citywalk 路线规划」生成路线并记录到社区、保存足迹后，可领取本地演示积分。</p>
-
-      <div class="points-level-popover" id="pointsLevelPopover" hidden role="dialog" aria-label="漫游者等级、积分要求与操作指引">
-        <div class="points-popover-head">
-          <div><strong>漫游者称号</strong><p>累计积分越多，解锁的称号越高。</p></div>
-          <button class="points-popover-close" type="button" onclick="closePointsLevels(event)" aria-label="关闭称号说明">×</button>
-        </div>
-        <div class="points-popover-current"><span>你目前的称号</span><strong id="pointsPopoverCurrent">🌱 街巷新芽</strong></div>
-        <div class="points-level-ladder" id="pointsLevelLadder"></div>
-        <div class="points-howto">
-          <strong>操作指引 · 如何获得积分</strong>
-          <ol>
-            <li>打开 <a href="../">Citywalk 路线规划</a>，生成一条可执行的步行路线。</li>
-            <li>点「记录到社区」，在本页保存 Walk 足迹后，可领取 <b>50 积分</b>（本地演示）。</li>
-            <li>返回这里查看积分与称号；完成的路线也会记入「我的 Walk 足迹」，方便回看沿途打卡点。</li>
-          </ol>
-          <p class="points-howto-note">同一次完成事件只计分一次。当前版本将积分与足迹保存在此浏览器中，暂不跨设备同步。</p>
-        </div>
-      </div>
-    </div>
-  </details>
 
 </main>
 
@@ -285,7 +263,7 @@
   </div>
 </div>
 
-<!-- CityWalk 完成积分奖励 -->
+<!-- Walk 完成积分奖励 -->
 <div class="modal" id="walkRewardModal" role="dialog" aria-modal="true" aria-labelledby="walkRewardTitle">
   <div class="modal-box points-reward-box">
     <button class="close" onclick="closeModal('walkRewardModal')" aria-label="关闭">×</button>

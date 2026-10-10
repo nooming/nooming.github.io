@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="ñ3í::">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f3efff"/>
+      <stop offset="100%" stop-color="#eefaf6"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="120" y="280" width="280" height="150" fill="#9b8cff" opacity=".2" rx="4"/>
+  <rect x="160" y="240" width="80" height="190" fill="#6f6871" opacity=".25"/>
+  <rect x="260" y="260" width="100" height="170" fill="#ff6f91" opacity=".15"/>
+  <path d="M520 450 L680 250 L840 450 Z" fill="#77d8c5" opacity=".35"/>
+  <path d="M600 450 L720 300 L840 450" fill="none" stroke="#5ab8a8" stroke-width="4"/>
+  <rect x="900" y="180" width="40" height="270" fill="#c484ff" opacity=".2" rx="2"/>
+  <text x="72" y="88" font-family="system-ui,sans-serif" font-size="28" fill="#8b6878" font-weight="700">:‹Â · :Mþ</text>
+  <text x="72" y="168" font-family="system-ui,sans-serif" font-size="56" fill="#3d3538" font-weight="800">ñ3 · í:</text>
+  <text x="72" y="228" font-family="system-ui,sans-serif" font-size="26" fill="#6f6871">N¨Îí ’ ÕWqÿS</text>
+</svg>

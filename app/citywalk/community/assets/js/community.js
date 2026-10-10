@@ -5,6 +5,23 @@ const feedGrid=document.getElementById('feedGrid');
 const feedEmpty=document.getElementById('feedEmpty');
 const buddyGrid=document.getElementById('buddyGrid');
 
+/** 社区用户可见文案（术语与语气统一，见 citywalk-后续.md · 文案规范） */
+const WW_COPY = {
+  planner: 'Citywalk 路线规划',
+  activity: 'Citywalk',
+  sampleRouteNote: '此为示例路线。自建路线请前往 Citywalk 规划页，完成后点「记录到社区」。',
+  samplePostNote: '此为示例动态。登录后点「发布」可分享你的 Walk。',
+  modalTipsRoute: [
+    '把停留时间算进整条路线，不要只计算步行时间。',
+    '周末热门点位可能需要排队或预约，请以现场规则为准。',
+    'Citywalk 宜慢走，不必严格按固定节奏完成。'
+  ],
+  modalTipsPost: [
+    '内容仅供参考，出行前请确认营业时间与交通规则。',
+    '可在找搭子区发起同行，或使用 Citywalk 路线规划。'
+  ]
+};
+
 function showDemoUnavailable(feature){
   showToast(feature ? `${feature} · 演示版尚未开放` : '演示版尚未开放');
 }
@@ -93,8 +110,8 @@ function ugcPostToDiscoverCard(p) {
     avatar: '',
     stops: tags.slice(0, 4).map(function (t) { return String(t).replace(/^#/, ''); }),
     tips: p.share_route_id
-      ? ['帖子绑定了规划分享链，可在详情中打开真实步行路线。']
-      : ['来自社区动态；走自己的路线请去 Citywalk 规划页。'],
+      ? ['帖子已绑定规划分享链，可在详情中打开步行路线。']
+      : ['来自社区动态；自建路线请前往 Citywalk 规划页。'],
     _source: 'ugc',
     _ugcPostId: p.id,
     share_route_id: p.share_route_id || '',
@@ -145,7 +162,7 @@ function renderRouteCardHtml(r) {
   return `\
     <article class="route-card" onclick="${routeCardOpenHandler(r)}">\
       <div class="route-media">\
-        <img src="${r.image || SPOT_PLACEHOLDER}" alt="${safeText(r.title)}" loading="lazy">\
+        <img src="${r.image || SPOT_PLACEHOLDER}" alt="${safeText(r.title)}" loading="lazy" onerror="wwOnImgError(this)">\
         ${routeCardRibbon(r)}\
         <span class="route-badge">${safeText(r.city)} · ${safeText(r.type)}</span>\
         <button class="route-save ${isRouteFavorite(r.id) ? 'liked' : ''}" aria-label="收藏路线" onclick="event.stopPropagation();toggleRouteFavorite('${safeText(r.id)}',this)">${isRouteFavorite(r.id) ? '♥' : '♡'}</button>\
@@ -171,7 +188,7 @@ function renderRoutes(city) {
   rebuildRouteCityTabs();
   const data = routesForDiscover(city);
   if (!data.length) {
-    routeGrid.innerHTML = '<div class="empty" style="display:block;grid-column:1/-1">暂无发现内容。社区「路线」类动态会出现在这里；示例路线加载失败时可刷新页面。</div>';
+    routeGrid.innerHTML = '<div class="empty" style="display:block;grid-column:1/-1">暂无发现内容。发布「路线」类动态后会出现在这里；若示例未加载，请刷新页面。</div>';
     return;
   }
   routeGrid.innerHTML = data.map(renderRouteCardHtml).join('');
@@ -208,6 +225,11 @@ const POINTS_STORAGE_LEGACY = {
 };
 const PLANNED_ROUTES_KEY = 'citywalk_planned_routes_v1';
 const SPOT_PLACEHOLDER = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="100"><rect fill="#f4edf6" width="100%" height="100%"/><text x="50%" y="52%" text-anchor="middle" fill="#b08aa8" font-size="14" font-family="sans-serif">打卡</text></svg>');
+function wwOnImgError(el) {
+  if (!el || el.dataset.wwImgFallback === '1') return;
+  el.dataset.wwImgFallback = '1';
+  el.src = SPOT_PLACEHOLDER;
+}
 let plannerLinkedRouteId = null;
 
 function migrateStorageOnce(newKey, legacyKey, fallback) {
@@ -536,7 +558,7 @@ function renderFootprints(){
         </div>
       </article>`;
     }).join('');
-    empty.textContent='还没有记录过的路线。走完一条 CityWalk 后，点「记录一次 Walk」把路线和沿途点位留在这里。';
+    empty.textContent='还没有记录过的路线。完成一次 Citywalk 后，点「记录一次 Walk」，把路线与沿途点位留在这里。';
   }else if(footprintView==='planned'){
     items=plannedRoutes;
     html=items.map(function (r) {
@@ -547,7 +569,7 @@ function renderFootprints(){
       <div class="footprint-card-actions"><button class="primary" onclick="renderSpots('${safeText(r.id)}',true)">查看点位 →</button><button class="primary" onclick="openRouteById('${safeText(r.id)}')">路线详情</button><button class="remove" onclick="openAddFootprintPrefilled('${safeText(r.id)}')">记录 Walk</button></div>
     </article>`;
     }).join('');
-    empty.innerHTML='还没有规划导入的路线。<a href="../">去 Citywalk 规划</a> 完成后点「记录到社区」，或使用 <code>?r=</code> 分享链；导入后会出现在这里。';
+    empty.innerHTML='还没有规划导入的路线。在 <a href="../">Citywalk 路线规划</a> 完成后点「记录到社区」，或通过 <code>?r=</code> 分享链导入；导入后会出现在这里。';
   }else if(footprintView==='routes'){
     items=validFavRoutes.map(id=>routeById(id)).filter(Boolean);
     html=items.map(r=>`<article class="footprint-card">
@@ -555,12 +577,12 @@ function renderFootprints(){
       <div class="footprint-card-body"><div class="footprint-card-title">${safeText(r.title)}</div><div class="footprint-card-desc">${safeText(r.desc)}</div><div class="footprint-meta"><span>📏 ${r.distance}</span><span>🕐 ${r.time}</span><span>📍 ${routeSpots[r.id]?.spots.length||0} 个点位</span></div><div class="footprint-stops-preview">${(routeSpots[r.id]?.spots||[]).slice(0,3).map(sp=>`<span>${safeText(sp.name)}</span>`).join('')}</div></div>
       <div class="footprint-card-actions"><button class="primary" onclick="renderSpots('${r.id}',true)">查看路线点位 →</button><button class="remove" onclick="toggleRouteFavorite('${r.id}')">取消收藏</button></div>
     </article>`).join('');
-    empty.textContent='这里还没有收藏的路线。可以在 CityWalk 路线卡片或路线详情中点击 ♡ 收藏。';
+    empty.textContent='这里还没有收藏的路线。在发现区或路线详情中点击 ♡ 即可收藏。';
   }else{
     items=favoriteSpotKeys.map(routeForSpotKey).filter(Boolean);
     html=items.map(item=>`<article class="footprint-card">
-      <div class="footprint-cover"><img src="${item.spot.image}" alt="${safeText(item.spot.name)}"><span class="footprint-cover-badge">♡ 已收藏 · ${safeText(item.route?.city||'CityWalk')}</span></div>
-      <div class="footprint-card-body"><div class="footprint-card-title">${safeText(item.spot.name)}</div><div class="footprint-card-desc">${safeText(item.spot.desc)}</div><div class="footprint-meta"><span>📍 ${safeText(item.spot.type)}</span><span>${safeText(item.route?.city||'CityWalk')}</span></div><div class="footprint-card-note">来自路线：${safeText(item.data.title)}</div></div>
+      <div class="footprint-cover"><img src="${item.spot.image}" alt="${safeText(item.spot.name)}"><span class="footprint-cover-badge">♡ 已收藏 · ${safeText(item.route?.city||'Citywalk')}</span></div>
+      <div class="footprint-card-body"><div class="footprint-card-title">${safeText(item.spot.name)}</div><div class="footprint-card-desc">${safeText(item.spot.desc)}</div><div class="footprint-meta"><span>📍 ${safeText(item.spot.type)}</span><span>${safeText(item.route?.city||'Citywalk')}</span></div><div class="footprint-card-note">来自路线：${safeText(item.data.title)}</div></div>
       <div class="footprint-card-actions"><button class="primary" onclick="renderSpots('${item.routeId}',true);setTimeout(()=>showSpot(${item.index}),350)">查看点位详情 →</button><button class="remove" onclick="toggleSpotFavorite('${item.routeId}',${item.index})">取消收藏</button></div>
     </article>`).join('');
     empty.textContent='还没有收藏的打卡点。打开任意路线，点击点位旁的 ♡，喜欢的咖啡店、街角和拍照机位就会保存在这里。';
@@ -590,7 +612,7 @@ function renderSpots(routeId=currentSpotRouteId, scroll=false){
   document.getElementById('spotRouteTitle').textContent=routeSpotData.title;
   document.getElementById('spotRouteMeta').textContent=routeSpotData.meta;
   spotPath.innerHTML=routeSpotData.spots.map((sp,i)=>`<div class="path-item ${i===0?'current':''}" onclick="showSpot(${i})"><i class="path-dot"></i><strong>${String(i+1).padStart(2,'0')} · ${safeText(sp.name)}</strong><span>${safeText(sp.type)} · ${safeText(sp.meta)}</span></div>`).join('');
-  spotList.innerHTML=routeSpotData.spots.map((sp,i)=>`<div class="spot-item" onclick="showSpot(${i})"><img class="spot-thumb" src="${sp.image||SPOT_PLACEHOLDER}" alt=""><div class="spot-item-copy"><h4>${safeText(sp.name)}</h4><p>${safeText(sp.desc)}</p><div class="spot-meta">${safeText(sp.type)} · ${safeText(sp.meta)}</div></div><button class="spot-save-button ${isSpotFavorite(routeId,i)?'saved':''}" onclick="event.stopPropagation();toggleSpotFavorite('${routeId}',${i})">${isSpotFavorite(routeId,i)?'♥ 已收藏':'♡ 收藏'}</button></div>`).join('');
+  spotList.innerHTML=routeSpotData.spots.map((sp,i)=>`<div class="spot-item" onclick="showSpot(${i})"><img class="spot-thumb" src="${sp.image||SPOT_PLACEHOLDER}" alt="" onerror="wwOnImgError(this)"><div class="spot-item-copy"><h4>${safeText(sp.name)}</h4><p>${safeText(sp.desc)}</p><div class="spot-meta">${safeText(sp.type)} · ${safeText(sp.meta)}</div></div><button class="spot-save-button ${isSpotFavorite(routeId,i)?'saved':''}" onclick="event.stopPropagation();toggleSpotFavorite('${routeId}',${i})">${isSpotFavorite(routeId,i)?'♥ 已收藏':'♡ 收藏'}</button></div>`).join('');
   if(scroll){ requestAnimationFrame(()=>document.getElementById('spots').scrollIntoView({behavior:'smooth',block:'start'})); }
 }
 
@@ -707,8 +729,9 @@ function renderPointsBoard(){
   const totalEl=document.getElementById('walkPointsTotal');
   if(!totalEl) return;
   totalEl.textContent=points.toLocaleString('zh-CN');
-  const foldEl=document.getElementById('walkPointsTotalFold');
-  if(foldEl) foldEl.textContent=points.toLocaleString('zh-CN');
+  const wrap=document.getElementById('footprintPointsWrap');
+  const hasActivity=points>0||(Array.isArray(completionEvents)&&completionEvents.length>0);
+  if(wrap) wrap.hidden=!hasActivity;
 
   const levelButton=document.getElementById('pointsCurrentLevel');
   levelButton.innerHTML=`<span class="points-current-level-text">${current.level.icon} ${current.level.title}</span><span class="points-level-arrow" aria-hidden="true"></span>`;
@@ -1029,7 +1052,7 @@ function renderFeed(type='全部',keyword=''){
     const demoBadge=p.is_demo?'<span class="post-type-badge post-demo-badge">示例</span>':'';
     return `<article class="post" onclick="showPostById('${safeText(p.id)}')">\
     ${demoBadge}<span class="post-type-badge">${safeText(p.type||'动态')}</span>\
-    <img class="post-cover" src="${postCoverUrl(p)}" alt="${safeText(p.title)}" loading="lazy">\
+    <img class="post-cover" src="${postCoverUrl(p)}" alt="${safeText(p.title)}" loading="lazy" onerror="wwOnImgError(this)">\
     <div class="post-body"><div class="post-title">${safeText(p.title)}</div><div class="post-desc">${safeText(p.desc)}</div><div class="tags">${tags.map(t=>`<span class="tag">#${safeText(String(t).replace(/^#/,''))}</span>`).join('')}</div></div>\
     <div class="post-footer"><div class="post-user"><span class="avatar-initial" aria-hidden="true">${safeText((p.author||'?').slice(0,1))}</span><span>${safeText(p.author)}</span></div><div class="post-actions"><button type="button" class="clickable post-like-btn${p.liked_by_me?' liked':''}" onclick="event.stopPropagation();toggleLikePost('${safeText(p.id)}',this)">${p.liked_by_me?'♥':'♡'} ${Number(p.like_count)||0}</button></div></div>\
   </article>`;
@@ -1045,7 +1068,7 @@ function renderBuddies(filter='全部'){
   const data=filter==='全部'?source:source.filter(b=>b.filter===filter||(b.tags||[]).includes(filter));
   buddyGrid.innerHTML=data.length?data.map((b)=>`<article class="buddy-card">\
     <span class="status">● 正在招募</span>\
-    <div class="buddy-user"><span class="avatar-initial" aria-hidden="true">${safeText((b.user||'?').slice(0,1))}</span><div><strong>${safeText(b.user)}</strong><span>${safeText(b.city)} · CityWalk</span></div></div>\
+    <div class="buddy-user"><span class="avatar-initial" aria-hidden="true">${safeText((b.user||'?').slice(0,1))}</span><div><strong>${safeText(b.user)}</strong><span>${safeText(b.city)} · Citywalk</span></div></div>\
     <div class="buddy-title">${safeText(b.title)}</div><div class="buddy-desc">${safeText(b.desc)}</div>\
     <div class="buddy-info"><div class="info-box"><span>出发时间</span><strong>${safeText(b.date)}</strong></div><div class="info-box"><span>人数</span><strong>${safeText(b.people)}</strong></div></div>\
     <div class="buddy-tags">${(b.tags||[]).map(t=>`<span class="buddy-tag">#${safeText(t)}</span>`).join('')}</div>\
@@ -1077,9 +1100,7 @@ function openRouteDetails(r) {
   document.getElementById('modalTitle').textContent = r.title;
   let lead = r.desc || '';
   if (sample) {
-    lead = '【示例参考，非真实用户 Walk】' + lead + ' 想走属于自己的路线，请去 Citywalk 规划页生成并「记录到社区」。';
-  } else if (r._source === 'ugc') {
-    lead = '【社区用户分享】' + lead;
+    lead = lead + (lead ? ' ' : '') + WW_COPY.sampleRouteNote;
   }
   document.getElementById('modalLead').textContent = lead;
   const statParts = [`📏 ${r.distance}`, `🕐 ${r.time}`, `◌ ${r.level}`];
@@ -1147,12 +1168,12 @@ function showSpot(index){
   document.getElementById('routeFavoriteModalBtn').style.display='';
   document.getElementById('routeFavoriteModalBtn').textContent=isRouteFavorite(currentSpotRouteId)?'♥ 已收藏路线':'♡ 收藏这条路线';
   document.getElementById('modalCover').src=s.image;
-  document.getElementById('modalKicker').textContent=`${routeSpots[currentSpotRouteId]?.meta.split(' · ')[0] || 'CityWalk'} · ${s.type} · 沿途打卡点`;
+  document.getElementById('modalKicker').textContent=`${routeSpots[currentSpotRouteId]?.meta.split(' · ')[0] || WW_COPY.activity} · ${s.type} · 沿途打卡点`;
   document.getElementById('modalTitle').textContent=s.name;
   document.getElementById('modalLead').textContent=s.desc;
-  document.getElementById('modalStats').innerHTML=[`📍 ${s.type}`,`🕐 ${s.meta}`,`✦ 适合 CityWalk`].map(x=>`<span class="modal-stat">${x}</span>`).join('');
+  document.getElementById('modalStats').innerHTML=[`📍 ${s.type}`,`🕐 ${s.meta}`,`✦ 适合 ${WW_COPY.activity}`].map(x=>`<span class="modal-stat">${x}</span>`).join('');
   document.getElementById('modalStops').innerHTML=[s.meta,s.desc,`来自「${routeSpots[currentSpotRouteId]?.title || '当前路线'}」`].map(x=>`<li>${x}</li>`).join('');
-  document.getElementById('modalTips').innerHTML=['把停留时间算进整条路线，不要只计算步行时间。','周末热门点位可能需要排队或预约，请以现场规则为准。','CityWalk 是弹性行走，不必严格按固定节奏完成。'].map(x=>`<li>${x}</li>`).join('');
+  document.getElementById('modalTips').innerHTML=WW_COPY.modalTipsRoute.map(x=>`<li>${x}</li>`).join('');
   currentRouteId=currentSpotRouteId;
   document.getElementById('spotJumpBtn').textContent=`📍 查看「${routeSpots[currentSpotRouteId]?.title || '当前路线'}」的完整打卡点`;
   showModal('routeModal');
@@ -1179,7 +1200,7 @@ function showPostById(id){
   document.getElementById('modalKicker').textContent=`${p.city} · ${p.type} · ${p.author}${kickerDemo}`;
   document.getElementById('modalTitle').textContent=p.title;
   document.getElementById('modalLead').textContent=p.is_demo
-    ?('【示例动态，非真实用户发布】'+p.desc+' 真实分享请登录后点「发布」。')
+    ?(p.desc+(p.desc?' ':'')+WW_COPY.samplePostNote)
     :p.desc;
   const tags=Array.isArray(p.tags)?p.tags:[];
   const linkBits=[];
@@ -1187,7 +1208,7 @@ function showPostById(id){
   if(p.share_route_id) linkBits.push('分享链');
   document.getElementById('modalStats').innerHTML=[`${p.liked_by_me?'♥':'♡'} ${Number(p.like_count)||0}`,`📍 ${p.city}`,...linkBits,...tags.map(t=>'#'+t)].map(x=>`<span class="modal-stat">${safeText(x)}</span>`).join('');
   document.getElementById('modalStops').innerHTML=[p.desc].map(x=>`<li>${safeText(x)}</li>`).join('');
-  document.getElementById('modalTips').innerHTML=['内容仅供参考，出行前请确认营业时间与交通规则。','可在找搭子区发起同行，或使用 Citywalk 规划路线。'].map(x=>`<li>${x}</li>`).join('');
+  document.getElementById('modalTips').innerHTML=WW_COPY.modalTipsPost.map(x=>`<li>${x}</li>`).join('');
   const likeBtn=document.getElementById('postLikeBtn');
   if(likeBtn){
     likeBtn.textContent=(p.liked_by_me?'♥ ':'♡ ')+'点赞 · '+(Number(p.like_count)||0);

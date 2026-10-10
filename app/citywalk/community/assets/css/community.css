@@ -816,7 +816,19 @@ footer a {
 }
 
 /* ===== UX polish: 联动条 / 导入提示 / 锚点 / 折叠积分 ===== */
-#home,#buddies,#routes,#feed,#spots,#pointsSection{scroll-margin-top:92px}
+#home,#buddies,#routes,#feed,#spots{scroll-margin-top:92px}
+
+.footprint-points-bar{margin:0 0 16px;position:relative;z-index:4}
+.footprint-points-card.walk-points-card{padding:14px 16px 12px;border-radius:18px;margin-top:0}
+.footprint-points-card.walk-points-card:after{display:none}
+.footprint-points-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.footprint-points-total{display:flex;align-items:baseline;gap:4px;color:#6f6278;font-size:12px;font-weight:800}
+.footprint-points-total strong{font-size:22px;color:#34293d;font-weight:950;font-variant-numeric:tabular-nums}
+.footprint-points-progress-meta{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-top:10px;font-size:11px;color:#95839e}
+.footprint-points-progress-meta strong{font-size:12px;color:#584660;font-weight:850}
+.footprint-points-card .points-progress-track-main{height:8px;margin-top:8px}
+.footprint-points-card .points-level-chip{font-size:14px}
+.footprint-points-card .points-level-arrow{width:32px;height:32px;border-radius:11px}
 
 .ww-planner-strip{
   display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
