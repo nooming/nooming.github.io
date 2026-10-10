@@ -2,12 +2,7 @@
  * 社区 UGC API（动态 / 找搭子）
  */
 (function (global) {
-    const PLACEHOLDER_POST_IMAGE =
-        'data:image/svg+xml,' + encodeURIComponent(
-            '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300">'
-            + '<rect fill="#f4edf6" width="100%" height="100%"/>'
-            + '<text x="50%" y="52%" text-anchor="middle" fill="#b08aa8" font-size="16" font-family="sans-serif">WanderWalk</text></svg>'
-        );
+    const PLACEHOLDER_POST_IMAGE = 'assets/images/covers/feed-route.jpg';
 
     function apiBase() {
         if (global.CitywalkAuth && CitywalkAuth.CW_API) return CitywalkAuth.CW_API;

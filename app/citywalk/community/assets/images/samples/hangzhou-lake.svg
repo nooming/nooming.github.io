@@ -1,21 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="mÞVbL:">
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="????">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#eefaf6"/>
-      <stop offset="100%" stop-color="#e8f4fc"/>
-    </linearGradient>
-    <linearGradient id="lake" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#77d8c5"/>
-      <stop offset="100%" stop-color="#5ab8a8"/>
+      <stop offset="100%" stop-color="#77d8c5"/>
     </linearGradient>
   </defs>
   <rect width="1200" height="630" fill="url(#bg)"/>
-  <ellipse cx="700" cy="480" rx="520" ry="180" fill="url(#lake)" opacity=".55"/>
-  <ellipse cx="650" cy="460" rx="400" ry="120" fill="#fff" opacity=".15"/>
-  <path d="M200 350 Q350 280 500 320 T800 300" fill="none" stroke="#77d8c5" stroke-width="8" opacity=".5"/>
-  <circle cx="420" cy="280" r="45" fill="#ffd76a" opacity=".3"/>
-  <path d="M380 320 q20-40 40 0 q20 40 40 0" fill="none" stroke="#5a9e6a" stroke-width="3" opacity=".6"/>
-  <text x="72" y="88" font-family="system-ui,sans-serif" font-size="28" fill="#8b6878" font-weight="700">:‹Â · :Mþ</text>
-  <text x="72" y="168" font-family="system-ui,sans-serif" font-size="56" fill="#3d3538" font-weight="800">mÞ · VbL</text>
-  <text x="72" y="228" font-family="system-ui,sans-serif" font-size="26" fill="#6f6871">hl$ ’ ¶à ’ LŸm</text>
+  <ellipse cx="700" cy="420" rx="480" ry="100" fill="#fff" opacity="0.35"/>
+  <text x="880" y="260" text-anchor="middle" font-size="120">??</text>
+  <rect x="0" y="480" width="1200" height="150" fill="#1a3830" opacity="0.9"/>
+  <text x="64" y="555" font-family="system-ui,sans-serif" font-size="46" font-weight="800" fill="#fff">?? · ????</text>
+  <text x="64" y="598" font-family="system-ui,sans-serif" font-size="22" fill="#a8d0c0">???? · ??? ? ???</text>
 </svg>

@@ -1,4 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Walk φ:">
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Walk ??">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#fff5f8"/>
@@ -6,10 +7,10 @@
     </linearGradient>
   </defs>
   <rect width="1200" height="630" fill="url(#bg)"/>
-  <circle cx="900" cy="320" r="120" fill="none" stroke="#9b8cff" stroke-width="8" opacity=".4"/>
-  <path d="M900 320 L900 240" stroke="#ff6f91" stroke-width="6" stroke-linecap="round"/>
-  <path d="M900 320 L970 350" stroke="#77d8c5" stroke-width="6" stroke-linecap="round"/>
-  <text x="72" y="88" font-family="system-ui,sans-serif" font-size="28" fill="#8b6878" font-weight="700">:‹Β · :Mώ</text>
-  <text x="72" y="168" font-family="system-ui,sans-serif" font-size="56" fill="#3d3538" font-weight="800">Walk · φ‚O</text>
-  <text x="72" y="228" font-family="system-ui,sans-serif" font-size="26" fill="#6f6871">eL · \Y · z}φτ</text>
+  <circle cx="880" cy="240" r="110" fill="none" stroke="#9b8cff" stroke-width="12" opacity="0.5"/>
+  <line x1="880" y1="240" x2="880" y2="170" stroke="#ff6f91" stroke-width="8" stroke-linecap="round"/>
+  <line x1="880" y1="240" x2="940" y2="270" stroke="#77d8c5" stroke-width="8" stroke-linecap="round"/>
+  <rect x="0" y="480" width="1200" height="150" fill="#2d2430" opacity="0.9"/>
+  <text x="64" y="555" font-family="system-ui,sans-serif" font-size="46" font-weight="800" fill="#fff">Walk · ?????</text>
+  <text x="64" y="598" font-family="system-ui,sans-serif" font-size="22" fill="#c8b8d0">???? · ?? · ?? · ??</text>
 </svg>

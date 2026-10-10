@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="8">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a1528"/>
+      <stop offset="55%" stop-color="#2d2445"/>
+      <stop offset="100%" stop-color="#4a3560"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="200" cy="120" r="50" fill="#ffd76a" opacity="0.9"/>
+  <rect x="0" y="420" width="1200" height="80" fill="#ff6f91" opacity="0.2"/>
+  <path d="M0 450 L200 420 L400 440 L600 410 L800 430 L1200 400 L1200 630 L0 630 Z" fill="#0d0a14" opacity="0.5"/>
+  <rect x="0" y="480" width="1200" height="150" fill="#0d0a14" opacity="0.92"/>
+  <text x="64" y="560" font-family="system-ui,sans-serif" font-size="48" font-weight="800" fill="#ffffff">8</text>
+  <text x="64" y="602" font-family="system-ui,sans-serif" font-size="24" fill="#b8a8c8">:ã® ∑ çZÛÙ®ø</text>
+</svg>

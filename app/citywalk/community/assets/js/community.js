@@ -11,6 +11,7 @@ const WW_COPY = {
   activity: 'Citywalk',
   sampleRouteNote: '此为示例路线。自建路线请前往 Citywalk 规划页，完成后点「记录到社区」。',
   samplePostNote: '此为示例动态。登录后点「发布」可分享你的 Walk。',
+  sampleBuddyNote: '此为示例招募。登录后点「发起一次 Walk」可发布真实招募。',
   modalTipsRoute: [
     '把停留时间算进整条路线，不要只计算步行时间。',
     '周末热门点位可能需要排队或预约，请以现场规则为准。',
@@ -26,27 +27,62 @@ function showDemoUnavailable(feature){
   showToast(feature ? `${feature} · 演示版尚未开放` : '演示版尚未开放');
 }
 
+const IMPORT_GUIDE_DISMISS_KEY = 'ww_import_guide_dismissed';
+
 function dismissImportGuide(){
   const el=document.getElementById('importGuideBanner');
-  if(el) el.hidden=true;
+  if(!el) return;
+  el.hidden=true;
+  try{ sessionStorage.setItem(IMPORT_GUIDE_DISMISS_KEY,'1'); }catch(e){/* private mode */}
 }
 
 function showImportGuideBanner(){
   const el=document.getElementById('importGuideBanner');
-  if(el) el.hidden=false;
+  if(!el) return;
+  try{
+    if(sessionStorage.getItem(IMPORT_GUIDE_DISMISS_KEY)==='1') return;
+  }catch(e){/* ignore */}
+  el.hidden=false;
+}
+
+function resetImportGuideDismiss(){
+  try{ sessionStorage.removeItem(IMPORT_GUIDE_DISMISS_KEY); }catch(e){/* ignore */}
+}
+
+function buddiesSource() {
+  if (ugcBuddies.length) return ugcBuddies;
+  return typeof demoBuddies !== 'undefined' && Array.isArray(demoBuddies) ? demoBuddies : [];
+}
+
+function findBuddy(buddyId) {
+  const hit = ugcBuddies.find(function (x) { return x.id === buddyId; });
+  if (hit) return hit;
+  if (typeof demoBuddies !== 'undefined' && Array.isArray(demoBuddies)) {
+    return demoBuddies.find(function (x) { return x.id === buddyId; }) || null;
+  }
+  return null;
+}
+
+function updateHeroBuddyCount() {
+  const countEl = document.querySelector('.hero-buddy-count');
+  if (!countEl) return;
+  const n = buddiesSource().length;
+  countEl.textContent = n
+    ? (n + ' 组正在招募' + (ugcBuddies.length ? '' : ' · 示例'))
+    : '快来发起第一场 Walk';
 }
 
 function renderHeroBuddyPreview(){
   const list=document.getElementById('heroBuddyList');
   if(!list) return;
-  const source=ugcBuddies;
+  const source=buddiesSource();
   if(!source.length){
     list.innerHTML='<div class="hero-buddy-item"><span>暂无招募，</span><strong>点击「发起一次 Walk」</strong></div>';
     return;
   }
   list.innerHTML=source.slice(0,2).map(b=>{
     const initial=String(b.user||'?').slice(0,1);
-    const isUgc=!!b.id;
+    const isUgc=!b.is_demo;
     return `<div class="hero-buddy-item"><span class="hero-buddy-avatar${isUgc?'':' hero-buddy-avatar--demo'}" data-demo="${safeText(initial)}"></span><div><strong>${safeText(b.city)} · ${safeText(b.title)}</strong><span>${safeText(b.date)} · ${safeText((b.tags||[])[0]||'Walk')} · ${safeText(b.people)}</span></div></div>`;
   }).join('');
 }
@@ -69,12 +105,7 @@ async function loadCommunityUgc(){
     showToast('社区内容加载失败，请稍后刷新');
   }
   renderHeroBuddyPreview();
-  const countEl=document.querySelector('.hero-buddy-count');
-  if(countEl){
-    countEl.textContent=ugcBuddies.length
-      ? (ugcBuddies.length+' 组正在招募')
-      : '快来发起第一场 Walk';
-  }
+  updateHeroBuddyCount();
   renderFeed(document.querySelector('.feed-tab.active')?.dataset.type||'全部',document.getElementById('searchInput')?.value||'');
   renderBuddies(document.querySelector('.buddy-filter.active')?.dataset.filter||'全部');
   renderRoutes(document.querySelector('#cityTabs .city-tab.active')?.dataset.city||'全部');
@@ -159,10 +190,11 @@ function routeCardOpenHandler(r) {
 
 function renderRouteCardHtml(r) {
   const stops = (r.stops || []).slice(0, 4);
+  const mediaInner = `<img src="${r.image || SPOT_PLACEHOLDER}" alt="${safeText(r.title)}" loading="lazy" onerror="wwOnImgError(this)">`;
   return `\
     <article class="route-card" onclick="${routeCardOpenHandler(r)}">\
       <div class="route-media">\
-        <img src="${r.image || SPOT_PLACEHOLDER}" alt="${safeText(r.title)}" loading="lazy" onerror="wwOnImgError(this)">\
+        ${mediaInner}\
         ${routeCardRibbon(r)}\
         <span class="route-badge">${safeText(r.city)} · ${safeText(r.type)}</span>\
         <button class="route-save ${isRouteFavorite(r.id) ? 'liked' : ''}" aria-label="收藏路线" onclick="event.stopPropagation();toggleRouteFavorite('${safeText(r.id)}',this)">${isRouteFavorite(r.id) ? '♥' : '♡'}</button>\
@@ -225,6 +257,14 @@ const POINTS_STORAGE_LEGACY = {
 };
 const PLANNED_ROUTES_KEY = 'citywalk_planned_routes_v1';
 const SPOT_PLACEHOLDER = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="100"><rect fill="#f4edf6" width="100%" height="100%"/><text x="50%" y="52%" text-anchor="middle" fill="#b08aa8" font-size="14" font-family="sans-serif">打卡</text></svg>');
+function wwOnFeedImgError(el) {
+  if (!el || el.dataset.wwImgFallback === '1') return;
+  el.dataset.wwImgFallback = '1';
+  const ph = (typeof SAMPLE_IMG !== 'undefined' && SAMPLE_IMG.placeholder) || '';
+  if (ph) el.src = ph;
+  else wwOnImgError(el);
+}
+
 function wwOnImgError(el) {
   if (!el || el.dataset.wwImgFallback === '1') return;
   el.dataset.wwImgFallback = '1';
@@ -882,6 +922,7 @@ function applyImportedPlannerPayload(payload, options={}){
   } else if(options.openFootprintForm !== false){
     openAddFootprintPrefilled(routeId);
   }
+  resetImportGuideDismiss();
   showImportGuideBanner();
   showToast('已载入规划路线，可在足迹中记录这次 Walk');
   return routeId;
@@ -1019,9 +1060,30 @@ window.CitywalkCommunity = {
 };
 
 function postCoverUrl(p){
+  if(!p) return (typeof SAMPLE_IMG !== 'undefined' && SAMPLE_IMG.placeholder) || '';
   const img=p.image||'';
   if(img) return img;
-  return (window.CitywalkCommunityApi&&CitywalkCommunityApi.PLACEHOLDER_POST_IMAGE)||SPOT_PLACEHOLDER;
+  if(typeof FEED_TYPE_IMG !== 'undefined' && p.type && FEED_TYPE_IMG[p.type]) return FEED_TYPE_IMG[p.type];
+  return (typeof SAMPLE_IMG !== 'undefined' && SAMPLE_IMG.placeholder)
+    || (window.CitywalkCommunityApi && CitywalkCommunityApi.PLACEHOLDER_POST_IMAGE)
+    || '';
+}
+
+function renderPostCoverHtml(p){
+  const src=postCoverUrl(p);
+  if(!src){
+    return `<div class="post-cover post-cover-demo" data-type="${safeText(p.type||'动态')}" role="img"><span class="post-cover-demo-kicker">WanderWalk</span><span class="post-cover-demo-type">${safeText(p.type||'动态')}</span></div>`;
+  }
+  return `<img class="post-cover" src="${src}" alt="${safeText(p.title)}" loading="lazy" onerror="wwOnFeedImgError(this)">`;
+}
+
+function setModalCoverVisual(opts){
+  const img=document.getElementById('modalCover');
+  const demo=document.getElementById('modalCoverDemo');
+  if(!img) return;
+  if(demo) demo.hidden=true;
+  img.hidden=false;
+  img.src=(opts && opts.src) || SPOT_PLACEHOLDER;
 }
 
 function findCommunityPost(id) {
@@ -1052,7 +1114,7 @@ function renderFeed(type='全部',keyword=''){
     const demoBadge=p.is_demo?'<span class="post-type-badge post-demo-badge">示例</span>':'';
     return `<article class="post" onclick="showPostById('${safeText(p.id)}')">\
     ${demoBadge}<span class="post-type-badge">${safeText(p.type||'动态')}</span>\
-    <img class="post-cover" src="${postCoverUrl(p)}" alt="${safeText(p.title)}" loading="lazy" onerror="wwOnImgError(this)">\
+    ${renderPostCoverHtml(p)}\
     <div class="post-body"><div class="post-title">${safeText(p.title)}</div><div class="post-desc">${safeText(p.desc)}</div><div class="tags">${tags.map(t=>`<span class="tag">#${safeText(String(t).replace(/^#/,''))}</span>`).join('')}</div></div>\
     <div class="post-footer"><div class="post-user"><span class="avatar-initial" aria-hidden="true">${safeText((p.author||'?').slice(0,1))}</span><span>${safeText(p.author)}</span></div><div class="post-actions"><button type="button" class="clickable post-like-btn${p.liked_by_me?' liked':''}" onclick="event.stopPropagation();toggleLikePost('${safeText(p.id)}',this)">${p.liked_by_me?'♥':'♡'} ${Number(p.like_count)||0}</button></div></div>\
   </article>`;
@@ -1063,17 +1125,57 @@ function renderFeed(type='全部',keyword=''){
   }
 }
 
+function buddyCoverUrl(b) {
+  if (!b) return '';
+  if (b.image) return b.image;
+  if (typeof CITY_COVER !== 'undefined' && b.city && CITY_COVER[b.city]) return CITY_COVER[b.city];
+  return (typeof COVER_IMG !== 'undefined' && COVER_IMG.placeholder) || '';
+}
+
+function parseBuddyPeople(people) {
+  const m = String(people || '').match(/(\d+)\s*\/\s*(\d+)/);
+  if (!m) return null;
+  const current = parseInt(m[1], 10);
+  const max = parseInt(m[2], 10);
+  if (!max || max < 1) return null;
+  return { current: Math.min(current, max), max: max };
+}
+
 function renderBuddies(filter='全部'){
-  const source=ugcBuddies;
+  const source=buddiesSource();
   const data=filter==='全部'?source:source.filter(b=>b.filter===filter||(b.tags||[]).includes(filter));
-  buddyGrid.innerHTML=data.length?data.map((b)=>`<article class="buddy-card">\
-    <span class="status">● 正在招募</span>\
-    <div class="buddy-user"><span class="avatar-initial" aria-hidden="true">${safeText((b.user||'?').slice(0,1))}</span><div><strong>${safeText(b.user)}</strong><span>${safeText(b.city)} · Citywalk</span></div></div>\
-    <div class="buddy-title">${safeText(b.title)}</div><div class="buddy-desc">${safeText(b.desc)}</div>\
-    <div class="buddy-info"><div class="info-box"><span>出发时间</span><strong>${safeText(b.date)}</strong></div><div class="info-box"><span>人数</span><strong>${safeText(b.people)}</strong></div></div>\
-    <div class="buddy-tags">${(b.tags||[]).map(t=>`<span class="buddy-tag">#${safeText(t)}</span>`).join('')}</div>\
-    <button class="join" type="button" onclick="openJoin('${safeText(b.id||'')}')">＋ 加入这次 Walk</button>\
-  </article>`).join(''):'<p class="empty" style="display:block;grid-column:1/-1">暂无招募，登录后发起一次 Walk 吧。</p>';
+  buddyGrid.innerHTML=data.length?data.map((b)=>{
+    const cover=buddyCoverUrl(b);
+    const demoRibbon=b.is_demo?'<span class="buddy-demo-ribbon">示例招募</span>':'';
+    const seats=parseBuddyPeople(b.people);
+    const seatBar=seats
+      ? `<div class="buddy-seats" aria-label="已报名 ${seats.current} 人，共 ${seats.max} 人"><div class="buddy-seats-bar"><span style="width:${Math.round((seats.current/seats.max)*100)}%"></span></div><span class="buddy-seats-label">${safeText(b.people)}</span></div>`
+      : '';
+    const mood=b.filter && b.filter!=='全部'?`<span class="buddy-mood">${safeText(b.filter)}</span>`:'';
+    return `<article class="buddy-card${b.is_demo?' buddy-card--demo':''}">\
+    <div class="buddy-media">\
+      <img src="${safeText(cover)}" alt="" loading="lazy" onerror="wwOnImgError(this)">\
+      ${demoRibbon}\
+      <span class="buddy-status"><span class="buddy-status-dot" aria-hidden="true"></span>正在招募</span>\
+      <span class="buddy-city-pill">${safeText(b.city)}</span>\
+    </div>\
+    <div class="buddy-body">\
+      <div class="buddy-head">\
+        <span class="avatar-initial buddy-avatar" aria-hidden="true">${safeText((b.user||'?').slice(0,1))}</span>\
+        <div class="buddy-head-text"><strong class="buddy-user-name">${safeText(b.user)}</strong>${mood}</div>\
+      </div>\
+      <h4 class="buddy-title">${safeText(b.title)}</h4>\
+      <p class="buddy-desc">${safeText(b.desc)}</p>\
+      <div class="buddy-meta">\
+        <span class="buddy-meta-item"><span class="buddy-meta-icon" aria-hidden="true">🕐</span>${safeText(b.date)}</span>\
+        ${seats?'':`<span class="buddy-meta-item"><span class="buddy-meta-icon" aria-hidden="true">👥</span>${safeText(b.people)}</span>`}\
+      </div>\
+      ${seatBar}\
+      <div class="buddy-tags">${(b.tags||[]).map(t=>`<span class="buddy-tag">#${safeText(t)}</span>`).join('')}</div>\
+      <button class="buddy-join" type="button" onclick="openJoin('${safeText(b.id||'')}')">加入这次 Walk</button>\
+    </div>\
+  </article>`;
+  }).join(''):'<p class="empty" style="display:block;grid-column:1/-1">暂无招募，登录后发起一次 Walk 吧。</p>';
 }
 
 let currentRouteId = null;
@@ -1094,7 +1196,7 @@ function openRouteDetails(r) {
   document.getElementById('spotJumpBtn').style.display = hasSpots ? '' : 'none';
   document.getElementById('routeFavoriteModalBtn').style.display = '';
   document.getElementById('routeFavoriteModalBtn').textContent = isRouteFavorite(r.id) ? '♥ 已收藏路线' : '♡ 收藏这条路线';
-  document.getElementById('modalCover').src = r.image || SPOT_PLACEHOLDER;
+  setModalCoverVisual({ src: r.image || SPOT_PLACEHOLDER });
   const kickerExtra = sample ? ' · 示例参考' : (r._source === 'ugc' ? ' · 社区分享' : '');
   document.getElementById('modalKicker').textContent = `${r.city} · ${r.type} · ${r.author}${kickerExtra}`;
   document.getElementById('modalTitle').textContent = r.title;
@@ -1167,7 +1269,7 @@ function showSpot(index){
   document.getElementById('spotJumpBtn').style.display='';
   document.getElementById('routeFavoriteModalBtn').style.display='';
   document.getElementById('routeFavoriteModalBtn').textContent=isRouteFavorite(currentSpotRouteId)?'♥ 已收藏路线':'♡ 收藏这条路线';
-  document.getElementById('modalCover').src=s.image;
+  setModalCoverVisual({ src: s.image || SPOT_PLACEHOLDER });
   document.getElementById('modalKicker').textContent=`${routeSpots[currentSpotRouteId]?.meta.split(' · ')[0] || WW_COPY.activity} · ${s.type} · 沿途打卡点`;
   document.getElementById('modalTitle').textContent=s.name;
   document.getElementById('modalLead').textContent=s.desc;
@@ -1195,7 +1297,7 @@ function showPostById(id){
   document.getElementById('spotFavoriteBtn').style.display='none';
   document.getElementById('spotJumpBtn').style.display='none';
   document.getElementById('routeFavoriteModalBtn').style.display='none';
-  document.getElementById('modalCover').src=postCoverUrl(p);
+  setModalCoverVisual({ src: postCoverUrl(p) });
   const kickerDemo=p.is_demo?' · 示例动态':'';
   document.getElementById('modalKicker').textContent=`${p.city} · ${p.type} · ${p.author}${kickerDemo}`;
   document.getElementById('modalTitle').textContent=p.title;
@@ -1298,14 +1400,24 @@ function setBuddyModalMode(mode){
 
 function openJoin(buddyId){
   if(!buddyId){ showToast('该招募无法加入'); return; }
-  if(!requireLoginForPost()) return;
-  const b=ugcBuddies.find(x=>x.id===buddyId);
+  const b=findBuddy(buddyId);
   if(!b){ showToast('招募不存在或已下线'); return; }
   setBuddyModalMode('join');
-  document.getElementById('buddyModalTitle').textContent='加入这次 Walk';
-  document.getElementById('buddyModalDesc').textContent=`加入 ${b.user} 发起的同行计划。`;
-  document.getElementById('buddyPreview').innerHTML=`<strong>${safeText(b.title)}</strong><div style="font-size:12px;color:#666;line-height:1.8">📍 ${safeText(b.city)}<br>🕐 ${safeText(b.date)}<br>👥 ${safeText(b.people)}<br>🏷️ ${(b.tags||[]).map(x=>'#'+safeText(x)).join(' ')}</div>`;
-  document.getElementById('buddyConfirm').onclick=async()=>{
+  document.getElementById('buddyModalTitle').textContent=b.is_demo?'示例招募':'加入这次 Walk';
+  document.getElementById('buddyModalDesc').textContent=b.is_demo
+    ? WW_COPY.sampleBuddyNote
+    : ('加入 ' + b.user + ' 发起的同行计划。');
+  document.getElementById('buddyPreview').innerHTML=`<strong>${safeText(b.title)}</strong><div style="font-size:12px;color:#666;line-height:1.8">📍 ${safeText(b.city)}<br>🕐 ${safeText(b.date)}<br>👥 ${safeText(b.people)}<br>🏷️ ${(b.tags||[]).map(x=>'#'+safeText(x)).join(' ')}<br><br>${safeText(b.desc)}</div>`;
+  const confirmBtn=document.getElementById('buddyConfirm');
+  if(b.is_demo){
+    confirmBtn.textContent='知道了';
+    confirmBtn.onclick=function(){ closeModal('buddyModal'); };
+    showModal('buddyModal');
+    return;
+  }
+  if(!requireLoginForPost()) return;
+  confirmBtn.textContent='确认加入';
+  confirmBtn.onclick=async()=>{
     try{
       await CitywalkCommunityApi.joinBuddy(buddyId);
       closeModal('buddyModal');
@@ -1505,6 +1617,7 @@ renderFeed();
 renderBuddies();
 renderPointsBoard();
 renderHeroBuddyPreview();
+updateHeroBuddyCount();
 updateBuddyToggle(true);
 
 const publishPostForm=document.getElementById('publishPostForm');

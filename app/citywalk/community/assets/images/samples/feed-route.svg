@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="ï¿«">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff0f5"/>
+      <stop offset="100%" stop-color="#ede8ff"/>
+    </linearGradient>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ff6f91"/>
+      <stop offset="100%" stop-color="#9b8cff"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="0" y="480" width="1200" height="150" fill="#2d2430" opacity="0.88"/>
+  <path d="M80 420 Q280 320 520 380 T920 340 L1100 300" fill="none" stroke="url(#line)" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="80" cy="420" r="14" fill="#77d8c5" stroke="#fff" stroke-width="4"/>
+  <circle cx="520" cy="380" r="12" fill="#ffd76a" stroke="#fff" stroke-width="3"/>
+  <circle cx="920" cy="340" r="14" fill="#ff6f91" stroke="#fff" stroke-width="4"/>
+  <text x="64" y="560" font-family="system-ui,sans-serif" font-size="48" font-weight="800" fill="#ffffff">ï¿«</text>
+  <text x="64" y="602" font-family="system-ui,sans-serif" font-size="24" fill="#c8b8d0">:‹¨ · 2TwÈ¹Å»</text>
+</svg>

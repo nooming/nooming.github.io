@@ -1,4 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Þ†òW::">
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="????">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#fff5f8"/>
@@ -6,13 +7,10 @@
     </linearGradient>
   </defs>
   <rect width="1200" height="630" fill="url(#bg)"/>
-  <rect x="0" y="420" width="1200" height="210" fill="#d4e8f0" opacity=".6"/>
-  <rect x="160" y="200" width="90" height="220" fill="#f5f0e8" stroke="#c484ff" stroke-width="2" opacity=".9"/>
-  <rect x="270" y="170" width="100" height="250" fill="#fff" stroke="#9b8cff" stroke-width="2"/>
-  <path d="M320 170 v-40 h40 v40" fill="none" stroke="#9b8cff" stroke-width="3"/>
-  <rect x="400" y="220" width="85" height="200" fill="#f5f0e8" stroke="#ff6f91" stroke-width="2" opacity=".85"/>
-  <circle cx="520" cy="380" r="80" fill="#77d8c5" opacity=".25"/>
-  <text x="72" y="88" font-family="system-ui,sans-serif" font-size="28" fill="#8b6878" font-weight="700">:‹Â · :Mþ</text>
-  <text x="72" y="168" font-family="system-ui,sans-serif" font-size="56" fill="#3d3538" font-weight="800">Þ · †òW:</text>
-  <text x="72" y="228" font-family="system-ui,sans-serif" font-size="26" fill="#6f6871">™b ’ ¿_ï ’ 1¤'¦</text>
+  <rect x="680" y="120" width="80" height="260" fill="#f5f0e8" stroke="#9b8cff" stroke-width="3" rx="4"/>
+  <rect x="780" y="160" width="90" height="220" fill="#fff" stroke="#ff6f91" stroke-width="3" rx="4"/>
+  <text x="920" y="320" font-size="80">???</text>
+  <rect x="0" y="480" width="1200" height="150" fill="#2d2430" opacity="0.9"/>
+  <text x="64" y="555" font-family="system-ui,sans-serif" font-size="46" font-weight="800" fill="#fff">?? ? ????</text>
+  <text x="64" y="598" font-family="system-ui,sans-serif" font-size="22" fill="#c8b8d0">???? ? ?? ? ????</text>
 </svg>

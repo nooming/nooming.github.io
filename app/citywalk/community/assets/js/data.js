@@ -1,28 +1,57 @@
 ﻿/**
- * 发现区示例数据。封面为本地 SVG 示意（与城市/主题一致，标注「示例参考」），避免外链图与文案不符。
+ * 发现区示例数据。封面为仓库内 JPEG（Pexels 源，见 assets/images/covers/README.md）。
  * 路径相对 community/index.html。
  */
-const SAMPLE_IMG = {
-  beijing: 'assets/images/samples/beijing-hutong.svg',
-  shanghai: 'assets/images/samples/shanghai-creek.svg',
-  chengdu: 'assets/images/samples/chengdu-street.svg',
-  hangzhou: 'assets/images/samples/hangzhou-lake.svg',
-  guangzhou: 'assets/images/samples/guangzhou-shamian.svg',
-  shenzhen: 'assets/images/samples/shenzhen-oct.svg',
-  tips: 'assets/images/samples/walk-tips.svg'
+const COVER_IMG = {
+  beijing: 'assets/images/covers/beijing-hutong.jpg',
+  shanghai: 'assets/images/covers/shanghai-creek.jpg',
+  chengdu: 'assets/images/covers/chengdu-street.jpg',
+  hangzhou: 'assets/images/covers/hangzhou-lake.jpg',
+  guangzhou: 'assets/images/covers/guangzhou-shamian.jpg',
+  shenzhen: 'assets/images/covers/shenzhen-oct.jpg',
+  tips: 'assets/images/covers/feed-guide.jpg',
+  placeholder: 'assets/images/covers/feed-route.jpg'
 };
 
+/** @deprecated 别名，与 COVER_IMG 相同 */
+const SAMPLE_IMG = COVER_IMG;
+
+/** 动态区按类型；无单独图时回退 */
+const FEED_TYPE_IMG = {
+  '路线': 'assets/images/covers/feed-route.jpg',
+  '攻略': 'assets/images/covers/feed-guide.jpg',
+  '打卡': 'assets/images/covers/feed-checkin.jpg',
+  '拍照': 'assets/images/covers/feed-photo.jpg',
+  '夜游': 'assets/images/covers/feed-night.jpg'
+};
+
+const CITY_COVER = {
+  '北京': COVER_IMG.beijing,
+  '上海': COVER_IMG.shanghai,
+  '成都': COVER_IMG.chengdu,
+  '杭州': COVER_IMG.hangzhou,
+  '广州': COVER_IMG.guangzhou,
+  '深圳': COVER_IMG.shenzhen
+};
+
+function demoPostCover(post) {
+  if (post.image) return post.image;
+  if (post.city && CITY_COVER[post.city]) return CITY_COVER[post.city];
+  if (post.type && FEED_TYPE_IMG[post.type]) return FEED_TYPE_IMG[post.type];
+  return COVER_IMG.placeholder;
+}
+
 const ROUTE_SAMPLE_IMG = {
-  'beijing-gulou-hutong': SAMPLE_IMG.beijing,
-  'shanghai-suzhou-creek': SAMPLE_IMG.shanghai,
-  'chengdu-wangping': SAMPLE_IMG.chengdu,
-  'hangzhou-westlake-west': SAMPLE_IMG.hangzhou,
-  'guangzhou-shamian': SAMPLE_IMG.guangzhou,
-  'shenzhen-ocean-oct': SAMPLE_IMG.shenzhen
+  'beijing-gulou-hutong': COVER_IMG.beijing,
+  'shanghai-suzhou-creek': COVER_IMG.shanghai,
+  'chengdu-wangping': COVER_IMG.chengdu,
+  'hangzhou-westlake-west': COVER_IMG.hangzhou,
+  'guangzhou-shamian': COVER_IMG.guangzhou,
+  'shenzhen-ocean-oct': COVER_IMG.shenzhen
 };
 
 function sampleCover(routeId) {
-  return ROUTE_SAMPLE_IMG[routeId] || SAMPLE_IMG.tips;
+  return ROUTE_SAMPLE_IMG[routeId] || COVER_IMG.tips;
 }
 
 /** 发现区示例路线（均标注「示例参考」，非真实 UGC） */
@@ -193,7 +222,7 @@ const demoPosts = [
     city: '北京',
     title: '用规划页生成了胡同线，比跟攻略走省心',
     desc: '起终点加两个必去咖啡，WanderWalk 直接串好顺序，路上只负责慢慢走。',
-    image: SAMPLE_IMG.beijing,
+    image: COVER_IMG.beijing,
     author: '示例·规划',
     tags: ['Citywalk', '规划导入'],
     like_count: 0
@@ -205,7 +234,7 @@ const demoPosts = [
     city: '成都',
     title: '望平街这家窗口位，适合走累了坐 20 分钟',
     desc: '把停留写进计划时长里，Walk 就不会变成赶路。',
-    image: SAMPLE_IMG.chengdu,
+    image: COVER_IMG.chengdu,
     author: '示例·咖啡',
     tags: ['望平街', '停留'],
     like_count: 0
@@ -217,7 +246,7 @@ const demoPosts = [
     city: '全国',
     title: '计划 2 小时 Walk，为什么要留 20 分钟「空白」',
     desc: '步行、打卡与自由安排都要算进滑块时长，留一点空白才不赶。',
-    image: SAMPLE_IMG.tips,
+    image: FEED_TYPE_IMG['攻略'],
     author: '示例·攻略',
     tags: ['WalkTips', '时长'],
     like_count: 0
@@ -229,7 +258,7 @@ const demoPosts = [
     city: '上海',
     title: '苏州河一段的夜景，适合放在路线最后 30 分钟',
     desc: '摄影向时段放在终点：白天逛店，傍晚拍桥。',
-    image: SAMPLE_IMG.shanghai,
+    image: COVER_IMG.shanghai,
     author: '示例·夜游',
     tags: ['苏州河', '夜景'],
     like_count: 0
@@ -241,7 +270,7 @@ const demoPosts = [
     city: '广州',
     title: '沙面不需要滤镜，下午侧光就够了',
     desc: '建筑 Walk 以立面细节为主，不必赶点位数量。',
-    image: SAMPLE_IMG.guangzhou,
+    image: COVER_IMG.guangzhou,
     author: '示例·镜头',
     tags: ['沙面', '建筑'],
     like_count: 0
@@ -253,7 +282,7 @@ const demoPosts = [
     city: '杭州',
     title: '西湖西侧这条，适合「省力直达」少绕路',
     desc: '站数不多，但每段都有明确停留理由。',
-    image: SAMPLE_IMG.hangzhou,
+    image: COVER_IMG.hangzhou,
     author: '示例·湖西',
     tags: ['西湖', '路线分享'],
     like_count: 0
@@ -265,7 +294,7 @@ const demoPosts = [
     city: '深圳',
     title: '园区 + 短绿道：爬升段记得穿防滑鞋',
     desc: '途经点过多或某段步行失败时，规划页会有路线说明，出行前看一眼更安心。',
-    image: SAMPLE_IMG.shenzhen,
+    image: COVER_IMG.shenzhen,
     author: '示例·装备',
     tags: ['华侨城', '实用'],
     like_count: 0
@@ -277,12 +306,109 @@ const demoPosts = [
     city: '上海',
     title: '记录到社区后，足迹里能逐站回看',
     desc: '规划完成 → 记录到社区 → 在「规划导入」里打开点位板。',
-    image: SAMPLE_IMG.shanghai,
+    image: COVER_IMG.shanghai,
     author: '示例·足迹',
     tags: ['社区联动', '规划'],
     like_count: 0
   }
 ];
 
-/** 找搭子示例（API 无数据时前端不读此表；保留供本地演示扩展） */
-const buddies = [];
+/** 找搭子示例（API 无招募时展示；字段对齐 UGC） */
+const demoBuddies = [
+  {
+    id: 'demo-buddy-01',
+    is_demo: true,
+    user: '示例·胡同',
+    city: '北京',
+    title: '周日早间 · 南锣鼓巷一带慢走',
+    desc: '不赶景点，中间留 30 分钟咖啡。新手友好，欢迎一起练「计划时长」。',
+    date: '本周日 09:30',
+    filter: '周末',
+    tags: ['胡同', '轻松'],
+    people: '2 / 4 人'
+  },
+  {
+    id: 'demo-buddy-02',
+    is_demo: true,
+    user: '示例·滨江',
+    city: '上海',
+    title: '傍晚苏州河步道 · 拍桥与河面',
+    desc: '摄影向，带相机的来；走完约 4km，强度轻松。',
+    date: '周六 17:00',
+    filter: '摄影',
+    tags: ['苏州河', '夜景'],
+    people: '1 / 3 人'
+  },
+  {
+    id: 'demo-buddy-03',
+    is_demo: true,
+    user: '示例·巷弄',
+    city: '成都',
+    title: '望平街 → 镗钯街 · 边逛边吃',
+    desc: '美食搭子优先，接受边走边停；不酗酒，以小吃为主。',
+    date: '今天 15:00',
+    filter: '今天',
+    tags: ['美食', '望平街'],
+    people: '3 / 5 人'
+  },
+  {
+    id: 'demo-buddy-04',
+    is_demo: true,
+    user: '示例·湖西',
+    city: '杭州',
+    title: '西湖西侧 · 杨公堤静音线',
+    desc: '中等强度，可能有小坡；希望节奏相近，别赶点。',
+    date: '10/12 周六 08:00',
+    filter: '轻徒步',
+    tags: ['西湖', '湖西'],
+    people: '2 / 4 人'
+  },
+  {
+    id: 'demo-buddy-05',
+    is_demo: true,
+    user: '示例·岭南',
+    city: '广州',
+    title: '沙面建筑 Walk · 下午侧光',
+    desc: '建筑/拍照向，互拍为主；约 3.5km，2 小时含停留。',
+    date: '周六 14:30',
+    filter: '摄影',
+    tags: ['沙面', '建筑'],
+    people: '1 / 4 人'
+  },
+  {
+    id: 'demo-buddy-06',
+    is_demo: true,
+    user: '示例·园区',
+    city: '深圳',
+    title: '华侨城创意园 + 短绿道',
+    desc: '有一段台阶爬升，穿运动鞋；走完可一起喝东西收尾。',
+    date: '周日 10:00',
+    filter: '轻徒步',
+    tags: ['OCT', '绿道'],
+    people: '2 / 4 人'
+  },
+  {
+    id: 'demo-buddy-07',
+    is_demo: true,
+    user: '示例·规划',
+    city: '上海',
+    title: '刚用规划页串好线，找 1–2 人试走',
+    desc: '路线已导入社区，想找人一起验证站距和时长是否合理。',
+    date: '今天 19:00',
+    filter: '今天',
+    tags: ['路线试走', '规划导入'],
+    people: '1 / 3 人'
+  },
+  {
+    id: 'demo-buddy-08',
+    is_demo: true,
+    user: '示例·咖啡',
+    city: '成都',
+    title: '周末下午 · 只走平路聊八卦',
+    desc: '纯休闲，不摄影不打卡竞赛；适合第一次找搭子试试水。',
+    date: '本周末 16:00',
+    filter: '周末',
+    tags: ['休闲', '平路'],
+    people: '2 / 6 人'
+  }
+];

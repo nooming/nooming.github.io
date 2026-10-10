@@ -55,7 +55,7 @@
       <div class="hero-buddy-card">
         <div class="hero-buddy-top">
           <span class="hero-buddy-label">FIND A WALK BUDDY</span>
-          <span class="hero-buddy-count">18 组正在招募</span>
+          <span class="hero-buddy-count">加载招募中…</span>
         </div>
         <h3>今天有人一起走吗？</h3>
         <p>按时间、城市和兴趣选择一场 Walk，直接加入。</p>
@@ -223,7 +223,10 @@
   <div class="modal-box">
     <button class="close" onclick="closeModal('routeModal')">×</button>
     <div class="route-modal">
-      <img id="modalCover" class="modal-cover" src="" alt="路线图片">
+      <div class="modal-cover-wrap">
+        <div id="modalCoverDemo" class="modal-cover route-cover-demo" hidden aria-hidden="true"></div>
+        <img id="modalCover" class="modal-cover" src="" alt="路线图片">
+      </div>
       <div class="modal-info">
         <div class="modal-kicker" id="modalKicker"></div>
         <h2 id="modalTitle"></h2>
