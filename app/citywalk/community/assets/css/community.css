@@ -17,7 +17,7 @@ img{display:block}
 }
 .nav-inner{max-width:1400px;height:100%;margin:auto;padding:0 28px;display:flex;align-items:center;gap:28px}
 .logo{font-size:25px;font-weight:900;letter-spacing:-1.2px;white-space:nowrap}
-.logo b{background:linear-gradient(90deg,var(--accent),var(--lavender));-webkit-background-clip:text;background-clip:text;color:transparent}
+.logo:not(.cw-brand-logo) b{background:linear-gradient(90deg,var(--accent),var(--lavender));-webkit-background-clip:text;background-clip:text;color:transparent}
 .nav-links{display:flex;gap:23px;align-items:center}
 .nav-links a{font-size:14px;color:#666;font-weight:650;position:relative;padding:4px 0}
 .nav-links a:hover,.nav-links a.active{color:#111}
@@ -98,6 +98,8 @@ img{display:block}
 .section-head-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .publish--inline{margin-left:0}
 .demo-chip{display:inline-block;font-size:11px;font-weight:800;color:#8f4f68;background:var(--accent-soft);padding:3px 8px;border-radius:999px;vertical-align:middle;margin-left:6px}
+.post-demo-badge{right:auto;left:12px;top:12px;background:rgba(42,40,48,.78);color:#fff;margin-right:6px}
+.post{position:relative}
 
 /* ===== CITY TABS ===== */
 .city-tabs{display:flex;gap:10px;overflow:auto;padding-bottom:4px;scrollbar-width:none;margin-bottom:24px;-webkit-overflow-scrolling:touch}
@@ -120,6 +122,8 @@ img{display:block}
 .route-media img{width:100%;height:100%;object-fit:cover;transition:.45s}
 .route-card:hover .route-media img{transform:scale(1.045)}
 .route-demo-ribbon{position:absolute;left:13px;top:13px;background:rgba(255,255,255,.92);color:#b04a72;padding:5px 8px;border-radius:999px;font-size:10px;font-weight:850;z-index:2;box-shadow:0 4px 10px rgba(0,0,0,.06)}
+.route-ugc-ribbon{color:#5a4a8a;background:rgba(255,255,255,.94)}
+.route-library-tabs{margin-bottom:14px}
 .route-badge{position:absolute;left:13px;top:40px;background:rgba(0,0,0,.48);color:#fff;padding:6px 9px;border-radius:8px;font-size:11px;backdrop-filter:blur(8px)}
 .route-save{position:absolute;right:13px;top:13px;width:35px;height:35px;border-radius:50%;background:rgba(255,255,255,.92);font-size:16px}
 .route-body{padding:16px}

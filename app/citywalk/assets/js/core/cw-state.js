@@ -88,6 +88,7 @@ const CITY_COORDS = {
     "香港": [114.1694, 22.3193],
     "澳门": [113.5491, 22.1987]
 };
+if (typeof window !== 'undefined') window.CITY_COORDS = CITY_COORDS;
 
 // --- API 地址（根据运行环境自动切换）---
 const _h = window.location.hostname;

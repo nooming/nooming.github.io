@@ -8,7 +8,15 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#ff6f91">
     <meta name="description" content="WanderWalk · Citywalk 路线规划：智能定制步行路线，支持多城起终点、必去点与社区足迹联动">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚶</text></svg>">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="WanderWalk">
+    <meta property="og:title" content="WanderWalk · Citywalk 路线规划">
+    <meta property="og:description" content="智能定制步行路线，多城起终点与必去点，联动社区足迹与分享。">
+    <meta property="og:url" content="https://nooming.github.io/app/citywalk/">
+    <meta property="og:image" content="https://nooming.github.io/app/citywalk/assets/brand/og-cover.svg">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" href="assets/brand/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="assets/brand/wanderwalk-mark.svg">
     <title>WanderWalk · Citywalk 路线规划</title>
     <link rel="preconnect" href="https://webapi.amap.com">
     <link rel="preconnect" href="https://restapi.amap.com">
@@ -94,7 +102,7 @@
     <div class="control-panel">
         <div class="panel-header">
             <h2>
-                <span class="panel-header-icon">🚶</span>
+                <img class="panel-header-icon cw-brand-mark" src="assets/brand/wanderwalk-mark-light.svg" width="36" height="36" alt="">
                 <span class="panel-header-title-block">
                     <span class="panel-header-title-text">WanderWalk</span>
                     <span class="panel-header-subtitle">Citywalk 路线规划</span>
@@ -379,6 +387,7 @@
     </div>
 
     <script src="assets/js/core/cw-state.js"></script>
+    <script src="assets/js/core/cw-prefs.js"></script>
     <script src="assets/js/cw-auth.js"></script>
     <script src="community/assets/js/cw-footprint-sync.js"></script>
     <script src="assets/js/cw-bridge.js"></script>

@@ -309,6 +309,18 @@ function renderRouteFeedback(data) {
         : (typeof data.estimated_total_min === 'number' ? data.estimated_total_min : (walk + stay));
     const freeMin = Number(data.free_time_min);
     const tip = (data.route_tip || '').trim();
+    const walkIssues = Array.isArray(data.walking_segment_issues) ? data.walking_segment_issues : [];
+    if (walkIssues.length > 0) {
+        const legLines = walkIssues.map((w) => {
+            const fr = (w && w.from) ? String(w.from) : '?';
+            const to = (w && w.to) ? String(w.to) : '?';
+            const idx = (w && w.index) ? w.index : '';
+            return idx ? `第 ${idx} 段：${fr} → ${to}` : '部分路段';
+        });
+        lines.push(
+            `<span class="route-walk-issue">⚠️ 步行线 ${walkIssues.length} 段未能完整拉取（${legLines.join('；')}），地图上为直线连接。</span>`
+        );
+    }
     const tipHasPlanGap = /比计划少约|超出计划约|预计比计划/.test(tip);
     const tipExplainsFree = /自由安排/.test(tip) && /与计划/.test(tip);
     if (typeof planMin === 'number' && planMin > 0 && !tipHasPlanGap && !tipExplainsFree) {

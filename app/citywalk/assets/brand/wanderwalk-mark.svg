@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="WanderWalk">
+  <defs>
+    <linearGradient id="ww-bg" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#fff5f8"/>
+      <stop offset="55%" stop-color="#f3efff"/>
+      <stop offset="100%" stop-color="#eefaf6"/>
+    </linearGradient>
+    <linearGradient id="ww-path" x1="12" y1="44" x2="52" y2="20" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ff6f91"/>
+      <stop offset="52%" stop-color="#c484ff"/>
+      <stop offset="100%" stop-color="#9b8cff"/>
+    </linearGradient>
+    <filter id="ww-soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#584358" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#ww-bg)"/>
+  <!-- 明确的双 V 字标 W：左高→左谷→中峰→右谷→右高 -->
+  <path
+    d="M 14 21 L 20 43 L 32 25 L 44 43 L 50 21"
+    fill="none"
+    stroke="url(#ww-path)"
+    stroke-width="4.4"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#ww-soft)"
+  />
+  <circle cx="14" cy="21" r="4" fill="#77d8c5" stroke="#fff" stroke-width="2"/>
+  <circle cx="32" cy="25" r="3.5" fill="#ffd76a" stroke="#fff" stroke-width="2"/>
+  <circle cx="50" cy="21" r="4" fill="#ff6f91" stroke="#fff" stroke-width="2"/>
+</svg>

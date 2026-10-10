@@ -5,7 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#ff6f91">
 <meta name="description" content="WanderWalk 社区：Citywalk 经验、找搭子、足迹，与 Citywalk 路线规划联动">
+<meta property="og:type" content="website">
+<meta property="og:title" content="WanderWalk · 社区">
+<meta property="og:description" content="Citywalk 经验、找搭子、足迹，与路线规划联动。">
+<meta property="og:url" content="https://nooming.github.io/app/citywalk/community/">
+<meta property="og:image" content="https://nooming.github.io/app/citywalk/assets/brand/og-cover.svg">
 <title>WanderWalk · 社区</title>
+<link rel="icon" href="../assets/brand/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/css/cw-brand.css">
 <link rel="stylesheet" href="assets/css/community.css">
 </head>
@@ -13,12 +19,15 @@
 
 <header class="navbar">
   <div class="nav-inner">
-    <a class="logo" href="#home">Wander<b>Walk</b></a>
+    <a class="logo cw-brand-logo" href="#home">
+      <img class="cw-brand-logo__mark" src="../assets/brand/wanderwalk-mark.svg" width="36" height="36" alt="">
+      <span class="cw-brand-logo__word">Wander<b>Walk</b></span>
+    </a>
     <nav class="nav-links" id="navLinks" aria-label="社区导航">
       <a href="../" class="nav-plan">Citywalk 路线规划</a>
       <a href="#home">首页</a>
       <a href="#buddies" class="buddy-nav" onclick="openBuddiesPage(event)">👥 找搭子</a>
-      <a href="#routes">路线</a>
+      <a href="#routes">发现路线</a>
       <a href="#feed">动态</a>
       <a href="#spots">足迹</a>
     </nav>
@@ -102,7 +111,7 @@
 
 <section class="section" id="routes">
     <div class="section-head">
-      <div><h2>我的路线</h2><p>来自 Citywalk 规划页「记录到社区」或分享导入，不含示例假数据</p></div>
+      <div><h2>发现 CityWalk</h2><p>社区真实分享 + 明确标注的<strong>示例灵感</strong>；你规划或导入的路线在 <a href="#spots" onclick="setFootprintView('planned')">足迹 · 规划导入</a></p></div>
       <a class="section-action" href="../">去规划 →</a>
     </div>
     <div class="city-tabs" id="cityTabs">
@@ -144,6 +153,7 @@
     <div id="footprintArchivePanel">
       <div class="footprint-tabs" id="footprintTabs">
         <button class="footprint-tab active" data-view="walks" onclick="setFootprintView('walks')">🚶 走过的路线</button>
+        <button class="footprint-tab" data-view="planned" onclick="setFootprintView('planned')">📋 规划导入</button>
         <button class="footprint-tab" data-view="routes" onclick="setFootprintView('routes')">♡ 收藏的路线</button>
         <button class="footprint-tab" data-view="spots" onclick="setFootprintView('spots')">📍 收藏的点位</button>
         <span class="local-save-note">私人足迹 · 登录可云同步</span>

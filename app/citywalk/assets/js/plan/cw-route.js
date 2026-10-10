@@ -257,6 +257,7 @@ function switchPlanMode(mode) {
     }
 
     updateBtnStatus();
+    if (typeof window.__cwOnPlanPrefsChange === 'function') window.__cwOnPlanPrefsChange();
 }
 
 function updateBtnStatus() {
@@ -959,9 +960,78 @@ function drawPlannedRoute(path, mode) {
     drawRouteArrows();
 }
 
+function reorderRoutePoisAndReplan(fromIndex, toIndex) {
+    if (!CW.routeData || !Array.isArray(CW.routeData.pois)) return;
+    const arr = CW.routeData.pois;
+    const from = Number(fromIndex);
+    const to = Number(toIndex);
+    if (!Number.isFinite(from) || !Number.isFinite(to) || from < 0 || to < 0 || from >= arr.length || to >= arr.length) return;
+    if (from === to) return;
+    const item = arr.splice(from, 1)[0];
+    arr.splice(to, 0, item);
+    replanFromResultStops(collectKeptStopSeeds(null));
+}
+
+function bindPoiListDragReorder(poiList) {
+    if (!poiList || poiList.dataset.dragBound === '1') return;
+    poiList.dataset.dragBound = '1';
+    let dragFrom = null;
+
+    poiList.addEventListener('dragstart', (e) => {
+        const item = e.target.closest('.poi-item[data-poi-index]');
+        if (!item || !e.target.closest('.poi-drag-handle')) {
+            e.preventDefault();
+            return;
+        }
+        dragFrom = item.dataset.poiIndex;
+        item.classList.add('poi-item--dragging');
+        if (e.dataTransfer) {
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', dragFrom);
+        }
+    });
+
+    poiList.addEventListener('dragend', (e) => {
+        const item = e.target.closest('.poi-item[data-poi-index]');
+        if (item) item.classList.remove('poi-item--dragging');
+        poiList.querySelectorAll('.poi-item--drag-over').forEach((el) => el.classList.remove('poi-item--drag-over'));
+        dragFrom = null;
+    });
+
+    poiList.addEventListener('dragover', (e) => {
+        const item = e.target.closest('.poi-item[data-poi-index]');
+        if (!item) return;
+        e.preventDefault();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+        poiList.querySelectorAll('.poi-item--drag-over').forEach((el) => {
+            if (el !== item) el.classList.remove('poi-item--drag-over');
+        });
+        item.classList.add('poi-item--drag-over');
+    });
+
+    poiList.addEventListener('dragleave', (e) => {
+        const item = e.target.closest('.poi-item[data-poi-index]');
+        if (item) item.classList.remove('poi-item--drag-over');
+    });
+
+    poiList.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const item = e.target.closest('.poi-item[data-poi-index]');
+        if (!item) return;
+        item.classList.remove('poi-item--drag-over');
+        const from = dragFrom != null ? dragFrom : (e.dataTransfer && e.dataTransfer.getData('text/plain'));
+        const to = item.dataset.poiIndex;
+        if (from != null && to != null) reorderRoutePoisAndReplan(from, to);
+    });
+}
+
 function renderRouteStopEditor(poiList) {
     const bar = document.createElement('div');
     bar.className = 'poi-edit-bar';
+    const hint = document.createElement('p');
+    hint.className = 'poi-edit-hint';
+    hint.textContent = '拖动 ⋮⋮ 可调整站点顺序，将自动重新规划步行线';
+    bar.appendChild(hint);
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'poi-add-stop';
@@ -1101,6 +1171,10 @@ function applyRouteResult(data) {
     if (data.degraded_route) {
         showToast(data.message || '已展示基础路线，完整串点请稍后重试', 4500);
     }
+    if (Array.isArray(data.walking_segment_issues) && data.walking_segment_issues.length > 0) {
+        const n = data.walking_segment_issues.length;
+        showToast(n === 1 ? '有一段步行线未能拉取，已在说明里标注' : `有 ${n} 段步行线未能拉取，详见路线说明`, 5000);
+    }
 
     drawPlannedRoute(data.path, data.mode);
 
@@ -1158,6 +1232,7 @@ function renderPoiList(pois) {
     if (!poiList) return;
     poiList.innerHTML = '';
     renderRouteStopEditor(poiList);
+    bindPoiListDragReorder(poiList);
 
     if (!Array.isArray(pois) || pois.length === 0) {
         poiList.innerHTML = `
@@ -1211,6 +1286,7 @@ function renderPoiList(pois) {
         const optionalTag = poi.optional ? '<span class="poi-optional-tag">可选</span> ' : '';
         const skippedTag = skipped ? '<span class="poi-skipped-tag">已跳过</span> ' : '';
         poiItem.innerHTML = `
+            <button type="button" class="poi-drag-handle" draggable="true" aria-label="拖动调整第 ${index + 1} 站顺序" title="拖动排序">⋮⋮</button>
             <div class="poi-item-content">
                 <span class="poi-item-icon">${safeIcon}</span>
                 <div class="poi-item-body">
@@ -1235,6 +1311,10 @@ function renderPoiList(pois) {
                 e.stopPropagation();
                 removeRouteStopAndReplan(index);
             });
+        }
+        const dragHandle = poiItem.querySelector('.poi-drag-handle');
+        if (dragHandle) {
+            dragHandle.addEventListener('click', (e) => e.stopPropagation());
         }
         poiList.appendChild(poiItem);
     });

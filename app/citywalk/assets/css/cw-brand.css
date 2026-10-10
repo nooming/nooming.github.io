@@ -80,6 +80,43 @@
   line-height: 1.2;
 }
 
+.panel-header-icon.cw-brand-mark {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: block;
+}
+
+.cw-brand-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.cw-brand-logo__mark {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: block;
+}
+
+.cw-brand-logo__word {
+  font-size: 25px;
+  font-weight: 900;
+  letter-spacing: -1.2px;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.cw-brand-logo__word b {
+  background: linear-gradient(90deg, var(--cw-accent), var(--cw-lavender));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
 .cw-route-summary-card {
   margin: 0 0 12px;
   padding: 14px 16px;

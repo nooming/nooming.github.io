@@ -76,7 +76,7 @@
         }
 
         // 使用高德地理编码获取城市坐标
-        function geocodeCity(cityName) {
+        window.geocodeCity = function geocodeCity(cityName) {
             return new Promise((resolve, reject) => {
                 if (!window.AMap) {
                     reject(new Error('高德地图未加载'));
@@ -125,6 +125,7 @@
             if (cityDetails) cityDetails.open = false;
 
             showToast(`已切换到 ${cityName}，地图选点已清空；可在「智能规划」用文字描述新路线`);
+            if (typeof window.__cwOnPlanPrefsChange === 'function') window.__cwOnPlanPrefsChange();
         }
 
         // ===== 攻略与分享 =====
@@ -317,22 +318,30 @@ ${poiText}
         bindSingleSelectGroup('.poi-type-group .poi-type-btn:not(.route-style-btn):not(.visit-pace-btn):not(.time-of-day-btn)', (el) => {
             CW.selectedPoiType = el.dataset.type;
             CW.poiTypeLocked = true;
+            if (typeof window.__cwOnPlanPrefsChange === 'function') window.__cwOnPlanPrefsChange();
         });
 
         // 路线风格
         bindSingleSelectGroup('.route-style-btn', (el) => {
             CW.selectedRouteStyle = el.dataset.style || 'balanced';
+            if (typeof window.__cwOnPlanPrefsChange === 'function') window.__cwOnPlanPrefsChange();
         });
 
         // 逛法节奏
         bindSingleSelectGroup('.visit-pace-btn', (el) => {
             CW.selectedVisitPace = el.dataset.pace === 'relaxed' ? 'relaxed' : 'checkin';
+            if (typeof window.__cwOnPlanPrefsChange === 'function') window.__cwOnPlanPrefsChange();
         });
 
         // 出行时段
         bindSingleSelectGroup('.time-of-day-btn', (el) => {
             CW.selectedTimeOfDay = el.dataset.tod || 'now';
+            if (typeof window.__cwOnPlanPrefsChange === 'function') window.__cwOnPlanPrefsChange();
         });
+
+        if (typeof CitywalkPrefs !== 'undefined' && CitywalkPrefs.initPlanPrefs) {
+            CitywalkPrefs.initPlanPrefs();
+        }
 
         if (typeof initPanelTabs === 'function') initPanelTabs();
         if (typeof syncPanelSharedPlanMode === 'function') syncPanelSharedPlanMode();
@@ -453,6 +462,7 @@ ${poiText}
                 const val = parseInt(this.value, 10);
                 planTimeValue.textContent = `${val} 分钟`;
                 updateBtnStatus();
+                if (typeof window.__cwOnPlanPrefsChange === 'function') window.__cwOnPlanPrefsChange();
             });
         }
 

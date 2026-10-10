@@ -444,40 +444,26 @@ function addPoiMarkers(pois) {
 
         const themeColor = CW.currentTheme ? CW.currentTheme.primary : '#ff7e5f';
         const themeLightColor = CW.currentTheme ? CW.currentTheme.primaryLight : '#feb47b';
-        const baseStyle = {
-            'background': `linear-gradient(135deg, ${themeColor}, ${themeLightColor})`,
-            'color': 'white',
-            'border-radius': '14px',
-            'min-width': '28px',
-            'height': '28px',
-            'text-align': 'center',
-            'line-height': '28px',
-            'font-size': '13px',
-            'font-weight': 'bold',
-            'border': '3px solid white',
-            'box-shadow': '0 3px 8px rgba(0,0,0,0.25)',
-            'cursor': 'pointer',
-            'padding': '0 6px',
-            'white-space': 'nowrap'
-        };
-        const numberLabel = new AMap.Text({
-            text: `${index+1}`,
+        const typeIcon = (poi.icon || '📍').trim();
+        const pinHtml = `<div class="cw-poi-map-pin" data-poi-index="${index}">` +
+            `<span class="cw-poi-map-pin-icon">${typeIcon}</span>` +
+            `<span class="cw-poi-map-pin-num">${index + 1}</span></div>`;
+        const numberLabel = new AMap.Marker({
             position: poi.location,
-            offset: new AMap.Pixel(0, 0),
-            style: baseStyle,
+            content: pinHtml,
+            offset: new AMap.Pixel(-16, -18),
             zIndex: 100 + index,
-            title: `打卡${index + 1}（沿途）· ${poi.name}`
+            title: `第 ${index + 1} 站 · ${poi.name}`
         });
-        // 记录基础样式与主题色，供列表点击时切换「选中态」
-        numberLabel._baseStyle = baseStyle;
         numberLabel._themeColor = themeColor;
         numberLabel._index = index;
+        numberLabel._pinClass = 'cw-poi-map-pin';
 
         numberLabel.on('click', function() {
             CW.infoWindow.setContent(`
                 <div class="poi-infowin">
                     <h4 class="poi-infowin-title">
-                        <span class="poi-infowin-badge" style="background: linear-gradient(135deg, ${themeColor}, ${themeLightColor})">${index+1}</span>
+                        <span class="poi-infowin-badge" style="background: linear-gradient(135deg, ${themeColor}, ${themeLightColor})">${typeIcon} ${index+1}</span>
                         <span class="poi-infowin-name">${cwEscapeHtml(poi.name)}</span>
                     </h4>
                     <p class="poi-infowin-row"><span class="poi-infowin-icon">🏷️</span> ${cwEscapeHtml(poi.category || poi.type || '未知类型')}</p>
@@ -495,20 +481,21 @@ function addPoiMarkers(pois) {
 }
 
 // 列表项点击时高亮对应 POI 标记（放大 + 主题色光环），其余复位
+function _poiMarkerPinEl(marker) {
+    if (!marker || typeof marker.getContent !== 'function') return null;
+    const root = marker.getContent();
+    if (!root) return null;
+    if (root.classList && root.classList.contains('cw-poi-map-pin')) return root;
+    return root.querySelector ? root.querySelector('.cw-poi-map-pin') : null;
+}
+
 function highlightPoiMarker(index) {
     CW.poiMarkers.forEach((marker, i) => {
-        if (!marker || typeof marker.setStyle !== 'function' || !marker._baseStyle) return;
-        if (i === index) {
-            const ring = (marker._themeColor || '#ff7e5f') + '88';
-            marker.setStyle(Object.assign({}, marker._baseStyle, {
-                'border': '3px solid white',
-                'box-shadow': `0 0 0 4px ${ring}, 0 4px 12px rgba(0,0,0,0.3)`,
-                'transform': 'scale(1.18)'
-            }));
-            if (typeof marker.setzIndex === 'function') marker.setzIndex(300);
-        } else {
-            marker.setStyle(marker._baseStyle);
-            if (typeof marker.setzIndex === 'function') marker.setzIndex(100 + i);
+        const pin = _poiMarkerPinEl(marker);
+        if (!pin) return;
+        pin.classList.toggle('cw-poi-map-pin--active', i === index);
+        if (typeof marker.setzIndex === 'function') {
+            marker.setzIndex(i === index ? 300 : 100 + i);
         }
     });
 }

@@ -1919,10 +1919,97 @@
         }
 
         /* POI 列表项内容（消除 inline style） */
+        .poi-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+        }
+
+        .poi-drag-handle {
+            flex: 0 0 auto;
+            border: none;
+            background: transparent;
+            color: #b8a8b0;
+            font-size: 14px;
+            line-height: 1;
+            padding: 4px 2px;
+            cursor: grab;
+            touch-action: none;
+        }
+
+        .poi-drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .poi-item--dragging {
+            opacity: 0.55;
+        }
+
+        .poi-item--drag-over {
+            outline: 2px dashed var(--primary);
+            outline-offset: 2px;
+        }
+
+        .poi-edit-hint {
+            font-size: 11px;
+            color: var(--text-light);
+            margin: 0 0 8px;
+            line-height: 1.45;
+        }
+
+        .route-walk-issue {
+            color: #9a4d3a;
+            font-weight: 650;
+        }
+
+        .cw-poi-map-pin {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 34px;
+            min-height: 34px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border: 3px solid #fff;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .cw-poi-map-pin-icon {
+            font-size: 16px;
+            line-height: 1;
+        }
+
+        .cw-poi-map-pin-num {
+            position: absolute;
+            right: -4px;
+            bottom: -5px;
+            min-width: 15px;
+            height: 15px;
+            padding: 0 3px;
+            border-radius: 999px;
+            background: #2a2830;
+            color: #fff;
+            font-size: 9px;
+            font-weight: 800;
+            line-height: 15px;
+            text-align: center;
+            border: 1.5px solid #fff;
+        }
+
+        .cw-poi-map-pin--active {
+            transform: scale(1.14);
+            box-shadow: 0 0 0 4px rgba(var(--primary-rgb, 255, 111, 145), 0.35), 0 4px 12px rgba(0, 0, 0, 0.28);
+        }
+
         .poi-item-content {
             display: flex;
             align-items: flex-start;
             gap: 8px;
+            flex: 1;
+            min-width: 0;
         }
 
         .poi-item-icon {
