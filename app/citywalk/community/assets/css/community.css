@@ -812,9 +812,12 @@ footer b{color:#333}
   .hero-copy{max-width:none}
   .hero h1{font-size:34px}
   .hero p{font-size:13px;margin-bottom:0}
+  .hero-buddy-card{width:100%;max-width:none;box-sizing:border-box}
   body[data-community-view="home"] .hero-buddy-card{
     display:block;margin-top:22px;padding:18px 16px;border-radius:20px;
   }
+  /* 移动 Tab 视图：整站 footer 由底栏承担导航，避免夹在内容与 Tab 之间 */
+  body[data-community-view]:not(.community-view-me) footer{display:none}
   body[data-community-view="home"] .hero-buddy-card .hero-buddy-top{margin-bottom:10px}
   body[data-community-view="home"] .hero-buddy-card h3{font-size:17px}
   body[data-community-view="home"] .hero-buddy-card p{font-size:12px;margin-bottom:8px}
