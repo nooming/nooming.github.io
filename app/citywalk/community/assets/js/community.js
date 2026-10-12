@@ -52,7 +52,6 @@ function showDemoUnavailable(feature){
 }
 
 const IMPORT_GUIDE_DISMISS_KEY = 'ww_import_guide_dismissed';
-const SEARCH_SCOPE_HINT_KEY = 'ww_search_scope_hint_seen';
 
 function dismissImportGuide(){
   const el=document.getElementById('importGuideBanner');
@@ -328,18 +327,27 @@ function bindSearchResultsBarActions() {
   });
 }
 
-function maybeShowSearchScopeHint() {
-  const el = document.getElementById('searchScopeHint');
-  if (!el) return;
-  try {
-    if (sessionStorage.getItem(SEARCH_SCOPE_HINT_KEY) === '1') {
-      el.hidden = true;
-      return;
-    }
-    sessionStorage.setItem(SEARCH_SCOPE_HINT_KEY, '1');
-  } catch (e) { /* private mode */ }
-  el.textContent = '可在下方切换「只搜找搭子」或「只搜灵感社区」缩小范围。';
-  el.hidden = false;
+function searchResultCounts() {
+  const filter = activeBuddyFilter();
+  const inspireKey = keywordForInspire();
+  const city = document.querySelector('#cityTabs .city-tab.active')?.dataset.city || '全部';
+  const feedType = document.querySelector('.feed-tab.active')?.dataset.type || '全部';
+  return {
+    buddyN: buddiesFiltered(filter).length,
+    routeN: routesForDiscover(city, inspireKey).length,
+    noteN: filterFeedPosts(feedType, inspireKey).length
+  };
+}
+
+function formatSearchResultsSummary(key, counts) {
+  const q = '「' + key + '」';
+  if (communitySearchScope === 'buddies') {
+    return q + ' · 招募 ' + counts.buddyN;
+  }
+  if (communitySearchScope === 'inspire') {
+    return q + ' · 路线 ' + counts.routeN + ' · 笔记 ' + counts.noteN;
+  }
+  return q + ' · 招募 ' + counts.buddyN + ' · 路线 ' + counts.routeN + ' · 笔记 ' + counts.noteN;
 }
 
 function renderSearchResultsBar() {
@@ -347,43 +355,63 @@ function renderSearchResultsBar() {
   const summary = document.getElementById('searchResultsSummary');
   const actions = document.getElementById('searchResultsActions');
   const clearBtn = document.getElementById('searchResultsClear');
-  const hintEl = document.getElementById('searchScopeHint');
   if (!bar || !summary || !actions) return;
 
   const key = communitySearchKeyword().trim();
   if (!key) {
     bar.hidden = true;
     if (clearBtn) clearBtn.hidden = true;
-    if (hintEl) hintEl.hidden = true;
     actions.innerHTML = '';
     return;
   }
 
-  const filter = activeBuddyFilter();
-  const inspireKey = keywordForInspire();
-  const buddyN = buddiesFiltered(filter).length;
-  const city = document.querySelector('#cityTabs .city-tab.active')?.dataset.city || '全部';
-  const feedType = document.querySelector('.feed-tab.active')?.dataset.type || '全部';
-  const routeN = routesForDiscover(city, inspireKey).length;
-  const noteN = filterFeedPosts(feedType, inspireKey).length;
+  const counts = searchResultCounts();
+  const inspireTotal = counts.routeN + counts.noteN;
 
   bar.hidden = false;
   if (clearBtn) clearBtn.hidden = false;
   syncSearchScopeUi();
-  maybeShowSearchScopeHint();
+  summary.textContent = formatSearchResultsSummary(key, counts);
 
-  if (communitySearchScope === 'buddies') {
-    summary.textContent = '当前：只搜找搭子 · 关键词「' + key + '」— 匹配 ' + buddyN + ' 条招募。';
-    actions.innerHTML = '<button type="button" class="search-results-jump" data-scroll="buddies">👥 查看找搭子 <em>' + buddyN + '</em></button>';
-  } else if (communitySearchScope === 'inspire') {
-    summary.textContent = '当前：只搜灵感社区 · 关键词「' + key + '」— 路线 ' + routeN + ' 条，笔记 ' + noteN + ' 条。';
-    actions.innerHTML = '<button type="button" class="search-results-jump" data-scroll="inspire">✦ 查看灵感社区 <em>' + (routeN + noteN) + '</em></button>';
+  if (communitySearchScope === 'buddies' || communitySearchScope === 'inspire') {
+    actions.innerHTML = '';
+    actions.hidden = true;
   } else {
-    summary.textContent = '当前：全站 · 关键词「' + key + '」— 找搭子 ' + buddyN + ' 条 · 路线 ' + routeN + ' 条 · 笔记 ' + noteN + ' 条。';
-    actions.innerHTML = '<button type="button" class="search-results-jump" data-scroll="buddies">👥 找搭子 <em>' + buddyN + '</em></button>'
-      + '<button type="button" class="search-results-jump" data-scroll="inspire">✦ 灵感社区 <em>' + (routeN + noteN) + '</em></button>';
+    actions.innerHTML = '<button type="button" class="search-results-jump" data-scroll="buddies">找搭子 <em>' + counts.buddyN + '</em></button>'
+      + '<button type="button" class="search-results-jump" data-scroll="inspire">灵感 <em>' + inspireTotal + '</em></button>';
+    actions.hidden = false;
+    bindSearchResultsBarActions();
   }
-  bindSearchResultsBarActions();
+}
+
+function syncSearchViewForActiveSearch(key, scroll) {
+  if (!key) return;
+  if (document.body.classList.contains('community-view-me')) {
+    closeMePage('#home');
+  }
+  const instant = !scroll;
+  if (communitySearchScope === 'buddies') {
+    switchCommunityView('buddies', { skipHash: false, instant: instant });
+    return;
+  }
+  if (communitySearchScope === 'inspire') {
+    switchCommunityView('inspire', { skipHash: false, instant: instant });
+    return;
+  }
+  if (communityViewId === 'home') {
+    const city = document.querySelector('#cityTabs .city-tab.active')?.dataset.city || '全部';
+    const feedType = document.querySelector('.feed-tab.active')?.dataset.type || '全部';
+    const inspireKey = keywordForInspire();
+    const buddyN = buddiesFiltered(activeBuddyFilter()).length;
+    const routeN = routesForDiscover(city, inspireKey).length;
+    const noteN = filterFeedPosts(feedType, inspireKey).length;
+    const inspireTotal = routeN + noteN;
+    if (buddyN > 0 && buddyN >= inspireTotal) {
+      switchCommunityView('buddies', { skipHash: false, instant: instant });
+    } else {
+      switchCommunityView('inspire', { skipHash: false, instant: instant });
+    }
+  }
 }
 
 function clearCommunitySearch() {
@@ -397,25 +425,19 @@ function applyCommunitySearch(opts) {
   syncSearchScopeUi();
   renderBuddies(activeBuddyFilter());
   renderInspire();
-  renderSearchResultsBar();
 
   const key = communitySearchKeyword().trim();
-  const buddyN = buddiesFiltered(activeBuddyFilter()).length;
+  syncSearchViewForActiveSearch(key, scroll);
 
-  if (key && buddyN > 0 && communitySearchScope !== 'inspire') {
-    ensureBuddiesPageOpen({ scroll: false });
-  }
+  renderSearchResultsBar();
 
   if (!scroll || !key) return;
 
-  if (communitySearchScope === 'buddies') {
-    ensureBuddiesPageOpen({ scroll: true });
+  if (communitySearchScope === 'buddies' || communitySearchScope === 'inspire') {
     return;
   }
-  if (communitySearchScope === 'inspire') {
-    scrollToId('inspire');
-    return;
-  }
+
+  const buddyN = buddiesFiltered(activeBuddyFilter()).length;
   const bar = document.getElementById('searchResultsBar');
   if (bar && !bar.hidden) {
     bar.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -451,6 +473,7 @@ function syncInspireToolbarMeta(type) {
   let text = INSPIRE_TYPE_META[type] || INSPIRE_TYPE_META['全部'];
   if (feedViewSavedOnly) text = '仅显示本机收藏的笔记。';
   meta.textContent = text;
+  meta.hidden = !feedViewSavedOnly && (!type || type === '全部');
 }
 
 function syncInspireSectionHead() {
@@ -472,6 +495,7 @@ function renderInspire() {
   syncInspireToolbarMeta(state.type);
   syncInspireSectionHead();
   renderSearchResultsBar();
+  syncMobileFilterTriggers();
 }
 
 function routeCardRibbon(r) {
@@ -901,10 +925,77 @@ function setMeSavedTab(tab, rerender) {
   if (rerender !== false) renderMeSavedPanel();
 }
 
+const COMMUNITY_VIEW_IDS = ['home', 'buddies', 'inspire', 'spots'];
+let communityViewId = 'home';
+
+function syncCommunityNavActive(view) {
+  document.querySelectorAll('[data-community-nav]').forEach(function (a) {
+    const id = a.getAttribute('data-community-nav') || '';
+    const on = id === view;
+    if (a.classList.contains('buddy-nav')) {
+      a.classList.toggle('buddy-nav-open', on);
+      a.classList.toggle('active', on);
+      if (!a.dataset.defaultLabel) a.dataset.defaultLabel = a.textContent.trim() || '👥 找搭子';
+      a.textContent = on ? '👥 找搭子' : a.dataset.defaultLabel;
+    } else {
+      a.classList.toggle('active', on);
+    }
+  });
+}
+
+function syncCommunityTabbarActive(view) {
+  document.querySelectorAll('.community-tabbar-btn[data-community-view]').forEach(function (btn) {
+    const on = (btn.dataset.communityView || '') === view;
+    btn.classList.toggle('active', on);
+    btn.setAttribute('aria-current', on ? 'page' : 'false');
+  });
+}
+
+function closeMeView() {
+  document.body.classList.remove('community-view-me');
+  const meEl = document.getElementById('me');
+  if (meEl) {
+    meEl.hidden = true;
+    meEl.setAttribute('aria-hidden', 'true');
+  }
+}
+
+function switchCommunityView(view, opts) {
+  opts = opts || {};
+  if (view === 'me') {
+    openMePage(opts);
+    return;
+  }
+  if (!COMMUNITY_VIEW_IDS.includes(view)) view = 'home';
+  communityViewId = view;
+  closeMeView();
+  document.body.setAttribute('data-community-view', view);
+
+  const buddies = document.getElementById('buddies');
+  if (buddies && view === 'buddies') {
+    buddies.classList.remove('buddy-section-hidden');
+    buddies.classList.add('buddy-section-visible');
+    renderBuddies(activeBuddyFilter());
+  }
+  if (view === 'inspire') renderInspire();
+  if (view === 'spots') renderFootprints();
+
+  syncCommunityNavActive(view);
+  syncCommunityTabbarActive(view);
+  setHeroPrimaryBuddyLabel(view === 'buddies');
+
+  window.scrollTo({ top: 0, behavior: opts.instant ? 'auto' : 'smooth' });
+  if (!opts.skipHash && typeof history !== 'undefined' && history.replaceState) {
+    try { history.replaceState(null, '', '#' + view); } catch (e) { /* file:// */ }
+  }
+}
+
 function openMePage(opts) {
   opts = opts || {};
   if (opts.tab) setMePrimaryTab(opts.tab, false);
   if (opts.saved) setMeSavedTab(opts.saved, false);
+  closeMeView();
+  document.body.removeAttribute('data-community-view');
   document.body.classList.add('community-view-me');
   const meEl = document.getElementById('me');
   if (meEl) {
@@ -912,6 +1003,8 @@ function openMePage(opts) {
     meEl.setAttribute('aria-hidden', 'false');
   }
   renderMePage();
+  syncCommunityNavActive('');
+  syncCommunityTabbarActive('');
   window.scrollTo({ top: 0, behavior: opts.instant ? 'auto' : 'smooth' });
   if (!opts.skipHash && typeof history !== 'undefined' && history.replaceState) {
     try { history.replaceState(null, '', '#me'); } catch (e) { /* file:// etc. */ }
@@ -919,38 +1012,35 @@ function openMePage(opts) {
 }
 
 function closeMePage(targetHash) {
-  document.body.classList.remove('community-view-me');
-  const meEl = document.getElementById('me');
-  if (meEl) {
-    meEl.hidden = true;
-    meEl.setAttribute('aria-hidden', 'true');
-  }
-  const hash = targetHash || '#home';
-  const id = hash.replace(/^#/, '') || 'home';
-  if (typeof history !== 'undefined' && history.replaceState) {
-    try { history.replaceState(null, '', hash); } catch (e) { /* file:// */ }
-  }
-  const target = document.getElementById(id);
-  if (target) target.scrollIntoView({ behavior: 'smooth' });
+  const raw = targetHash || '#home';
+  const view = raw.replace(/^#/, '') || 'home';
+  switchCommunityView(COMMUNITY_VIEW_IDS.includes(view) ? view : 'home');
 }
 
 function syncCommunityViewFromHash() {
   const hash = (typeof location !== 'undefined' && location.hash) || '';
-  if (hash === '#me') {
+  const id = hash.replace(/^#/, '') || 'home';
+  if (id === 'me') {
     openMePage({ skipHash: true, instant: true });
     return;
   }
-  if (document.body.classList.contains('community-view-me')) {
-    document.body.classList.remove('community-view-me');
-    const meEl = document.getElementById('me');
-    if (meEl) {
-      meEl.hidden = true;
-      meEl.setAttribute('aria-hidden', 'true');
-    }
-    const id = hash.replace(/^#/, '') || 'home';
-    const target = document.getElementById(id);
-    if (target) target.scrollIntoView({ behavior: 'smooth' });
-  }
+  switchCommunityView(COMMUNITY_VIEW_IDS.includes(id) ? id : 'home', { skipHash: true, instant: true });
+}
+
+function bindCommunityRouter() {
+  document.querySelectorAll('[data-community-nav]').forEach(function (a) {
+    a.addEventListener('click', function (ev) {
+      const view = a.getAttribute('data-community-nav');
+      if (!view || !COMMUNITY_VIEW_IDS.includes(view)) return;
+      ev.preventDefault();
+      switchCommunityView(view);
+    });
+  });
+  document.querySelectorAll('.community-tabbar-btn[data-community-view]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      switchCommunityView(btn.dataset.communityView || 'home');
+    });
+  });
 }
 
 function updateUserAvatarPopover() {
@@ -981,6 +1071,7 @@ function updateUserAvatarPopover() {
 if (typeof window !== 'undefined') {
   window.openMePage = openMePage;
   window.closeMePage = closeMePage;
+  window.switchCommunityView = switchCommunityView;
 }
 
 function postsAuthoredByMe() {
@@ -1023,7 +1114,7 @@ function renderMeSavedPanel() {
   if (meSavedTab === 'notes') {
     const posts = [...feedSavedIds].map(findCommunityPost).filter(Boolean);
     html = posts.length ? posts.map(postCardHtml).join('') : '';
-    emptyMsg = posts.length ? '' : '还没有收藏的灵感笔记。在灵感社区卡片上点 ☆ 即可收藏。';
+    emptyMsg = posts.length ? '' : '还没有收藏的笔记。在灵感区卡片上点 ☆ 即可收藏。';
     grid.className = 'me-saved-grid feed-grid';
   } else if (meSavedTab === 'buddies') {
     const list = [...buddySavedIds].map(function (id) { return findBuddy(id); }).filter(Boolean);
@@ -1042,7 +1133,7 @@ function renderMeSavedPanel() {
         + '<div class="me-row-actions"><button type="button" class="me-row-btn" onclick="openRouteById(\'' + safeText(r.id) + '\')">详情</button>'
         + '<button type="button" class="me-row-btn" onclick="setFootprintView(\'routes\');scrollToId(\'spots\')">在足迹中</button></div></article>';
     }).join('');
-    emptyMsg = list.length ? '' : '还没有收藏路线。在灵感社区路线卡上点 ♡ 收藏。';
+    emptyMsg = list.length ? '' : '还没有收藏路线。在灵感区路线卡上点 ♡ 收藏。';
     grid.className = 'me-saved-grid me-list-grid';
   } else {
     const list = favoriteSpotKeys.map(routeForSpotKey).filter(Boolean);
@@ -1088,7 +1179,7 @@ function renderMePublishedPanel() {
   }
   if (postsEmpty) {
     postsEmpty.hidden = !!myPosts.length;
-    postsEmpty.textContent = myPosts.length ? '' : '你还没有发布帖子。在灵感社区点「＋ 发布」。';
+    postsEmpty.textContent = myPosts.length ? '' : '你还没有发布笔记。在灵感区点「＋ 发布」。';
   }
   if (budEl) {
     budEl.innerHTML = myBuds.length ? myBuds.map(function (b) {
@@ -1424,6 +1515,10 @@ function renderPointsBoard(){
   const wrap=document.getElementById('footprintPointsWrap');
   const hasActivity=points>0||(Array.isArray(completionEvents)&&completionEvents.length>0);
   if(wrap) wrap.hidden=!hasActivity;
+  const fold=document.getElementById('footprintPointsFold');
+  if(fold) fold.hidden=!hasActivity;
+  const foldSummary=document.getElementById('pointsFoldSummary');
+  if(foldSummary) foldSummary.textContent=points.toLocaleString('zh-CN')+' 分 · '+current.level.title;
 
   const levelButton=document.getElementById('pointsCurrentLevel');
   levelButton.innerHTML=`<span class="points-current-level-text">${current.level.icon} ${current.level.title}</span><span class="points-level-arrow" aria-hidden="true"></span>`;
@@ -2135,8 +2230,9 @@ function renderBuddies(filter='全部'){
   }).join(''):filter==='收藏'
     ?'<p class="empty" style="display:block;grid-column:1/-1"><strong>还没有收藏的招募</strong><br><span style="font-size:12px;color:#888">在卡片右上角点 ☆，或在「我的 · 收藏」查看。</span></p>'
     :key
-    ?'<p class="empty" style="display:block;grid-column:1/-1"><strong>没有匹配的招募</strong><br><span style="font-size:12px;color:#888">换个关键词，或切换顶栏范围为「全站 / 灵感社区」。</span></p>'
+    ?'<p class="empty" style="display:block;grid-column:1/-1"><strong>没有匹配的招募</strong><br><span style="font-size:12px;color:#888">换关键词，或把范围切到「全部 / 灵感」。</span></p>'
     :'<p class="empty" style="display:block;grid-column:1/-1">暂无招募，登录后发起一次 Walk 吧。</p>';
+  syncMobileFilterTriggers();
 }
 
 let currentRouteId = null;
@@ -2597,50 +2693,24 @@ async function submitBuddyCreateForm(ev){
 function showModal(id){document.getElementById(id).classList.add('show');document.body.style.overflow='hidden'}
 function closeModal(id){document.getElementById(id).classList.remove('show');document.body.style.overflow=''}
 
-/** 展开找搭子区（不切换关闭；供搜索、结果跳转等使用） */
+/** 供搜索、结果跳转等：切到找搭子视图 */
 function ensureBuddiesPageOpen(options) {
-  const section = document.getElementById('buddies');
-  if (!section) return;
-  if (!section.classList.contains('buddy-section-visible')) {
-    section.classList.remove('buddy-section-hidden');
-    section.classList.add('buddy-section-visible');
-    renderBuddies(activeBuddyFilter());
-    updateBuddyToggle(true);
-  }
-  if (options && options.scroll) {
-    requestAnimationFrame(function () {
-      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-  }
+  switchCommunityView('buddies', { skipHash: false, instant: !(options && options.scroll) });
 }
 
-function openBuddiesPage(event){
-  if(event){event.preventDefault();}
-  const section=document.getElementById('buddies');
-  const isOpen=section.classList.contains('buddy-section-visible');
-  if(isOpen){
-    closeBuddiesPage();
-    return;
-  }
-  ensureBuddiesPageOpen({ scroll: true });
+function openBuddiesPage(event) {
+  if (event) event.preventDefault();
+  switchCommunityView('buddies');
 }
 
-function toggleBuddiesPage(event){
-  if(event){event.preventDefault();event.stopPropagation();}
-  const section=document.getElementById('buddies');
-  const isOpen=section.classList.contains('buddy-section-visible');
-  if(isOpen){closeBuddiesPage();}
-  else{openBuddiesPage();}
+function toggleBuddiesPage(event) {
+  if (event) { event.preventDefault(); event.stopPropagation(); }
+  if (communityViewId === 'buddies') switchCommunityView('home');
+  else switchCommunityView('buddies');
 }
 
-function closeBuddiesPage(){
-  const section=document.getElementById('buddies');
-  section.classList.remove('buddy-section-visible');
-  section.classList.add('buddy-section-hidden');
-  updateBuddyToggle(false);
-  requestAnimationFrame(()=>{
-    document.getElementById('inspire').scrollIntoView({behavior:'smooth',block:'start'});
-  });
+function closeBuddiesPage() {
+  switchCommunityView('inspire');
 }
 
 function setHeroPrimaryBuddyLabel(isOpen){
@@ -2652,19 +2722,117 @@ function setHeroPrimaryBuddyLabel(isOpen){
   if(icon) icon.textContent=isOpen?'↕':'👥';
 }
 
-function updateBuddyToggle(isOpen){
-  const btn=document.getElementById('buddyCollapseBtn');
-  if(btn) btn.textContent=isOpen?'收起搭子区 ↑':'展开搭子区 ↓';
-  document.querySelectorAll('.buddy-nav').forEach(a=>{
-    a.classList.toggle('buddy-nav-open',isOpen);
-    const label=a.dataset.defaultLabel || '👥 找搭子';
-    a.textContent=isOpen?'👥 收起搭子':label;
-    a.dataset.defaultLabel=label;
-  });
+function updateBuddyToggle(isOpen) {
   setHeroPrimaryBuddyLabel(isOpen);
+  syncCommunityNavActive(isOpen ? 'buddies' : communityViewId);
 }
 
-function scrollToId(id){document.getElementById(id).scrollIntoView({behavior:'smooth'})}
+const MOBILE_LAYOUT_MQ=typeof window!=='undefined'&&window.matchMedia?window.matchMedia('(max-width: 760px)'):null;
+function isMobileLayout(){return MOBILE_LAYOUT_MQ?MOBILE_LAYOUT_MQ.matches:false}
+
+function initMobileLayoutDefaults() {
+  /* 视图由 switchCommunityView 控制，不再折叠搭子区块 */
+}
+
+function syncMobileFilterTriggers(){
+  const buddyBtn=document.getElementById('buddyFilterTrigger');
+  if(buddyBtn) buddyBtn.textContent='筛选 · '+(activeBuddyFilter()||'全部');
+  const typeBtn=document.getElementById('inspireTypeTrigger');
+  const type=document.querySelector('.feed-tab.active')?.dataset.type||'全部';
+  if(typeBtn) typeBtn.textContent='类型 · '+type;
+}
+
+function closeMobileFilterSheet(){
+  const sheet=document.getElementById('mobileFilterSheet');
+  if(!sheet) return;
+  sheet.hidden=true;
+  sheet.setAttribute('aria-hidden','true');
+  if(document.body.style.overflow==='hidden'&&!document.querySelector('.modal.show')) document.body.style.overflow='';
+}
+
+function openMobileFilterSheet(mode){
+  const sheet=document.getElementById('mobileFilterSheet');
+  const bodyEl=document.getElementById('mobileSheetBody');
+  const titleEl=document.getElementById('mobileSheetTitle');
+  if(!sheet||!bodyEl||!titleEl) return;
+  bodyEl.innerHTML='';
+  if(mode==='buddy'){
+    titleEl.textContent='找搭子筛选';
+    document.querySelectorAll('#buddyFilters .buddy-filter').forEach(function(btn){
+      const chip=document.createElement('button');
+      chip.type='button';
+      chip.className='mobile-sheet-chip'+(btn.classList.contains('active')?' active':'');
+      chip.textContent=btn.textContent;
+      chip.dataset.filter=btn.dataset.filter||'';
+      chip.addEventListener('click',function(){
+        document.querySelectorAll('.buddy-filter').forEach(function(b){
+          b.classList.toggle('active',b.dataset.filter===chip.dataset.filter);
+        });
+        renderBuddies(chip.dataset.filter||'全部');
+        syncMobileFilterTriggers();
+        closeMobileFilterSheet();
+      });
+      bodyEl.appendChild(chip);
+    });
+  }else if(mode==='inspire-type'){
+    titleEl.textContent='笔记类型';
+    document.querySelectorAll('#feedTabs .feed-tab').forEach(function(btn){
+      const chip=document.createElement('button');
+      chip.type='button';
+      chip.className='mobile-sheet-chip'+(btn.classList.contains('active')?' active':'');
+      chip.textContent=btn.textContent;
+      chip.dataset.type=btn.dataset.type||'全部';
+      chip.addEventListener('click',function(){
+        feedViewSavedOnly=false;
+        feedVisibleCount=8;
+        setFeedTypeFilter(chip.dataset.type||'全部');
+        syncMobileFilterTriggers();
+        closeMobileFilterSheet();
+      });
+      bodyEl.appendChild(chip);
+    });
+  }
+  sheet.hidden=false;
+  sheet.setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden';
+}
+
+function bindMobileDensityUi(){
+  const searchToggle=document.getElementById('searchNavToggle');
+  const searchInput=document.getElementById('searchInput');
+  if(searchToggle){
+    searchToggle.addEventListener('click',function(){
+      const open=document.body.classList.toggle('search-nav-open');
+      searchToggle.setAttribute('aria-expanded',open?'true':'false');
+      if(open&&searchInput) searchInput.focus();
+    });
+  }
+  const buddyTrigger=document.getElementById('buddyFilterTrigger');
+  if(buddyTrigger) buddyTrigger.addEventListener('click',function(){openMobileFilterSheet('buddy');});
+  const inspireTrigger=document.getElementById('inspireTypeTrigger');
+  if(inspireTrigger) inspireTrigger.addEventListener('click',function(){openMobileFilterSheet('inspire-type');});
+  ['mobileFilterSheetClose','mobileFilterSheetDone','mobileFilterSheetBackdrop'].forEach(function(id){
+    const el=document.getElementById(id);
+    if(el) el.addEventListener('click',closeMobileFilterSheet);
+  });
+  if(MOBILE_LAYOUT_MQ){
+    MOBILE_LAYOUT_MQ.addEventListener('change',function(){
+      initMobileLayoutDefaults();
+      closeMobileFilterSheet();
+      if(!isMobileLayout()) document.body.classList.remove('search-nav-open');
+    });
+  }
+}
+
+function scrollToId(id) {
+  if (COMMUNITY_VIEW_IDS.includes(id) || id === 'me') {
+    if (id === 'me') openMePage({});
+    else switchCommunityView(id);
+    return;
+  }
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth' });
+}
 function saveRoute(btn){btn.textContent=btn.textContent==='♡'?'♥':'♡';btn.style.color=btn.textContent==='♥'?'#ff385c':''}
 function toggleLike(el){el.classList.toggle('liked');el.textContent=el.classList.contains('liked')?el.textContent.replace('♡','♥'):el.textContent.replace('♥','♡')}
 function toggleSaveText(el){el.classList.toggle('liked');el.textContent=el.classList.contains('liked')?'♣ 已收藏':'♧ 收藏'}
@@ -2711,6 +2879,7 @@ Array.from(document.querySelectorAll('.buddy-filter')).forEach(btn=>btn.addEvent
   btn.classList.add('active');
   renderBuddies(btn.dataset.filter);
   renderSearchResultsBar();
+  syncMobileFilterTriggers();
 }));
 
 // global search（范围在 #searchResultsBar 内切换）
@@ -2741,21 +2910,7 @@ if(searchResultsClear) searchResultsClear.addEventListener('click',clearCommunit
 Array.from(document.querySelectorAll('.modal')).forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id)}));
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal.show').forEach(m=>closeModal(m.id))});
 
-// nav active state（顶栏：规划 / 社区 / 找搭子）
-const sections=['home','buddies','inspire','spots'];
-const navLinks=Array.from(document.querySelectorAll('.nav-links a'));
-const navLinkBySection={};
-navLinks.forEach(a=>{
-  const href=a.getAttribute('href')||'';
-  if(href.startsWith('#')&&href.length>1) navLinkBySection[href.slice(1)]=a;
-});
-const io=new IntersectionObserver(entries=>{entries.forEach(entry=>{if(entry.isIntersecting){
-  navLinks.forEach(a=>a.classList.remove('active'));
-  const link=navLinkBySection[entry.target.id];
-  if(link) link.classList.add('active');
-}})},{threshold:.2,rootMargin:'-20% 0px -60% 0px'});
-sections.forEach(id=>{const el=document.getElementById(id);if(el)io.observe(el)});
-if(navLinkBySection.home) navLinkBySection.home.classList.add('active');
+bindCommunityRouter();
 
 renderFootprints();
 renderFeedHotTags();
@@ -2782,7 +2937,10 @@ if (meOpenAccountBtn) meOpenAccountBtn.addEventListener('click', function () {
 });
 renderHeroBuddyPreview();
 updateHeroBuddyCount();
-updateBuddyToggle(true);
+bindMobileDensityUi();
+initMobileLayoutDefaults();
+syncMobileFilterTriggers();
+syncCommunityViewFromHash();
 
 const publishPostForm=document.getElementById('publishPostForm');
 if(publishPostForm) publishPostForm.addEventListener('submit',submitPublishPostForm);
@@ -2826,9 +2984,7 @@ const incomingRouteId = integrationParams.get('route');
 if(incomingRouteId && routeSpots[incomingRouteId]){
   currentRouteId=incomingRouteId;
   renderSpots(incomingRouteId,false);
-  requestAnimationFrame(()=>{
-    document.getElementById('spots').scrollIntoView({behavior:'smooth',block:'start'});
-  });
+  switchCommunityView('spots', { instant: true });
 }
 if(integrationParams.get('walkComplete')==='1'){
   const completedRouteId=integrationParams.get('route')||integrationParams.get('routeId');
@@ -2883,6 +3039,3 @@ if(typeof CitywalkAuth!=='undefined'){
 }
 
 window.addEventListener('hashchange', syncCommunityViewFromHash);
-if (typeof location !== 'undefined' && location.hash === '#me') {
-  openMePage({ skipHash: true, instant: true });
-}

@@ -15,24 +15,25 @@
 <link rel="stylesheet" href="../assets/css/cw-brand.css">
 <link rel="stylesheet" href="assets/css/community.css">
 </head>
-<body class="cw-safe-bottom">
+<body class="cw-safe-bottom" data-community-view="home">
 
 <header class="navbar">
   <div class="nav-inner">
-    <a class="logo cw-brand-logo" href="#home">
+    <a class="logo cw-brand-logo" href="#home" data-community-nav="home">
       <img class="cw-brand-logo__mark" src="../assets/brand/wanderwalk-mark.svg" width="36" height="36" alt="">
       <span class="cw-brand-logo__word">Wander<b>Walk</b></span>
     </a>
     <nav class="nav-links" id="navLinks" aria-label="社区导航">
       <a href="../" class="nav-plan">Citywalk 路线规划</a>
-      <a href="#home">首页</a>
-      <a href="#buddies" class="buddy-nav" onclick="openBuddiesPage(event)">👥 找搭子</a>
-      <a href="#inspire">灵感社区</a>
-      <a href="#spots">足迹</a>
+      <a href="#home" data-community-nav="home">首页</a>
+      <a href="#buddies" class="buddy-nav" data-community-nav="buddies">👥 找搭子</a>
+      <a href="#inspire" data-community-nav="inspire">灵感社区</a>
+      <a href="#spots" data-community-nav="spots">足迹</a>
     </nav>
-    <label class="search search--nav">
+    <button type="button" class="search-nav-toggle" id="searchNavToggle" aria-expanded="false" aria-controls="searchNavField">⌕</button>
+    <label class="search search--nav search--nav-field" id="searchNavField">
       <span>⌕</span>
-      <input id="searchInput" placeholder="搜索找搭子、路线与笔记…" autocomplete="off" aria-label="搜索社区">
+      <input id="searchInput" placeholder="搜搭子、路线、笔记…" autocomplete="off" aria-label="搜索社区">
     </label>
     <div class="user-avatar-wrap">
       <button type="button" class="user-avatar user-avatar--initial" id="cwAuthAvatarBtn" aria-describedby="userAvatarPopover">我</button>
@@ -49,9 +50,9 @@
         <h1>不赶景点，<br>只走一段有意思的路。</h1>
         <p>发现城市里的街区、咖啡、小店、建筑和隐藏机位。更重要的是，找到一个也想出门的人，一起把路线走完。</p>
         <div class="hero-actions">
-          <button class="hero-btn primary" type="button" onclick="openBuddiesPage()"><span class="hero-btn-icon" aria-hidden="true">👥</span><span class="hero-btn-label">先找搭子</span></button>
+          <button class="hero-btn primary" type="button" onclick="switchCommunityView('buddies')"><span class="hero-btn-icon" aria-hidden="true">👥</span><span class="hero-btn-label">先找搭子</span></button>
           <a class="hero-btn hero-btn-planner" href="../"><span class="hero-btn-label">Citywalk 路线规划</span><span class="hero-btn-suffix" aria-hidden="true">→</span></a>
-          <button class="hero-btn ghost" type="button" onclick="scrollToId('inspire')"><span class="hero-btn-label">逛灵感社区</span><span class="hero-btn-suffix" aria-hidden="true">→</span></button>
+          <button class="hero-btn ghost" type="button" onclick="switchCommunityView('inspire')"><span class="hero-btn-label">逛灵感社区</span><span class="hero-btn-suffix" aria-hidden="true">→</span></button>
         </div>
       </div>
       <div class="hero-buddy-card">
@@ -62,7 +63,7 @@
         <h3>今天有人一起走吗？</h3>
         <p>按时间、城市和兴趣选择一场 Walk，直接加入。</p>
         <div class="hero-buddy-list" id="heroBuddyList"></div>
-        <button class="hero-buddy-cta" onclick="openBuddiesPage()">查看全部同行计划 →</button>
+        <button class="hero-buddy-cta" type="button" onclick="switchCommunityView('buddies')">查看全部同行计划 →</button>
       </div>
     </div>
   </div>
@@ -70,27 +71,15 @@
 
 <main class="container">
 
-  <aside class="ww-planner-strip" aria-label="与路线规划联动">
-    <div class="ww-planner-strip-copy">
-      <strong>还没有路线？</strong>
-      <span>Citywalk 路线规划 → 记录到社区 → 在足迹里回看时间轴</span>
-    </div>
-    <a class="ww-planner-strip-btn" href="../">去规划</a>
-  </aside>
-
   <aside class="search-results-bar" id="searchResultsBar" hidden aria-live="polite">
     <div class="search-results-body">
-      <div class="search-results-copy">
-        <strong>搜索结果</strong>
-        <p id="searchResultsSummary">—</p>
-        <p class="search-results-scope-hint" id="searchScopeHint" hidden></p>
-      </div>
+      <p class="search-results-summary" id="searchResultsSummary">—</p>
       <div class="search-results-scope-row">
-        <span class="search-results-scope-label" id="searchResultsScopeLabel">搜索范围</span>
-        <div class="search-scope search-scope--results" id="searchResultsScope" role="tablist" aria-labelledby="searchResultsScopeLabel">
-          <button type="button" class="search-scope-btn active" data-search-scope="all" role="tab" aria-selected="true">全站</button>
+        <span class="search-results-scope-label" id="searchResultsScopeLabel">范围</span>
+        <div class="search-scope search-scope--results" id="searchResultsScope" role="tablist" aria-label="搜索范围">
+          <button type="button" class="search-scope-btn active" data-search-scope="all" role="tab" aria-selected="true">全部</button>
           <button type="button" class="search-scope-btn" data-search-scope="buddies" role="tab" aria-selected="false">找搭子</button>
-          <button type="button" class="search-scope-btn" data-search-scope="inspire" role="tab" aria-selected="false">灵感社区</button>
+          <button type="button" class="search-scope-btn" data-search-scope="inspire" role="tab" aria-selected="false">灵感</button>
         </div>
       </div>
       <div class="search-results-actions" id="searchResultsActions"></div>
@@ -106,7 +95,7 @@
     <button type="button" class="import-guide-dismiss" onclick="dismissImportGuide()">知道了</button>
   </aside>
 
-  <section class="section buddy-section-visible" id="buddies">
+  <section class="section buddy-section-visible community-view-section" id="buddies">
     <div class="buddy-section-top">
       <div class="buddy-section-note">✨ 主要功能 · 找到一起出发的人</div>
       <button class="buddy-collapse" id="buddyCollapseBtn" onclick="toggleBuddiesPage(event)">收起搭子区 ↑</button>
@@ -117,6 +106,7 @@
         <div><h3>👥 找搭子</h3><p>一个人也想出门？发起一次 Walk，找到节奏刚好的同行者。</p></div>
         <button class="buddy-cta" onclick="openCreateBuddy()">＋ 发起一次 Walk</button>
       </div>
+      <button type="button" class="mobile-filter-trigger" id="buddyFilterTrigger" aria-haspopup="dialog">筛选 · 全部</button>
       <div class="buddy-filters" id="buddyFilters">
         <button class="buddy-filter active" data-filter="全部">全部</button>
         <button class="buddy-filter" data-filter="今天">今天</button>
@@ -130,11 +120,11 @@
     </div>
   </section>
 
-  <section class="section" id="inspire">
+  <section class="section community-view-section" id="inspire">
     <div class="section-head inspire-section-head" id="inspireSectionHead">
       <div>
         <h2>灵感社区</h2>
-        <p class="inspire-lead">浏览社区路线与笔记。自己规划的线路请在 <a href="#spots" onclick="setFootprintView('planned')">足迹 · 规划导入</a> 查看。</p>
+        <p class="inspire-lead">社区路线与笔记。自规划线路见 <a href="#spots" onclick="switchCommunityView('spots'); setFootprintView('planned'); return false;">足迹 · 规划导入</a>。</p>
       </div>
       <div class="section-head-actions">
         <button type="button" class="publish publish--inline" onclick="openPublish()">＋ 发布</button>
@@ -142,6 +132,7 @@
     </div>
     <div class="inspire-toolbar" id="inspireToolbar">
       <div class="feed-toolbar inspire-toolbar-inner">
+        <button type="button" class="mobile-filter-trigger" id="inspireTypeTrigger" aria-haspopup="dialog">类型 · 全部</button>
         <div class="feed-tabs" id="feedTabs" role="tablist" aria-label="内容类型">
           <button type="button" class="feed-tab active" data-type="全部" role="tab" aria-selected="true">全部</button>
           <button type="button" class="feed-tab" data-type="路线" role="tab">路线</button>
@@ -176,26 +167,29 @@
           <div class="feed-load-row"><button type="button" class="feed-load-more" id="feedLoadMore" hidden>再加载一些 ↓</button></div>
           <div class="empty feed-empty-state" id="feedEmpty" hidden>没有找到相关内容，换个关键词试试。</div>
         </div>
-        <aside class="feed-side" aria-label="话题与发布提示">
-          <details class="feed-side-card feed-side-tips-details">
-            <summary class="feed-side-title feed-side-summary">发布小贴士</summary>
-            <ul class="feed-side-tips">
-              <li><b>路线</b>：起终点、时长、沿途亮点。</li>
-              <li><b>打卡</b>：招牌、人均或适合停留的时段。</li>
-              <li><b>攻略</b>：装备、预约或交通规则等提醒。</li>
-            </ul>
-          </details>
-          <div class="feed-side-card feed-side-tags" id="feedHotTags">
-            <strong class="feed-side-title">常见话题</strong>
-            <p class="feed-side-note">点击标签可填入顶栏搜索</p>
-            <div class="feed-hot-tags" id="feedHotTagsList"></div>
-          </div>
-        </aside>
+        <details class="feed-side-pack" id="feedSidePack">
+          <summary class="feed-side-pack-summary">话题 · 发布提示</summary>
+          <aside class="feed-side" aria-label="话题与发布提示">
+            <details class="feed-side-card feed-side-tips-details">
+              <summary class="feed-side-title feed-side-summary">发布小贴士</summary>
+              <ul class="feed-side-tips">
+                <li><b>路线</b>：起终点、时长、沿途亮点。</li>
+                <li><b>打卡</b>：招牌、人均或适合停留的时段。</li>
+                <li><b>攻略</b>：装备、预约或交通规则等提醒。</li>
+              </ul>
+            </details>
+            <div class="feed-side-card feed-side-tags" id="feedHotTags">
+              <strong class="feed-side-title">常见话题</strong>
+              <p class="feed-side-note">点标签填入搜索框</p>
+              <div class="feed-hot-tags" id="feedHotTagsList"></div>
+            </div>
+          </aside>
+        </details>
       </div>
     </div>
   </section>
 
-<section class="section" id="spots">
+  <section class="section community-view-section" id="spots">
     <div class="section-head footprint-section-head">
       <div>
         <h2 id="footprintHeading">我的 Walk 足迹</h2>
@@ -205,6 +199,7 @@
         <button class="footprint-add" onclick="openAddFootprint()">＋ 记录一次 Walk</button>
       </div>
     </div>
+    <p class="footprint-planner-hint">还没有路线？<a href="../">去 Citywalk 路线规划</a>，生成后点「记录到社区」会出现在下方「规划导入」。</p>
 
     <div id="footprintArchivePanel">
       <div class="footprint-tabs" id="footprintTabs">
@@ -219,6 +214,8 @@
         <input id="plannedImportInput" class="footprint-input" type="text" inputmode="url" autocomplete="off" placeholder="粘贴规划页复制的链接，或 ?r= 后面的 id" />
         <button type="submit">导入</button>
       </form>
+      <details class="footprint-points-fold" id="footprintPointsFold">
+      <summary class="footprint-points-fold-summary">漫游积分 · <span id="pointsFoldSummary">0 分</span></summary>
       <div class="footprint-points-bar" id="footprintPointsWrap" hidden>
         <div class="footprint-points-card walk-points-card" id="walkPointsCard">
           <div class="footprint-points-row">
@@ -253,6 +250,7 @@
           </div>
         </div>
       </div>
+      </details>
       <div class="footprint-summary" id="footprintSummary"></div>
       <div class="footprint-grid" id="footprintGrid"></div>
       <div class="footprint-empty" id="footprintEmpty" style="display:none"></div>
@@ -322,6 +320,13 @@
       </div>
     </div>
 </section>
+
+<nav class="community-tabbar" id="communityTabbar" aria-label="社区主导航">
+  <button type="button" class="community-tabbar-btn" data-community-view="home" aria-current="page"><span class="community-tabbar-icon" aria-hidden="true">⌂</span><span>首页</span></button>
+  <button type="button" class="community-tabbar-btn" data-community-view="buddies"><span class="community-tabbar-icon" aria-hidden="true">👥</span><span>找搭子</span></button>
+  <button type="button" class="community-tabbar-btn" data-community-view="inspire"><span class="community-tabbar-icon" aria-hidden="true">✦</span><span>灵感</span></button>
+  <button type="button" class="community-tabbar-btn" data-community-view="spots"><span class="community-tabbar-icon" aria-hidden="true">👣</span><span>足迹</span></button>
+</nav>
 
 <footer><b>WanderWalk</b> 社区 · <a href="../">Citywalk 路线规划</a> · <a href="../../">noomings 首页</a><br><br>城市不是用来赶路的，是用来慢慢走的。<br><br>© 2026 WanderWalk（演示数据）</footer>
 
@@ -468,6 +473,18 @@
     </div>
   </div>
 </div>
+<div class="mobile-sheet" id="mobileFilterSheet" hidden aria-hidden="true">
+  <div class="mobile-sheet-backdrop" id="mobileFilterSheetBackdrop"></div>
+  <div class="mobile-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="mobileSheetTitle">
+    <div class="mobile-sheet-head">
+      <h3 id="mobileSheetTitle">筛选</h3>
+      <button type="button" class="mobile-sheet-close" id="mobileFilterSheetClose" aria-label="关闭">×</button>
+    </div>
+    <div class="mobile-sheet-body" id="mobileSheetBody"></div>
+    <button type="button" class="mobile-sheet-done" id="mobileFilterSheetDone">完成</button>
+  </div>
+</div>
+
 <div class="modal" id="cwAuthModal" role="dialog" aria-modal="true" aria-labelledby="cwAuthModalTitle">
   <div class="modal-box buddy-modal cw-auth-modal">
     <button type="button" class="close" onclick="CitywalkAuth.closeAuthModal()" aria-label="关闭">×</button>
