@@ -140,8 +140,7 @@ function renderPinnedSeeds() {
     if (seeds.length === 0) {
         panel.hidden = true;
         list.innerHTML = '';
-        return;
-    }
+    } else {
     panel.hidden = false;
     list.innerHTML = '';
     seeds.forEach((s, i) => {
@@ -160,7 +159,18 @@ function renderPinnedSeeds() {
         row.appendChild(del);
         list.appendChild(row);
     });
+    }
     if (typeof syncPinnedSeedMarkers === 'function') syncPinnedSeedMarkers();
+}
+
+/** 按坐标移除必去（地图气泡用，避免列表变更后 index 错位） */
+function removePinnedSeedAt(lng, lat) {
+    if (!Array.isArray(CW.pinnedSeeds)) return;
+    const idx = CW.pinnedSeeds.findIndex(s =>
+        s && typeof s.lng === 'number' && typeof s.lat === 'number'
+        && Math.abs(s.lng - lng) < 1e-5 && Math.abs(s.lat - lat) < 1e-5
+    );
+    if (idx >= 0) removePinnedSeed(idx);
 }
 
 function confirmPinnedOrRouteStop(spot) {

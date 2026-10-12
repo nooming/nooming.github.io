@@ -683,22 +683,30 @@ function syncPinnedSeedMarkers() {
         marker.on('click', function() {
             if (!CW.infoWindow) return;
             const name = spot.name || '必去点';
+            const pinLng = spot.lng;
+            const pinLat = spot.lat;
             CW.infoWindow.setContent(`
                 <div class="mustgo-infowin">
                     <strong>${cwEscapeHtml(name)}</strong>
                     <p class="mustgo-infowin-tag">必去点</p>
-                    <button type="button" class="btn-mustgo-infowin-remove" data-mustgo-index="${index}">移除必去</button>
+                    <button type="button" class="btn-mustgo-infowin-remove" data-mustgo-lng="${pinLng}" data-mustgo-lat="${pinLat}">移除必去</button>
                 </div>
             `);
             CW._mustGoConfirmToken = 0;
-            CW.infoWindow.open(CW.map, [spot.lng, spot.lat]);
+            CW.infoWindow.open(CW.map, [pinLng, pinLat]);
             setTimeout(() => {
-                const btn = document.querySelector('.btn-mustgo-infowin-remove[data-mustgo-index="' + index + '"]');
+                const btn = document.querySelector(
+                    '.btn-mustgo-infowin-remove[data-mustgo-lng="' + pinLng + '"][data-mustgo-lat="' + pinLat + '"]'
+                );
                 if (!btn) return;
                 btn.addEventListener('click', (ev) => {
                     ev.preventDefault();
                     ev.stopPropagation();
-                    if (typeof removePinnedSeed === 'function') removePinnedSeed(index);
+                    if (typeof removePinnedSeedAt === 'function') {
+                        removePinnedSeedAt(pinLng, pinLat);
+                    } else if (typeof removePinnedSeed === 'function') {
+                        removePinnedSeed(index);
+                    }
                     if (CW.infoWindow) CW.infoWindow.close();
                 });
             }, 0);
