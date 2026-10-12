@@ -1351,6 +1351,39 @@
             color: var(--text-light);
         }
 
+        .map-layer-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 8px 0 0;
+            font-size: 12px;
+            color: var(--text-medium);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .map-layer-toggle input {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .inspire-map-toggle {
+            margin-top: 6px;
+        }
+
+        .explore-map-toggle {
+            margin-top: 10px;
+        }
+
+        .map-layer-hint {
+            margin: 4px 0 0;
+            font-size: 11px;
+            line-height: 1.45;
+            color: var(--text-light);
+        }
+
         .agent-inspire .inspire-cards {
             margin-top: 10px;
         }
@@ -2241,6 +2274,82 @@
         .cw-poi-map-pin--active {
             transform: scale(1.14);
             box-shadow: 0 0 0 4px rgba(var(--primary-rgb, 255, 111, 145), 0.35), 0 4px 12px rgba(0, 0, 0, 0.28);
+        }
+
+        .cw-inspire-pin {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border: 2.5px solid #fff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .cw-inspire-pin-icon {
+            font-size: 13px;
+            line-height: 1;
+        }
+
+        .cw-inspire-pin--selected {
+            transform: scale(1.12);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 255, 126, 95), 0.45), 0 3px 8px rgba(0, 0, 0, 0.25);
+        }
+
+        /* 地图探索（高德）· 灰点 */
+        .cw-explore-pin {
+            position: relative;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: linear-gradient(180deg, #9aa1ad 0%, #5c6370 100%);
+            border: 3px solid #fff;
+            box-shadow:
+                0 0 0 1px rgba(0, 0, 0, 0.18),
+                0 3px 10px rgba(0, 0, 0, 0.35);
+            cursor: pointer;
+        }
+
+        .cw-explore-pin::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 5px;
+            width: 7px;
+            height: 5px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.45);
+        }
+
+        .inspire-infowin-title,
+        .explore-infowin strong {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .inspire-infowin-tag,
+        .inspire-infowin-reason,
+        .explore-infowin-addr,
+        .explore-infowin-hint {
+            margin: 4px 0;
+            font-size: 12px;
+            line-height: 1.45;
+            color: var(--text-medium, #666);
+        }
+
+        .btn-inspire-infowin-toggle {
+            margin-top: 8px;
+            padding: 6px 10px;
+            font-size: 12px;
+            border-radius: 8px;
+            border: 1px solid;
+            background: #fff;
+            cursor: pointer;
         }
 
         .poi-item-content {

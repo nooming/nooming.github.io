@@ -311,6 +311,7 @@ function resetSelection() {
     if (CW.endMarker) CW.map.remove(CW.endMarker);
     clearRouteOverlays();
     clearPoiMarkers();
+    if (typeof clearPlanningMapLayers === 'function') clearPlanningMapLayers();
 
     CW.startMarker = null;
     CW.endMarker = null;

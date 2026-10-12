@@ -213,6 +213,11 @@
                         <button type="button" class="poi-type-btn" data-type="咖啡甜品" aria-pressed="false">☕ 咖啡甜品</button>
                         <button type="button" class="poi-type-btn" data-type="商场" aria-pressed="false">🛍️ 商场</button>
                     </div>
+                    <label class="map-layer-toggle explore-map-toggle">
+                        <input type="checkbox" id="mapShowExplore">
+                        <span>地图探索（高德）</span>
+                    </label>
+                    <p class="map-layer-hint">按途经偏好在当前地图范围内显示热门 POI，仅供参考；默认关闭以节省请求。</p>
                     <div class="filter-title" id="visitPaceTitle">逛法节奏</div>
                     <div class="visit-pace-group poi-type-group" role="group" aria-labelledby="visitPaceTitle">
                         <button type="button" class="visit-pace-btn poi-type-btn active" data-pace="checkin" aria-pressed="true">多站紧凑</button>
@@ -249,6 +254,10 @@
                             </label>
                             <button type="button" class="btn-inspire-cards" id="btnInspireCards">查看推荐点位</button>
                         </div>
+                        <label class="map-layer-toggle inspire-map-toggle">
+                            <input type="checkbox" id="mapShowInspire" checked>
+                            <span>在地图上显示候选点</span>
+                        </label>
                         <div class="inspire-cards" id="inspireCards" hidden></div>
                     </section>
                     <div class="panel-cta-sticky">

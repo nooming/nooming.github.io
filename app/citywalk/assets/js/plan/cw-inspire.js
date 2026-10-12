@@ -43,7 +43,7 @@ async function fetchInspirationCards() {
         console.error('获取灵感卡片失败：', err);
         renderInspirationEmpty('没能联系上灵感服务，稍后再试');
     } finally {
-        if (btn) { btn.disabled = false; btn.textContent = '浏览推荐地点'; }
+        if (btn) { btn.disabled = false; btn.textContent = '查看推荐点位'; }
     }
 }
 
@@ -57,6 +57,7 @@ function renderInspirationEmpty(message, source) {
     const wrap = document.getElementById('inspireCards');
     if (!wrap) return;
     CW.inspireCandidates = [];
+    if (typeof clearInspireMarkers === 'function') clearInspireMarkers();
     wrap.hidden = false;
     wrap.innerHTML = '';
     const hint = inspirationSourceHint(source, false);
@@ -122,6 +123,10 @@ function renderInspirationCards(data) {
     planBtn.addEventListener('click', planWithSelectedInspiration);
     foot.appendChild(planBtn);
     wrap.appendChild(foot);
+
+    if (typeof syncInspireMarkers === 'function') {
+        syncInspireMarkers(spots, { fitView: true });
+    }
 }
 
 function buildInspireCard(spot, index) {
@@ -137,6 +142,9 @@ function buildInspireCard(spot, index) {
     cb.dataset.index = String(index);
     cb.addEventListener('change', () => {
         label.classList.toggle('selected', cb.checked);
+        if (typeof setInspireMarkerSelected === 'function') {
+            setInspireMarkerSelected(index, cb.checked);
+        }
     });
 
     const body = document.createElement('div');

@@ -12,8 +12,18 @@ const CW = {
     routeLine: null,
     routeLines: [],
     poiMarkers: [],
+    inspireMarkers: [],
+    exploreMarkers: [],
     infoWindow: null,
     searchMarker: null,
+    /** 规划页地图图层开关（持久化见 cw-map.js） */
+    mapLayerPrefs: {
+        showInspireOnMap: true,
+        showExploreOnMap: false,
+    },
+    exploreSearchTimer: null,
+    exploreSearchToken: 0,
+    userMovedMap: false,
 
     // --- 业务状态 ---
     selectedPoiType: "无偏好",

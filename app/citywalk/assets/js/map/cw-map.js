@@ -85,6 +85,19 @@ function initMap() {
             mapContainer.addEventListener('touchmove', clearLongPress, { passive: true });
         }
 
+        CW.userMovedMap = false;
+        CW.map.on('dragend', function() {
+            CW.userMovedMap = true;
+        });
+        CW.map.on('moveend', function() {
+            if (typeof scheduleExplorePlaceSearch === 'function') scheduleExplorePlaceSearch();
+        });
+        CW.map.on('zoomend', function() {
+            if (typeof scheduleExplorePlaceSearch === 'function') scheduleExplorePlaceSearch();
+        });
+
+        if (typeof loadMapLayerPrefs === 'function') loadMapLayerPrefs();
+
         startWeatherRefresh();
         locateUserCity();
     } catch (e) {
@@ -433,6 +446,7 @@ function clearPoiMarkers() {
 }
 
 function addPoiMarkers(pois) {
+    if (typeof clearPlanningMapLayers === 'function') clearPlanningMapLayers();
     clearPoiMarkers();
 
     if (!Array.isArray(pois) || pois.length === 0) return;
@@ -594,4 +608,357 @@ function tryGeocodeSearch(keyword) {
             }
         });
     });
+}
+
+// ========== 规划页 · 灵感候选 / 偏好探索图层 ==========
+
+const CW_MAP_INSPIRE_KEY = 'cw_map_inspire_v1';
+const CW_MAP_EXPLORE_KEY = 'cw_map_explore_v1';
+const EXPLORE_MIN_ZOOM = 14;
+const EXPLORE_DEBOUNCE_MS = 520;
+const EXPLORE_PAGE_SIZE = typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches ? 8 : 12;
+
+const POI_TYPE_EXPLORE_KEYWORDS = {
+    '自然': '公园',
+    '历史': '博物馆',
+    '文创': '文创园',
+    '花店': '花店',
+    '咖啡甜品': '咖啡厅',
+    '商场': '购物中心',
+};
+
+function loadMapLayerPrefs() {
+    if (!CW.mapLayerPrefs) {
+        CW.mapLayerPrefs = { showInspireOnMap: true, showExploreOnMap: false };
+    }
+    try {
+        const ins = localStorage.getItem(CW_MAP_INSPIRE_KEY);
+        if (ins === '0') CW.mapLayerPrefs.showInspireOnMap = false;
+        if (ins === '1') CW.mapLayerPrefs.showInspireOnMap = true;
+        const exp = localStorage.getItem(CW_MAP_EXPLORE_KEY);
+        if (exp === '1') CW.mapLayerPrefs.showExploreOnMap = true;
+        if (exp === '0') CW.mapLayerPrefs.showExploreOnMap = false;
+    } catch (_) { /* ignore */ }
+}
+
+function saveMapLayerPrefs() {
+    if (!CW.mapLayerPrefs) return;
+    try {
+        localStorage.setItem(CW_MAP_INSPIRE_KEY, CW.mapLayerPrefs.showInspireOnMap ? '1' : '0');
+        localStorage.setItem(CW_MAP_EXPLORE_KEY, CW.mapLayerPrefs.showExploreOnMap ? '1' : '0');
+    } catch (_) { /* ignore */ }
+}
+
+function clearPlanningMapLayers() {
+    clearInspireMarkers();
+    clearExploreMarkers();
+}
+
+function _markerPinEl(marker, className) {
+    if (!marker || typeof marker.getContent !== 'function') return null;
+    const root = marker.getContent();
+    if (!root) return null;
+    if (root.classList && root.classList.contains(className)) return root;
+    return root.querySelector ? root.querySelector('.' + className) : null;
+}
+
+function clearInspireMarkers() {
+    if (!CW.map || !Array.isArray(CW.inspireMarkers)) {
+        CW.inspireMarkers = [];
+        return;
+    }
+    CW.inspireMarkers.forEach(marker => {
+        try { CW.map.remove(marker); } catch (_) { /* ignore */ }
+    });
+    CW.inspireMarkers = [];
+}
+
+function _inspireCardChecked(index) {
+    const cb = document.getElementById('inspireCard' + index);
+    return !!(cb && cb.checked);
+}
+
+function setInspireMarkerSelected(index, selected) {
+    const marker = CW.inspireMarkers[index];
+    if (!marker) return;
+    const pin = _markerPinEl(marker, 'cw-inspire-pin');
+    if (pin) pin.classList.toggle('cw-inspire-pin--selected', !!selected);
+}
+
+function openInspireMarkerInfo(spot, index) {
+    if (!CW.infoWindow || !CW.map) return;
+    const themeColor = CW.currentTheme ? CW.currentTheme.primary : '#ff7e5f';
+    const checked = _inspireCardChecked(index);
+    CW.infoWindow.setContent(`
+        <div class="inspire-infowin">
+            <strong class="inspire-infowin-title">${cwEscapeHtml(spot.name)}</strong>
+            ${spot.category ? `<p class="inspire-infowin-tag">${cwEscapeHtml(spot.category)}</p>` : ''}
+            ${spot.reason ? `<p class="inspire-infowin-reason">${cwEscapeHtml(spot.reason)}</p>` : ''}
+            <button type="button" class="btn-inspire-infowin-toggle" data-inspire-index="${index}" style="border-color:${themeColor};color:${themeColor}">
+                ${checked ? '取消勾选' : '勾选此点'}
+            </button>
+        </div>
+    `);
+    CW._mustGoConfirmToken = 0;
+    CW.infoWindow.open(CW.map, [spot.lng, spot.lat]);
+    setTimeout(() => {
+        const btn = document.querySelector('.btn-inspire-infowin-toggle[data-inspire-index="' + index + '"]');
+        if (!btn) return;
+        btn.addEventListener('click', (ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            const cb = document.getElementById('inspireCard' + index);
+            if (cb) {
+                cb.checked = !cb.checked;
+                cb.dispatchEvent(new Event('change', { bubbles: true }));
+            } else {
+                setInspireMarkerSelected(index, !checked);
+            }
+            CW.infoWindow.close();
+        });
+    }, 0);
+}
+
+function syncInspireMarkers(spots, options) {
+    if (!CW.map) return;
+    const opts = options || {};
+    if (!CW.mapLayerPrefs || !CW.mapLayerPrefs.showInspireOnMap) {
+        clearInspireMarkers();
+        return;
+    }
+    const list = Array.isArray(spots) ? spots.filter(
+        s => s && s.name && typeof s.lng === 'number' && typeof s.lat === 'number'
+    ) : [];
+    clearInspireMarkers();
+    if (list.length === 0) return;
+
+    const themeColor = CW.currentTheme ? CW.currentTheme.primary : '#ff7e5f';
+    const themeLight = CW.currentTheme ? CW.currentTheme.primaryLight : '#feb47b';
+
+    list.forEach((spot, index) => {
+        const initial = _inspireCardChecked(index);
+        const pinHtml = `<div class="cw-inspire-pin${initial ? ' cw-inspire-pin--selected' : ''}" data-inspire-index="${index}">` +
+            `<span class="cw-inspire-pin-icon">✨</span></div>`;
+        const marker = new AMap.Marker({
+            position: [spot.lng, spot.lat],
+            content: pinHtml,
+            offset: new AMap.Pixel(-14, -14),
+            zIndex: 60 + index,
+            title: spot.name,
+        });
+        marker._inspireIndex = index;
+        marker.on('click', function() {
+            openInspireMarkerInfo(spot, index);
+        });
+        CW.map.add(marker);
+        CW.inspireMarkers.push(marker);
+    });
+
+    if (opts.fitView && !CW.userMovedMap && CW.inspireMarkers.length) {
+        CW.map.setFitView(CW.inspireMarkers, {
+            padding: [80, 80, 80, 80],
+            animate: true,
+        });
+    }
+}
+
+function clearExploreMarkers() {
+    if (!CW.map || !Array.isArray(CW.exploreMarkers)) {
+        CW.exploreMarkers = [];
+        return;
+    }
+    CW.exploreMarkers.forEach(marker => {
+        try { CW.map.remove(marker); } catch (_) { /* ignore */ }
+    });
+    CW.exploreMarkers = [];
+}
+
+function _coordKey(lng, lat) {
+    return `${Number(lng).toFixed(4)},${Number(lat).toFixed(4)}`;
+}
+
+function _isDuplicateOfInspire(lng, lat, name) {
+    const candidates = CW.inspireCandidates || [];
+    const normName = (name || '').trim();
+    for (let i = 0; i < candidates.length; i++) {
+        const s = candidates[i];
+        if (!s || typeof s.lng !== 'number' || typeof s.lat !== 'number') continue;
+        if (normName && s.name && s.name.trim() === normName) return true;
+        if (Math.abs(s.lng - lng) < 0.00045 && Math.abs(s.lat - lat) < 0.00045) return true;
+    }
+    return false;
+}
+
+function syncExploreMarkers(pois) {
+    if (!CW.map) return;
+    clearExploreMarkers();
+    if (!Array.isArray(pois) || pois.length === 0) return;
+
+    const seen = new Set();
+    pois.forEach((poi, index) => {
+        if (!poi || !poi.location) return;
+        const loc = poi.location;
+        let lng = loc.lng;
+        let lat = loc.lat;
+        if (!Number.isFinite(lng) && typeof loc.getLng === 'function') lng = loc.getLng();
+        if (!Number.isFinite(lat) && typeof loc.getLat === 'function') lat = loc.getLat();
+        if (!Number.isFinite(lng) || !Number.isFinite(lat)) return;
+        if (_isDuplicateOfInspire(lng, lat, poi.name)) return;
+        const key = _coordKey(lng, lat) + '|' + (poi.name || '');
+        if (seen.has(key)) return;
+        seen.add(key);
+
+        const pinHtml = `<div class="cw-explore-pin" title="${cwEscapeHtml(poi.name || '')}"></div>`;
+        const marker = new AMap.Marker({
+            position: [lng, lat],
+            content: pinHtml,
+            offset: new AMap.Pixel(-11, -11),
+            zIndex: 40 + index,
+            title: poi.name || '探索点',
+        });
+        marker.on('click', function() {
+            if (!CW.infoWindow) return;
+            CW.infoWindow.setContent(`
+                <div class="explore-infowin">
+                    <strong>${cwEscapeHtml(poi.name || '地点')}</strong>
+                    <p class="explore-infowin-addr">${cwEscapeHtml(poi.address || '')}</p>
+                    <p class="explore-infowin-hint">地图探索 · 仅供参考</p>
+                    <button type="button" class="btn-pin-mustgo" id="btnPinExploreMustGo">${mustGoActionLabel()}</button>
+                </div>
+            `);
+            CW._mustGoConfirmToken = 0;
+            CW.infoWindow.open(CW.map, [lng, lat]);
+            setTimeout(() => {
+                const pinBtn = document.getElementById('btnPinExploreMustGo');
+                if (pinBtn) {
+                    pinBtn.addEventListener('click', (ev) => {
+                        ev.preventDefault();
+                        ev.stopPropagation();
+                        confirmMapOrSearchSpot({
+                            name: poi.name || '探索点',
+                            lng: parseFloat(Number(lng).toFixed(6)),
+                            lat: parseFloat(Number(lat).toFixed(6)),
+                            category: poi.type || '',
+                        });
+                    });
+                }
+            }, 0);
+        });
+        CW.map.add(marker);
+        CW.exploreMarkers.push(marker);
+    });
+}
+
+function scheduleExplorePlaceSearch() {
+    if (!CW.mapLayerPrefs || !CW.mapLayerPrefs.showExploreOnMap) return;
+    if (CW.exploreSearchTimer) clearTimeout(CW.exploreSearchTimer);
+    CW.exploreSearchTimer = setTimeout(runExplorePlaceSearch, EXPLORE_DEBOUNCE_MS);
+}
+
+function runExplorePlaceSearch() {
+    CW.exploreSearchTimer = null;
+    if (!CW.map || !window.AMap) return;
+    if (!CW.mapLayerPrefs || !CW.mapLayerPrefs.showExploreOnMap) {
+        clearExploreMarkers();
+        return;
+    }
+    const poiType = (CW.selectedPoiType || '无偏好').trim();
+    const keyword = POI_TYPE_EXPLORE_KEYWORDS[poiType];
+    if (!keyword || poiType === '无偏好') {
+        clearExploreMarkers();
+        return;
+    }
+    const zoom = CW.map.getZoom();
+    if (typeof zoom === 'number' && zoom < EXPLORE_MIN_ZOOM) {
+        clearExploreMarkers();
+        return;
+    }
+
+    const token = ++CW.exploreSearchToken;
+    const bounds = CW.map.getBounds();
+    if (!bounds) return;
+
+    AMap.plugin('AMap.PlaceSearch', function() {
+        const placeSearch = new AMap.PlaceSearch({
+            city: CW.currentCity || '全国',
+            citylimit: true,
+            pageSize: EXPLORE_PAGE_SIZE,
+            pageIndex: 1,
+        });
+
+        const onResult = function(status, result) {
+            if (token !== CW.exploreSearchToken) return;
+            if (status !== 'complete' || !result || result.info !== 'OK' || !result.poiList) {
+                return;
+            }
+            const pois = result.poiList.pois || [];
+            syncExploreMarkers(pois);
+        };
+
+        if (typeof placeSearch.searchInBounds === 'function') {
+            placeSearch.searchInBounds(keyword, bounds, onResult);
+        } else {
+            placeSearch.search(keyword, onResult);
+        }
+    });
+}
+
+function initMapLayerControls() {
+    if (CW._mapLayerControlsBound) return;
+    CW._mapLayerControlsBound = true;
+
+    loadMapLayerPrefs();
+    const inspireEl = document.getElementById('mapShowInspire');
+    const exploreEl = document.getElementById('mapShowExplore');
+    if (inspireEl) {
+        inspireEl.checked = !!CW.mapLayerPrefs.showInspireOnMap;
+        inspireEl.addEventListener('change', function() {
+            CW.mapLayerPrefs.showInspireOnMap = inspireEl.checked;
+            saveMapLayerPrefs();
+            if (inspireEl.checked && CW.inspireCandidates && CW.inspireCandidates.length) {
+                syncInspireMarkers(CW.inspireCandidates);
+            } else {
+                clearInspireMarkers();
+            }
+        });
+    }
+    if (exploreEl) {
+        exploreEl.checked = !!CW.mapLayerPrefs.showExploreOnMap;
+        exploreEl.addEventListener('change', function() {
+            CW.mapLayerPrefs.showExploreOnMap = exploreEl.checked;
+            saveMapLayerPrefs();
+            if (exploreEl.checked) {
+                const poiType = (CW.selectedPoiType || '无偏好').trim();
+                if (poiType === '无偏好' || !POI_TYPE_EXPLORE_KEYWORDS[poiType]) {
+                    exploreEl.checked = false;
+                    CW.mapLayerPrefs.showExploreOnMap = false;
+                    saveMapLayerPrefs();
+                    showToast('请先选择途经偏好（非「无偏好」）再开地图探索');
+                    return;
+                }
+                runExplorePlaceSearch();
+            } else {
+                clearExploreMarkers();
+                CW.exploreSearchToken++;
+            }
+        });
+    }
+
+    const prevPlanPrefsChange = window.__cwOnPlanPrefsChange;
+    window.__cwOnPlanPrefsChange = function() {
+        if (typeof prevPlanPrefsChange === 'function') prevPlanPrefsChange();
+        if (!CW.mapLayerPrefs || !CW.mapLayerPrefs.showExploreOnMap) return;
+        const poiType = (CW.selectedPoiType || '无偏好').trim();
+        if (poiType === '无偏好' || !POI_TYPE_EXPLORE_KEYWORDS[poiType]) {
+            clearExploreMarkers();
+            const exploreEl = document.getElementById('mapShowExplore');
+            if (exploreEl && exploreEl.checked) {
+                exploreEl.checked = false;
+                CW.mapLayerPrefs.showExploreOnMap = false;
+                saveMapLayerPrefs();
+            }
+            return;
+        }
+        scheduleExplorePlaceSearch();
+    };
 }

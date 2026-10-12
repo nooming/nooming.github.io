@@ -556,6 +556,7 @@ ${poiText}
         // ===== 地图初始化（通过 index.html 的就绪桥接，取代 setTimeout 猜测）=====
         window.__cwOnAMapReady = function() {
             if (!CW.map) initMap();
+            if (typeof initMapLayerControls === 'function') initMapLayerControls();
             // 分享起终点须在地图存在后落点（init 早期可能已解析偏好）
             if (typeof finishShareRestoreAfterMapReady === 'function') {
                 finishShareRestoreAfterMapReady();
