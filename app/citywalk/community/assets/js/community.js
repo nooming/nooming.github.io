@@ -418,6 +418,7 @@ function clearCommunitySearch() {
   const input = document.getElementById('searchInput');
   if (input) input.value = '';
   applyCommunitySearch({ scroll: false });
+  closeMobileSearchNav();
 }
 
 function applyCommunitySearch(opts) {
@@ -975,12 +976,28 @@ function closeMeView() {
   }
 }
 
+function syncSearchNavToggleUi() {
+  const btn = document.getElementById('searchNavToggle');
+  if (!btn) return;
+  const open = document.body.classList.contains('search-nav-open');
+  btn.textContent = open ? '×' : '⌕';
+  btn.setAttribute('aria-label', open ? '关闭搜索' : '打开搜索');
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+
+function closeMobileSearchNav() {
+  if (!document.body.classList.contains('search-nav-open')) return;
+  document.body.classList.remove('search-nav-open');
+  syncSearchNavToggleUi();
+}
+
 function switchCommunityView(view, opts) {
   opts = opts || {};
   if (view === 'me') {
     openMePage(opts);
     return;
   }
+  if (!(opts && opts.keepSearchOpen)) closeMobileSearchNav();
   if (!COMMUNITY_VIEW_IDS.includes(view)) view = 'home';
   communityViewId = view;
   closeMeView();
@@ -1007,6 +1024,7 @@ function switchCommunityView(view, opts) {
 
 function openMePage(opts) {
   opts = opts || {};
+  closeMobileSearchNav();
   if (opts.tab) setMePrimaryTab(opts.tab, false);
   if (opts.saved) setMeSavedTab(opts.saved, false);
   closeMeView();
@@ -2827,13 +2845,25 @@ function openMobileFilterSheet(mode){
 function bindMobileDensityUi(){
   const searchToggle=document.getElementById('searchNavToggle');
   const searchInput=document.getElementById('searchInput');
+  syncSearchNavToggleUi();
   if(searchToggle){
     searchToggle.addEventListener('click',function(){
-      const open=document.body.classList.toggle('search-nav-open');
-      searchToggle.setAttribute('aria-expanded',open?'true':'false');
-      if(open&&searchInput) searchInput.focus();
+      if(document.body.classList.contains('community-view-me')) return;
+      const open=!document.body.classList.contains('search-nav-open');
+      document.body.classList.toggle('search-nav-open',open);
+      syncSearchNavToggleUi();
+      if(open){
+        if(communityViewId==='home'&&typeof switchCommunityView==='function'){
+          switchCommunityView('inspire',{skipHash:false,instant:true,keepSearchOpen:true});
+        }
+        if(searchInput) searchInput.focus();
+      }
     });
   }
+  document.addEventListener('keydown',function(ev){
+    if(ev.key!=='Escape') return;
+    if(document.body.classList.contains('search-nav-open')) closeMobileSearchNav();
+  });
   const buddyTrigger=document.getElementById('buddyFilterTrigger');
   if(buddyTrigger) buddyTrigger.addEventListener('click',function(){openMobileFilterSheet('buddy');});
   const inspireTrigger=document.getElementById('inspireTypeTrigger');

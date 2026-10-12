@@ -724,20 +724,32 @@ footer b{color:#333}
 }
 @media(max-width:760px){
   :root{--nav-sticky-offset:calc(56px + env(safe-area-inset-top,0px))}
-  .navbar{height:auto;min-height:56px;padding-bottom:8px}
-  .nav-inner{padding:0 14px;gap:10px;flex-wrap:nowrap;align-content:center}
-  .logo{font-size:20px;flex-shrink:0}
+  html,body{overflow-x:clip;max-width:100%}
+  .navbar{height:auto;min-height:56px;padding-bottom:8px;overflow:hidden}
+  .nav-inner{
+    width:100%;max-width:100%;min-width:0;padding:0 14px;gap:8px;
+    flex-wrap:nowrap;align-items:center;
+  }
+  .logo{font-size:20px;flex-shrink:0;order:1;min-width:0}
   .search-nav-toggle{
     display:inline-grid;place-items:center;order:2;flex:none;width:44px;height:44px;border-radius:50%;
-    border:1px solid #eee6f0;background:linear-gradient(135deg,#fff1f4,#f1efff);font-size:18px;color:#8d8d8d;
+    border:1px solid #eee6f0;background:linear-gradient(135deg,#fff1f4,#f1efff);font-size:20px;line-height:1;color:#8d8d8d;
   }
   .search--nav.search--nav-field{
-    order:5;flex:1 1 100%;width:100%;max-width:100%;margin:0;display:none;
+    display:none;order:2;flex:1 1 0;min-width:0;width:auto;max-width:none;margin:0;
   }
+  .search--nav.search--nav-field .search input{min-width:0}
+  body.search-nav-open .logo .cw-brand-logo__word{display:none}
+  body.search-nav-open .user-avatar-wrap{display:none}
   body.search-nav-open .search--nav.search--nav-field{display:flex}
-  body.search-nav-open .search-nav-toggle{border-color:var(--accent);color:#d94766}
-  .user-avatar-wrap{order:3;margin-left:auto}
+  body.search-nav-open .search-nav-toggle{
+    order:3;border-color:var(--accent);color:#d94766;font-size:22px;
+  }
+  body.search-nav-open .logo{pointer-events:none}
+  .user-avatar-wrap{order:3;margin-left:auto;flex:none}
   .user-avatar{flex:none}
+  body.community-view-me .search-nav-toggle,
+  body.community-view-me .search--nav.search--nav-field{display:none!important}
   .nav-links{display:none!important}
   .hero-actions{flex-direction:column;align-items:stretch;gap:10px}
   .hero-btn{width:100%;justify-content:center;padding:15px 22px;min-height:50px}
