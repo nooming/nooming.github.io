@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#ff6f91">
-<meta name="description" content="WanderWalk 社区：Citywalk 经验、找搭子、足迹，与 Citywalk 路线规划联动">
+<meta name="description" content="WanderWalk 社区：发现 Walk 灵感、找同行搭子、记录足迹，并与路线规划无缝联动。">
 <meta property="og:type" content="website">
 <meta property="og:title" content="WanderWalk · 社区">
-<meta property="og:description" content="Citywalk 经验、找搭子、足迹，与路线规划联动。">
+<meta property="og:description" content="Walk 灵感、找搭子与足迹，一站串联你的 Citywalk。">
 <meta property="og:url" content="https://nooming.github.io/app/citywalk/community/">
 <meta property="og:image" content="https://nooming.github.io/app/citywalk/assets/brand/og-cover.svg">
 <title>WanderWalk · 社区</title>
@@ -33,8 +33,9 @@
     <button type="button" class="search-nav-toggle" id="searchNavToggle" aria-expanded="false" aria-controls="searchNavField" aria-label="打开搜索">⌕</button>
     <label class="search search--nav search--nav-field" id="searchNavField">
       <span>⌕</span>
-      <input id="searchInput" placeholder="搜搭子、路线、笔记…" autocomplete="off" aria-label="搜索社区">
+      <input id="searchInput" placeholder="搜索招募、路线或笔记…" autocomplete="off" aria-label="搜索社区">
     </label>
+    <button type="button" class="nav-compose-btn" id="navComposeBtn" hidden>＋ 发布</button>
     <div class="user-avatar-wrap">
       <button type="button" class="user-avatar user-avatar--initial" id="cwAuthAvatarBtn" aria-describedby="userAvatarPopover">我</button>
       <div class="user-avatar-popover" id="userAvatarPopover" role="tooltip"></div>
@@ -46,13 +47,13 @@
   <div class="hero">
     <div class="hero-content">
       <div class="hero-copy">
-        <div class="eyebrow">✦ 今天去哪里走走？</div>
-        <h1>不赶景点，<br>只走一段有意思的路。</h1>
-        <p>发现城市里的街区、咖啡、小店、建筑和隐藏机位。更重要的是，找到一个也想出门的人，一起把路线走完。</p>
+        <div class="eyebrow">✦ 今天出门走走？</div>
+        <h1>不赶景点，<br>只走一段值得的路。</h1>
+        <p>发现街区、咖啡、小店与隐藏机位；也可以在这里找到同路人，一起完成一条 Walk。</p>
         <div class="hero-actions">
-          <button class="hero-btn primary" type="button" onclick="switchCommunityView('buddies')"><span class="hero-btn-icon" aria-hidden="true">👥</span><span class="hero-btn-label">先找搭子</span></button>
-          <a class="hero-btn hero-btn-planner" href="../"><span class="hero-btn-label">Citywalk 路线规划</span><span class="hero-btn-suffix" aria-hidden="true">→</span></a>
-          <button class="hero-btn ghost" type="button" onclick="switchCommunityView('inspire')"><span class="hero-btn-label">逛灵感社区</span><span class="hero-btn-suffix" aria-hidden="true">→</span></button>
+          <button class="hero-btn primary" type="button" onclick="switchCommunityView('buddies')"><span class="hero-btn-icon" aria-hidden="true">👥</span><span class="hero-btn-label">找搭子同行</span></button>
+          <a class="hero-btn hero-btn-planner" href="../"><span class="hero-btn-label">规划步行路线</span><span class="hero-btn-suffix" aria-hidden="true">→</span></a>
+          <button class="hero-btn ghost" type="button" onclick="switchCommunityView('inspire')"><span class="hero-btn-label">浏览灵感社区</span><span class="hero-btn-suffix" aria-hidden="true">→</span></button>
         </div>
       </div>
       <div class="hero-buddy-card">
@@ -60,10 +61,10 @@
           <span class="hero-buddy-label">FIND A WALK BUDDY</span>
           <span class="hero-buddy-count">加载招募中…</span>
         </div>
-        <h3>今天有人一起走吗？</h3>
-        <p>按时间、城市和兴趣选择一场 Walk，直接加入。</p>
+        <h3>最近有谁在招募？</h3>
+        <p>按城市与时间筛选，一键加入合适的 Walk。</p>
         <div class="hero-buddy-list" id="heroBuddyList"></div>
-        <button class="hero-buddy-cta" type="button" onclick="switchCommunityView('buddies')">查看全部同行计划 →</button>
+        <button class="hero-buddy-cta" type="button" onclick="switchCommunityView('buddies')">查看全部招募 →</button>
       </div>
     </div>
   </div>
@@ -89,8 +90,8 @@
 
   <aside class="import-guide-banner" id="importGuideBanner" hidden>
     <div>
-      <strong>已放入规划导入</strong>
-      <p>路线在足迹的「规划导入」里。走过之后再点卡片上的「记录 Walk」，才会进入走过的路线并领取积分。</p>
+      <strong>路线已加入「规划导入」</strong>
+      <p>可在「足迹 · 规划导入」查看。实地走完后，在卡片上「记录 Walk」才会计入「走过的路线」并领取积分。</p>
     </div>
     <button type="button" class="import-guide-dismiss" onclick="dismissImportGuide()">知道了</button>
   </aside>
@@ -101,10 +102,10 @@
       <button class="buddy-collapse" id="buddyCollapseBtn" onclick="toggleBuddiesPage(event)">收起搭子区 ↑</button>
     </div>
     <div class="buddy-shell">
-      <div style="display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid #eee0e6;color:#8c6e7d;padding:6px 9px;border-radius:999px;font-size:10px;font-weight:800;margin-bottom:14px;position:relative;z-index:1;box-shadow:0 5px 12px rgba(121,83,104,.06)">✨ 本周高活跃 · 找一个一起出发的人</div>
+      <div class="buddy-sticky-bar">
       <div class="buddy-intro">
-        <div><h3>👥 找搭子</h3><p>一个人也想出门？发起一次 Walk，找到节奏刚好的同行者。</p></div>
-        <button class="buddy-cta" onclick="openCreateBuddy()">＋ 发起一次 Walk</button>
+        <h3>👥 找搭子</h3>
+        <p>浏览招募并加入；发起新 Walk 请点击「＋ 发起 Walk」（桌面在顶栏，手机在右下角）。</p>
       </div>
       <button type="button" class="mobile-filter-trigger" id="buddyFilterTrigger" aria-haspopup="dialog">筛选 · 全部</button>
       <div class="buddy-filters" id="buddyFilters">
@@ -116,6 +117,7 @@
         <button class="buddy-filter" data-filter="轻徒步">轻徒步</button>
         <button class="buddy-filter" data-filter="收藏">☆ 收藏</button>
       </div>
+      </div>
       <div class="buddy-grid" id="buddyGrid"></div>
     </div>
   </section>
@@ -124,10 +126,7 @@
     <div class="section-head inspire-section-head" id="inspireSectionHead">
       <div>
         <h2>灵感社区</h2>
-        <p class="inspire-lead">社区路线与笔记。自规划线路见 <a href="#spots" onclick="switchCommunityView('spots'); setFootprintView('planned'); return false;">足迹 · 规划导入</a>。</p>
-      </div>
-      <div class="section-head-actions">
-        <button type="button" class="publish publish--inline" onclick="openPublish()">＋ 发布</button>
+        <p class="inspire-lead">路线灵感与 Walk 笔记。规划页导入的线路在 <a href="#spots" onclick="switchCommunityView('spots'); setFootprintView('planned'); return false;">足迹 · 规划导入</a>；分享笔记请点「＋ 发布」。</p>
       </div>
     </div>
     <div class="inspire-toolbar" id="inspireToolbar">
@@ -154,7 +153,7 @@
       <p class="inspire-toolbar-meta" id="inspireToolbarMeta" aria-live="polite"></p>
     </div>
     <div class="inspire-routes-block" id="inspireRoutesBlock">
-      <div class="inspire-block-kicker-row"><span class="inspire-block-kicker">路线灵感</span></div>
+      <div class="inspire-block-kicker-row"><span class="inspire-block-kicker">精选路线</span></div>
       <div class="city-tabs" id="cityTabs">
         <button type="button" class="city-tab active" data-city="全部">全部城市</button>
       </div>
@@ -165,7 +164,7 @@
         <div class="feed-main">
           <div class="feed-grid" id="feedGrid"></div>
           <div class="feed-load-row"><button type="button" class="feed-load-more" id="feedLoadMore" hidden>再加载一些 ↓</button></div>
-          <div class="empty feed-empty-state" id="feedEmpty" hidden>没有找到相关内容，换个关键词试试。</div>
+          <div class="empty feed-empty-state" id="feedEmpty" hidden>没有匹配的内容，试试其他关键词或类型。</div>
         </div>
         <details class="feed-side-pack" id="feedSidePack">
           <summary class="feed-side-pack-summary">话题 · 发布提示</summary>
@@ -173,14 +172,14 @@
             <details class="feed-side-card feed-side-tips-details">
               <summary class="feed-side-title feed-side-summary">发布小贴士</summary>
               <ul class="feed-side-tips">
-                <li><b>路线</b>：起终点、时长、沿途亮点。</li>
-                <li><b>打卡</b>：招牌、人均或适合停留的时段。</li>
-                <li><b>攻略</b>：装备、预约或交通规则等提醒。</li>
+                <li><b>路线</b>：写清起终点、时长与沿途亮点。</li>
+                <li><b>打卡</b>：推荐菜/招牌、人均或最佳停留时段。</li>
+                <li><b>攻略</b>：预约、装备与交通等实用提醒。</li>
               </ul>
             </details>
             <div class="feed-side-card feed-side-tags" id="feedHotTags">
               <strong class="feed-side-title">常见话题</strong>
-              <p class="feed-side-note">点标签填入搜索框</p>
+              <p class="feed-side-note">点击标签可填入搜索框</p>
               <div class="feed-hot-tags" id="feedHotTagsList"></div>
             </div>
           </aside>
@@ -193,14 +192,14 @@
     <div class="section-head footprint-section-head">
       <div class="footprint-section-head-main">
         <h2 id="footprintHeading">我的 Walk 足迹</h2>
-        <p id="footprintSubtitle"><span id="footprintSyncHint">登录后足迹与收藏会保存到账号；未登录时仍只在本浏览器。</span></p>
+        <p id="footprintSubtitle"><span id="footprintSyncHint">登录后足迹与收藏会同步账号；未登录时仅保存在本浏览器。</span></p>
         <div class="footprint-summary" id="footprintSummary" aria-label="足迹概览"></div>
       </div>
       <div class="footprint-head-actions" id="footprintHeadActions">
         <button class="footprint-add" onclick="openAddFootprint()">＋ 记录一次 Walk</button>
       </div>
     </div>
-    <p class="footprint-planner-hint">还没有路线？<a href="../">去 Citywalk 路线规划</a>，生成后点「记录到社区」会出现在下方「规划导入」。</p>
+    <p class="footprint-planner-hint">还没有路线？<a href="../">去规划步行路线</a>，生成后点「记录到社区」即可出现在「规划导入」。</p>
 
     <div id="footprintArchivePanel">
       <div class="footprint-tabs" id="footprintTabs">
@@ -208,7 +207,7 @@
         <button class="footprint-tab" data-view="planned" onclick="setFootprintView('planned')">📋 规划导入</button>
         <button class="footprint-tab" data-view="routes" onclick="setFootprintView('routes')">♡ 收藏的路线</button>
         <button class="footprint-tab" data-view="spots" onclick="setFootprintView('spots')">📍 收藏的点位</button>
-        <span class="local-save-note">私人足迹 · 登录可云同步</span>
+        <span class="local-save-note">私人足迹 · 登录可同步</span>
       </div>
       <form class="planned-import-bar" id="plannedImportBar" hidden onsubmit="return submitPlannedLinkImport(event)">
         <label for="plannedImportInput">导入分享链接</label>
@@ -280,7 +279,7 @@
       <div>
         <button type="button" class="me-back-btn" onclick="closeMePage()">← 返回社区</button>
         <h2>我的</h2>
-        <p id="mePageSubtitle">收藏、发布与账号；规划导入仍在 <a href="#spots" onclick="closeMePage('#spots'); setFootprintView('planned'); return false;">足迹 · 规划导入</a>。</p>
+        <p id="mePageSubtitle">管理收藏、发布与账号；规划页导入的线路仍在 <a href="#spots" onclick="closeMePage('#spots'); setFootprintView('planned'); return false;">足迹 · 规划导入</a>。</p>
       </div>
     </div>
     <div class="me-overview" id="meOverview"></div>
@@ -316,10 +315,12 @@
           <button type="button" class="me-settings-btn" id="meOpenAccountBtn" hidden>账号与改密</button>
           <a class="me-settings-btn ghost" href="#spots" onclick="closeMePage('#spots'); return true;">Walk 足迹与规划导入 →</a>
         </div>
-        <p class="me-settings-note">灵感笔记、找搭子收藏默认保存在本浏览器；登录后足迹与路线/点位收藏可云同步。笔记与招募收藏同步将在后续版本接入。</p>
+        <p class="me-settings-note">笔记与招募收藏默认保存在本浏览器；登录后足迹、路线与点位收藏可同步。笔记/招募收藏的云同步将在后续版本提供。</p>
       </div>
     </div>
 </section>
+
+<button type="button" class="community-fab" id="communityFab" hidden aria-label="主操作">＋</button>
 
 <nav class="community-tabbar" id="communityTabbar" aria-label="社区主导航">
   <button type="button" class="community-tabbar-btn" data-community-view="home" aria-current="page"><span class="community-tabbar-icon" aria-hidden="true">⌂</span><span>首页</span></button>
@@ -367,8 +368,8 @@
 <div class="modal" id="footprintModal">
   <div class="modal-box buddy-modal footprint-modal">
     <button class="close" onclick="closeModal('footprintModal')">×</button>
-    <h2>记录一次 Walk</h2>
-    <p>把走过的路线放进足迹里，之后可以随时回来查看沿途点位。</p>
+    <h2>记录 Walk 足迹</h2>
+    <p>保存本次完成的路线，便于日后查看站点与备注。</p>
     <label class="form-label" for="footprintRouteSelect">走过哪条路线？</label>
     <select id="footprintRouteSelect" class="footprint-input"></select>
     <label class="form-label" for="footprintDateInput">完成日期</label>
@@ -385,10 +386,10 @@
     <button class="close" onclick="closeModal('walkRewardModal')" aria-label="关闭">×</button>
     <div class="points-reward-emblem">✦</div>
     <div class="modal-kicker">WALK COMPLETED</div>
-    <h2 id="walkRewardTitle">这次 WanderWalk 完成啦！</h2>
-    <p id="walkRewardRoute">一段城市漫游，已经成为你的新足迹。</p>
+    <h2 id="walkRewardTitle">Walk 已完成</h2>
+    <p id="walkRewardRoute">这次漫游已写入你的足迹。</p>
     <div class="points-reward-number">+50<span>积分</span></div>
-    <p id="walkRewardMessage">积分已计入你的 WanderWalk 账户。</p>
+    <p id="walkRewardMessage">积分已计入你的 WanderWalk 账户</p>
     <div class="points-reward-level"><span>当前称号</span><strong id="walkRewardLevel">🌱 街巷新芽</strong></div>
     <button class="confirm" onclick="closeModal('walkRewardModal')">收下这份奖励</button>
   </div>
@@ -399,7 +400,7 @@
   <div class="modal-box buddy-modal publish-modal">
     <button type="button" class="close" onclick="closeModal('publishModal')" aria-label="关闭">×</button>
     <h2>发布灵感笔记</h2>
-    <p class="cw-auth-lead">需登录。封面暂填图片链接（上传功能后续接入）；标签可点选推荐或 Enter 添加。</p>
+    <p class="cw-auth-lead">发布需登录。封面请填写图片链接（上传功能即将支持）；标签可点选推荐或按 Enter 添加。</p>
     <form id="publishPostForm" class="cw-auth-form publish-form">
       <label class="form-label" for="publishType">类型</label>
       <select id="publishType" class="footprint-input">
@@ -445,8 +446,8 @@
       <button type="button" class="confirm" id="buddyConfirm">确认加入</button>
     </div>
     <div id="buddyCreatePane">
-      <h2>发起一次 Walk</h2>
-      <p class="cw-auth-lead">需登录。填写出发时间与人数，其他人可在找搭子区加入。</p>
+      <h2>发起 Walk 招募</h2>
+      <p class="cw-auth-lead">发布需登录。填写出发时间与人数上限，其他用户可在找搭子区加入。</p>
       <form id="buddyCreateForm" class="cw-auth-form">
         <label class="form-label" for="buddyCreateCity">城市</label>
         <input id="buddyCreateCity" class="footprint-input" type="text" maxlength="24" required>
@@ -489,7 +490,7 @@
   <div class="modal-box buddy-modal cw-auth-modal">
     <button type="button" class="close" onclick="CitywalkAuth.closeAuthModal()" aria-label="关闭">×</button>
     <h2 id="cwAuthModalTitle">WanderWalk 账号</h2>
-    <p class="cw-auth-lead">登录后足迹、收藏路线与规划导入会同步到云端。</p>
+    <p class="cw-auth-lead">登录后足迹、收藏与规划导入可在多设备同步。</p>
     <div class="cw-auth-tabs">
       <button type="button" class="cw-auth-tab" onclick="CitywalkAuth.openAuthModal('login')">登录</button>
       <button type="button" class="cw-auth-tab" onclick="CitywalkAuth.openAuthModal('register')">注册</button>

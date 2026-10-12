@@ -31,19 +31,19 @@ const buddyGrid=document.getElementById('buddyGrid');
 
 /** 社区用户可见文案（术语与语气统一，见 citywalk-后续.md · 文案规范） */
 const WW_COPY = {
-  planner: 'Citywalk 路线规划',
+  planner: '步行路线规划',
   activity: 'Citywalk',
-  sampleRouteNote: '此为示例路线。自建路线请前往 Citywalk 规划页，完成后点「记录到社区」。',
-  samplePostNote: '此为示例笔记。登录后点「发布」可分享你的 Walk。',
-  sampleBuddyNote: '此为示例招募。登录后点「发起一次 Walk」可发布真实招募。',
+  sampleRouteNote: '示例路线，仅供参考。自建路线请前往规划页，完成后可「记录到社区」。',
+  samplePostNote: '示例笔记。登录后点「＋ 发布」即可分享你的 Walk。',
+  sampleBuddyNote: '示例招募。登录后点「＋ 发起 Walk」可发布真实招募。',
   modalTipsRoute: [
-    '把停留时间算进整条路线，不要只计算步行时间。',
-    '周末热门点位可能需要排队或预约，请以现场规则为准。',
-    'Citywalk 宜慢走，不必严格按固定节奏完成。'
+    '停留时间应计入整段 Walk，而不只算步行段。',
+    '热门点位可能需要排队或预约，请以现场为准。',
+    'Citywalk 宜慢走，不必卡死每个时间点。'
   ],
   modalTipsPost: [
-    '内容仅供参考，出行前请确认营业时间与交通规则。',
-    '可在找搭子区发起同行，或使用 Citywalk 路线规划。'
+    '内容仅供参考，出行前请确认营业时间与当地规则。',
+    '想找人同行可在「找搭子」发起招募，或使用路线规划生成线路。'
   ]
 };
 
@@ -93,7 +93,7 @@ function updateHeroBuddyCount() {
   const n = buddiesSource().length;
   countEl.textContent = n
     ? (n + ' 组正在招募' + (ugcBuddies.length ? '' : ' · 示例'))
-    : '快来发起第一场 Walk';
+    : '暂无招募，欢迎发起第一场 Walk';
 }
 
 function renderHeroBuddyPreview(){
@@ -101,7 +101,7 @@ function renderHeroBuddyPreview(){
   if(!list) return;
   const source=buddiesSource();
   if(!source.length){
-    list.innerHTML='<div class="hero-buddy-item"><span>暂无招募，</span><strong>点击「发起一次 Walk」</strong></div>';
+    list.innerHTML='<div class="hero-buddy-item"><span>暂无招募，</span><strong>前往找搭子发起「＋ 发起 Walk」</strong></div>';
     return;
   }
   list.innerHTML=source.slice(0,2).map(b=>{
@@ -113,7 +113,7 @@ function renderHeroBuddyPreview(){
 
 function requireLoginForPost(){
   if(typeof CitywalkAuth!=='undefined'&&CitywalkAuth.isLoggedIn()) return true;
-  showToast('请先登录（右上角头像）');
+  showToast('请先登录（点击右上角「我」）');
   if(typeof CitywalkAuth!=='undefined') CitywalkAuth.openAuthModal('login');
   return false;
 }
@@ -126,7 +126,7 @@ async function loadCommunityUgc(){
     ugcBuddies=data.buddies||[];
   }catch(e){
     console.warn('loadCommunityUgc',e);
-    showToast('社区内容加载失败，请稍后刷新');
+    showToast('内容加载失败，请稍后刷新页面');
   }
   renderHeroBuddyPreview();
   updateHeroBuddyCount();
@@ -460,19 +460,19 @@ function getInspireFilterState() {
 }
 
 const INSPIRE_TYPE_META = {
-  '全部': '「全部」混排路线与笔记；同一条社区路线只以路线卡片展示一次。',
-  '路线': '仅路线卡片，可按上方城市筛选。',
-  '打卡': '仅打卡类笔记。',
-  '攻略': '仅攻略类笔记。',
-  '夜游': '仅夜游类笔记。',
-  '拍照': '仅拍照类笔记。'
+  '全部': '路线与笔记混排展示；同一条社区路线不会重复出现。',
+  '路线': '仅展示路线卡片，可按城市筛选。',
+  '打卡': '仅展示打卡类笔记。',
+  '攻略': '仅展示攻略类笔记。',
+  '夜游': '仅展示夜游类笔记。',
+  '拍照': '仅展示拍照类笔记。'
 };
 
 function syncInspireToolbarMeta(type) {
   const meta = document.getElementById('inspireToolbarMeta');
   if (!meta) return;
   let text = INSPIRE_TYPE_META[type] || INSPIRE_TYPE_META['全部'];
-  if (feedViewSavedOnly) text = '仅显示本机收藏的笔记。';
+  if (feedViewSavedOnly) text = '当前仅显示本机收藏的笔记。';
   meta.textContent = text;
   meta.hidden = !feedViewSavedOnly && (!type || type === '全部');
 }
@@ -554,7 +554,7 @@ function renderRoutes(city, keyword) {
   if (!data.length) {
     const key = String(keyword || '').trim();
     const msg = key
-      ? '没有匹配的路线。试试别的关键词，或切换到「全部」类型。'
+      ? '没有匹配的路线，试试其他关键词或切换到「全部」。'
       : '暂无路线内容。发布「路线」类笔记后会出现在这里；若示例未加载，请刷新页面。';
     routeGrid.innerHTML = '<div class="empty" style="display:block;grid-column:1/-1">' + msg + '</div>';
     return;
@@ -991,6 +991,52 @@ function closeMobileSearchNav() {
   syncSearchNavToggleUi();
 }
 
+function syncCommunityComposeUi(view) {
+  const navBtn = document.getElementById('navComposeBtn');
+  const fab = document.getElementById('communityFab');
+  const onMe = document.body.classList.contains('community-view-me');
+  const v = view || communityViewId || 'home';
+  if (onMe || v === 'home' || v === 'spots') {
+    if (navBtn) navBtn.hidden = true;
+    if (fab) {
+      fab.hidden = true;
+      fab.classList.remove('community-fab--extended');
+    }
+    return;
+  }
+  if (v === 'buddies') {
+    if (navBtn) {
+      navBtn.hidden = false;
+      navBtn.textContent = '＋ 发起 Walk';
+    }
+    if (fab) {
+      fab.hidden = false;
+      fab.textContent = '＋ 发起 Walk';
+      fab.setAttribute('aria-label', '发起 Walk');
+      fab.classList.add('community-fab--extended');
+    }
+    return;
+  }
+  if (v === 'inspire') {
+    if (navBtn) {
+      navBtn.hidden = false;
+      navBtn.textContent = '＋ 发布';
+    }
+    if (fab) {
+      fab.hidden = false;
+      fab.textContent = '＋ 发布';
+      fab.setAttribute('aria-label', '发布笔记');
+      fab.classList.add('community-fab--extended');
+    }
+  }
+}
+
+function triggerCommunityComposeAction() {
+  const v = communityViewId || 'home';
+  if (v === 'buddies') openCreateBuddy();
+  else if (v === 'inspire') openPublish();
+}
+
 function switchCommunityView(view, opts) {
   opts = opts || {};
   if (view === 'me') {
@@ -1015,6 +1061,7 @@ function switchCommunityView(view, opts) {
   syncCommunityNavActive(view);
   syncCommunityTabbarActive(view);
   setHeroPrimaryBuddyLabel(view === 'buddies');
+  syncCommunityComposeUi(view);
 
   window.scrollTo({ top: 0, behavior: opts.instant ? 'auto' : 'smooth' });
   if (!opts.skipHash && typeof history !== 'undefined' && history.replaceState) {
@@ -1038,6 +1085,7 @@ function openMePage(opts) {
   renderMePage();
   syncCommunityNavActive('');
   syncCommunityTabbarActive('');
+  syncCommunityComposeUi('');
   window.scrollTo({ top: 0, behavior: opts.instant ? 'auto' : 'smooth' });
   if (!opts.skipHash && typeof history !== 'undefined' && history.replaceState) {
     try { history.replaceState(null, '', '#me'); } catch (e) { /* file:// etc. */ }
@@ -1074,6 +1122,10 @@ function bindCommunityRouter() {
       switchCommunityView(btn.dataset.communityView || 'home');
     });
   });
+  const navComposeBtn = document.getElementById('navComposeBtn');
+  const communityFab = document.getElementById('communityFab');
+  if (navComposeBtn) navComposeBtn.addEventListener('click', triggerCommunityComposeAction);
+  if (communityFab) communityFab.addEventListener('click', triggerCommunityComposeAction);
 }
 
 function updateUserAvatarPopover() {
@@ -1222,7 +1274,7 @@ function renderMePublishedPanel() {
   }
   if (budEmpty) {
     budEmpty.hidden = !!myBuds.length;
-    budEmpty.textContent = myBuds.length ? '' : '你还没有发起招募。在找搭子区点「发起一次 Walk」。';
+    budEmpty.textContent = myBuds.length ? '' : '你还没有发起招募。在找搭子区点「＋ 发起 Walk」。';
   }
 }
 
@@ -2158,9 +2210,9 @@ function renderFeedMixed(keyword) {
     if (!total) {
       feedEmpty.hidden = false;
       if (source.length || getDiscoverRoutes().length) {
-        feedEmpty.innerHTML = '<strong>没有找到相关内容</strong><p style="margin-top:8px;font-size:12px;color:#888">换个关键词试试，或切换到「路线」按城市浏览。</p>';
+        feedEmpty.innerHTML = '<strong>没有匹配的内容</strong><p style="margin-top:8px;font-size:12px;color:#888">试试其他关键词，或切换到「路线」按城市浏览。</p>';
       } else {
-        feedEmpty.innerHTML = '<strong>还没有灵感内容</strong><p style="margin-top:8px;font-size:12px;color:#888">登录后点「发布」做第一个分享吧。</p>';
+        feedEmpty.innerHTML = '<strong>还没有灵感内容</strong><p style="margin-top:8px;font-size:12px;color:#888">登录后点「＋ 发布」，做第一个分享吧。</p>';
       }
     } else {
       feedEmpty.hidden = true;
@@ -2202,11 +2254,11 @@ function renderFeed(type='全部',keyword=''){
         const exit=document.getElementById('feedExitSaved');
         if(exit) exit.onclick=function(){feedViewSavedOnly=false;syncFeedSavedCounts();renderInspire();};
       }else if(type==='路线'&&!feedViewSavedOnly){
-        feedEmpty.innerHTML='<strong>路线在上方卡片区浏览</strong><p style="margin-top:8px;font-size:12px;color:#888">笔记流不重复展示路线类内容；可切回「全部」看打卡与攻略。</p>';
+        feedEmpty.innerHTML='<strong>路线请在上方卡片区浏览</strong><p style="margin-top:8px;font-size:12px;color:#888">笔记流不重复展示路线；切回「全部」可看打卡与攻略。</p>';
       }else if(source.length){
         feedEmpty.innerHTML='<strong>没有找到相关内容</strong><p style="margin-top:8px;font-size:12px;color:#888">换个关键词或类型试试。</p>';
       }else{
-        feedEmpty.innerHTML='<strong>还没有笔记</strong><p style="margin-top:8px;font-size:12px;color:#888">登录后点「发布」做第一个分享吧。</p>';
+        feedEmpty.innerHTML='<strong>还没有笔记</strong><p style="margin-top:8px;font-size:12px;color:#888">登录后点「＋ 发布」，做第一个分享吧。</p>';
       }
     }else{
       feedEmpty.hidden=true;
@@ -2763,7 +2815,7 @@ function setHeroPrimaryBuddyLabel(isOpen){
   if(!heroBtn) return;
   const label=heroBtn.querySelector('.hero-btn-label');
   const icon=heroBtn.querySelector('.hero-btn-icon');
-  if(label) label.textContent=isOpen?'收起找搭子':'先找搭子';
+  if(label) label.textContent=isOpen?'返回首页':'找搭子同行';
   if(icon) icon.textContent=isOpen?'↕':'👥';
 }
 

@@ -238,29 +238,134 @@
             to { transform: translateX(-50%) translateY(0); opacity: 1; }
         }
 
-        /* 控制面板 - 玻璃拟态风格 */
+        /* 控制面板 · 桌面：贴边侧栏（宽度可由 --cw-panel-width 与拖拽调整） */
         .control-panel {
+            --cw-panel-width: 392px;
+            --cw-panel-width-min: 340px;
+            --cw-panel-width-max: 480px;
             position: fixed;
-            top: 20px;
-            right: 20px;
-            width: 340px;
-            height: calc(100vh - 40px);
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-lg);
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: var(--cw-panel-width);
+            height: auto;
+            max-height: none;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 0;
+            box-shadow: -10px 0 40px rgba(42, 40, 48, 0.07);
             z-index: 100;
             overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.8);
+            border: none;
+            border-left: 1px solid rgba(238, 231, 234, 0.95);
             display: flex;
             flex-direction: column;
+        }
+
+        .panel-resize-handle {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 8px;
+            margin-left: -4px;
+            cursor: ew-resize;
+            z-index: 120;
+            touch-action: none;
+        }
+
+        .panel-resize-handle::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 3px;
+            height: 48px;
+            max-height: 40%;
+            border-radius: 999px;
+            background: rgba(122, 116, 126, 0.22);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .panel-resize-handle:hover::after,
+        .panel-resize-handle:focus-visible::after,
+        .control-panel.is-resizing .panel-resize-handle::after {
+            opacity: 1;
+        }
+
+        .panel-resize-handle:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: -2px;
+        }
+
+        .plan-prefs-disclosure {
+            margin-top: 12px;
+            padding-top: 8px;
+            border-top: 1px dashed var(--border-light);
+        }
+
+        .plan-prefs-disclosure__summary {
+            list-style: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 650;
+            color: var(--text-medium);
+            padding: 6px 4px;
+            user-select: none;
+        }
+
+        .plan-prefs-disclosure__summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .plan-prefs-disclosure__summary::before {
+            content: '▸ ';
+            color: var(--primary);
+            font-size: 11px;
+        }
+
+        .plan-prefs-disclosure[open] .plan-prefs-disclosure__summary::before {
+            content: '▾ ';
+        }
+
+        .panel-cta-sticky {
+            position: sticky;
+            bottom: 0;
+            z-index: 8;
+            margin-top: 12px;
+            padding: 10px 0 4px;
+            background: linear-gradient(to top, #ffffff 72%, rgba(255, 255, 255, 0));
+        }
+
+        .panel-cta-sticky .btn-agent-plan,
+        .panel-cta-sticky .btn-plan,
+        .panel-cta-sticky .btn-group--manual-primary {
+            margin-bottom: 0;
+        }
+
+        .panel-cta-sticky .btn-group--manual-primary .btn-plan {
+            width: 100%;
+        }
+
+        @media (min-width: 1280px) {
+            .control-panel:has(#tabBtnResult[aria-selected="true"]) {
+                --cw-panel-width: 448px;
+            }
+        }
+
+        .sheet-grabber,
+        .sheet-scrim,
+        .sheet-more {
+            display: none;
         }
 
         /* 面板头部 - 渐变背景 */
         .panel-header {
             background: linear-gradient(135deg, var(--primary), var(--primary-light));
-            padding: 20px 20px;
+            padding: 16px 18px;
             color: white;
             flex-shrink: 0;
         }
@@ -1290,6 +1395,22 @@
 
         /* 响应式适配 - 全面移动端优化 */
         @media (max-width: 768px) {
+            .panel-resize-handle {
+                display: none;
+            }
+
+            .panel-cta-sticky {
+                position: static;
+                padding: 0;
+                margin-top: 10px;
+                background: transparent;
+            }
+
+            .plan-prefs-disclosure__summary {
+                display: none;
+            }
+
+            /* 三档底栏：收起 / 半屏 / 全屏。不用 transform，否则内部 fixed 会被困在面板里。 */
             .control-panel {
                 width: 100%;
                 right: 0;
@@ -1297,153 +1418,201 @@
                 top: auto;
                 bottom: 0;
                 height: auto;
-                /* 默认只显示头部，让用户看到更多地图 */
                 max-height: none;
-                border-radius: 20px 20px 0 0;
-                box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+                border-radius: 22px 22px 0 0;
+                box-shadow: 0 -8px 28px rgba(42, 40, 48, 0.12);
                 border: none;
-                border-top: 1px solid rgba(255,255,255,0.8);
-                /* 使用 transform 实现硬件加速，拖动更流畅 */
-                will-change: transform;
-                transform: translateZ(0);
+                background: rgba(255, 255, 255, 0.98);
+                padding-bottom: env(safe-area-inset-bottom, 0px);
+                /* backdrop-filter 会把内部 fixed 困在底栏里 */
+                backdrop-filter: none;
+                -webkit-backdrop-filter: none;
+                overflow: visible;
             }
 
-            .panel-header {
-                padding: 24px 20px 16px 20px;
-                border-radius: 20px 20px 0 0;
-                /* 增加拖动区域 */
-                position: relative;
-                cursor: grab;
-                user-select: none;
-                -webkit-user-select: none;
-                touch-action: none;
-                /* 最小高度确保可拖动 */
-                min-height: 56px;
+            .sheet-grabber {
                 display: flex;
                 align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+                width: 100%;
+                height: 28px;
+                margin: 0;
+                padding: 0;
+                border: none;
+                background: transparent;
+                cursor: grab;
+                touch-action: none;
             }
 
-            .panel-header:active {
+            .sheet-grabber::before {
+                content: '';
+                width: 36px;
+                height: 4px;
+                border-radius: 999px;
+                background: #d5ced4;
+            }
+
+            .sheet-grabber:active {
                 cursor: grabbing;
             }
 
-            .panel-header h2 {
-                font-size: 17px;
-                pointer-events: none;
-                margin: 0;
+            .sheet-grabber:focus-visible {
+                outline: 2px solid var(--primary);
+                outline-offset: -4px;
             }
 
-            /* 收起时仅保留标题栏，环境区与 Tab 随面板一并隐藏 */
-            .panel-env,
-            .panel-tabs {
+            /* 品牌条移到地图右上，不占底栏收起高度 */
+            .control-panel .panel-header {
+                position: fixed;
+                top: max(12px, env(safe-area-inset-top, 0px));
+                right: max(12px, env(safe-area-inset-right, 0px));
+                left: auto;
+                width: auto;
+                min-height: 0;
+                padding: 0;
+                border-radius: 0;
+                background: transparent;
+                box-shadow: none;
+                z-index: 160;
+                pointer-events: none;
+            }
+
+            .control-panel .panel-header h2 {
                 display: none;
             }
 
-            .control-panel.expanded .panel-env {
+            .control-panel .panel-header-actions {
+                pointer-events: auto;
+            }
+
+            .control-panel .panel-header-auth,
+            .control-panel .panel-header-community {
+                background: rgba(255, 255, 255, 0.94);
+                color: #2a2830;
+                border-color: rgba(255, 255, 255, 0.9);
+                box-shadow: 0 8px 20px rgba(42, 40, 48, 0.14);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                min-height: 36px;
+            }
+
+            .control-panel .panel-header-auth {
+                width: 36px;
+                height: 36px;
+                min-width: 36px;
+            }
+
+            .panel-env {
                 display: flex;
+                padding: 0 16px 6px;
+            }
+
+            .panel-tabs {
+                display: none;
             }
 
             .control-panel.expanded .panel-tabs {
                 display: flex;
             }
 
-            .panel-env {
-                padding: 10px 16px 0;
-            }
-
             .panel-body {
-                padding: 0 20px 20px 20px;
-                padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-                /* 默认收起状态 */
-                max-height: 0;
+                padding: 0 16px 8px;
+                max-height: none;
                 overflow: hidden;
-                opacity: 0;
-                transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-                            opacity 0.25s ease,
-                            padding 0.3s ease;
+                opacity: 1;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
             }
 
-            /* 展开状态 */
+            .panel-body::-webkit-scrollbar {
+                display: none;
+            }
+
+            /* 收起：搜索 + 起终点 */
+            .control-panel:not(.expanded) .panel-tabs,
+            .control-panel:not(.expanded) .plan-mode-group,
+            .control-panel:not(.expanded) .mustgo-hint,
+            .control-panel:not(.expanded) .plan-time-mini,
+            .control-panel:not(.expanded) .plan-prefs-disclosure,
+            .control-panel:not(.expanded) .tab-panel,
+            .control-panel:not(.expanded) .sheet-more {
+                display: none !important;
+            }
+
+            /* 半屏：当前步骤 + 主按钮，地图上半截仍可点 */
+            .control-panel.expanded:not(.sheet-full) {
+                max-height: min(54dvh, 480px);
+            }
+
             .control-panel.expanded .panel-body {
-                max-height: 55vh;
+                flex: 1 1 auto;
+                min-height: 0;
                 overflow-y: auto;
-                opacity: 1;
-                padding-top: 16px;
-                /* 优化滚动性能 */
                 -webkit-overflow-scrolling: touch;
                 overscroll-behavior: contain;
             }
 
-            /* 面板内容收起时的隐藏 */
-            .panel-body {
-                scrollbar-width: none; /* Firefox */
-                -ms-overflow-style: none; /* IE 10+ */
+            .control-panel.expanded:not(.sheet-full) .plan-prefs-disclosure,
+            .control-panel.expanded:not(.sheet-full) .agent-hint,
+            .control-panel.expanded:not(.sheet-full) .agent-query-input,
+            .control-panel.expanded:not(.sheet-full) .agent-inspire,
+            .control-panel.expanded:not(.sheet-full) .recent-routes,
+            .control-panel.expanded:not(.sheet-full) .tips-box {
+                display: none !important;
             }
 
-            .panel-body::-webkit-scrollbar {
-                display: none; /* Chrome Safari */
+            .control-panel.expanded:not(.sheet-full) .agent-box {
+                margin: 8px 0 0;
+                padding: 0;
+                border: none;
+                box-shadow: none;
+                background: transparent;
             }
 
-            /* 拖动指示器 */
-            .panel-header::before {
-                content: '';
-                position: absolute;
-                top: 8px;
-                left: 50%;
-                transform: translateX(-50%);
-                width: 36px;
-                height: 4px;
-                background: rgba(255,255,255,0.6);
-                border-radius: 2px;
-                pointer-events: none;
-                transition: width 0.2s ease, background 0.2s ease;
+            .control-panel.expanded:not(.sheet-full) .sheet-more {
+                display: block;
             }
 
-            .panel-header:active::before {
-                width: 48px;
-                background: rgba(255,255,255,0.9);
+            /* 全屏：偏好、描述、路线结果 */
+            .control-panel.expanded.sheet-full {
+                height: calc(100dvh - max(72px, env(safe-area-inset-top, 0px) + 60px));
+                max-height: calc(100dvh - max(72px, env(safe-area-inset-top, 0px) + 60px));
             }
 
-            /* 展开状态指示 */
-            .control-panel.expanded .panel-header::after {
-                content: '▼';
-                position: absolute;
-                right: 20px;
-                top: 50%;
-                transform: translateY(-50%);
-                font-size: 12px;
-                color: rgba(255,255,255,0.8);
-                pointer-events: none;
+            .control-panel.sheet-full .poi-list {
+                max-height: none;
             }
 
-            .control-panel:not(.expanded) .panel-header::after {
-                content: '▲';
-                position: absolute;
-                right: 20px;
-                top: 50%;
-                transform: translateY(-50%);
-                font-size: 12px;
-                color: rgba(255,255,255,0.8);
-                pointer-events: none;
+            .sheet-more {
+                width: 100%;
+                margin: 4px 0 2px;
+                padding: 10px 8px 4px;
+                border: none;
+                background: transparent;
+                color: var(--text-light);
+                font-size: 13px;
+                font-family: inherit;
+                cursor: pointer;
             }
 
-            /* 展开时的遮罩层（点击地图收起面板） */
-            .control-panel.expanded::after {
-                content: '';
+            .sheet-more:hover,
+            .sheet-more:focus-visible {
+                color: var(--primary);
+            }
+
+            .sheet-scrim {
                 position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0,0,0,0.2);
-                z-index: -1;
-                opacity: 0;
-                transition: opacity 0.3s ease;
-                pointer-events: none;
+                inset: 0;
+                z-index: 90;
+                border: none;
+                padding: 0;
+                background: rgba(24, 18, 28, 0.28);
+                cursor: pointer;
             }
 
-            .control-panel.expanded:active::after {
-                opacity: 1;
+            .sheet-scrim.is-on {
+                display: block;
             }
 
             .poi-type-btn {
@@ -1490,9 +1659,9 @@
                 padding: 12px 14px;
             }
 
-            /* 移动端POI列表：上调高度，容纳增强图文，仍在 panel-body(55vh) 内可滚动 */
+            /* 路线列表跟着底栏一起滚，不再套一层矮滚动区 */
             .poi-list {
-                max-height: 38vh;
+                max-height: none;
             }
 
             .poi-item {
@@ -1540,17 +1709,21 @@
             }
         }
 
-        /* 搜索聚焦：底栏只留标题和搜索行，贴在可视区域底部（键盘上方） */
+        /* 搜索聚焦：底栏只留搜索行，贴在可视区域底部（键盘上方） */
         @media (max-width: 768px) and (min-height: 501px) {
             .control-panel.search-focused {
                 top: auto;
                 bottom: var(--cw-vv-bottom, 0px);
+                height: auto !important;
+                max-height: none !important;
             }
 
+            .control-panel.search-focused .sheet-grabber,
             .control-panel.search-focused .panel-env,
             .control-panel.search-focused .panel-tabs,
+            .control-panel.search-focused .sheet-more,
             .control-panel.search-focused .share-restore-banner {
-                display: none;
+                display: none !important;
             }
 
             .control-panel.search-focused .panel-body {
@@ -1579,10 +1752,6 @@
 
         /* 超小屏幕适配 */
         @media (max-width: 375px) {
-            .control-panel {
-                max-height: 60vh;
-            }
-
             .panel-header h2 {
                 font-size: 16px;
             }
@@ -1597,16 +1766,86 @@
             }
         }
 
-        /* 横屏模式适配 */
-        @media (max-height: 500px) and (orientation: landscape) {
+        /* 窄屏横屏：回到右侧浮层，三档底栏让位 */
+        @media (max-width: 768px) and (max-height: 500px) and (orientation: landscape) {
             .control-panel {
-                max-height: 75vh;
-                width: 50%;
-                right: 0;
+                max-height: none;
+                height: calc(100vh - 16px);
+                width: min(420px, 52vw);
+                right: 8px;
                 left: auto;
-                top: 10px;
+                top: 8px;
                 bottom: auto;
                 border-radius: 16px;
+            }
+
+            .sheet-grabber,
+            .sheet-scrim {
+                display: none !important;
+            }
+
+            .control-panel .panel-header {
+                position: relative;
+                top: auto;
+                right: auto;
+                width: auto;
+                padding: 14px 14px 10px;
+                background: linear-gradient(135deg, var(--primary), var(--primary-light));
+                pointer-events: auto;
+                border-radius: 16px 16px 0 0;
+            }
+
+            .control-panel .panel-header h2 {
+                display: flex;
+                font-size: 16px;
+            }
+
+            .control-panel .panel-header-auth,
+            .control-panel .panel-header-community {
+                background: rgba(255, 255, 255, 0.18);
+                color: #fff;
+                box-shadow: none;
+            }
+
+            .panel-tabs,
+            .panel-env,
+            .control-panel:not(.expanded) .plan-mode-group,
+            .control-panel:not(.expanded) .plan-time-mini,
+            .control-panel:not(.expanded) .plan-prefs-disclosure,
+            .control-panel:not(.expanded) .tab-panel:not([hidden]),
+            .control-panel:not(.expanded) .mustgo-hint,
+            .control-panel:not(.expanded) .share-restore-banner,
+            .control-panel.expanded:not(.sheet-full) .plan-prefs-disclosure,
+            .control-panel.expanded:not(.sheet-full) .agent-hint,
+            .control-panel.expanded:not(.sheet-full) .agent-query-input,
+            .control-panel.expanded:not(.sheet-full) .agent-inspire,
+            .control-panel.expanded:not(.sheet-full) .recent-routes,
+            .control-panel.expanded:not(.sheet-full) .tips-box {
+                display: block !important;
+            }
+
+            .panel-tabs,
+            .panel-env,
+            .control-panel:not(.expanded) .plan-mode-group {
+                display: flex !important;
+            }
+
+            .control-panel .panel-body {
+                overflow-y: auto;
+                max-height: none;
+            }
+
+            .control-panel.expanded:not(.sheet-full) .agent-box {
+                margin-bottom: var(--space-4);
+                padding: var(--space-3);
+                border: 1px solid var(--border-light);
+                border-left: 3px solid var(--primary);
+                box-shadow: var(--shadow-sm);
+                background: var(--bg-white);
+            }
+
+            .sheet-more {
+                display: none !important;
             }
         }
 
@@ -2675,9 +2914,13 @@
         .loading-retry:hover { background: rgba(var(--primary-rgb, 255,126,95), 0.08); }
 
         .plan-prefs {
-            margin-top: 12px;
-            padding-top: 10px;
-            border-top: 1px solid var(--border-light);
+            margin-top: 8px;
+            padding-top: 4px;
+            border-top: none;
+        }
+
+        .plan-prefs-disclosure .plan-prefs {
+            margin-top: 4px;
         }
         .plan-prefs .filter-title {
             margin-top: 8px;

@@ -124,7 +124,7 @@
             const cityDetails = document.getElementById('citySwitcherDetails');
             if (cityDetails) cityDetails.open = false;
 
-            showToast(`已切换到 ${cityName}，地图选点已清空；可在「智能规划」用文字描述新路线`);
+            showToast(`已切换到 ${cityName}，地图选点已清空`);
             if (typeof window.__cwOnPlanPrefsChange === 'function') window.__cwOnPlanPrefsChange();
         }
 
@@ -362,6 +362,8 @@ ${poiText}
         bindClick('btnAgentChat', sendAgentChat);
         bindClick('btnReset', resetSelection);
         bindClick('btnResetAgent', resetSelection);
+        bindClick('btnSheetMore', () => setSheetDetent('full'));
+        bindClick('sheetScrim', () => setSheetDetent('half'));
         bindClick('btnPlan', generateRoute);
         bindClick('modeBtnRoute', () => switchPlanMode('route'));
         bindClick('modeBtnLoop', () => switchPlanMode('loop'));
@@ -473,7 +475,7 @@ ${poiText}
         }
         if (typeof updateBtnStatus === 'function') updateBtnStatus();
 
-        // 搜索框功能。窄屏聚焦时底栏收成标题+搜索行，贴在可视区域底部。
+        // 搜索框功能。窄屏聚焦时底栏收成搜索行，贴在可视区域底部。
         const searchInput = document.getElementById('searchInput');
         if (searchInput) {
             const narrowSheetQuery = '(max-width: 768px) and (min-height: 501px)';
@@ -493,7 +495,7 @@ ${poiText}
                 if (!window.matchMedia(narrowSheetQuery).matches) return;
                 const panel = document.querySelector('.control-panel');
                 if (!panel) return;
-                panel.classList.add('expanded', 'search-focused');
+                panel.classList.add('search-focused');
                 syncSearchSheetToKeyboard();
                 if (window.visualViewport) {
                     window.visualViewport.addEventListener('resize', onSearchViewport);
@@ -523,8 +525,9 @@ ${poiText}
                     this.blur();
                     const panel = document.querySelector('.control-panel');
                     if (panel) {
-                        panel.classList.remove('expanded', 'search-focused');
+                        panel.classList.remove('search-focused');
                         panel.style.removeProperty('--cw-vv-bottom');
+                        setSheetDetent('peek');
                     }
                 }
                 searchAddress(keyword);
@@ -565,123 +568,210 @@ ${poiText}
             window.__cwOnAMapReady();
         }
 
-        // ===== 移动端手势 =====
-        (function initTouchGestures() {
-            const controlPanel = document.querySelector('.control-panel');
-            if (!controlPanel) return;
+        // ===== 移动端三档底栏：收起 / 半屏 / 全屏 =====
+        const SHEET_DETENTS = ['peek', 'half', 'full'];
+        const SHEET_MEDIA = '(max-width: 768px) and (min-height: 501px)';
 
-            const header = controlPanel.querySelector('.panel-header');
-            if (!header) return;
+        function sheetDetentsActive() {
+            return window.matchMedia(SHEET_MEDIA).matches;
+        }
 
-            let startY = 0;
-            let startTime = 0;
-            let isExpanded = false;
-            let isDragging = false;
-            let hasMoved = false;
+        function currentSheetDetent(panel) {
+            const el = panel || document.querySelector('.control-panel');
+            if (!el || !el.classList.contains('expanded')) return 'peek';
+            return el.classList.contains('sheet-full') ? 'full' : 'half';
+        }
 
-            // 检测是否为移动设备
-            const isMobile = window.matchMedia('(max-width: 768px)').matches;
-            if (!isMobile) return;
+        function notifyMapLayoutChange() {
+            if (!CW.map || typeof CW.map.resize !== 'function') return;
+            requestAnimationFrame(function () {
+                if (CW.map) CW.map.resize();
+            });
+        }
 
-            // 切换展开/收起状态
-            function togglePanel(expand) {
-                isExpanded = expand !== undefined ? expand : !isExpanded;
-                if (isExpanded) {
-                    controlPanel.classList.add('expanded');
-                } else {
-                    controlPanel.classList.remove('expanded');
-                    if (typeof recenterLastSearch === 'function') recenterLastSearch();
-                }
+        function syncPlanPrefsDisclosure() {
+            const details = document.getElementById('planPrefsDisclosure');
+            if (!details) return;
+            const mobile = window.matchMedia('(max-width: 768px)').matches;
+            details.open = mobile;
+        }
+
+        function setSheetDetent(detent) {
+            const panel = document.querySelector('.control-panel');
+            if (!panel || !sheetDetentsActive()) return;
+            const next = SHEET_DETENTS.indexOf(detent) >= 0 ? detent : 'peek';
+            panel.classList.remove('expanded', 'sheet-full');
+            if (next === 'half') panel.classList.add('expanded');
+            if (next === 'full') panel.classList.add('expanded', 'sheet-full');
+            const scrim = document.getElementById('sheetScrim');
+            if (scrim) {
+                const on = next === 'full';
+                scrim.classList.toggle('is-on', on);
+                scrim.setAttribute('aria-hidden', on ? 'false' : 'true');
+            }
+            const grabber = document.getElementById('sheetGrabber');
+            if (grabber) {
+                const label = next === 'peek' ? '展开到半屏' : (next === 'half' ? '展开到全屏' : '收起面板');
+                grabber.setAttribute('aria-label', label);
+            }
+            if (next === 'peek') {
+                const body = panel.querySelector('.panel-body');
+                if (body) body.scrollTop = 0;
+                if (typeof recenterLastSearch === 'function') recenterLastSearch();
+            }
+            if (next === 'full') syncPlanPrefsDisclosure();
+        }
+
+        window.setSheetDetent = setSheetDetent;
+
+        (function initDesktopPanelResize() {
+            const DESKTOP_PANEL_MQ = '(min-width: 769px)';
+            const STORAGE_KEY = 'cw_panel_width_v1';
+            const panel = document.getElementById('controlPanel') || document.querySelector('.control-panel');
+            const handle = document.getElementById('panelResizeHandle');
+            if (!panel || !handle) return;
+
+            function readStoredWidth() {
+                try {
+                    const n = parseInt(localStorage.getItem(STORAGE_KEY), 10);
+                    if (Number.isFinite(n)) return n;
+                } catch (_) { /* ignore */ }
+                return null;
             }
 
-            // 点击头部切换（还原为：点击整个头部都可以展开/收起）
-            header.addEventListener('click', function(e) {
-                if (hasMoved) return; // 如果是拖动操作，不触发点击
-                togglePanel();
+            function applyPanelWidth(px) {
+                const min = parseInt(getComputedStyle(panel).getPropertyValue('--cw-panel-width-min'), 10) || 340;
+                const max = parseInt(getComputedStyle(panel).getPropertyValue('--cw-panel-width-max'), 10) || 480;
+                const w = Math.max(min, Math.min(max, Math.round(px)));
+                panel.style.setProperty('--cw-panel-width', w + 'px');
+                notifyMapLayoutChange();
+                return w;
+            }
+
+            const stored = readStoredWidth();
+            if (stored != null) applyPanelWidth(stored);
+
+            let dragging = false;
+            let startX = 0;
+            let startW = 0;
+
+            function onMove(clientX) {
+                if (!dragging) return;
+                const delta = startX - clientX;
+                applyPanelWidth(startW + delta);
+            }
+
+            function stopDrag() {
+                if (!dragging) return;
+                dragging = false;
+                panel.classList.remove('is-resizing');
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+                try {
+                    const w = parseInt(getComputedStyle(panel).width, 10);
+                    if (Number.isFinite(w)) localStorage.setItem(STORAGE_KEY, String(w));
+                } catch (_) { /* ignore */ }
+            }
+
+            handle.addEventListener('mousedown', function (e) {
+                if (!window.matchMedia(DESKTOP_PANEL_MQ).matches) return;
+                e.preventDefault();
+                dragging = true;
+                startX = e.clientX;
+                startW = panel.getBoundingClientRect().width;
+                panel.classList.add('is-resizing');
+                document.body.style.cursor = 'ew-resize';
+                document.body.style.userSelect = 'none';
             });
 
-            // 触摸开始
-            header.addEventListener('touchstart', function(e) {
-                startY = e.touches[0].clientY;
-                startTime = Date.now();
-                isDragging = true;
-                hasMoved = false;
-                header.style.cursor = 'grabbing';
-            }, { passive: true });
+            window.addEventListener('mousemove', function (e) {
+                if (!dragging) return;
+                onMove(e.clientX);
+            });
+            window.addEventListener('mouseup', stopDrag);
 
-            // 触摸移动 - 检测滑动方向
-            header.addEventListener('touchmove', function(e) {
-                if (!isDragging) return;
-
-                const currentY = e.touches[0].clientY;
-                const deltaY = startY - currentY;
-
-                // 移动超过 10px 认为是拖动
-                if (Math.abs(deltaY) > 10) {
-                    hasMoved = true;
-                }
-
-                // 根据滑动方向实时反馈
-                if (deltaY > 30 && !isExpanded) {
-                    // 向上滑动，准备展开
-                    header.style.transform = 'translateY(-2px)';
-                } else if (deltaY < -30 && isExpanded) {
-                    // 向下滑动，准备收起
-                    header.style.transform = 'translateY(2px)';
-                }
-            }, { passive: true });
-
-            // 触摸结束
-            header.addEventListener('touchend', function(e) {
-                if (!isDragging) return;
-                isDragging = false;
-                header.style.cursor = 'grab';
-                header.style.transform = '';
-
-                const endY = e.changedTouches[0].clientY;
-                const deltaY = startY - endY;
-                const deltaTime = Date.now() - startTime;
-
-                // 快速滑动（轻扫）
-                if (deltaTime < 300 && Math.abs(deltaY) > 50) {
-                    if (deltaY > 0) {
-                        togglePanel(true); // 向上轻扫，展开
-                    } else {
-                        togglePanel(false); // 向下轻扫，收起
-                    }
-                } else if (Math.abs(deltaY) > 80) {
-                    // 慢速但滑动距离长
-                    if (deltaY > 0) {
-                        togglePanel(true);
-                    } else {
-                        togglePanel(false);
-                    }
-                }
-                // 否则认为是点击，由 click 事件处理
-            }, { passive: true });
-
-            // 阻止头部区域的默认滚动行为
-            header.addEventListener('touchmove', function(e) {
+            handle.addEventListener('keydown', function (e) {
+                if (!window.matchMedia(DESKTOP_PANEL_MQ).matches) return;
+                const step = e.shiftKey ? 24 : 12;
+                let w = panel.getBoundingClientRect().width;
+                if (e.key === 'ArrowLeft') w += step;
+                else if (e.key === 'ArrowRight') w -= step;
+                else return;
                 e.preventDefault();
-            }, { passive: false });
+                const applied = applyPanelWidth(w);
+                try { localStorage.setItem(STORAGE_KEY, String(applied)); } catch (_) { /* ignore */ }
+            });
+        })();
 
-            // 面板内容区域滚动时，如果滚动到顶部继续下拉则收起面板
+        syncPlanPrefsDisclosure();
+        window.addEventListener('resize', syncPlanPrefsDisclosure);
+
+        (function initTouchGestures() {
+            const controlPanel = document.querySelector('.control-panel');
+            const grabber = document.getElementById('sheetGrabber');
+            if (!controlPanel || !grabber) return;
+
+            let startY = 0;
+            let dragging = false;
+            let moved = false;
+            let suppressClick = false;
+
+            function stepDetent(dir) {
+                const order = SHEET_DETENTS;
+                let i = order.indexOf(currentSheetDetent(controlPanel));
+                i = Math.max(0, Math.min(order.length - 1, i + dir));
+                setSheetDetent(order[i]);
+            }
+
+            grabber.addEventListener('click', function() {
+                if (!sheetDetentsActive()) return;
+                if (suppressClick) {
+                    suppressClick = false;
+                    return;
+                }
+                const i = SHEET_DETENTS.indexOf(currentSheetDetent(controlPanel));
+                setSheetDetent(SHEET_DETENTS[(i + 1) % SHEET_DETENTS.length]);
+            });
+
+            grabber.addEventListener('touchstart', function(e) {
+                if (!sheetDetentsActive() || controlPanel.classList.contains('search-focused')) return;
+                startY = e.touches[0].clientY;
+                dragging = true;
+                moved = false;
+            }, { passive: true });
+
+            grabber.addEventListener('touchmove', function(e) {
+                if (!dragging) return;
+                if (Math.abs(e.touches[0].clientY - startY) > 10) moved = true;
+            }, { passive: true });
+
+            grabber.addEventListener('touchend', function(e) {
+                if (!dragging) return;
+                dragging = false;
+                const deltaY = startY - e.changedTouches[0].clientY;
+                if (Math.abs(deltaY) > 42) {
+                    suppressClick = true;
+                    stepDetent(deltaY > 0 ? 1 : -1);
+                } else if (moved) {
+                    suppressClick = true;
+                }
+            }, { passive: true });
+
             const panelBody = controlPanel.querySelector('.panel-body');
             if (panelBody) {
                 let bodyStartY = 0;
-
+                let bodyStepped = false;
                 panelBody.addEventListener('touchstart', function(e) {
                     bodyStartY = e.touches[0].clientY;
+                    bodyStepped = false;
                 }, { passive: true });
-
                 panelBody.addEventListener('touchmove', function(e) {
-                    const currentY = e.touches[0].clientY;
-                    const deltaY = currentY - bodyStartY;
-
-                    // 在顶部继续下拉超过50px时收起面板，并阻止系统滚动
-                    if (panelBody.scrollTop <= 0 && deltaY > 50) {
+                    if (bodyStepped || !sheetDetentsActive() || controlPanel.classList.contains('search-focused')) return;
+                    const deltaY = e.touches[0].clientY - bodyStartY;
+                    if (panelBody.scrollTop <= 0 && deltaY > 56 && currentSheetDetent(controlPanel) !== 'peek') {
+                        bodyStepped = true;
                         e.preventDefault();
-                        togglePanel(false);
+                        stepDetent(-1);
                     }
                 }, { passive: false });
             }
@@ -726,17 +816,4 @@ ${poiText}
             e.stopPropagation();
         }, { passive: true });
 
-        // 点击地图区域收起面板
-        (function initMapTapToClose() {
-            const container = document.getElementById('container');
-            const controlPanel = document.querySelector('.control-panel');
-            if (!container || !controlPanel) return;
-
-            container.addEventListener('touchstart', function(e) {
-                // 如果面板是展开的，点击地图收起
-                if (controlPanel.classList.contains('expanded')) {
-                    controlPanel.classList.remove('expanded');
-                    if (typeof recenterLastSearch === 'function') recenterLastSearch();
-                }
-            }, { passive: true });
-        })();
+        // 全屏时点遮罩回到半屏（见 sheetScrim）。半屏与收起不拦截地图，方便选点。

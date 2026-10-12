@@ -39,9 +39,14 @@ function openResultChatOnPlan() {
 }
 
 function expandControlPanelForResult() {
+    const mobileSheet = window.matchMedia('(max-width: 768px) and (min-height: 501px)').matches;
+    if (mobileSheet && typeof setSheetDetent === 'function') {
+        setSheetDetent('full');
+        return;
+    }
     const controlPanel = document.querySelector('.control-panel');
     if (controlPanel && window.matchMedia('(max-width: 768px)').matches) {
-        controlPanel.classList.add('expanded');
+        controlPanel.classList.add('expanded', 'sheet-full');
     }
 }
 
@@ -132,7 +137,7 @@ function presentRouteToUser(data) {
 
     const resultHeader = document.querySelector('.result-header');
     if (resultHeader) {
-        resultHeader.textContent = data.mode === 'loop' ? '探索路线规划完成' : '路线规划完成';
+        resultHeader.textContent = data.mode === 'loop' ? '环线已生成' : '路线已生成';
     }
 
     const resultAreaEl = document.getElementById('resultArea');
@@ -238,8 +243,8 @@ function switchPlanMode(mode) {
     }
     if (tipsText) {
         tipsText.textContent = m === 'loop'
-            ? '请在地图上选择探索中心，将生成环线漫步路线'
-            : '自然语言描述需求？请使用「智能规划」';
+            ? '在地图上选定探索中心，将围绕该点生成环线'
+            : '想用自然语言描述行程？请切换到「智能规划」';
     }
     const styleGroup = document.querySelector('.route-style-group');
     if (routeStyleBlock) routeStyleBlock.style.display = m === 'loop' ? 'none' : '';
@@ -253,7 +258,7 @@ function switchPlanMode(mode) {
         CW.endMarker = null;
         const endCardEl = document.getElementById('endCard');
         if (endCardEl) endCardEl.className = 'status-card';
-        setPickupStatusText('endValue', '点击地图选择');
+        setPickupStatusText('endValue', '在地图上选择');
     }
 
     updateBtnStatus();
@@ -284,7 +289,7 @@ function updateBtnStatus() {
         } else if (CW.planMode === 'loop') {
             btn.innerText = '请先选择探索中心';
         } else {
-            btn.innerText = '先在地图上选起终点';
+            btn.innerText = '请在地图选定起终点';
         }
     }
 
@@ -295,7 +300,7 @@ function updateBtnStatus() {
         agentBtn.disabled = !canAgent;
         agentBtn.title = canAgent
             ? ''
-            : '请填写上方需求描述，或在地图选起终点';
+            : '请填写需求描述，或在地图选定起终点';
     }
 }
 
@@ -317,8 +322,8 @@ function resetSelection() {
 
     document.getElementById('startCard').className = 'status-card';
     document.getElementById('endCard').className = 'status-card';
-    setPickupStatusText('startValue', '点击地图选择');
-    setPickupStatusText('endValue', '点击地图选择');
+    setPickupStatusText('startValue', '在地图上选择');
+    setPickupStatusText('endValue', '在地图上选择');
     const resultArea = document.getElementById('resultArea');
     if (resultArea) resultArea.style.display = 'none';
     if (typeof window.CitywalkBridge !== 'undefined') {
@@ -1030,7 +1035,7 @@ function renderRouteStopEditor(poiList) {
     bar.className = 'poi-edit-bar';
     const hint = document.createElement('p');
     hint.className = 'poi-edit-hint';
-    hint.textContent = '拖动 ⋮⋮ 可调整站点顺序，将自动重新规划步行线';
+    hint.textContent = '拖动 ⋮⋮ 调整站点顺序，将自动重新计算步行路线';
     bar.appendChild(hint);
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -1061,7 +1066,8 @@ function toggleAddRouteStop() {
     CW.addingRouteStop = true;
     if (panel) {
         panel.classList.add('result-adding-stop');
-        if (window.matchMedia('(max-width: 768px)').matches) panel.classList.add('expanded');
+        if (typeof setSheetDetent === 'function') setSheetDetent('half');
+        else if (window.matchMedia('(max-width: 768px)').matches) panel.classList.add('expanded');
     }
     if (CW.routeData && Array.isArray(CW.routeData.pois)) renderPoiList(CW.routeData.pois);
     const input = document.getElementById('searchInput');
@@ -1340,9 +1346,9 @@ function showLoadingSteps(message) {
     const title = document.getElementById('loadingTitle');
     const sub = document.getElementById('loadingSub');
     const retry = document.getElementById('btnLoadingRetry');
-    if (title) title.textContent = message || '正在规划步行路线，可能需要十几秒';
+    if (title) title.textContent = message || '正在生成步行路线';
     if (sub) {
-        sub.textContent = '请稍候，结果就绪后会自动展示';
+        sub.textContent = '通常需要 10–20 秒，完成后会自动展示';
         sub.hidden = false;
     }
     if (retry) {

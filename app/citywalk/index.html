@@ -7,11 +7,11 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#ff6f91">
-    <meta name="description" content="WanderWalk · Citywalk 路线规划：智能定制步行路线，支持多城起终点、必去点与社区足迹联动">
+    <meta name="description" content="WanderWalk · 按你的节奏规划 Citywalk 步行路线：起终点、必去与偏好一键生成，并可同步社区足迹。">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="WanderWalk">
     <meta property="og:title" content="WanderWalk · Citywalk 路线规划">
-    <meta property="og:description" content="智能定制步行路线，多城起终点与必去点，联动社区足迹与分享。">
+    <meta property="og:description" content="为 Citywalk 生成步行路线：支持智能描述与地图选点，结果可分享并记录到社区。">
     <meta property="og:url" content="https://nooming.github.io/app/citywalk/">
     <meta property="og:image" content="https://nooming.github.io/app/citywalk/assets/brand/og-cover.svg">
     <meta name="twitter:card" content="summary_large_image">
@@ -91,26 +91,30 @@
     <div class="loading-overlay" id="loadingOverlay" role="status" aria-live="polite" aria-hidden="true">
         <div class="loading-card">
             <div class="loading-spinner" aria-hidden="true"></div>
-            <div class="loading-title" id="loadingTitle">正在规划步行路线，可能需要十几秒</div>
-            <p class="loading-sub" id="loadingSub">请稍候，结果就绪后会自动展示</p>
+            <div class="loading-title" id="loadingTitle">正在生成步行路线</div>
+            <p class="loading-sub" id="loadingSub">通常需要 10–20 秒，完成后会自动展示</p>
             <button type="button" class="loading-retry" id="btnLoadingRetry" hidden>重试</button>
         </div>
     </div>
 
     <div class="error-toast" id="errorToast" role="alert" aria-live="assertive"></div>
 
-    <div class="control-panel">
+    <button type="button" class="sheet-scrim" id="sheetScrim" aria-label="回到半屏" aria-hidden="true" tabindex="-1"></button>
+
+    <div class="control-panel" id="controlPanel">
+        <div class="panel-resize-handle" id="panelResizeHandle" role="separator" aria-orientation="vertical" aria-label="拖动调整侧栏宽度" tabindex="0"></div>
+        <button type="button" class="sheet-grabber" id="sheetGrabber" aria-label="展开面板"></button>
         <div class="panel-header">
             <h2>
                 <img class="panel-header-icon cw-brand-mark" src="assets/brand/wanderwalk-mark-light.svg" width="36" height="36" alt="">
                 <span class="panel-header-title-block">
                     <span class="panel-header-title-text">WanderWalk</span>
-                    <span class="panel-header-subtitle">Citywalk 路线规划</span>
+                    <span class="panel-header-subtitle">步行路线规划</span>
                 </span>
             </h2>
             <div class="panel-header-actions">
                 <button type="button" class="panel-header-auth" id="cwAuthAvatarBtn" title="登录同步足迹">我</button>
-                <a class="panel-header-community" href="community/" title="WanderWalk 社区 · 找搭子与足迹">社区</a>
+                <a class="panel-header-community" href="community/" title="社区 · 找搭子、灵感与足迹">社区</a>
             </div>
         </div>
 
@@ -119,7 +123,7 @@
                 <details class="city-switcher" id="citySwitcherDetails">
                     <summary class="city-switcher-summary">
                         <span class="city-switcher-icon">📍</span>
-                        <span id="currentCity" class="city-switcher-name">定位中...</span>
+                        <span id="currentCity" class="city-switcher-name">定位中…</span>
                         <span class="city-switcher-chevron">▾</span>
                     </summary>
                     <div class="city-switcher-body">
@@ -155,14 +159,14 @@
 
         <div class="panel-body">
             <div class="share-restore-banner" id="shareRestoreBanner" hidden>
-                <span id="shareRestoreText">已从链接载入参数</span>
-                <button type="button" class="btn btn-agent-plan" id="btnShareReplan">按此规划</button>
+                <span id="shareRestoreText">已从分享链接载入路线条件</span>
+                <button type="button" class="btn btn-agent-plan" id="btnShareReplan">按此条件生成</button>
             </div>
 
             <section id="panel-shared" class="panel-shared plan-mode-route" aria-label="选点与模式">
                 <div class="search-box search-box--compact">
                     <label for="searchInput" class="sr-only">搜索地址</label>
-                    <input type="text" id="searchInput" placeholder="🔍 搜索地址，回车定位">
+                    <input type="text" id="searchInput" placeholder="搜索地点，回车定位到地图">
                 </div>
 
                 <div class="plan-mode-group" role="group" aria-label="规划模式">
@@ -173,15 +177,15 @@
                 <div class="pickup-strip status-group">
                     <div class="status-card" id="startCard">
                         <div class="label">📍 起点</div>
-                        <div class="value" id="startValue">点击地图选择</div>
+                        <div class="value" id="startValue">在地图上选择</div>
                     </div>
                     <div class="status-card status-card--destination" id="endCard">
                         <div class="label">🏁 终点</div>
-                        <div class="value" id="endValue">点击地图选择</div>
+                        <div class="value" id="endValue">在地图上选择</div>
                     </div>
                 </div>
 
-                <p class="mustgo-hint" id="mustGoHint">右键地图可订必去，手机长按，最多 3 个</p>
+                <p class="mustgo-hint" id="mustGoHint">长按地图添加必去点（最多 3 个；电脑端可右键）</p>
                 <div class="pinned-seeds" id="pinnedSeedsPanel" hidden>
                     <div class="pinned-seeds-head">
                         <span class="filter-title">必去点</span>
@@ -196,8 +200,10 @@
                     <span id="planTimeValue" class="time-slider-value plan-time-mini-value">60 分钟</span>
                 </div>
 
+                <details class="plan-prefs-disclosure" id="planPrefsDisclosure">
+                    <summary class="plan-prefs-disclosure__summary">偏好与节奏</summary>
                 <div class="plan-prefs" aria-label="偏好与节奏">
-                    <div class="filter-title" id="poiPrefTitleShared">打卡偏好</div>
+                    <div class="filter-title" id="poiPrefTitleShared">途经偏好</div>
                     <div class="poi-type-group" role="group" aria-labelledby="poiPrefTitleShared">
                         <button type="button" class="poi-type-btn active" data-type="无偏好" aria-pressed="true">无偏好</button>
                         <button type="button" class="poi-type-btn" data-type="自然" aria-pressed="false">🌳 自然</button>
@@ -209,8 +215,8 @@
                     </div>
                     <div class="filter-title" id="visitPaceTitle">逛法节奏</div>
                     <div class="visit-pace-group poi-type-group" role="group" aria-labelledby="visitPaceTitle">
-                        <button type="button" class="visit-pace-btn poi-type-btn active" data-pace="checkin" aria-pressed="true">密集打卡</button>
-                        <button type="button" class="visit-pace-btn poi-type-btn" data-pace="relaxed" aria-pressed="false">慢慢逛</button>
+                        <button type="button" class="visit-pace-btn poi-type-btn active" data-pace="checkin" aria-pressed="true">多站紧凑</button>
+                        <button type="button" class="visit-pace-btn poi-type-btn" data-pace="relaxed" aria-pressed="false">慢逛留白</button>
                     </div>
                     <div class="filter-title" id="timeOfDayTitle">出行时段</div>
                     <div class="time-of-day-group poi-type-group" role="group" aria-labelledby="timeOfDayTitle">
@@ -227,24 +233,27 @@
                         <button type="button" class="route-style-btn poi-type-btn" data-style="efficiency_first" aria-pressed="false">省力直达</button>
                     </div>
                 </div>
+                </details>
             </section>
 
             <section class="tab-panel tab-panel--active" id="tab-panel-agent" data-tab-panel="agent" role="tabpanel" aria-labelledby="tabBtnAgent">
                 <div class="agent-box">
-                    <p class="agent-hint">描述玩法偏好即可；起终点可在地图或搜索选定。上方偏好与节奏会随规划一并提交。</p>
+                    <p class="agent-hint">用一句话说明想怎么逛；起终点可在地图或搜索中指定。下方「偏好与节奏」会一并参与规划。</p>
                     <label for="agentQueryInput" class="sr-only">智能规划需求描述</label>
-                    <textarea id="agentQueryInput" class="agent-query-input" rows="3" placeholder="例：静安寺—南京西路，约90分钟，偏好咖啡馆"></textarea>
+                    <textarea id="agentQueryInput" class="agent-query-input" rows="3" placeholder="例：从静安寺走到南京西路，约 90 分钟，多安排咖啡馆和拍照点"></textarea>
                     <section class="agent-inspire" aria-label="灵感推荐">
                         <div class="agent-inspire-row">
                             <label class="inspire-toggle">
                                 <input type="checkbox" id="inspireToggle" checked>
                                 <span>灵感推荐</span>
                             </label>
-                            <button type="button" class="btn-inspire-cards" id="btnInspireCards">浏览推荐地点</button>
+                            <button type="button" class="btn-inspire-cards" id="btnInspireCards">查看推荐点位</button>
                         </div>
                         <div class="inspire-cards" id="inspireCards" hidden></div>
                     </section>
-                    <button type="button" class="btn btn-agent-plan" id="btnAgentPlan">智能规划路线</button>
+                    <div class="panel-cta-sticky">
+                        <button type="button" class="btn btn-agent-plan" id="btnAgentPlan">生成路线</button>
+                    </div>
                     <button type="button" class="btn btn-ghost btn-reset" id="btnResetAgent">重置选择</button>
                     <div class="recent-routes recent-routes--resume" id="recentRoutesMain" hidden>
                         <div class="recent-routes-header">
@@ -261,23 +270,25 @@
 
             <section class="tab-panel" id="tab-panel-manual" data-tab-panel="manual" role="tabpanel" aria-labelledby="tabBtnManual" hidden>
                 <div class="tips-box tips-box--compact" id="planModeTips">
-                    <span class="tips-box-text">自然语言描述需求？请使用「智能规划」</span>
+                    <span class="tips-box-text">想用自然语言描述行程？请切换到「智能规划」</span>
                     <button type="button" class="tips-box-dismiss" id="btnDismissTips" aria-label="关闭提示">✕</button>
                 </div>
 
-                <div class="btn-group btn-group--manual-primary">
-                    <button class="btn btn-plan" id="btnPlan" type="button" disabled>先在地图上选起终点</button>
+                <div class="panel-cta-sticky">
+                    <div class="btn-group btn-group--manual-primary">
+                        <button class="btn btn-plan" id="btnPlan" type="button" disabled>请在地图选定起终点</button>
+                    </div>
                 </div>
                 <button class="btn btn-ghost btn-reset" id="btnReset" type="button">重置选择</button>
             </section>
 
             <section class="tab-panel" id="tab-panel-result" data-tab-panel="result" role="tabpanel" aria-labelledby="tabBtnResult" hidden>
                 <div class="result-toolbar">
-                    <button type="button" class="btn-link-back-plan" id="btnBackToPlan">← 返回调整路线</button>
+                    <button type="button" class="btn-link-back-plan" id="btnBackToPlan">← 返回修改条件</button>
                 </div>
 
                 <div class="result-area" id="resultArea" style="display:none;">
-                    <div class="result-header">路线规划完成</div>
+                    <div class="result-header">路线已生成</div>
                     <article class="cw-route-summary-card" id="cwRouteSummaryCard" hidden>
                         <div class="cw-route-summary-kicker" id="cwRouteSummaryCity">—</div>
                         <h3 class="cw-route-summary-title" id="cwRouteSummaryTitle">路线摘要</h3>
@@ -290,7 +301,7 @@
                             <div class="value highlight" id="distanceValue">--</div>
                         </div>
                         <div class="result-stat result-stat--duration">
-                            <div class="label" title="计划为滑块目标；预计为步行+打卡，余下为自由安排">耗时</div>
+                            <div class="label" title="计划：目标时长；预计：步行与停留合计；余量可自由安排">时长</div>
                             <div class="value highlight duration-stat-value">
                                 <span class="duration-plan" id="durationPlanValue">--</span>
                                 <span class="duration-est" id="durationEstValue">--</span>
@@ -309,7 +320,7 @@
                         <button type="button" class="btn-route-action" id="btnOpenAmap">🧭 起终点导航</button>
                     </div>
                     <div class="result-share-block">
-                        <div class="result-share-label">分享与导出</div>
+                        <div class="result-share-label">分享与保存</div>
                         <div class="result-actions-row">
                             <button class="btn-generate-plan btn-record-community" id="btnRecordCommunity" type="button">记录到社区</button>
                             <button class="btn-generate-plan btn-copy-link" id="btnCopyShareLink" type="button">复制链接</button>
@@ -318,13 +329,13 @@
                         </div>
                     </div>
                     <div class="result-chat result-chat--open" id="resultChatDetails">
-                        <div class="result-chat-label">对话优化路线</div>
+                        <div class="result-chat-label">微调这条路线</div>
                         <div class="agent-chat-section">
-                            <p class="result-chat-hint">用一句话微调时长、顺序或打卡偏好</p>
+                            <p class="result-chat-hint">例如改时长、减少步行或调整途经偏好</p>
                             <div class="agent-chat-log" id="agentChatLog" role="log" aria-live="polite"></div>
                             <div class="agent-chat-input-row">
                                 <label for="agentChatInput" class="sr-only">对话调整输入</label>
-                                <input type="text" id="agentChatInput" class="agent-chat-input" placeholder="例：调整为 90 分钟、减少步行">
+                                <input type="text" id="agentChatInput" class="agent-chat-input" placeholder="例：改成 90 分钟，少排两个点">
                                 <button type="button" class="btn-agent-chat-send" id="btnAgentChat">发送</button>
                             </div>
                         </div>
@@ -339,6 +350,7 @@
                     </details>
                 </div>
             </section>
+            <button type="button" class="sheet-more" id="btnSheetMore">展开偏好与描述</button>
         </div>
     </div>
 
@@ -346,7 +358,7 @@
         <div class="modal-box cw-auth-modal">
             <button type="button" class="close cw-auth-close" onclick="CitywalkAuth.closeAuthModal()" aria-label="关闭">×</button>
             <h2 id="cwAuthModalTitle">WanderWalk 账号</h2>
-            <p class="cw-auth-lead">登录后「继续上次」、社区足迹与积分会同步到云端。</p>
+            <p class="cw-auth-lead">登录后可在多设备同步「继续上次」、社区足迹与漫游积分。</p>
             <div class="cw-auth-tabs">
                 <button type="button" class="cw-auth-tab" onclick="CitywalkAuth.openAuthModal('login')">登录</button>
                 <button type="button" class="cw-auth-tab" onclick="CitywalkAuth.openAuthModal('register')">注册</button>
