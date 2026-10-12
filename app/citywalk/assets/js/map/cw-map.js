@@ -812,7 +812,7 @@ function syncExploreMarkers(pois) {
         const marker = new AMap.Marker({
             position: [lng, lat],
             content: pinHtml,
-            offset: new AMap.Pixel(-11, -11),
+            offset: new AMap.Pixel(-10, -10),
             zIndex: 40 + index,
             title: poi.name || '探索点',
         });
