@@ -2446,15 +2446,39 @@
         }
 
         .poi-infowin-badge {
-            color: white;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
+            position: relative;
+            width: 34px;
+            height: 34px;
+            border-radius: 12px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
             flex-shrink: 0;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+            overflow: visible;
+        }
+
+        .poi-infowin-badge-icon {
+            font-size: 16px;
+            line-height: 1;
+        }
+
+        .poi-infowin-badge-num {
+            position: absolute;
+            right: -4px;
+            bottom: -5px;
+            min-width: 15px;
+            height: 15px;
+            padding: 0 3px;
+            border-radius: 999px;
+            background: #2a2830;
+            color: #fff;
+            font-size: 9px;
+            font-weight: 800;
+            line-height: 15px;
+            text-align: center;
+            border: 1.5px solid #fff;
         }
 
         .poi-infowin-name {

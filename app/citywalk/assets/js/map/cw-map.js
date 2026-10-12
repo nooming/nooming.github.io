@@ -477,7 +477,7 @@ function addPoiMarkers(pois) {
             CW.infoWindow.setContent(`
                 <div class="poi-infowin">
                     <h4 class="poi-infowin-title">
-                        <span class="poi-infowin-badge" style="background: linear-gradient(135deg, ${themeColor}, ${themeLightColor})">${typeIcon} ${index+1}</span>
+                        <span class="poi-infowin-badge" style="background: linear-gradient(135deg, ${themeColor}, ${themeLightColor})"><span class="poi-infowin-badge-icon">${typeIcon}</span><span class="poi-infowin-badge-num">${index + 1}</span></span>
                         <span class="poi-infowin-name">${cwEscapeHtml(poi.name)}</span>
                     </h4>
                     <p class="poi-infowin-row"><span class="poi-infowin-icon">🏷️</span> ${cwEscapeHtml(poi.category || poi.type || '未知类型')}</p>
