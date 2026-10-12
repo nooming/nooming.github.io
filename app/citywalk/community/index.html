@@ -27,13 +27,13 @@
       <a href="../" class="nav-plan">Citywalk 路线规划</a>
       <a href="#home">首页</a>
       <a href="#buddies" class="buddy-nav" onclick="openBuddiesPage(event)">👥 找搭子</a>
-      <a href="#routes">发现 Citywalk</a>
-      <a href="#feed">动态</a>
+      <a href="#inspire">灵感社区</a>
       <a href="#spots">足迹</a>
+      <a href="#me" id="meNavLink">我的</a>
     </nav>
-    <label class="search">
+    <label class="search search--nav">
       <span>⌕</span>
-      <input id="searchInput" placeholder="搜索动态（路线、街区、攻略）…" autocomplete="off" aria-label="搜索动态">
+      <input id="searchInput" placeholder="搜索找搭子、路线与笔记…" autocomplete="off" aria-label="搜索社区">
     </label>
     <button type="button" class="user-avatar user-avatar--initial" id="cwAuthAvatarBtn" aria-label="登录或账号">我</button>
   </div>
@@ -49,7 +49,7 @@
         <div class="hero-actions">
           <button class="hero-btn primary" type="button" onclick="openBuddiesPage()"><span class="hero-btn-icon" aria-hidden="true">👥</span><span class="hero-btn-label">先找搭子</span></button>
           <a class="hero-btn hero-btn-planner" href="../"><span class="hero-btn-label">Citywalk 路线规划</span><span class="hero-btn-suffix" aria-hidden="true">→</span></a>
-          <button class="hero-btn ghost" type="button" onclick="scrollToId('feed')"><span class="hero-btn-label">逛动态</span><span class="hero-btn-suffix" aria-hidden="true">→</span></button>
+          <button class="hero-btn ghost" type="button" onclick="scrollToId('inspire')"><span class="hero-btn-label">逛灵感社区</span><span class="hero-btn-suffix" aria-hidden="true">→</span></button>
         </div>
       </div>
       <div class="hero-buddy-card">
@@ -74,6 +74,26 @@
       <span>Citywalk 路线规划 → 记录到社区 → 在足迹里回看时间轴</span>
     </div>
     <a class="ww-planner-strip-btn" href="../">去规划</a>
+  </aside>
+
+  <aside class="search-results-bar" id="searchResultsBar" hidden aria-live="polite">
+    <div class="search-results-body">
+      <div class="search-results-copy">
+        <strong>搜索结果</strong>
+        <p id="searchResultsSummary">—</p>
+        <p class="search-results-scope-hint" id="searchScopeHint" hidden></p>
+      </div>
+      <div class="search-results-scope-row">
+        <span class="search-results-scope-label" id="searchResultsScopeLabel">搜索范围</span>
+        <div class="search-scope search-scope--results" id="searchResultsScope" role="tablist" aria-labelledby="searchResultsScopeLabel">
+          <button type="button" class="search-scope-btn active" data-search-scope="all" role="tab" aria-selected="true">全站</button>
+          <button type="button" class="search-scope-btn" data-search-scope="buddies" role="tab" aria-selected="false">找搭子</button>
+          <button type="button" class="search-scope-btn" data-search-scope="inspire" role="tab" aria-selected="false">灵感社区</button>
+        </div>
+      </div>
+      <div class="search-results-actions" id="searchResultsActions"></div>
+    </div>
+    <button type="button" class="search-results-clear" id="searchResultsClear" hidden>清除</button>
   </aside>
 
   <aside class="import-guide-banner" id="importGuideBanner" hidden>
@@ -102,41 +122,75 @@
         <button class="buddy-filter" data-filter="摄影">摄影搭子</button>
         <button class="buddy-filter" data-filter="美食">美食搭子</button>
         <button class="buddy-filter" data-filter="轻徒步">轻徒步</button>
+        <button class="buddy-filter" data-filter="收藏">☆ 收藏</button>
       </div>
       <div class="buddy-grid" id="buddyGrid"></div>
     </div>
   </section>
 
-
-
-<section class="section" id="routes">
-    <div class="section-head">
-      <div><h2>发现 Citywalk</h2><p>社区分享与标注<strong>示例灵感</strong>，供你找路线参考；自己规划或导入的路线在 <a href="#spots" onclick="setFootprintView('planned')">足迹 · 规划导入</a>。</p></div>
-      <a class="section-action" href="../">Citywalk 路线规划 →</a>
-    </div>
-    <div class="city-tabs" id="cityTabs">
-      <button type="button" class="city-tab active" data-city="全部">全部城市</button>
-    </div>
-    <div class="route-grid" id="routeGrid"></div>
-  </section>
-
-  <section class="section" id="feed">
-    <div class="section-head">
-      <div><h2>WanderWalk 动态</h2><p>登录后可发布；所有人可见最新分享。</p></div>
+  <section class="section" id="inspire">
+    <div class="section-head inspire-section-head" id="inspireSectionHead">
+      <div>
+        <h2>灵感社区</h2>
+        <p class="inspire-lead">「全部」混排路线与笔记；选「路线」可按城市筛选。自建规划见 <a href="#spots" onclick="setFootprintView('planned')">足迹 · 规划导入</a>。</p>
+      </div>
       <div class="section-head-actions">
         <button type="button" class="publish publish--inline" onclick="openPublish()">＋ 发布</button>
       </div>
     </div>
-    <div class="feed-tabs" id="feedTabs">
-      <button class="feed-tab active" data-type="全部">全部</button>
-      <button class="feed-tab" data-type="路线">路线分享</button>
-      <button class="feed-tab" data-type="打卡">打卡安利</button>
-      <button class="feed-tab" data-type="攻略">实用攻略</button>
-      <button class="feed-tab" data-type="夜游">夜游</button>
-      <button class="feed-tab" data-type="拍照">拍照</button>
+    <div class="inspire-toolbar" id="inspireToolbar">
+      <div class="feed-toolbar inspire-toolbar-inner">
+        <div class="feed-tabs" id="feedTabs" role="tablist" aria-label="内容类型">
+          <button type="button" class="feed-tab active" data-type="全部" role="tab" aria-selected="true">全部</button>
+          <button type="button" class="feed-tab" data-type="路线" role="tab">路线</button>
+          <button type="button" class="feed-tab" data-type="打卡" role="tab">打卡</button>
+          <button type="button" class="feed-tab" data-type="攻略" role="tab">攻略</button>
+          <button type="button" class="feed-tab" data-type="夜游" role="tab">夜游</button>
+          <button type="button" class="feed-tab" data-type="拍照" role="tab">拍照</button>
+        </div>
+        <div class="feed-toolbar-actions">
+          <button type="button" class="feed-saved-chip" id="feedSavedToggle" aria-pressed="false">☆ 收藏 <span class="feed-saved-count" id="feedSavedCount">0</span></button>
+          <label class="feed-sort-wrap"><span class="visually-hidden">排序</span>
+            <select class="feed-sort" id="feedSort" aria-label="笔记排序">
+              <option value="default">默认顺序</option>
+              <option value="newest">最新优先</option>
+            </select>
+          </label>
+        </div>
+      </div>
+      <p class="inspire-toolbar-meta" id="inspireToolbarMeta" aria-live="polite"></p>
     </div>
-    <div class="feed" id="feedGrid"></div>
-    <div class="empty" id="feedEmpty">没有找到相关内容，换个关键词试试。</div>
+    <div class="inspire-routes-block" id="inspireRoutesBlock">
+      <div class="inspire-block-kicker-row"><span class="inspire-block-kicker">路线灵感</span></div>
+      <div class="city-tabs" id="cityTabs">
+        <button type="button" class="city-tab active" data-city="全部">全部城市</button>
+      </div>
+      <div class="route-grid" id="routeGrid"></div>
+    </div>
+    <div class="inspire-feed-block" id="inspireFeedBlock">
+      <div class="feed-layout">
+        <div class="feed-main">
+          <div class="feed-grid" id="feedGrid"></div>
+          <div class="feed-load-row"><button type="button" class="feed-load-more" id="feedLoadMore" hidden>再加载一些 ↓</button></div>
+          <div class="empty feed-empty-state" id="feedEmpty" hidden>没有找到相关内容，换个关键词试试。</div>
+        </div>
+        <aside class="feed-side" aria-label="话题与发布提示">
+          <details class="feed-side-card feed-side-tips-details">
+            <summary class="feed-side-title feed-side-summary">发布小贴士</summary>
+            <ul class="feed-side-tips">
+              <li><b>路线</b>：起终点、时长、沿途亮点。</li>
+              <li><b>打卡</b>：招牌、人均或适合停留的时段。</li>
+              <li><b>攻略</b>：装备、预约或交通规则等提醒。</li>
+            </ul>
+          </details>
+          <div class="feed-side-card feed-side-tags" id="feedHotTags">
+            <strong class="feed-side-title">常见话题</strong>
+            <p class="feed-side-note">点击标签可填入顶栏搜索</p>
+            <div class="feed-hot-tags" id="feedHotTagsList"></div>
+          </div>
+        </aside>
+      </div>
+    </div>
   </section>
 
 <section class="section" id="spots">
@@ -214,6 +268,51 @@
     </div>
   </section>
 
+  <section class="section" id="me">
+    <div class="section-head me-section-head">
+      <div>
+        <h2>我的</h2>
+        <p id="mePageSubtitle">收藏、发布与账号；规划导入仍在 <a href="#spots" onclick="setFootprintView('planned')">足迹 · 规划导入</a>。</p>
+      </div>
+    </div>
+    <div class="me-overview" id="meOverview"></div>
+    <div class="me-primary-tabs" id="mePrimaryTabs" role="tablist" aria-label="我的页面分类">
+      <button type="button" class="me-primary-tab active" data-me-tab="saved" role="tab" aria-selected="true">收藏</button>
+      <button type="button" class="me-primary-tab" data-me-tab="published" role="tab">我的发布</button>
+      <button type="button" class="me-primary-tab" data-me-tab="settings" role="tab">账号</button>
+    </div>
+    <div class="me-panel" id="mePanelSaved" role="tabpanel">
+      <div class="me-saved-tabs" id="meSavedTabs" role="tablist" aria-label="收藏分类">
+        <button type="button" class="me-saved-tab active" data-me-saved="notes" role="tab">灵感笔记</button>
+        <button type="button" class="me-saved-tab" data-me-saved="buddies" role="tab">找搭子</button>
+        <button type="button" class="me-saved-tab" data-me-saved="routes" role="tab">路线</button>
+        <button type="button" class="me-saved-tab" data-me-saved="spots" role="tab">打卡点</button>
+      </div>
+      <p class="me-saved-hint" id="meSavedHint"></p>
+      <div class="me-saved-grid" id="meSavedGrid"></div>
+      <p class="me-empty" id="meSavedEmpty" hidden></p>
+    </div>
+    <div class="me-panel" id="mePanelPublished" hidden role="tabpanel">
+      <h3 class="me-subhead">我发布的帖子</h3>
+      <div class="me-saved-grid me-publish-grid" id="mePublishedPosts"></div>
+      <p class="me-empty" id="mePublishedPostsEmpty" hidden></p>
+      <h3 class="me-subhead">我发起的招募</h3>
+      <div class="me-buddy-list" id="mePublishedBuddies"></div>
+      <p class="me-empty" id="mePublishedBuddiesEmpty" hidden></p>
+    </div>
+    <div class="me-panel" id="mePanelSettings" hidden role="tabpanel">
+      <div class="me-settings-card">
+        <p id="meAuthStatus">账号状态加载中…</p>
+        <div class="me-settings-actions">
+          <button type="button" class="me-settings-btn primary" id="meOpenAuthBtn">登录 / 注册</button>
+          <button type="button" class="me-settings-btn" id="meOpenAccountBtn" hidden>账号与改密</button>
+          <a class="me-settings-btn ghost" href="#spots">Walk 足迹与规划导入 →</a>
+        </div>
+        <p class="me-settings-note">灵感笔记、找搭子收藏默认保存在本浏览器；登录后足迹与路线/点位收藏可云同步。笔记与招募收藏同步将在后续版本接入。</p>
+      </div>
+    </div>
+  </section>
+
 </main>
 
 <footer><b>WanderWalk</b> 社区 · <a href="../">Citywalk 路线规划</a> · <a href="../../">noomings 首页</a><br><br>城市不是用来赶路的，是用来慢慢走的。<br><br>© 2026 WanderWalk（演示数据）</footer>
@@ -236,6 +335,7 @@
         <div class="modal-section"><h4>💡 Walk 提示</h4><ul id="modalTips"></ul></div>
         <div class="route-modal-actions" id="postUgcActions" hidden>
           <button type="button" class="confirm secondary" id="postLikeBtn" onclick="toggleLikeCurrentPost()">♡ 点赞</button>
+          <button type="button" class="confirm secondary" id="postSaveBtn" onclick="toggleSaveCurrentPost()">☆ 收藏</button>
           <button type="button" class="confirm secondary" id="postReportBtn" onclick="reportCurrentPost()">举报</button>
           <button type="button" class="confirm secondary" id="postDeleteBtn" onclick="deleteCurrentPost()" hidden>删除</button>
           <a class="confirm secondary" id="postOpenShareLink" href="#" target="_blank" rel="noopener" hidden>在规划页打开分享路线</a>
@@ -283,11 +383,11 @@
 
 <!-- 发布动态 -->
 <div class="modal" id="publishModal">
-  <div class="modal-box buddy-modal">
+  <div class="modal-box buddy-modal publish-modal">
     <button type="button" class="close" onclick="closeModal('publishModal')" aria-label="关闭">×</button>
     <h2>发布到社区动态</h2>
-    <p class="cw-auth-lead">需登录。分享路线灵感、打卡点或实用攻略（暂不支持图片上传，可填图片链接）。</p>
-    <form id="publishPostForm" class="cw-auth-form">
+    <p class="cw-auth-lead">需登录。封面暂填图片链接（上传功能后续接入）；标签可点选推荐或 Enter 添加。</p>
+    <form id="publishPostForm" class="cw-auth-form publish-form">
       <label class="form-label" for="publishType">类型</label>
       <select id="publishType" class="footprint-input">
         <option value="路线">路线分享</option>
@@ -296,21 +396,28 @@
         <option value="夜游">夜游</option>
         <option value="拍照">拍照</option>
       </select>
+      <p class="publish-type-hint" id="publishTypeHint"></p>
       <label class="form-label" for="publishCity">城市</label>
       <input id="publishCity" class="footprint-input" type="text" maxlength="24" placeholder="如：上海" required>
-      <label class="form-label" for="publishTitle">标题</label>
-      <input id="publishTitle" class="footprint-input" type="text" maxlength="80" required>
-      <label class="form-label" for="publishDesc">正文</label>
-      <textarea id="publishDesc" class="footprint-input" rows="4" maxlength="2000" required></textarea>
+      <label class="form-label" for="publishTitle">标题 <span class="label-light" id="publishTitleCount">0 / 80</span></label>
+      <input id="publishTitle" class="footprint-input" type="text" maxlength="80" placeholder="一句话说出亮点" required>
+      <label class="form-label" for="publishDesc">正文 <span class="label-light" id="publishDescCount">0 / 2000</span></label>
+      <textarea id="publishDesc" class="footprint-input publish-desc" rows="5" maxlength="2000" placeholder="为什么值得来？路线、停留点或实用细节……" required></textarea>
       <label class="form-label" for="publishImage">封面图链接（选填）</label>
       <input id="publishImage" class="footprint-input" type="url" placeholder="https://…">
-        <label class="form-label" for="publishTags">标签（选填，逗号分隔）</label>
-        <input id="publishTags" class="footprint-input" type="text" placeholder="摄影, 咖啡">
-        <label class="form-label" for="publishRouteId">关联已导入路线（选填）</label>
-        <select id="publishRouteId" class="footprint-input"><option value="">不关联</option></select>
-        <label class="form-label" for="publishShareRouteId">或分享短 id（选填，规划页 ?r= 后面那段）</label>
-        <input id="publishShareRouteId" class="footprint-input" type="text" maxlength="32" placeholder="如 p1a2b3c4d5e6f7">
-        <button type="submit" class="confirm footprint-save-btn">发布</button>
+      <label class="form-label" for="publishTagsInput">话题标签</label>
+      <div class="tag-editor" id="publishTagEditor">
+        <div class="selected-tags" id="publishSelectedTags"></div>
+        <input id="publishTagsInput" type="text" placeholder="输入后 Enter，或点下方推荐" autocomplete="off" aria-describedby="publishTagHint">
+      </div>
+      <div class="tag-suggestions" id="publishTagSuggestions" hidden></div>
+      <p class="field-hint" id="publishTagHint">最多 10 个标签；示例帖仅供浏览，收藏保存在本浏览器。</p>
+      <input type="hidden" id="publishTags" value="">
+      <label class="form-label" for="publishRouteId">关联已导入路线（选填）</label>
+      <select id="publishRouteId" class="footprint-input"><option value="">不关联</option></select>
+      <label class="form-label" for="publishShareRouteId">或分享短 id（选填，规划页 ?r= 后面那段）</label>
+      <input id="publishShareRouteId" class="footprint-input" type="text" maxlength="32" placeholder="如 p1a2b3c4d5e6f7">
+      <button type="submit" class="confirm footprint-save-btn">发布</button>
     </form>
   </div>
 </div>

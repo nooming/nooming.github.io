@@ -3,6 +3,30 @@ const spotList=document.getElementById('spotList');
 const spotPath=document.getElementById('spotPath');
 const feedGrid=document.getElementById('feedGrid');
 const feedEmpty=document.getElementById('feedEmpty');
+const FEED_SAVED_STORAGE_KEY='wanderwalk_feed_saved_v1';
+const BUDDY_SAVED_STORAGE_KEY='wanderwalk_buddy_saved_v1';
+let feedVisibleCount=8;
+let feedViewSavedOnly=false;
+let feedSavedIds=loadFeedSavedIds();
+let buddySavedIds=loadBuddySavedIds();
+let mePrimaryTab='saved';
+let meSavedTab='notes';
+let publishSelectedTags=[];
+let activeDetailPostId = null;
+const FEED_TAG_SUGGESTIONS=[
+  {name:'Citywalk',keys:['citywalk','walk','散步','漫游']},
+  {name:'咖啡',keys:['咖啡','café','手冲']},
+  {name:'胡同',keys:['胡同','老街','巷弄']},
+  {name:'摄影',keys:['摄影','拍照','机位','夜景']},
+  {name:'周末半日',keys:['周末','半日','半天']},
+  {name:'独自出发',keys:['一个人','独自','独处']},
+  {name:'美食',keys:['美食','小吃','探店']},
+  {name:'建筑',keys:['建筑','立面','历史']},
+  {name:'规划导入',keys:['规划','导入','路线']},
+  {name:'苏州河',keys:['苏州河','滨江','河']},
+  {name:'西湖',keys:['西湖','湖西','杭州']},
+  {name:'沙面',keys:['沙面','广州','岭南']}
+];
 const buddyGrid=document.getElementById('buddyGrid');
 
 /** 社区用户可见文案（术语与语气统一，见 citywalk-后续.md · 文案规范） */
@@ -28,6 +52,7 @@ function showDemoUnavailable(feature){
 }
 
 const IMPORT_GUIDE_DISMISS_KEY = 'ww_import_guide_dismissed';
+const SEARCH_SCOPE_HINT_KEY = 'ww_search_scope_hint_seen';
 
 function dismissImportGuide(){
   const el=document.getElementById('importGuideBanner');
@@ -106,9 +131,9 @@ async function loadCommunityUgc(){
   }
   renderHeroBuddyPreview();
   updateHeroBuddyCount();
-  renderFeed(document.querySelector('.feed-tab.active')?.dataset.type||'全部',document.getElementById('searchInput')?.value||'');
-  renderBuddies(document.querySelector('.buddy-filter.active')?.dataset.filter||'全部');
-  renderRoutes(document.querySelector('#cityTabs .city-tab.active')?.dataset.city||'全部');
+  renderFeedHotTags();
+  applyCommunitySearch({ scroll: false });
+  renderMePage();
 }
 
 function isSampleRoute(r) {
@@ -166,9 +191,278 @@ function getImportedRoutes(){
   });
 }
 
-function routesForDiscover(city) {
-  const pool = getDiscoverRoutes();
-  return city === '全部' ? pool : pool.filter(function (r) { return r.city === city; });
+function routeDiscoverBlob(r) {
+  const stops = (r.stops || []).join(' ');
+  return [r.title, r.desc, r.city, r.type, stops].join(' ').toLowerCase();
+}
+
+function routesForDiscover(city, keyword) {
+  const key = String(keyword || '').trim().toLowerCase();
+  let pool = getDiscoverRoutes();
+  if (city && city !== '全部') pool = pool.filter(function (r) { return r.city === city; });
+  if (key) pool = pool.filter(function (r) { return routeDiscoverBlob(r).includes(key); });
+  return pool;
+}
+
+function discoverUgcPostIds() {
+  const ids = new Set();
+  ugcPosts.forEach(function (p) {
+    if (p.type === '路线' || p.share_route_id || p.route_id) ids.add(p.id);
+  });
+  return ids;
+}
+
+function isUgcRouteDiscoverPost(p) {
+  if (!p) return false;
+  return p.type === '路线' || !!p.share_route_id || !!p.route_id;
+}
+
+function shouldShowInspireRoutes(type) {
+  return type === '路线';
+}
+
+function useInspireMixedFeed(type) {
+  return type === '全部' && !feedViewSavedOnly;
+}
+
+function buildInspireMixedHtmlList(keyword) {
+  const routes = routesForDiscover('全部', keyword);
+  let posts = filterFeedPosts('全部', keyword);
+  const sortEl = document.getElementById('feedSort');
+  const sortMode = sortEl ? sortEl.value : 'default';
+  if (sortMode === 'newest') posts = [...posts].reverse();
+  return routes.map(renderRouteCardHtml).concat(posts.map(postCardHtml));
+}
+
+/** 顶栏搜索范围：all | buddies | inspire */
+let communitySearchScope = 'all';
+
+function communitySearchKeyword() {
+  return document.getElementById('searchInput')?.value || '';
+}
+
+function keywordForInspire() {
+  if (communitySearchScope === 'buddies') return '';
+  return communitySearchKeyword();
+}
+
+function keywordForBuddies() {
+  if (communitySearchScope === 'inspire') return '';
+  return communitySearchKeyword();
+}
+
+function buddyMatchesKeyword(b, key) {
+  if (!key) return true;
+  const tags = (b.tags || []).join(' ');
+  const blob = [b.city, b.title, b.desc, b.date, b.filter, b.user, tags].join(' ').toLowerCase();
+  return blob.includes(key);
+}
+
+function activeBuddyFilter() {
+  return document.querySelector('.buddy-filter.active')?.dataset.filter || '全部';
+}
+
+function buddiesFiltered(filter, keyword) {
+  const source = buddiesSource();
+  let data;
+  if (filter === '收藏') {
+    data = source.filter(function (b) { return b.id && isBuddySaved(b.id); });
+  } else if (filter === '全部') {
+    data = source;
+  } else {
+    data = source.filter(function (b) {
+      return b.filter === filter || (b.tags || []).includes(filter);
+    });
+  }
+  const key = String(keyword !== undefined ? keyword : keywordForBuddies()).trim().toLowerCase();
+  if (key) data = data.filter(function (b) { return buddyMatchesKeyword(b, key); });
+  return data;
+}
+
+function filterFeedPosts(type, keyword) {
+  const key = String(keyword !== undefined ? keyword : keywordForInspire()).trim().toLowerCase();
+  const source = feedPostsSource();
+  const ugcRouteIds = discoverUgcPostIds();
+  return source.filter(function (p) {
+    if (feedViewSavedOnly && !isPostSaved(p.id)) return false;
+    if (type === '路线' && !feedViewSavedOnly) return false;
+    if (type === '全部' && !feedViewSavedOnly && ugcRouteIds.has(p.id) && isUgcRouteDiscoverPost(p)) return false;
+    const hitType = type === '全部' || p.type === type;
+    const tags = Array.isArray(p.tags) ? p.tags : [];
+    const blob = [p.title, p.desc, p.city, p.type, ...tags].join(' ').toLowerCase();
+    return hitType && (!key || blob.includes(key));
+  });
+}
+
+function syncSearchScopeUi() {
+  document.querySelectorAll('[data-search-scope]').forEach(function (btn) {
+    const on = (btn.dataset.searchScope || 'all') === communitySearchScope;
+    btn.classList.toggle('active', on);
+    btn.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
+}
+
+function setCommunitySearchScope(scope) {
+  communitySearchScope = scope || 'all';
+  syncSearchScopeUi();
+}
+
+function bindSearchResultsBarActions() {
+  const actions = document.getElementById('searchResultsActions');
+  if (!actions) return;
+  actions.querySelectorAll('[data-scroll]').forEach(function (btn) {
+    btn.onclick = function () {
+      const target = btn.dataset.scroll || 'inspire';
+      if (target === 'buddies') ensureBuddiesPageOpen({ scroll: false });
+      scrollToId(target);
+    };
+  });
+}
+
+function maybeShowSearchScopeHint() {
+  const el = document.getElementById('searchScopeHint');
+  if (!el) return;
+  try {
+    if (sessionStorage.getItem(SEARCH_SCOPE_HINT_KEY) === '1') {
+      el.hidden = true;
+      return;
+    }
+    sessionStorage.setItem(SEARCH_SCOPE_HINT_KEY, '1');
+  } catch (e) { /* private mode */ }
+  el.textContent = '可在下方切换「只搜找搭子」或「只搜灵感社区」缩小范围。';
+  el.hidden = false;
+}
+
+function renderSearchResultsBar() {
+  const bar = document.getElementById('searchResultsBar');
+  const summary = document.getElementById('searchResultsSummary');
+  const actions = document.getElementById('searchResultsActions');
+  const clearBtn = document.getElementById('searchResultsClear');
+  const hintEl = document.getElementById('searchScopeHint');
+  if (!bar || !summary || !actions) return;
+
+  const key = communitySearchKeyword().trim();
+  if (!key) {
+    bar.hidden = true;
+    if (clearBtn) clearBtn.hidden = true;
+    if (hintEl) hintEl.hidden = true;
+    actions.innerHTML = '';
+    return;
+  }
+
+  const filter = activeBuddyFilter();
+  const inspireKey = keywordForInspire();
+  const buddyN = buddiesFiltered(filter).length;
+  const city = document.querySelector('#cityTabs .city-tab.active')?.dataset.city || '全部';
+  const feedType = document.querySelector('.feed-tab.active')?.dataset.type || '全部';
+  const routeN = routesForDiscover(city, inspireKey).length;
+  const noteN = filterFeedPosts(feedType, inspireKey).length;
+
+  bar.hidden = false;
+  if (clearBtn) clearBtn.hidden = false;
+  syncSearchScopeUi();
+  maybeShowSearchScopeHint();
+
+  if (communitySearchScope === 'buddies') {
+    summary.textContent = '当前：只搜找搭子 · 关键词「' + key + '」— 匹配 ' + buddyN + ' 条招募。';
+    actions.innerHTML = '<button type="button" class="search-results-jump" data-scroll="buddies">👥 查看找搭子 <em>' + buddyN + '</em></button>';
+  } else if (communitySearchScope === 'inspire') {
+    summary.textContent = '当前：只搜灵感社区 · 关键词「' + key + '」— 路线 ' + routeN + ' 条，笔记 ' + noteN + ' 条。';
+    actions.innerHTML = '<button type="button" class="search-results-jump" data-scroll="inspire">✦ 查看灵感社区 <em>' + (routeN + noteN) + '</em></button>';
+  } else {
+    summary.textContent = '当前：全站 · 关键词「' + key + '」— 找搭子 ' + buddyN + ' 条 · 路线 ' + routeN + ' 条 · 笔记 ' + noteN + ' 条。';
+    actions.innerHTML = '<button type="button" class="search-results-jump" data-scroll="buddies">👥 找搭子 <em>' + buddyN + '</em></button>'
+      + '<button type="button" class="search-results-jump" data-scroll="inspire">✦ 灵感社区 <em>' + (routeN + noteN) + '</em></button>';
+  }
+  bindSearchResultsBarActions();
+}
+
+function clearCommunitySearch() {
+  const input = document.getElementById('searchInput');
+  if (input) input.value = '';
+  applyCommunitySearch({ scroll: false });
+}
+
+function applyCommunitySearch(opts) {
+  const scroll = !!(opts && opts.scroll);
+  syncSearchScopeUi();
+  renderBuddies(activeBuddyFilter());
+  renderInspire();
+  renderSearchResultsBar();
+
+  const key = communitySearchKeyword().trim();
+  const buddyN = buddiesFiltered(activeBuddyFilter()).length;
+
+  if (key && buddyN > 0 && communitySearchScope !== 'inspire') {
+    ensureBuddiesPageOpen({ scroll: false });
+  }
+
+  if (!scroll || !key) return;
+
+  if (communitySearchScope === 'buddies') {
+    ensureBuddiesPageOpen({ scroll: true });
+    return;
+  }
+  if (communitySearchScope === 'inspire') {
+    scrollToId('inspire');
+    return;
+  }
+  const bar = document.getElementById('searchResultsBar');
+  if (bar && !bar.hidden) {
+    bar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
+  if (buddyN) {
+    ensureBuddiesPageOpen({ scroll: true });
+  } else {
+    scrollToId('inspire');
+  }
+}
+
+function getInspireFilterState() {
+  return {
+    type: document.querySelector('.feed-tab.active')?.dataset.type || '全部',
+    keyword: keywordForInspire(),
+    city: document.querySelector('#cityTabs .city-tab.active')?.dataset.city || '全部'
+  };
+}
+
+const INSPIRE_TYPE_META = {
+  '全部': '路线卡与 Walk 笔记混排展示；UGC 路线以路线卡出现一次。',
+  '路线': '仅路线卡片，可按城市筛选；笔记不重复展示。',
+  '打卡': '笔记：打卡安利',
+  '攻略': '笔记：实用攻略',
+  '夜游': '笔记：夜游',
+  '拍照': '笔记：拍照'
+};
+
+function syncInspireToolbarMeta(type) {
+  const meta = document.getElementById('inspireToolbarMeta');
+  if (!meta) return;
+  let text = INSPIRE_TYPE_META[type] || INSPIRE_TYPE_META['全部'];
+  if (feedViewSavedOnly) text = '仅显示已收藏笔记（本浏览器）。';
+  meta.textContent = text;
+}
+
+function syncInspireSectionHead() {
+  const head = document.getElementById('inspireSectionHead');
+  if (!head) return;
+  head.classList.toggle('inspire-section-head--compact', !!communitySearchKeyword().trim());
+}
+
+function renderInspire() {
+  const state = getInspireFilterState();
+  const routesBlock = document.getElementById('inspireRoutesBlock');
+  const feedBlock = document.getElementById('inspireFeedBlock');
+  const showRoutes = shouldShowInspireRoutes(state.type) && !feedViewSavedOnly;
+  const hideFeed = state.type === '路线' && !feedViewSavedOnly;
+  if (routesBlock) routesBlock.hidden = !showRoutes;
+  if (feedBlock) feedBlock.hidden = hideFeed;
+  if (showRoutes) renderRoutes(state.city, state.keyword);
+  renderFeed(state.type, state.keyword);
+  syncInspireToolbarMeta(state.type);
+  syncInspireSectionHead();
+  renderSearchResultsBar();
 }
 
 function routeCardRibbon(r) {
@@ -213,14 +507,22 @@ function renderRouteCardHtml(r) {
     </article>`;
 }
 
-function renderRoutes(city) {
+function renderRoutes(city, keyword) {
+  if (!routeGrid) return;
   if (typeof city === 'undefined' || city === null) {
     city = document.querySelector('#cityTabs .city-tab.active')?.dataset.city || '全部';
   }
+  if (typeof keyword === 'undefined') {
+    keyword = document.getElementById('searchInput')?.value || '';
+  }
   rebuildRouteCityTabs();
-  const data = routesForDiscover(city);
+  const data = routesForDiscover(city, keyword);
   if (!data.length) {
-    routeGrid.innerHTML = '<div class="empty" style="display:block;grid-column:1/-1">暂无发现内容。发布「路线」类动态后会出现在这里；若示例未加载，请刷新页面。</div>';
+    const key = String(keyword || '').trim();
+    const msg = key
+      ? '没有匹配的路线。试试别的关键词，或切换到「全部」类型。'
+      : '暂无路线内容。发布「路线」类动态后会出现在这里；若示例未加载，请刷新页面。';
+    routeGrid.innerHTML = '<div class="empty" style="display:block;grid-column:1/-1">' + msg + '</div>';
     return;
   }
   routeGrid.innerHTML = data.map(renderRouteCardHtml).join('');
@@ -260,6 +562,8 @@ const SPOT_PLACEHOLDER = "data:image/svg+xml," + encodeURIComponent('<svg xmlns=
 function wwOnFeedImgError(el) {
   if (!el || el.dataset.wwImgFallback === '1') return;
   el.dataset.wwImgFallback = '1';
+  const wrap = el.closest('.post-media');
+  if (wrap) wrap.classList.add('image-fallback');
   const ph = (typeof SAMPLE_IMG !== 'undefined' && SAMPLE_IMG.placeholder) || '';
   if (ph) el.src = ph;
   else wwOnImgError(el);
@@ -498,6 +802,195 @@ function routeForSpotKey(key){
   return {routeId,index,route:routeById(routeId),spot:data.spots[index],data};
 }
 
+function setMePrimaryTab(tab, rerender) {
+  mePrimaryTab = tab || 'saved';
+  document.querySelectorAll('.me-primary-tab').forEach(function (btn) {
+    const on = (btn.dataset.meTab || '') === mePrimaryTab;
+    btn.classList.toggle('active', on);
+    btn.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
+  const saved = document.getElementById('mePanelSaved');
+  const pub = document.getElementById('mePanelPublished');
+  const settings = document.getElementById('mePanelSettings');
+  if (saved) saved.hidden = mePrimaryTab !== 'saved';
+  if (pub) pub.hidden = mePrimaryTab !== 'published';
+  if (settings) settings.hidden = mePrimaryTab !== 'settings';
+  if (rerender !== false) renderMePage();
+}
+
+function setMeSavedTab(tab, rerender) {
+  meSavedTab = tab || 'notes';
+  document.querySelectorAll('.me-saved-tab').forEach(function (btn) {
+    const on = (btn.dataset.meSaved || '') === meSavedTab;
+    btn.classList.toggle('active', on);
+    btn.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
+  if (rerender !== false) renderMeSavedPanel();
+}
+
+function openMePage(opts) {
+  if (opts && opts.tab) setMePrimaryTab(opts.tab, false);
+  if (opts && opts.saved) setMeSavedTab(opts.saved, false);
+  renderMePage();
+  scrollToId('me');
+}
+
+function postsAuthoredByMe() {
+  return feedPostsSource().filter(function (p) {
+    return p.is_mine && !p.is_demo;
+  });
+}
+
+function buddiesAuthoredByMe() {
+  return ugcBuddies.filter(function (b) {
+    return b.is_mine && !b.is_demo;
+  });
+}
+
+function renderMeOverview() {
+  const el = document.getElementById('meOverview');
+  if (!el) return;
+  const level = getPointsLevel(typeof totalWalkPoints !== 'undefined' ? totalWalkPoints : 0);
+  const loggedIn = typeof CitywalkAuth !== 'undefined' && CitywalkAuth.isLoggedIn();
+  const email = loggedIn && CitywalkAuth.loadCachedUser ? (CitywalkAuth.loadCachedUser().email || '') : '';
+  el.innerHTML = '<div class="me-overview-card">'
+    + '<div><span class="me-overview-label">漫游称号</span><strong>' + safeText(level.level.icon + ' ' + level.level.title) + '</strong></div>'
+    + '<div><span class="me-overview-label">收藏</span><strong>' + feedSavedIds.size + ' 笔记 · ' + buddySavedIds.size + ' 招募 · ' + favoriteRouteIds.length + ' 路线</strong></div>'
+    + '<div><span class="me-overview-label">账号</span><strong>' + safeText(loggedIn ? (email || '已登录') : '未登录') + '</strong></div>'
+    + '</div>';
+}
+
+function renderMeSavedPanel() {
+  const grid = document.getElementById('meSavedGrid');
+  const empty = document.getElementById('meSavedEmpty');
+  const hint = document.getElementById('meSavedHint');
+  if (!grid) return;
+  let html = '';
+  let emptyMsg = '';
+  if (hint) {
+    hint.textContent = (meSavedTab === 'notes' || meSavedTab === 'buddies')
+      ? '以下收藏保存在本浏览器；登录后足迹中的路线/点位收藏可云同步。'
+      : '与「足迹 · 收藏」相同数据，在此统一查看。';
+  }
+  if (meSavedTab === 'notes') {
+    const posts = [...feedSavedIds].map(findCommunityPost).filter(Boolean);
+    html = posts.length ? posts.map(postCardHtml).join('') : '';
+    emptyMsg = posts.length ? '' : '还没有收藏的灵感笔记。在灵感社区卡片上点 ☆ 即可收藏。';
+    grid.className = 'me-saved-grid feed-grid';
+  } else if (meSavedTab === 'buddies') {
+    const list = [...buddySavedIds].map(function (id) { return findBuddy(id); }).filter(Boolean);
+    html = list.length ? list.map(function (b) {
+      const saved = isBuddySaved(b.id);
+      return '<article class="me-buddy-row"><div><strong>' + safeText(b.city) + ' · ' + safeText(b.title) + '</strong><span>' + safeText(b.date) + '</span></div>'
+        + '<div class="me-row-actions"><button type="button" class="me-row-btn" onclick="openJoin(\'' + safeText(b.id) + '\')">查看</button>'
+        + '<button type="button" class="me-row-btn" onclick="toggleBuddySaved(\'' + safeText(b.id) + '\',null)">取消收藏</button></div></article>';
+    }).join('') : '';
+    emptyMsg = list.length ? '' : '还没有收藏的招募。在找搭子卡片上点 ☆ 即可收藏。';
+    grid.className = 'me-saved-grid me-list-grid';
+  } else if (meSavedTab === 'routes') {
+    const list = favoriteRouteIds.map(routeById).filter(Boolean);
+    html = list.map(function (r) {
+      return '<article class="me-row-card"><img src="' + safeText(r.image || SPOT_PLACEHOLDER) + '" alt=""><div><strong>' + safeText(r.title) + '</strong><span>' + safeText(r.city) + '</span></div>'
+        + '<div class="me-row-actions"><button type="button" class="me-row-btn" onclick="openRouteById(\'' + safeText(r.id) + '\')">详情</button>'
+        + '<button type="button" class="me-row-btn" onclick="setFootprintView(\'routes\');scrollToId(\'spots\')">在足迹中</button></div></article>';
+    }).join('');
+    emptyMsg = list.length ? '' : '还没有收藏路线。在灵感社区路线卡上点 ♡ 收藏。';
+    grid.className = 'me-saved-grid me-list-grid';
+  } else {
+    const list = favoriteSpotKeys.map(routeForSpotKey).filter(Boolean);
+    html = list.map(function (item) {
+      return '<article class="me-row-card"><img src="' + safeText(item.spot.image || SPOT_PLACEHOLDER) + '" alt=""><div><strong>' + safeText(item.spot.name) + '</strong><span>' + safeText(item.route?.city || '') + '</span></div>'
+        + '<div class="me-row-actions"><button type="button" class="me-row-btn" onclick="renderSpots(\'' + safeText(item.routeId) + '\',true);setTimeout(function(){showSpot(' + item.index + ');},350)">查看</button>'
+        + '<button type="button" class="me-row-btn" onclick="toggleSpotFavorite(\'' + safeText(item.routeId) + '\',' + item.index + ')">取消收藏</button></div></article>';
+    }).join('');
+    emptyMsg = list.length ? '' : '还没有收藏打卡点。在路线点位页点 ♡ 收藏。';
+    grid.className = 'me-saved-grid me-list-grid';
+  }
+  grid.innerHTML = html;
+  if (meSavedTab === 'notes') bindFeedCardEvents();
+  if (empty) {
+    empty.hidden = !!html;
+    empty.textContent = emptyMsg;
+  }
+}
+
+function renderMePublishedPanel() {
+  const postsEl = document.getElementById('mePublishedPosts');
+  const postsEmpty = document.getElementById('mePublishedPostsEmpty');
+  const budEl = document.getElementById('mePublishedBuddies');
+  const budEmpty = document.getElementById('mePublishedBuddiesEmpty');
+  const loggedIn = typeof CitywalkAuth !== 'undefined' && CitywalkAuth.isLoggedIn();
+  if (!loggedIn) {
+    if (postsEl) postsEl.innerHTML = '';
+    if (budEl) budEl.innerHTML = '';
+    const msg = '登录后可查看与管理你发布的帖子与招募。';
+    if (postsEmpty) { postsEmpty.hidden = false; postsEmpty.textContent = msg; }
+    if (budEmpty) { budEmpty.hidden = false; budEmpty.textContent = msg; }
+    return;
+  }
+  const myPosts = postsAuthoredByMe();
+  const myBuds = buddiesAuthoredByMe();
+  if (postsEl) {
+    postsEl.innerHTML = myPosts.length ? myPosts.map(function (p) {
+      return '<article class="me-publish-row"><div><strong>' + safeText(p.title) + '</strong><span>' + safeText(p.type) + ' · ' + safeText(p.city) + '</span></div>'
+        + '<div class="me-row-actions"><button type="button" class="me-row-btn" onclick="showPostById(\'' + safeText(p.id) + '\')">打开</button>'
+        + '<button type="button" class="me-row-btn danger" onclick="deletePostById(\'' + safeText(p.id) + '\')">删除</button></div></article>';
+    }).join('') : '';
+    postsEl.className = 'me-saved-grid me-list-grid';
+  }
+  if (postsEmpty) {
+    postsEmpty.hidden = !!myPosts.length;
+    postsEmpty.textContent = myPosts.length ? '' : '你还没有发布帖子。在灵感社区点「＋ 发布」。';
+  }
+  if (budEl) {
+    budEl.innerHTML = myBuds.length ? myBuds.map(function (b) {
+      return '<article class="me-buddy-row"><div><strong>' + safeText(b.title) + '</strong><span>' + safeText(b.city) + ' · ' + safeText(b.date) + '</span></div>'
+        + '<button type="button" class="me-row-btn" onclick="openJoin(\'' + safeText(b.id) + '\')">查看招募</button></article>';
+    }).join('') : '';
+  }
+  if (budEmpty) {
+    budEmpty.hidden = !!myBuds.length;
+    budEmpty.textContent = myBuds.length ? '' : '你还没有发起招募。在找搭子区点「发起一次 Walk」。';
+  }
+}
+
+function renderMeSettingsPanel() {
+  const status = document.getElementById('meAuthStatus');
+  const openAuth = document.getElementById('meOpenAuthBtn');
+  const openAcct = document.getElementById('meOpenAccountBtn');
+  const loggedIn = typeof CitywalkAuth !== 'undefined' && CitywalkAuth.isLoggedIn();
+  const email = loggedIn && typeof CitywalkAuth.loadCachedUser === 'function' ? (CitywalkAuth.loadCachedUser().email || '') : '';
+  if (status) {
+    status.textContent = loggedIn
+      ? '当前账号：' + (email || '已登录') + '。足迹与路线/点位收藏会同步到云端。'
+      : '未登录。可先在本浏览器收藏笔记与招募；登录后足迹与部分收藏可云同步。';
+  }
+  if (openAuth) openAuth.hidden = !!loggedIn;
+  if (openAcct) openAcct.hidden = !loggedIn;
+}
+
+function renderMePage() {
+  renderMeOverview();
+  if (mePrimaryTab === 'saved') renderMeSavedPanel();
+  else if (mePrimaryTab === 'published') renderMePublishedPanel();
+  else renderMeSettingsPanel();
+}
+
+async function deletePostById(postId) {
+  if (!postId || !requireLoginForPost()) return;
+  if (!confirm('确定删除这条动态？')) return;
+  try {
+    await CitywalkCommunityApi.deletePost(postId);
+    showToast('已删除');
+    feedSavedIds.delete(String(postId));
+    persistFeedSavedIds();
+    syncFeedSavedCounts();
+    await loadCommunityUgc();
+  } catch (e) {
+    showToast(e.message || '删除失败');
+  }
+}
+
 function setFootprintView(view){
   footprintView=view;
   document.querySelectorAll('.footprint-tab').forEach(btn=>btn.classList.toggle('active',btn.dataset.view===view));
@@ -670,7 +1163,8 @@ function toggleRouteFavorite(routeId, btn=null){
   saveArray(FOOTPRINT_STORAGE.favoriteRoutes,favoriteRouteIds);
   if(btn){btn.textContent=isRouteFavorite(routeId)?'♥':'♡';btn.classList.toggle('liked',isRouteFavorite(routeId));}
   if(wasRouteView) renderSpots(activeRouteId,false); else renderFootprints();
-  renderRoutes(document.querySelector('.city-tab.active')?.dataset.city || '全部');
+  renderInspire();
+  renderMePage();
   showToast(isRouteFavorite(routeId)?'路线已收藏':'已取消路线收藏');
 }
 
@@ -686,6 +1180,7 @@ function toggleSpotFavorite(routeId,index){
   if(btn && currentSpotIndex===index && currentSpotRouteId===routeId){
     btn.textContent=isSpotFavorite(routeId,index)?'♥ 已收藏这个点位':'♡ 收藏这个打卡点';
   }
+  renderMePage();
   showToast(favoriteSpotKeys.includes(key)?'打卡点已收藏到足迹':'已取消点位收藏');
 }
 
@@ -1100,29 +1595,278 @@ function feedPostsSource() {
   return typeof demoPosts !== 'undefined' ? demoPosts : [];
 }
 
-function renderFeed(type='全部',keyword=''){
-  const key=keyword.trim().toLowerCase();
-  const source = feedPostsSource();
-  const data=source.filter(p=>{
-    const hitType=type==='全部'||p.type===type;
-    const tags=Array.isArray(p.tags)?p.tags:[];
-    const blob=[p.title,p.desc,p.city,p.type,...tags].join(' ').toLowerCase();
-    return hitType&&(!key||blob.includes(key));
-  });
-  feedGrid.innerHTML=data.map((p)=>{
-    const tags=Array.isArray(p.tags)?p.tags:[];
-    const demoBadge=p.is_demo?'<span class="post-type-badge post-demo-badge">示例</span>':'';
-    return `<article class="post" onclick="showPostById('${safeText(p.id)}')">\
-    ${demoBadge}<span class="post-type-badge">${safeText(p.type||'动态')}</span>\
-    ${renderPostCoverHtml(p)}\
-    <div class="post-body"><div class="post-title">${safeText(p.title)}</div><div class="post-desc">${safeText(p.desc)}</div><div class="tags">${tags.map(t=>`<span class="tag">#${safeText(String(t).replace(/^#/,''))}</span>`).join('')}</div></div>\
-    <div class="post-footer"><div class="post-user"><span class="avatar-initial" aria-hidden="true">${safeText((p.author||'?').slice(0,1))}</span><span>${safeText(p.author)}</span></div><div class="post-actions"><button type="button" class="clickable post-like-btn${p.liked_by_me?' liked':''}" onclick="event.stopPropagation();toggleLikePost('${safeText(p.id)}',this)">${p.liked_by_me?'♥':'♡'} ${Number(p.like_count)||0}</button></div></div>\
-  </article>`;
-  }).join('');
-  feedEmpty.style.display=data.length?'none':'block';
-  if(!data.length&&feedEmpty) {
-    feedEmpty.textContent=source.length?'没有找到相关内容，换个关键词试试。':'还没有动态，登录后点「发布」做第一个分享吧。';
+function loadFeedSavedIds() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(FEED_SAVED_STORAGE_KEY) || '[]');
+    return new Set(Array.isArray(raw) ? raw.map(String) : []);
+  } catch (e) {
+    return new Set();
   }
+}
+
+function persistFeedSavedIds() {
+  try {
+    localStorage.setItem(FEED_SAVED_STORAGE_KEY, JSON.stringify([...feedSavedIds]));
+  } catch (e) { /* private mode */ }
+}
+
+function isPostSaved(postId) {
+  return feedSavedIds.has(String(postId));
+}
+
+function syncFeedSavedCounts() {
+  const n = feedSavedIds.size;
+  const countEl = document.getElementById('feedSavedCount');
+  if (countEl) countEl.textContent = String(n);
+  const toggle = document.getElementById('feedSavedToggle');
+  if (toggle) toggle.setAttribute('aria-pressed', feedViewSavedOnly ? 'true' : 'false');
+}
+
+function togglePostSaved(postId) {
+  const id = String(postId);
+  if (feedSavedIds.has(id)) feedSavedIds.delete(id);
+  else feedSavedIds.add(id);
+  persistFeedSavedIds();
+  syncFeedSavedCounts();
+  renderMePage();
+  return feedSavedIds.has(id);
+}
+
+function loadBuddySavedIds() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(BUDDY_SAVED_STORAGE_KEY) || '[]');
+    return new Set(Array.isArray(raw) ? raw.map(String) : []);
+  } catch (e) {
+    return new Set();
+  }
+}
+
+function persistBuddySavedIds() {
+  try {
+    localStorage.setItem(BUDDY_SAVED_STORAGE_KEY, JSON.stringify([...buddySavedIds]));
+  } catch (e) { /* ignore */ }
+}
+
+function isBuddySaved(buddyId) {
+  return buddyId && buddySavedIds.has(String(buddyId));
+}
+
+function toggleBuddySaved(buddyId, btn) {
+  if (!buddyId) return false;
+  const id = String(buddyId);
+  if (buddySavedIds.has(id)) buddySavedIds.delete(id);
+  else buddySavedIds.add(id);
+  persistBuddySavedIds();
+  if (btn) {
+    const on = buddySavedIds.has(id);
+    btn.classList.toggle('saved', on);
+    btn.textContent = on ? '★' : '☆';
+    btn.setAttribute('aria-label', on ? '取消收藏招募' : '收藏招募');
+  }
+  showToast(buddySavedIds.has(id) ? '已收藏这条招募（本浏览器）' : '已取消收藏');
+  if (activeBuddyFilter() === '收藏') renderBuddies('收藏');
+  renderMePage();
+  return buddySavedIds.has(id);
+}
+
+function postFeedMetaItems(p) {
+  const items = [];
+  if (p.city) items.push('📍 ' + p.city);
+  if (p.type === '路线') items.push('⌁ 路线分享');
+  if (p.type === '打卡') items.push('☕ 打卡');
+  if (p.type === '攻略') items.push('▧ 攻略');
+  if (p.route_id) items.push('关联路线');
+  if (p.share_route_id) items.push('分享链');
+  return items.slice(0, 3);
+}
+
+function renderPostMediaBlock(p) {
+  const src = postCoverUrl(p);
+  const demo = p.is_demo ? '<span class="post-cover-demo-badge">示例动态</span>' : '';
+  const coverInner = src
+    ? `<img class="post-cover" src="${safeText(src)}" alt="${safeText(p.title)}" loading="lazy" onerror="wwOnFeedImgError(this)">`
+    : `<div class="post-cover post-cover-demo" data-type="${safeText(p.type || '动态')}" role="img"><span class="post-cover-demo-kicker">WanderWalk</span><span class="post-cover-demo-type">${safeText(p.type || '动态')}</span></div>`;
+  return `<div class="post-media">${coverInner}${demo}<span class="post-cover-label">${safeText(p.type || '动态')}</span><span class="post-cover-city">${safeText(p.city || 'Citywalk')}</span></div>`;
+}
+
+function postCardHtml(p) {
+  const tags = Array.isArray(p.tags) ? p.tags : [];
+  const meta = postFeedMetaItems(p);
+  const saved = isPostSaved(p.id);
+  const pid = safeText(String(p.id));
+  return `<article class="post" data-post-id="${pid}" tabindex="0" role="button" aria-label="打开动态：${safeText(p.title)}">\
+    ${renderPostMediaBlock(p)}\
+    <div class="post-body">\
+      <div class="post-author-row"><span class="avatar-initial" aria-hidden="true">${safeText((p.author || '?').slice(0, 1))}</span><span>${safeText(p.author)}</span><span class="post-time">${p.is_demo ? '示例' : 'Walk 分享'}</span></div>\
+      <h3 class="post-title">${safeText(p.title)}</h3>\
+      <p class="post-desc">${safeText(p.desc || '')}</p>\
+      ${meta.length ? `<div class="post-meta">${meta.map(x => `<span class="post-meta-item">${safeText(x)}</span>`).join('')}</div>` : ''}\
+      <div class="tags">${tags.map(t => `<span class="tag">#${safeText(String(t).replace(/^#/, ''))}</span>`).join('')}</div>\
+    </div>\
+    <div class="post-footer">\
+      <div class="post-actions">\
+        <button type="button" class="clickable post-like-btn${p.liked_by_me ? ' liked' : ''}" data-like-id="${pid}">${p.liked_by_me ? '♥' : '♡'} ${Number(p.like_count) || 0}</button>\
+      </div>\
+      <button type="button" class="post-save-btn${saved ? ' saved' : ''}" data-save-id="${pid}" aria-label="${saved ? '取消收藏' : '收藏'}">${saved ? '★' : '☆'}</button>\
+    </div>\
+  </article>`;
+}
+
+function bindFeedCardEvents() {
+  if (!feedGrid) return;
+  feedGrid.querySelectorAll('.post[data-post-id]').forEach(function (card) {
+    const id = card.dataset.postId;
+    card.onclick = function (e) {
+      if (e.target.closest('[data-like-id],[data-save-id]')) return;
+      showPostById(id);
+    };
+    card.onkeydown = function (e) {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target === card) {
+        e.preventDefault();
+        showPostById(id);
+      }
+    };
+  });
+  feedGrid.querySelectorAll('[data-like-id]').forEach(function (btn) {
+    btn.onclick = function (e) {
+      e.stopPropagation();
+      toggleLikePost(btn.dataset.likeId, btn);
+    };
+  });
+  feedGrid.querySelectorAll('[data-save-id]').forEach(function (btn) {
+    btn.onclick = function (e) {
+      e.stopPropagation();
+      const nowSaved = togglePostSaved(btn.dataset.saveId);
+      btn.classList.toggle('saved', nowSaved);
+      btn.textContent = nowSaved ? '★' : '☆';
+      btn.setAttribute('aria-label', nowSaved ? '取消收藏' : '收藏');
+      showToast(nowSaved ? '已收藏这条动态（本浏览器）' : '已取消收藏');
+      if (feedViewSavedOnly) renderInspire();
+    };
+  });
+}
+
+function syncFeedTabs(type) {
+  document.querySelectorAll('.feed-tab').forEach(function (b) {
+    const on = (b.dataset.type || '') === type;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
+}
+
+function setFeedTypeFilter(type) {
+  syncFeedTabs(type);
+  feedVisibleCount = 8;
+  renderInspire();
+}
+
+function collectFeedTagCounts() {
+  const counts = new Map();
+  feedPostsSource().forEach(function (p) {
+    (Array.isArray(p.tags) ? p.tags : []).forEach(function (t) {
+      const key = String(t).replace(/^#/, '').trim();
+      if (!key) return;
+      counts.set(key, (counts.get(key) || 0) + 1);
+    });
+  });
+  return [...counts.entries()].sort(function (a, b) { return b[1] - a[1]; }).slice(0, 8);
+}
+
+function renderFeedHotTags() {
+  const holder = document.getElementById('feedHotTagsList');
+  if (!holder) return;
+  const top = collectFeedTagCounts();
+  if (!top.length) {
+    holder.innerHTML = '<span class="feed-side-note">发布带标签的动态后，这里会显示常见话题。</span>';
+    return;
+  }
+  holder.innerHTML = top.map(function (pair) {
+    return `<button type="button" class="feed-hot-tag" data-feed-tag="${safeText(pair[0])}"># ${safeText(pair[0])} <small>(${pair[1]})</small></button>`;
+  }).join('');
+  holder.querySelectorAll('[data-feed-tag]').forEach(function (btn) {
+    btn.onclick = function () {
+      const input = document.getElementById('searchInput');
+      if (input) input.value = btn.dataset.feedTag || '';
+      renderInspire();
+      scrollToId('inspire');
+    };
+  });
+}
+
+function renderFeedMixed(keyword) {
+  const key = String(keyword).trim().toLowerCase();
+  const source = feedPostsSource();
+  const items = buildInspireMixedHtmlList(keyword);
+  const total = items.length;
+  const slice = items.slice(0, feedVisibleCount);
+  feedGrid.classList.add('feed-grid--mixed');
+  feedGrid.innerHTML = slice.length ? slice.join('') : '';
+  bindFeedCardEvents();
+  syncFeedSavedCounts();
+  if (feedEmpty) {
+    if (!total) {
+      feedEmpty.hidden = false;
+      if (source.length || getDiscoverRoutes().length) {
+        feedEmpty.innerHTML = '<strong>没有找到相关内容</strong><p style="margin-top:8px;font-size:12px;color:#888">换个关键词试试，或切换到「路线」按城市浏览。</p>';
+      } else {
+        feedEmpty.innerHTML = '<strong>还没有灵感内容</strong><p style="margin-top:8px;font-size:12px;color:#888">登录后点「发布」做第一个分享吧。</p>';
+      }
+    } else {
+      feedEmpty.hidden = true;
+    }
+  }
+  const loadBtn = document.getElementById('feedLoadMore');
+  if (loadBtn) {
+    loadBtn.hidden = total <= feedVisibleCount;
+    loadBtn.textContent = total > feedVisibleCount ? '再加载一些 ↓' : '已浏览全部';
+  }
+  if (!feedViewSavedOnly) syncFeedTabs('全部');
+}
+
+function renderFeed(type='全部',keyword=''){
+  if (!feedGrid) return;
+  if (useInspireMixedFeed(type)) {
+    renderFeedMixed(keyword);
+    return;
+  }
+  feedGrid.classList.remove('feed-grid--mixed');
+  const key=String(keyword).trim().toLowerCase();
+  const source = feedPostsSource();
+  let data=filterFeedPosts(type, keyword);
+  const sortEl=document.getElementById('feedSort');
+  const sortMode=sortEl?sortEl.value:'default';
+  if(sortMode==='newest'){
+    data=[...data].reverse();
+  }
+  const total=data.length;
+  const slice=data.slice(0,feedVisibleCount);
+  feedGrid.innerHTML=slice.length?slice.map(postCardHtml).join(''):'';
+  bindFeedCardEvents();
+  syncFeedSavedCounts();
+  if(feedEmpty){
+    if(!total){
+      feedEmpty.hidden=false;
+      if(feedViewSavedOnly){
+        feedEmpty.innerHTML='<strong>还没有收藏动态</strong><p style="margin-top:8px;font-size:12px;color:#888">在卡片上点 ☆，把喜欢的分享收进清单。</p><button type="button" class="feed-load-more" style="margin-top:14px" id="feedExitSaved">返回全部动态</button>';
+        const exit=document.getElementById('feedExitSaved');
+        if(exit) exit.onclick=function(){feedViewSavedOnly=false;syncFeedSavedCounts();renderInspire();};
+      }else if(type==='路线'&&!feedViewSavedOnly){
+        feedEmpty.innerHTML='<strong>路线在上方卡片区浏览</strong><p style="margin-top:8px;font-size:12px;color:#888">笔记流不重复展示路线类内容；可切回「全部」看打卡与攻略。</p>';
+      }else if(source.length){
+        feedEmpty.innerHTML='<strong>没有找到相关内容</strong><p style="margin-top:8px;font-size:12px;color:#888">换个关键词或类型试试。</p>';
+      }else{
+        feedEmpty.innerHTML='<strong>还没有动态</strong><p style="margin-top:8px;font-size:12px;color:#888">登录后点「发布」做第一个分享吧。</p>';
+      }
+    }else{
+      feedEmpty.hidden=true;
+    }
+  }
+  const loadBtn=document.getElementById('feedLoadMore');
+  if(loadBtn){
+    loadBtn.hidden=total<=feedVisibleCount;
+    loadBtn.textContent=total>feedVisibleCount?'再加载一些 ↓':'已浏览全部';
+  }
+  if(!feedViewSavedOnly) syncFeedTabs(type);
 }
 
 function buddyCoverUrl(b) {
@@ -1142,8 +1886,9 @@ function parseBuddyPeople(people) {
 }
 
 function renderBuddies(filter='全部'){
-  const source=buddiesSource();
-  const data=filter==='全部'?source:source.filter(b=>b.filter===filter||(b.tags||[]).includes(filter));
+  const data=buddiesFiltered(filter);
+  const key=keywordForBuddies().trim().toLowerCase();
+  if(!buddyGrid) return;
   buddyGrid.innerHTML=data.length?data.map((b)=>{
     const cover=buddyCoverUrl(b);
     const demoRibbon=b.is_demo?'<span class="buddy-demo-ribbon">示例招募</span>':'';
@@ -1158,6 +1903,7 @@ function renderBuddies(filter='全部'){
       ${demoRibbon}\
       <span class="buddy-status"><span class="buddy-status-dot" aria-hidden="true"></span>正在招募</span>\
       <span class="buddy-city-pill">${safeText(b.city)}</span>\
+      <button type="button" class="buddy-save-btn${isBuddySaved(b.id)?' saved':''}" aria-label="${isBuddySaved(b.id)?'取消收藏招募':'收藏招募'}" onclick="event.stopPropagation();toggleBuddySaved('${safeText(b.id||'')}',this)">${isBuddySaved(b.id)?'★':'☆'}</button>\
     </div>\
     <div class="buddy-body">\
       <div class="buddy-head">\
@@ -1175,7 +1921,11 @@ function renderBuddies(filter='全部'){
       <button class="buddy-join" type="button" onclick="openJoin('${safeText(b.id||'')}')">加入这次 Walk</button>\
     </div>\
   </article>`;
-  }).join(''):'<p class="empty" style="display:block;grid-column:1/-1">暂无招募，登录后发起一次 Walk 吧。</p>';
+  }).join(''):filter==='收藏'
+    ?'<p class="empty" style="display:block;grid-column:1/-1"><strong>还没有收藏的招募</strong><br><span style="font-size:12px;color:#888">在卡片右上角点 ☆，或在「我的 · 收藏」查看。</span></p>'
+    :key
+    ?'<p class="empty" style="display:block;grid-column:1/-1"><strong>没有匹配的招募</strong><br><span style="font-size:12px;color:#888">换个关键词，或切换顶栏范围为「全站 / 灵感社区」。</span></p>'
+    :'<p class="empty" style="display:block;grid-column:1/-1">暂无招募，登录后发起一次 Walk 吧。</p>';
 }
 
 let currentRouteId = null;
@@ -1286,14 +2036,17 @@ function setPostModalMode(on){
   const routeBar=document.getElementById('routeModalActions');
   if(postBar) postBar.hidden=!on;
   if(routeBar) routeBar.hidden=!!on;
+  const saveBtn=document.getElementById('postSaveBtn');
+  if(saveBtn) saveBtn.hidden=!on;
 }
 
 function showPostById(id){
   const p=findCommunityPost(id);
   if(!p) return;
+  activeDetailPostId=id;
   currentUgcPostId=p.is_demo?null:id;
   currentSpotIndex=null;
-  setPostModalMode(!p.is_demo);
+  setPostModalMode(true);
   document.getElementById('spotFavoriteBtn').style.display='none';
   document.getElementById('spotJumpBtn').style.display='none';
   document.getElementById('routeFavoriteModalBtn').style.display='none';
@@ -1327,12 +2080,43 @@ function showPostById(id){
       shareA.hidden=true;
     }
   }
+  const saveBtn=document.getElementById('postSaveBtn');
+  if(saveBtn){
+    const saved=isPostSaved(p.id);
+    saveBtn.hidden=false;
+    saveBtn.classList.toggle('active',saved);
+    saveBtn.textContent=(saved?'★ ':'☆ ')+'收藏';
+  }
   if(p.is_demo){
-    setPostModalMode(false);
+    if(likeBtn) likeBtn.hidden=true;
+    if(delBtn) delBtn.hidden=true;
+    const reportBtn=document.getElementById('postReportBtn');
+    if(reportBtn) reportBtn.hidden=true;
+    if(shareA) shareA.hidden=true;
+    const routeBar=document.getElementById('routeModalActions');
+    if(routeBar) routeBar.hidden=true;
+  }else{
+    if(likeBtn) likeBtn.hidden=false;
+    const reportBtn=document.getElementById('postReportBtn');
+    if(reportBtn) reportBtn.hidden=false;
     const routeBar=document.getElementById('routeModalActions');
     if(routeBar) routeBar.hidden=true;
   }
   showModal('routeModal');
+}
+
+function toggleSaveCurrentPost(){
+  const id=activeDetailPostId||currentUgcPostId;
+  const p=id?findCommunityPost(id):null;
+  if(!p) return;
+  const nowSaved=togglePostSaved(p.id);
+  const saveBtn=document.getElementById('postSaveBtn');
+  if(saveBtn){
+    saveBtn.classList.toggle('active',nowSaved);
+    saveBtn.textContent=(nowSaved?'★ ':'☆ ')+'收藏';
+  }
+  showToast(nowSaved?'已收藏这条动态（本浏览器）':'已取消收藏');
+  renderInspire();
 }
 
 async function toggleLikePost(postId,btn){
@@ -1436,17 +2220,126 @@ function openCreateBuddy(){
   showModal('buddyModal');
 }
 
-function openPublish(){
+function syncPublishTagsHiddenField(){
+  const hidden=document.getElementById('publishTags');
+  if(hidden) hidden.value=publishSelectedTags.join(',');
+}
+
+function renderPublishSelectedTags(){
+  const holder=document.getElementById('publishSelectedTags');
+  if(!holder) return;
+  holder.innerHTML=publishSelectedTags.map(function(t,i){
+    return `<span class="selected-tag"># ${safeText(t)} <button type="button" data-remove-publish-tag="${i}" aria-label="删除标签">×</button></span>`;
+  }).join('');
+  holder.querySelectorAll('[data-remove-publish-tag]').forEach(function(btn){
+    btn.onclick=function(){
+      publishSelectedTags.splice(+btn.dataset.removePublishTag,1);
+      renderPublishSelectedTags();
+      syncPublishTagsHiddenField();
+      refreshPublishTagSuggestions();
+    };
+  });
+  syncPublishTagsHiddenField();
+}
+
+function addPublishTag(raw){
+  const t=String(raw||'').trim().replace(/^#+/,'').replace(/[,，\s]+$/,'').slice(0,24);
+  if(!t) return false;
+  if(publishSelectedTags.some(function(x){return x.toLowerCase()===t.toLowerCase();})){
+    showToast('该标签已添加');
+    return false;
+  }
+  if(publishSelectedTags.length>=10){
+    showToast('最多 10 个标签');
+    return false;
+  }
+  publishSelectedTags.push(t);
+  renderPublishSelectedTags();
+  refreshPublishTagSuggestions();
+  return true;
+}
+
+function refreshPublishTagSuggestions(){
+  const box=document.getElementById('publishTagSuggestions');
+  if(!box) return;
+  const open=document.getElementById('publishModal')?.classList.contains('show');
+  if(!open){ box.hidden=true; return; }
+  const query=(document.getElementById('publishTagsInput')||{}).value||'';
+  const q=query.trim().replace(/^#+/,'').toLowerCase();
+  const ctx=[q,(document.getElementById('publishTitle')||{}).value||'',(document.getElementById('publishDesc')||{}).value||'',(document.getElementById('publishCity')||{}).value||'',(document.getElementById('publishType')||{}).value||''].join(' ').toLowerCase();
+  const ranked=FEED_TAG_SUGGESTIONS.map(function(t){
+    let score=0;
+    if(q&&t.name.toLowerCase().includes(q)) score+=80;
+    t.keys.forEach(function(k){
+      if(k&&ctx.includes(k.toLowerCase())) score+=6;
+    });
+    return {name:t.name,score:score};
+  }).filter(function(t){
+    return !publishSelectedTags.some(function(x){return x.toLowerCase()===t.name.toLowerCase();});
+  }).sort(function(a,b){return b.score-a.score;}).slice(0,6);
+  let html='';
+  ranked.forEach(function(t){
+    html+=`<button type="button" class="tag-suggestion" data-add-publish-tag="${safeText(t.name)}">＋ #${safeText(t.name)}</button>`;
+  });
+  if(q&&!publishSelectedTags.some(function(x){return x.toLowerCase()===q;})){
+    html+=`<button type="button" class="tag-suggestion" data-add-publish-tag="${safeText(q)}">＋ 创建 #${safeText(q)}</button>`;
+  }
+  if(!html){ box.hidden=true; return; }
+  box.innerHTML=html;
+  box.hidden=false;
+  box.querySelectorAll('[data-add-publish-tag]').forEach(function(btn){
+    btn.onclick=function(){ addPublishTag(btn.dataset.addPublishTag); const inp=document.getElementById('publishTagsInput'); if(inp) inp.value=''; };
+  });
+}
+
+function updatePublishTypeHint(){
+  const type=(document.getElementById('publishType')||{}).value||'路线';
+  const hint=document.getElementById('publishTypeHint');
+  if(!hint) return;
+  const map={
+    '路线':'写清起终点、计划时长与沿途 2–3 个亮点，方便他人复走。',
+    '打卡':'分享店名/街区、人均或招牌，并注明适合停留的时段。',
+    '攻略':'补充预约、装备、交通规则等实用信息，比堆景点名更有帮助。',
+    '夜游':'说明光线时段、安全与返程方式，摄影向可提机位方向。',
+    '拍照':'标注大致位置与侧光/蓝调时段，给后来的人留一点探索空间。'
+  };
+  hint.textContent=map[type]||'用真实体验帮助同路人。';
+}
+
+function updatePublishCharCounts(){
+  const title=(document.getElementById('publishTitle')||{}).value||'';
+  const desc=(document.getElementById('publishDesc')||{}).value||'';
+  const tc=document.getElementById('publishTitleCount');
+  const dc=document.getElementById('publishDescCount');
+  if(tc) tc.textContent=title.length+' / 80';
+  if(dc) dc.textContent=desc.length+' / 2000';
+}
+
+function resetPublishComposer(presetType){
+  publishSelectedTags=[];
+  const form=document.getElementById('publishPostForm');
+  if(form) form.reset();
+  const typeEl=document.getElementById('publishType');
+  if(typeEl&&presetType) typeEl.value=presetType;
+  renderPublishSelectedTags();
+  updatePublishTypeHint();
+  updatePublishCharCounts();
+  refreshPublishTagSuggestions();
+}
+
+function openPublish(presetType){
   if(!requireLoginForPost()) return;
   fillPublishRouteSelect();
+  resetPublishComposer(presetType||'');
   showModal('publishModal');
 }
 
 async function submitPublishPostForm(ev){
   if(ev) ev.preventDefault();
   if(!requireLoginForPost()) return;
-  const tagsRaw=(document.getElementById('publishTags')||{}).value||'';
-  const tags=tagsRaw.split(/[,，]/).map(s=>s.trim()).filter(Boolean);
+  const pending=(document.getElementById('publishTagsInput')||{}).value||'';
+  if(pending.trim()) addPublishTag(pending);
+  const tags=[...publishSelectedTags];
   try{
     await CitywalkCommunityApi.createPost({
       type:(document.getElementById('publishType')||{}).value,
@@ -1459,6 +2352,7 @@ async function submitPublishPostForm(ev){
       share_route_id:(document.getElementById('publishShareRouteId')||{}).value||'',
     });
     closeModal('publishModal');
+    resetPublishComposer('');
     showToast('已发布');
     await loadCommunityUgc();
   }catch(e){
@@ -1484,13 +2378,30 @@ async function submitBuddyCreateForm(ev){
     closeModal('buddyModal');
     showToast('招募已发布');
     await loadCommunityUgc();
-    openBuddiesPage();
+    ensureBuddiesPageOpen({ scroll: true });
   }catch(e){
     showToast(e.message||'发起失败');
   }
 }
 function showModal(id){document.getElementById(id).classList.add('show');document.body.style.overflow='hidden'}
 function closeModal(id){document.getElementById(id).classList.remove('show');document.body.style.overflow=''}
+
+/** 展开找搭子区（不切换关闭；供搜索、结果跳转等使用） */
+function ensureBuddiesPageOpen(options) {
+  const section = document.getElementById('buddies');
+  if (!section) return;
+  if (!section.classList.contains('buddy-section-visible')) {
+    section.classList.remove('buddy-section-hidden');
+    section.classList.add('buddy-section-visible');
+    renderBuddies(activeBuddyFilter());
+    updateBuddyToggle(true);
+  }
+  if (options && options.scroll) {
+    requestAnimationFrame(function () {
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+}
 
 function openBuddiesPage(event){
   if(event){event.preventDefault();}
@@ -1500,13 +2411,7 @@ function openBuddiesPage(event){
     closeBuddiesPage();
     return;
   }
-  section.classList.remove('buddy-section-hidden');
-  section.classList.add('buddy-section-visible');
-  renderBuddies(document.querySelector('.buddy-filter.active')?.dataset.filter || '全部');
-  updateBuddyToggle(true);
-  requestAnimationFrame(()=>{
-    section.scrollIntoView({behavior:'smooth',block:'start'});
-  });
+  ensureBuddiesPageOpen({ scroll: true });
 }
 
 function toggleBuddiesPage(event){
@@ -1523,7 +2428,7 @@ function closeBuddiesPage(){
   section.classList.add('buddy-section-hidden');
   updateBuddyToggle(false);
   requestAnimationFrame(()=>{
-    document.getElementById('routes').scrollIntoView({behavior:'smooth',block:'start'});
+    document.getElementById('inspire').scrollIntoView({behavior:'smooth',block:'start'});
   });
 }
 
@@ -1562,41 +2467,71 @@ if(cityTabsEl){
     if(!btn) return;
     document.querySelectorAll('#cityTabs .city-tab').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
-    renderRoutes(btn.dataset.city || '全部');
+    renderInspire();
   });
 }
 
-// feed tabs
+// feed type tabs（灵感工具条）
 Array.from(document.querySelectorAll('.feed-tab')).forEach(btn=>btn.addEventListener('click',()=>{
-  document.querySelectorAll('.feed-tab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderFeed(btn.dataset.type,document.getElementById('searchInput').value);
+  feedViewSavedOnly=false;
+  feedVisibleCount=8;
+  setFeedTypeFilter(btn.dataset.type||'全部');
 }));
-
+const feedSavedToggle=document.getElementById('feedSavedToggle');
+if(feedSavedToggle){
+  feedSavedToggle.addEventListener('click',function(){
+    feedViewSavedOnly=!feedViewSavedOnly;
+    feedVisibleCount=Math.max(8,feedSavedIds.size||8);
+    syncFeedSavedCounts();
+    renderInspire();
+    scrollToId('inspire');
+  });
+}
+const feedSort=document.getElementById('feedSort');
+if(feedSort) feedSort.addEventListener('change',()=>renderInspire());
+const feedLoadMore=document.getElementById('feedLoadMore');
+if(feedLoadMore) feedLoadMore.addEventListener('click',function(){
+  feedVisibleCount+=6;
+  renderInspire();
+});
 // buddy filters
 Array.from(document.querySelectorAll('.buddy-filter')).forEach(btn=>btn.addEventListener('click',()=>{
   document.querySelectorAll('.buddy-filter').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   renderBuddies(btn.dataset.filter);
+  renderSearchResultsBar();
 }));
 
-// global search
+// global search（范围在 #searchResultsBar 内切换）
 let searchTimer;
-document.getElementById('searchInput').addEventListener('input',()=>{
-  clearTimeout(searchTimer);
-  searchTimer=setTimeout(()=>{
-    const activeFeed=document.querySelector('.feed-tab.active')?.dataset.type||'全部';
-    renderFeed(activeFeed,document.getElementById('searchInput').value);
-    scrollToId('feed');
-  },120);
-});
+const searchInputEl=document.getElementById('searchInput');
+if(searchInputEl){
+  searchInputEl.addEventListener('input',function(){
+    clearTimeout(searchTimer);
+    searchTimer=setTimeout(function(){
+      feedVisibleCount=8;
+      applyCommunitySearch({ scroll: true });
+    },120);
+  });
+}
+const searchResultsScopeEl=document.getElementById('searchResultsScope');
+if(searchResultsScopeEl){
+  searchResultsScopeEl.addEventListener('click',function(ev){
+    const btn=ev.target.closest('[data-search-scope]');
+    if(!btn) return;
+    setCommunitySearchScope(btn.dataset.searchScope||'all');
+    applyCommunitySearch({ scroll: false });
+  });
+}
+const searchResultsClear=document.getElementById('searchResultsClear');
+if(searchResultsClear) searchResultsClear.addEventListener('click',clearCommunitySearch);
 
 // close modals by backdrop + ESC
 Array.from(document.querySelectorAll('.modal')).forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id)}));
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal.show').forEach(m=>closeModal(m.id))});
 
 // nav active state（顶栏：规划 / 社区 / 找搭子）
-const sections=['home','buddies','routes','feed','spots'];
+const sections=['home','buddies','inspire','spots','me'];
 const navLinks=Array.from(document.querySelectorAll('.nav-links a'));
 const navLinkBySection={};
 navLinks.forEach(a=>{
@@ -1611,17 +2546,55 @@ const io=new IntersectionObserver(entries=>{entries.forEach(entry=>{if(entry.isI
 sections.forEach(id=>{const el=document.getElementById(id);if(el)io.observe(el)});
 if(navLinkBySection.home) navLinkBySection.home.classList.add('active');
 
-renderRoutes('全部');
 renderFootprints();
-renderFeed();
-renderBuddies();
+renderFeedHotTags();
+syncFeedSavedCounts();
+syncSearchScopeUi();
+applyCommunitySearch({ scroll: false });
 renderPointsBoard();
+setMePrimaryTab('saved', false);
+setMeSavedTab('notes', false);
+renderMePage();
+document.querySelectorAll('.me-primary-tab').forEach(function (btn) {
+  btn.addEventListener('click', function () { setMePrimaryTab(btn.dataset.meTab || 'saved'); });
+});
+document.querySelectorAll('.me-saved-tab').forEach(function (btn) {
+  btn.addEventListener('click', function () { setMeSavedTab(btn.dataset.meSaved || 'notes'); });
+});
+const meOpenAuthBtn = document.getElementById('meOpenAuthBtn');
+if (meOpenAuthBtn) meOpenAuthBtn.addEventListener('click', function () {
+  if (typeof CitywalkAuth !== 'undefined') CitywalkAuth.openAuthModal('login');
+});
+const meOpenAccountBtn = document.getElementById('meOpenAccountBtn');
+if (meOpenAccountBtn) meOpenAccountBtn.addEventListener('click', function () {
+  if (typeof CitywalkAuth !== 'undefined') CitywalkAuth.openAuthModal('account');
+});
 renderHeroBuddyPreview();
 updateHeroBuddyCount();
 updateBuddyToggle(true);
 
 const publishPostForm=document.getElementById('publishPostForm');
 if(publishPostForm) publishPostForm.addEventListener('submit',submitPublishPostForm);
+const publishTypeEl=document.getElementById('publishType');
+if(publishTypeEl) publishTypeEl.addEventListener('change',function(){ updatePublishTypeHint(); refreshPublishTagSuggestions(); });
+const publishTitleEl=document.getElementById('publishTitle');
+if(publishTitleEl) publishTitleEl.addEventListener('input',function(){ updatePublishCharCounts(); refreshPublishTagSuggestions(); });
+const publishDescEl=document.getElementById('publishDesc');
+if(publishDescEl) publishDescEl.addEventListener('input',function(){ updatePublishCharCounts(); refreshPublishTagSuggestions(); });
+const publishCityEl=document.getElementById('publishCity');
+if(publishCityEl) publishCityEl.addEventListener('input',refreshPublishTagSuggestions);
+const publishTagsInput=document.getElementById('publishTagsInput');
+if(publishTagsInput){
+  publishTagsInput.addEventListener('input',refreshPublishTagSuggestions);
+  publishTagsInput.addEventListener('keydown',function(e){
+    if(e.key==='Enter'||e.key===','||e.key==='，'){
+      e.preventDefault();
+      const val=publishTagsInput.value.trim();
+      if(val&&addPublishTag(val)) publishTagsInput.value='';
+    }
+  });
+  publishTagsInput.addEventListener('focus',refreshPublishTagSuggestions);
+}
 const buddyCreateForm=document.getElementById('buddyCreateForm');
 if(buddyCreateForm) buddyCreateForm.addEventListener('submit',submitBuddyCreateForm);
 
