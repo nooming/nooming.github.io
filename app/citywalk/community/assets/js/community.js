@@ -853,6 +853,21 @@ function registerPlannedRoute(payload) {
   return id;
 }
 
+function removePlannedRoute(routeId) {
+  const id = String(routeId || '');
+  if (!id || !plannedRouteCatalog[id]) return;
+  if (!confirm('从「规划导入」移除这条路线？规划页分享链接仍可再次导入。')) return;
+  delete plannedRouteCatalog[id];
+  savePlannedCatalog();
+  delete routeSpots[id];
+  if (plannerLinkedRouteId === id) plannerLinkedRouteId = null;
+  hydratePlannedRoutesFromCatalog();
+  fillPublishRouteSelect();
+  if (typeof renderInspire === 'function') renderInspire();
+  renderFootprints();
+  showToast('已从规划导入移除');
+}
+
 hydratePlannedRoutesFromCatalog();
 
 function routeById(routeId) {
@@ -1259,12 +1274,20 @@ function renderFootprints(){
   const validWalked=walkedRoutes.filter(item=>routeById(item.routeId));
   const validFavRoutes=favoriteRouteIds.filter(id=>routeById(id));
   const plannedRoutes=getImportedRoutes();
+  const spotFavCount=favoriteSpotKeys.filter(k=>routeForSpotKey(k)).length;
   const cityCount=new Set(validWalked.map(item=>routeById(item.routeId)?.city).filter(Boolean)).size;
-  document.getElementById('footprintSummary').innerHTML=`
-    <div class="footprint-stat"><strong>${validWalked.length}</strong><span>条已走过路线</span></div>
-    <div class="footprint-stat"><strong>${plannedRoutes.length}</strong><span>条规划导入</span></div>
-    <div class="footprint-stat"><strong>${validFavRoutes.length}</strong><span>条收藏路线</span></div>
-    <div class="footprint-stat"><strong>${favoriteSpotKeys.filter(k=>routeForSpotKey(k)).length}</strong><span>个收藏打卡点 · ${cityCount} 座城市</span></div>`;
+  const summaryStats=[
+    {view:'walks',count:validWalked.length,label:'已走过'},
+    {view:'planned',count:plannedRoutes.length,label:'规划导入'},
+    {view:'routes',count:validFavRoutes.length,label:'收藏路线'},
+    {view:'spots',count:spotFavCount,label:'收藏点位',sub:cityCount+' 城'}
+  ];
+  document.getElementById('footprintSummary').innerHTML=summaryStats.map(function (s) {
+    return '<button type="button" class="footprint-stat'+(footprintView===s.view?' is-active':'')+'" data-footprint-stat="'+s.view+'" onclick="setFootprintView(\''+s.view+'\')">'
+      +'<strong>'+s.count+'</strong><span>'+safeText(s.label)+'</span>'
+      +(s.sub?'<span class="footprint-stat-sub">'+safeText(s.sub)+'</span>':'')
+      +'</button>';
+  }).join('');
 
   const grid=document.getElementById('footprintGrid');
   const empty=document.getElementById('footprintEmpty');
@@ -1347,7 +1370,7 @@ function renderFootprints(){
       return `<article class="footprint-card">
       <div class="footprint-cover"><img src="${r.image || SPOT_PLACEHOLDER}" alt="${safeText(r.title)}"><span class="footprint-cover-badge">📋 规划导入 · ${safeText(r.city)}</span></div>
       <div class="footprint-card-body"><div class="footprint-card-title">${safeText(r.title)}</div><div class="footprint-card-desc">${safeText(r.desc)}</div><div class="footprint-meta"><span>📏 ${safeText(r.distance)}</span><span>🕐 ${safeText(r.time)}</span><span>📍 ${spotCount} 个点位</span></div></div>
-      <div class="footprint-card-actions"><button class="primary" onclick="renderSpots('${safeText(r.id)}',true)">查看点位 →</button><button class="primary" onclick="openRouteById('${safeText(r.id)}')">路线详情</button><button class="remove" onclick="openAddFootprintPrefilled('${safeText(r.id)}')">记录 Walk</button></div>
+      <div class="footprint-card-actions footprint-card-actions--planned"><button class="primary" onclick="renderSpots('${safeText(r.id)}',true)">查看点位</button><button class="primary" onclick="openRouteById('${safeText(r.id)}')">路线详情</button><button class="primary" onclick="openAddFootprintPrefilled('${safeText(r.id)}')">记录 Walk</button><button class="remove" type="button" onclick="removePlannedRoute('${safeText(r.id)}')">删除</button></div>
     </article>`;
     }).join('');
     empty.innerHTML='还没有规划导入的路线。在 <a href="../">Citywalk 路线规划</a> 完成后点「记录到社区」，或在上方粘贴分享链接（地址里带 <code>?r=</code>）。走过之后再点「记录 Walk」。';
@@ -1460,6 +1483,10 @@ function removeFootprint(routeId){
   saveArray(FOOTPRINT_STORAGE.walked,walkedRoutes);
   renderFootprints();
   showToast('已从足迹中移除');
+}
+
+if (typeof window !== 'undefined') {
+  window.removePlannedRoute = removePlannedRoute;
 }
 
 function openAddFootprint(){

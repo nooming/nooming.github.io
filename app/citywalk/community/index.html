@@ -191,9 +191,10 @@
 
   <section class="section community-view-section" id="spots">
     <div class="section-head footprint-section-head">
-      <div>
+      <div class="footprint-section-head-main">
         <h2 id="footprintHeading">我的 Walk 足迹</h2>
         <p id="footprintSubtitle"><span id="footprintSyncHint">登录后足迹与收藏会保存到账号；未登录时仍只在本浏览器。</span></p>
+        <div class="footprint-summary" id="footprintSummary" aria-label="足迹概览"></div>
       </div>
       <div class="footprint-head-actions" id="footprintHeadActions">
         <button class="footprint-add" onclick="openAddFootprint()">＋ 记录一次 Walk</button>
@@ -251,7 +252,6 @@
         </div>
       </div>
       </details>
-      <div class="footprint-summary" id="footprintSummary"></div>
       <div class="footprint-grid" id="footprintGrid"></div>
       <div class="footprint-empty" id="footprintEmpty" style="display:none"></div>
     </div>
