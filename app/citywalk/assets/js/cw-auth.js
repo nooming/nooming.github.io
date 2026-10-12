@@ -272,6 +272,12 @@
         const btn = document.getElementById('cwAuthAvatarBtn');
         if (btn) {
             btn.addEventListener('click', () => {
+                if (typeof global.openMePage === 'function') {
+                    global.openMePage({
+                        tab: isLoggedIn() ? 'saved' : 'settings',
+                    });
+                    return;
+                }
                 if (isLoggedIn()) {
                     openAuthModal('account');
                     return;

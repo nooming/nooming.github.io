@@ -116,7 +116,9 @@
             if (fp.planned_routes && typeof fp.planned_routes === 'object') {
                 if (typeof plannedRouteCatalog !== 'undefined') plannedRouteCatalog = fp.planned_routes;
                 try { localStorage.setItem(STORAGE_KEYS.planned, JSON.stringify(fp.planned_routes)); } catch (_) { /* ignore */ }
-                if (typeof routeSpots !== 'undefined') {
+                if (typeof hydratePlannedRoutesFromCatalog === 'function') {
+                    hydratePlannedRoutesFromCatalog();
+                } else if (typeof routeSpots !== 'undefined') {
                     Object.keys(fp.planned_routes).forEach(function (id) {
                         const entry = fp.planned_routes[id];
                         if (entry && entry.routeSpot && !routeSpots[id]) routeSpots[id] = entry.routeSpot;

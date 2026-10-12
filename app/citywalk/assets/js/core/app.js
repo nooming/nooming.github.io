@@ -361,6 +361,7 @@ ${poiText}
         bindClick('btnInspireCards', fetchInspirationCards);
         bindClick('btnAgentChat', sendAgentChat);
         bindClick('btnReset', resetSelection);
+        bindClick('btnResetAgent', resetSelection);
         bindClick('btnPlan', generateRoute);
         bindClick('modeBtnRoute', () => switchPlanMode('route'));
         bindClick('modeBtnLoop', () => switchPlanMode('loop'));

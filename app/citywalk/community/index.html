@@ -29,13 +29,15 @@
       <a href="#buddies" class="buddy-nav" onclick="openBuddiesPage(event)">👥 找搭子</a>
       <a href="#inspire">灵感社区</a>
       <a href="#spots">足迹</a>
-      <a href="#me" id="meNavLink">我的</a>
     </nav>
     <label class="search search--nav">
       <span>⌕</span>
       <input id="searchInput" placeholder="搜索找搭子、路线与笔记…" autocomplete="off" aria-label="搜索社区">
     </label>
-    <button type="button" class="user-avatar user-avatar--initial" id="cwAuthAvatarBtn" aria-label="登录或账号">我</button>
+    <div class="user-avatar-wrap">
+      <button type="button" class="user-avatar user-avatar--initial" id="cwAuthAvatarBtn" aria-describedby="userAvatarPopover">我</button>
+      <div class="user-avatar-popover" id="userAvatarPopover" role="tooltip"></div>
+    </div>
   </div>
 </header>
 
@@ -98,8 +100,8 @@
 
   <aside class="import-guide-banner" id="importGuideBanner" hidden>
     <div>
-      <strong>已从规划页载入路线</strong>
-      <p>在下方黑底时间轴查看站点；保存 Walk 足迹后可领取演示积分。</p>
+      <strong>已放入规划导入</strong>
+      <p>路线在足迹的「规划导入」里。走过之后再点卡片上的「记录 Walk」，才会进入走过的路线并领取积分。</p>
     </div>
     <button type="button" class="import-guide-dismiss" onclick="dismissImportGuide()">知道了</button>
   </aside>
@@ -132,7 +134,7 @@
     <div class="section-head inspire-section-head" id="inspireSectionHead">
       <div>
         <h2>灵感社区</h2>
-        <p class="inspire-lead">「全部」混排路线与笔记；选「路线」可按城市筛选。自建规划见 <a href="#spots" onclick="setFootprintView('planned')">足迹 · 规划导入</a>。</p>
+        <p class="inspire-lead">浏览社区路线与笔记。自己规划的线路请在 <a href="#spots" onclick="setFootprintView('planned')">足迹 · 规划导入</a> 查看。</p>
       </div>
       <div class="section-head-actions">
         <button type="button" class="publish publish--inline" onclick="openPublish()">＋ 发布</button>
@@ -212,6 +214,11 @@
         <button class="footprint-tab" data-view="spots" onclick="setFootprintView('spots')">📍 收藏的点位</button>
         <span class="local-save-note">私人足迹 · 登录可云同步</span>
       </div>
+      <form class="planned-import-bar" id="plannedImportBar" hidden onsubmit="return submitPlannedLinkImport(event)">
+        <label for="plannedImportInput">导入分享链接</label>
+        <input id="plannedImportInput" class="footprint-input" type="text" inputmode="url" autocomplete="off" placeholder="粘贴规划页复制的链接，或 ?r= 后面的 id" />
+        <button type="submit">导入</button>
+      </form>
       <div class="footprint-points-bar" id="footprintPointsWrap" hidden>
         <div class="footprint-points-card walk-points-card" id="walkPointsCard">
           <div class="footprint-points-row">
@@ -268,11 +275,14 @@
     </div>
   </section>
 
-  <section class="section" id="me">
+</main>
+
+<section class="section me-page container" id="me" hidden aria-hidden="true">
     <div class="section-head me-section-head">
       <div>
+        <button type="button" class="me-back-btn" onclick="closeMePage()">← 返回社区</button>
         <h2>我的</h2>
-        <p id="mePageSubtitle">收藏、发布与账号；规划导入仍在 <a href="#spots" onclick="setFootprintView('planned')">足迹 · 规划导入</a>。</p>
+        <p id="mePageSubtitle">收藏、发布与账号；规划导入仍在 <a href="#spots" onclick="closeMePage('#spots'); setFootprintView('planned'); return false;">足迹 · 规划导入</a>。</p>
       </div>
     </div>
     <div class="me-overview" id="meOverview"></div>
@@ -306,14 +316,12 @@
         <div class="me-settings-actions">
           <button type="button" class="me-settings-btn primary" id="meOpenAuthBtn">登录 / 注册</button>
           <button type="button" class="me-settings-btn" id="meOpenAccountBtn" hidden>账号与改密</button>
-          <a class="me-settings-btn ghost" href="#spots">Walk 足迹与规划导入 →</a>
+          <a class="me-settings-btn ghost" href="#spots" onclick="closeMePage('#spots'); return true;">Walk 足迹与规划导入 →</a>
         </div>
         <p class="me-settings-note">灵感笔记、找搭子收藏默认保存在本浏览器；登录后足迹与路线/点位收藏可云同步。笔记与招募收藏同步将在后续版本接入。</p>
       </div>
     </div>
-  </section>
-
-</main>
+</section>
 
 <footer><b>WanderWalk</b> 社区 · <a href="../">Citywalk 路线规划</a> · <a href="../../">noomings 首页</a><br><br>城市不是用来赶路的，是用来慢慢走的。<br><br>© 2026 WanderWalk（演示数据）</footer>
 
@@ -381,11 +389,11 @@
   </div>
 </div>
 
-<!-- 发布动态 -->
+<!-- 发布笔记 -->
 <div class="modal" id="publishModal">
   <div class="modal-box buddy-modal publish-modal">
     <button type="button" class="close" onclick="closeModal('publishModal')" aria-label="关闭">×</button>
-    <h2>发布到社区动态</h2>
+    <h2>发布灵感笔记</h2>
     <p class="cw-auth-lead">需登录。封面暂填图片链接（上传功能后续接入）；标签可点选推荐或 Enter 添加。</p>
     <form id="publishPostForm" class="cw-auth-form publish-form">
       <label class="form-label" for="publishType">类型</label>
@@ -411,7 +419,7 @@
         <input id="publishTagsInput" type="text" placeholder="输入后 Enter，或点下方推荐" autocomplete="off" aria-describedby="publishTagHint">
       </div>
       <div class="tag-suggestions" id="publishTagSuggestions" hidden></div>
-      <p class="field-hint" id="publishTagHint">最多 10 个标签；示例帖仅供浏览，收藏保存在本浏览器。</p>
+      <p class="field-hint" id="publishTagHint">最多 10 个标签；示例笔记仅供浏览，收藏保存在本浏览器。</p>
       <input type="hidden" id="publishTags" value="">
       <label class="form-label" for="publishRouteId">关联已导入路线（选填）</label>
       <select id="publishRouteId" class="footprint-input"><option value="">不关联</option></select>

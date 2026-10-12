@@ -34,7 +34,7 @@ const WW_COPY = {
   planner: 'Citywalk 路线规划',
   activity: 'Citywalk',
   sampleRouteNote: '此为示例路线。自建路线请前往 Citywalk 规划页，完成后点「记录到社区」。',
-  samplePostNote: '此为示例动态。登录后点「发布」可分享你的 Walk。',
+  samplePostNote: '此为示例笔记。登录后点「发布」可分享你的 Walk。',
   sampleBuddyNote: '此为示例招募。登录后点「发起一次 Walk」可发布真实招募。',
   modalTipsRoute: [
     '把停留时间算进整条路线，不要只计算步行时间。',
@@ -167,7 +167,7 @@ function ugcPostToDiscoverCard(p) {
     stops: tags.slice(0, 4).map(function (t) { return String(t).replace(/^#/, ''); }),
     tips: p.share_route_id
       ? ['帖子已绑定规划分享链，可在详情中打开步行路线。']
-      : ['来自社区动态；自建路线请前往 Citywalk 规划页。'],
+      : ['来自灵感社区；自建路线请前往 Citywalk 规划页。'],
     _source: 'ugc',
     _ugcPostId: p.id,
     share_route_id: p.share_route_id || '',
@@ -184,11 +184,20 @@ function getDiscoverRoutes() {
 }
 
 function getImportedRoutes(){
-  return routes.filter(function (r) {
+  const seen = {};
+  const list = routes.filter(function (r) {
     return r.type === '规划导入' || !!plannedRouteCatalog[r.id];
   }).map(function (r) {
+    seen[r.id] = true;
     return Object.assign({}, r, { _source: 'mine' });
   });
+  Object.keys(plannedRouteCatalog).forEach(function (id) {
+    if (seen[id]) return;
+    const planned = routeById(id);
+    if (!planned) return;
+    list.push(Object.assign({}, planned, { type: '规划导入', _source: 'mine' }));
+  });
+  return list;
 }
 
 function routeDiscoverBlob(r) {
@@ -428,19 +437,19 @@ function getInspireFilterState() {
 }
 
 const INSPIRE_TYPE_META = {
-  '全部': '路线卡与 Walk 笔记混排展示；UGC 路线以路线卡出现一次。',
-  '路线': '仅路线卡片，可按城市筛选；笔记不重复展示。',
-  '打卡': '笔记：打卡安利',
-  '攻略': '笔记：实用攻略',
-  '夜游': '笔记：夜游',
-  '拍照': '笔记：拍照'
+  '全部': '「全部」混排路线与笔记；同一条社区路线只以路线卡片展示一次。',
+  '路线': '仅路线卡片，可按上方城市筛选。',
+  '打卡': '仅打卡类笔记。',
+  '攻略': '仅攻略类笔记。',
+  '夜游': '仅夜游类笔记。',
+  '拍照': '仅拍照类笔记。'
 };
 
 function syncInspireToolbarMeta(type) {
   const meta = document.getElementById('inspireToolbarMeta');
   if (!meta) return;
   let text = INSPIRE_TYPE_META[type] || INSPIRE_TYPE_META['全部'];
-  if (feedViewSavedOnly) text = '仅显示已收藏笔记（本浏览器）。';
+  if (feedViewSavedOnly) text = '仅显示本机收藏的笔记。';
   meta.textContent = text;
 }
 
@@ -521,7 +530,7 @@ function renderRoutes(city, keyword) {
     const key = String(keyword || '').trim();
     const msg = key
       ? '没有匹配的路线。试试别的关键词，或切换到「全部」类型。'
-      : '暂无路线内容。发布「路线」类动态后会出现在这里；若示例未加载，请刷新页面。';
+      : '暂无路线内容。发布「路线」类笔记后会出现在这里；若示例未加载，请刷新页面。';
     routeGrid.innerHTML = '<div class="empty" style="display:block;grid-column:1/-1">' + msg + '</div>';
     return;
   }
@@ -597,10 +606,6 @@ function savePlannedCatalog() {
   if(typeof CitywalkFootprintSync!=='undefined'&&CitywalkFootprintSync.schedulePush) CitywalkFootprintSync.schedulePush();
 }
 let plannedRouteCatalog = loadPlannedCatalog();
-Object.keys(plannedRouteCatalog).forEach(function (id) {
-  const entry = plannedRouteCatalog[id];
-  if (entry && entry.routeSpot && !routeSpots[id]) routeSpots[id] = entry.routeSpot;
-});
 const POINTS_PER_WALK = 50;
 const POINT_LEVELS = [
   {min:0,max:99,icon:'🌱',title:'街巷新芽',desc:'刚刚开始探索城市，把每次出发变成新的发现。'},
@@ -700,9 +705,83 @@ let walkedRoutes = loadArray(FOOTPRINT_STORAGE.walked,sampleWalkedRoutes);
 let favoriteRouteIds = loadArray(FOOTPRINT_STORAGE.favoriteRoutes,[]);
 let favoriteSpotKeys = loadArray(FOOTPRINT_STORAGE.favoriteSpots,[]);
 
+function plannedRouteFingerprint(payload) {
+  const names = (payload.stops || []).map(function (s) {
+    return String((s && s.name) || '').trim();
+  }).filter(Boolean).join('|');
+  return [String(payload.city || '').trim(), String(payload.title || '').trim(), names].join('::');
+}
+
+function fingerprintFromCatalogEntry(entry) {
+  if (!entry) return '';
+  if (entry.fingerprint) return entry.fingerprint;
+  const spots = (entry.routeSpot && entry.routeSpot.spots) || [];
+  return plannedRouteFingerprint({ city: entry.city, title: entry.title, stops: spots });
+}
+
+function findPlannedIdByFingerprint(fingerprint) {
+  if (!fingerprint) return '';
+  const ids = Object.keys(plannedRouteCatalog);
+  for (let i = 0; i < ids.length; i++) {
+    if (fingerprintFromCatalogEntry(plannedRouteCatalog[ids[i]]) === fingerprint) return ids[i];
+  }
+  return '';
+}
+
+function upsertImportedRouteCard(id, fields) {
+  const card = {
+    id: id,
+    city: fields.city || '我的城市',
+    type: '规划导入',
+    title: fields.title,
+    desc: fields.desc || '来自 Citywalk 路线规划',
+    image: fields.image || SPOT_PLACEHOLDER,
+    distance: fields.distance || '—',
+    time: fields.time || '—',
+    level: fields.level || '规划',
+    likes: '—',
+    author: '我',
+    avatar: '',
+    stops: fields.stops || [],
+    tips: ['这条路线来自规划页。走过之后点「记录 Walk」，才会进入走过的路线。']
+  };
+  const idx = routes.findIndex(function (r) { return r.id === id; });
+  if (idx >= 0) routes[idx] = Object.assign({}, routes[idx], card);
+  else routes.unshift(card);
+}
+
+function hydratePlannedRoutesFromCatalog() {
+  const ids = new Set(Object.keys(plannedRouteCatalog));
+  for (let i = routes.length - 1; i >= 0; i--) {
+    if (routes[i] && routes[i].type === '规划导入' && !ids.has(routes[i].id)) routes.splice(i, 1);
+  }
+  ids.forEach(function (id) {
+    const entry = plannedRouteCatalog[id];
+    if (!entry) return;
+    if (entry.routeSpot) routeSpots[id] = entry.routeSpot;
+    const spots = (entry.routeSpot && entry.routeSpot.spots) || [];
+    upsertImportedRouteCard(id, {
+      city: entry.city,
+      title: entry.title,
+      desc: entry.desc,
+      image: entry.image,
+      distance: entry.distance,
+      time: entry.time,
+      level: entry.level,
+      stops: spots.map(function (s) { return s.name; })
+    });
+  });
+}
+
 function registerPlannedRoute(payload) {
   if (!payload || !Array.isArray(payload.stops) || !payload.stops.length) return null;
-  const id = String(payload.id || ('cw-import-' + Date.now().toString(36)));
+  const fingerprint = plannedRouteFingerprint(payload);
+  let id = String(payload.id || '');
+  if (!plannedRouteCatalog[id]) {
+    const matched = findPlannedIdByFingerprint(fingerprint);
+    if (matched) id = matched;
+    else if (!id) id = 'cw-import-' + Date.now().toString(36);
+  }
   const activityMin = Number(payload.durationActivityMin) || 0;
   const distKm = payload.distanceM ? (Number(payload.distanceM) / 1000).toFixed(2) + ' km' : '';
   const timeLabel = activityMin >= 60
@@ -722,10 +801,12 @@ function registerPlannedRoute(payload) {
     meta: String(payload.meta || (payload.city + ' · 规划路线')),
     spots: spots
   };
+  const prev = plannedRouteCatalog[id];
   routeSpots[id] = routeSpot;
   plannedRouteCatalog[id] = {
     id: id,
-    eventId: String(payload.eventId || payload.id || id),
+    eventId: (prev && prev.eventId) ? prev.eventId : String(payload.eventId || payload.id || id),
+    fingerprint: fingerprint,
     city: String(payload.city || ''),
     title: routeSpot.title,
     desc: '来自 Citywalk 路线规划',
@@ -736,27 +817,19 @@ function registerPlannedRoute(payload) {
     routeSpot: routeSpot
   };
   savePlannedCatalog();
+  upsertImportedRouteCard(id, {
+    city: payload.city || '我的城市',
+    title: routeSpot.title,
+    desc: '来自 Citywalk 路线规划',
+    distance: distKm || '—',
+    time: timeLabel,
+    stops: spots.map(function (s) { return s.name; })
+  });
   if (footprintView === 'planned' && typeof renderFootprints === 'function') renderFootprints();
-  if (!routes.some(function (r) { return r.id === id; })) {
-    routes.unshift({
-      id: id,
-      city: payload.city || '我的城市',
-      type: '规划导入',
-      title: routeSpot.title,
-      desc: '刚刚从 Citywalk 规划页记录到社区。',
-      image: SPOT_PLACEHOLDER,
-      distance: distKm || '—',
-      time: timeLabel,
-      level: '规划',
-      likes: '—',
-      author: '我',
-      avatar: '',
-      stops: spots.map(function (s) { return s.name; }),
-      tips: ['这条路线来自规划页，可在足迹中补充感想。']
-    });
-  }
   return id;
 }
+
+hydratePlannedRoutesFromCatalog();
 
 function routeById(routeId) {
   const found = routes.find(function (r) { return r.id === routeId; });
@@ -829,10 +902,85 @@ function setMeSavedTab(tab, rerender) {
 }
 
 function openMePage(opts) {
-  if (opts && opts.tab) setMePrimaryTab(opts.tab, false);
-  if (opts && opts.saved) setMeSavedTab(opts.saved, false);
+  opts = opts || {};
+  if (opts.tab) setMePrimaryTab(opts.tab, false);
+  if (opts.saved) setMeSavedTab(opts.saved, false);
+  document.body.classList.add('community-view-me');
+  const meEl = document.getElementById('me');
+  if (meEl) {
+    meEl.hidden = false;
+    meEl.setAttribute('aria-hidden', 'false');
+  }
   renderMePage();
-  scrollToId('me');
+  window.scrollTo({ top: 0, behavior: opts.instant ? 'auto' : 'smooth' });
+  if (!opts.skipHash && typeof history !== 'undefined' && history.replaceState) {
+    try { history.replaceState(null, '', '#me'); } catch (e) { /* file:// etc. */ }
+  }
+}
+
+function closeMePage(targetHash) {
+  document.body.classList.remove('community-view-me');
+  const meEl = document.getElementById('me');
+  if (meEl) {
+    meEl.hidden = true;
+    meEl.setAttribute('aria-hidden', 'true');
+  }
+  const hash = targetHash || '#home';
+  const id = hash.replace(/^#/, '') || 'home';
+  if (typeof history !== 'undefined' && history.replaceState) {
+    try { history.replaceState(null, '', hash); } catch (e) { /* file:// */ }
+  }
+  const target = document.getElementById(id);
+  if (target) target.scrollIntoView({ behavior: 'smooth' });
+}
+
+function syncCommunityViewFromHash() {
+  const hash = (typeof location !== 'undefined' && location.hash) || '';
+  if (hash === '#me') {
+    openMePage({ skipHash: true, instant: true });
+    return;
+  }
+  if (document.body.classList.contains('community-view-me')) {
+    document.body.classList.remove('community-view-me');
+    const meEl = document.getElementById('me');
+    if (meEl) {
+      meEl.hidden = true;
+      meEl.setAttribute('aria-hidden', 'true');
+    }
+    const id = hash.replace(/^#/, '') || 'home';
+    const target = document.getElementById(id);
+    if (target) target.scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+function updateUserAvatarPopover() {
+  const pop = document.getElementById('userAvatarPopover');
+  const btn = document.getElementById('cwAuthAvatarBtn');
+  if (!pop || !btn) return;
+  const loggedIn = typeof CitywalkAuth !== 'undefined' && CitywalkAuth.isLoggedIn();
+  const email = loggedIn && CitywalkAuth.loadCachedUser
+    ? (CitywalkAuth.loadCachedUser().email || '')
+    : '';
+  const level = getPointsLevel(typeof totalWalkPoints !== 'undefined' ? totalWalkPoints : 0);
+  const savedBrief = feedSavedIds.size + ' 笔记 · ' + buddySavedIds.size + ' 招募 · ' + favoriteRouteIds.length + ' 路线';
+  if (loggedIn) {
+    pop.innerHTML = '<strong>' + safeText(email || '已登录') + '</strong>'
+      + '<span>' + safeText(level.level.icon + ' ' + level.level.title) + '</span>'
+      + '<span>收藏 ' + safeText(savedBrief) + '</span>'
+      + '<span class="user-avatar-popover-cta">点击进入个人中心</span>';
+    btn.setAttribute('aria-label', '个人中心：' + (email || '已登录'));
+  } else {
+    pop.innerHTML = '<strong>未登录</strong>'
+      + '<span>收藏与发布暂存本浏览器</span>'
+      + '<span class="user-avatar-popover-cta">点击查看账号与收藏</span>';
+    btn.setAttribute('aria-label', '个人中心（未登录）');
+  }
+  btn.title = '';
+}
+
+if (typeof window !== 'undefined') {
+  window.openMePage = openMePage;
+  window.closeMePage = closeMePage;
 }
 
 function postsAuthoredByMe() {
@@ -974,11 +1122,12 @@ function renderMePage() {
   if (mePrimaryTab === 'saved') renderMeSavedPanel();
   else if (mePrimaryTab === 'published') renderMePublishedPanel();
   else renderMeSettingsPanel();
+  updateUserAvatarPopover();
 }
 
 async function deletePostById(postId) {
   if (!postId || !requireLoginForPost()) return;
-  if (!confirm('确定删除这条动态？')) return;
+  if (!confirm('确定删除这条笔记？')) return;
   try {
     await CitywalkCommunityApi.deletePost(postId);
     showToast('已删除');
@@ -991,13 +1140,21 @@ async function deletePostById(postId) {
   }
 }
 
+function syncPlannedImportBar(){
+  const bar=document.getElementById('plannedImportBar');
+  if(!bar) return;
+  bar.hidden=footprintView!=='planned';
+}
+
 function setFootprintView(view){
   footprintView=view;
   document.querySelectorAll('.footprint-tab').forEach(btn=>btn.classList.toggle('active',btn.dataset.view===view));
+  syncPlannedImportBar();
   renderFootprints();
 }
 
 function renderFootprints(){
+  syncPlannedImportBar();
   spotMode='archive';
   document.getElementById('footprintArchivePanel').style.display='block';
   document.getElementById('routeSpotPanel').style.display='none';
@@ -1102,7 +1259,7 @@ function renderFootprints(){
       <div class="footprint-card-actions"><button class="primary" onclick="renderSpots('${safeText(r.id)}',true)">查看点位 →</button><button class="primary" onclick="openRouteById('${safeText(r.id)}')">路线详情</button><button class="remove" onclick="openAddFootprintPrefilled('${safeText(r.id)}')">记录 Walk</button></div>
     </article>`;
     }).join('');
-    empty.innerHTML='还没有规划导入的路线。在 <a href="../">Citywalk 路线规划</a> 完成后点「记录到社区」，或通过 <code>?r=</code> 分享链导入；导入后会出现在这里。';
+    empty.innerHTML='还没有规划导入的路线。在 <a href="../">Citywalk 路线规划</a> 完成后点「记录到社区」，或在上方粘贴分享链接（地址里带 <code>?r=</code>）。走过之后再点「记录 Walk」。';
   }else if(footprintView==='routes'){
     items=validFavRoutes.map(id=>routeById(id)).filter(Boolean);
     html=items.map(r=>`<article class="footprint-card">
@@ -1406,20 +1563,24 @@ function openAddFootprintPrefilled(routeId){
 
 function applyImportedPlannerPayload(payload, options={}){
   if(!payload) return null;
+  const fingerprint = plannedRouteFingerprint(payload);
+  const existed = !!(payload.id && plannedRouteCatalog[payload.id]) || !!findPlannedIdByFingerprint(fingerprint);
   const routeId = registerPlannedRoute(payload);
   if(!routeId) return null;
   plannerLinkedRouteId = routeId;
   setFootprintView('planned');
-  renderSpots(routeId, true);
-  setFootprintView('walks');
+  const spots=document.getElementById('spots');
+  if(spots && typeof spots.scrollIntoView==='function'){
+    spots.scrollIntoView({behavior:'smooth',block:'start'});
+  }
   if(options.awardPoints === true){
     handleWalkCompletion({ routeId, eventId: payload.eventId || ('import-' + routeId), completedAt: payload.savedAt || new Date().toISOString() });
-  } else if(options.openFootprintForm !== false){
+  } else if(options.openFootprintForm === true){
     openAddFootprintPrefilled(routeId);
   }
   resetImportGuideDismiss();
   showImportGuideBanner();
-  showToast('已载入规划路线，可在足迹中记录这次 Walk');
+  showToast(existed ? '这条路线已在规划导入中，已更新' : '已放入规划导入。走过之后再点「记录 Walk」');
   return routeId;
 }
 
@@ -1460,6 +1621,54 @@ function payloadFromSharedRouteSnapshot(snapshot, shareId){
   };
 }
 
+const SHARE_ROUTE_ID_RE = /^[A-Za-z0-9_-]{6,24}$/;
+
+function parseShareImportInput(raw){
+  const text = String(raw || '').trim();
+  if (!text) return { error: 'empty' };
+  const hasLong = /(?:^|[?&#])cw=1(?:&|$)|#cwshare=/.test(text);
+  let id = '';
+  if (/^https?:\/\//i.test(text) || text.indexOf('?') >= 0 || text.indexOf('#') >= 0) {
+    try {
+      const url = new URL(text, window.location.origin);
+      id = url.searchParams.get('r') || '';
+      if (!id && /cwshare=/.test(url.hash || '')) return { error: 'long' };
+    } catch (e) {
+      id = '';
+    }
+  }
+  if (!id && SHARE_ROUTE_ID_RE.test(text)) id = text;
+  if (!id && /^r=/i.test(text)) {
+    const bare = text.slice(2);
+    if (SHARE_ROUTE_ID_RE.test(bare)) id = bare;
+  }
+  if (id && SHARE_ROUTE_ID_RE.test(id)) return { id: id };
+  if (hasLong) return { error: 'long' };
+  return { error: 'bad' };
+}
+
+function submitPlannedLinkImport(event){
+  if (event && event.preventDefault) event.preventDefault();
+  const input = document.getElementById('plannedImportInput');
+  const parsed = parseShareImportInput(input ? input.value : '');
+  if (parsed.error === 'empty') {
+    showToast('请粘贴分享链接或 id');
+    return false;
+  }
+  if (parsed.error === 'long') {
+    showToast('请使用规划页「复制链接」得到的短链（地址里带 ?r=）');
+    return false;
+  }
+  if (!parsed.id) {
+    showToast('无法识别分享 id');
+    return false;
+  }
+  importSharedRouteById(parsed.id, { openFootprintForm: false, awardPoints: false }).then(function (routeId) {
+    if (routeId && input) input.value = '';
+  });
+  return false;
+}
+
 async function importSharedRouteById(shareId, options={}){
   if(!shareId) return null;
   const apiBase=(window.CitywalkAuth&&CitywalkAuth.CW_API)
@@ -1479,7 +1688,7 @@ async function importSharedRouteById(shareId, options={}){
       showToast('分享路线没有可展示的站点');
       return null;
     }
-    return applyImportedPlannerPayload(payload, Object.assign({ awardPoints:false, openFootprintForm:true }, options));
+    return applyImportedPlannerPayload(payload, Object.assign({ awardPoints:false, openFootprintForm:false }, options));
   }catch(e){
     console.warn('importSharedRouteById',e);
     showToast('无法加载分享路线');
@@ -1534,7 +1743,7 @@ window.addEventListener('message',event=>{
     const raw = data.payload || data.route;
     const normalized = normalizePendingPayload(raw);
     if(normalized){
-      applyImportedPlannerPayload(normalized, { awardPoints: false, openFootprintForm: true });
+      applyImportedPlannerPayload(normalized, { awardPoints: false, openFootprintForm: false });
       return;
     }
     handleWalkCompletion({ route: raw, eventId: raw && (raw.eventId || raw.id), completedAt: raw && (raw.createdAt || raw.savedAt) });
@@ -1551,7 +1760,9 @@ window.WanderWalkRewards={
 window.CitywalkCommunity = {
   importPlannedRouteFromSession,
   importSharedRouteById,
-  registerPlannedRoute
+  registerPlannedRoute,
+  parseShareImportInput,
+  submitPlannedLinkImport
 };
 
 function postCoverUrl(p){
@@ -1567,7 +1778,7 @@ function postCoverUrl(p){
 function renderPostCoverHtml(p){
   const src=postCoverUrl(p);
   if(!src){
-    return `<div class="post-cover post-cover-demo" data-type="${safeText(p.type||'动态')}" role="img"><span class="post-cover-demo-kicker">WanderWalk</span><span class="post-cover-demo-type">${safeText(p.type||'动态')}</span></div>`;
+    return `<div class="post-cover post-cover-demo" data-type="${safeText(p.type||'笔记')}" role="img"><span class="post-cover-demo-kicker">WanderWalk</span><span class="post-cover-demo-type">${safeText(p.type||'笔记')}</span></div>`;
   }
   return `<img class="post-cover" src="${src}" alt="${safeText(p.title)}" loading="lazy" onerror="wwOnFeedImgError(this)">`;
 }
@@ -1682,11 +1893,11 @@ function postFeedMetaItems(p) {
 
 function renderPostMediaBlock(p) {
   const src = postCoverUrl(p);
-  const demo = p.is_demo ? '<span class="post-cover-demo-badge">示例动态</span>' : '';
+  const demo = p.is_demo ? '<span class="post-cover-demo-badge">示例笔记</span>' : '';
   const coverInner = src
     ? `<img class="post-cover" src="${safeText(src)}" alt="${safeText(p.title)}" loading="lazy" onerror="wwOnFeedImgError(this)">`
-    : `<div class="post-cover post-cover-demo" data-type="${safeText(p.type || '动态')}" role="img"><span class="post-cover-demo-kicker">WanderWalk</span><span class="post-cover-demo-type">${safeText(p.type || '动态')}</span></div>`;
-  return `<div class="post-media">${coverInner}${demo}<span class="post-cover-label">${safeText(p.type || '动态')}</span><span class="post-cover-city">${safeText(p.city || 'Citywalk')}</span></div>`;
+    : `<div class="post-cover post-cover-demo" data-type="${safeText(p.type || '笔记')}" role="img"><span class="post-cover-demo-kicker">WanderWalk</span><span class="post-cover-demo-type">${safeText(p.type || '笔记')}</span></div>`;
+  return `<div class="post-media">${coverInner}${demo}<span class="post-cover-label">${safeText(p.type || '笔记')}</span><span class="post-cover-city">${safeText(p.city || 'Citywalk')}</span></div>`;
 }
 
 function postCardHtml(p) {
@@ -1694,7 +1905,7 @@ function postCardHtml(p) {
   const meta = postFeedMetaItems(p);
   const saved = isPostSaved(p.id);
   const pid = safeText(String(p.id));
-  return `<article class="post" data-post-id="${pid}" tabindex="0" role="button" aria-label="打开动态：${safeText(p.title)}">\
+  return `<article class="post" data-post-id="${pid}" tabindex="0" role="button" aria-label="打开笔记：${safeText(p.title)}">\
     ${renderPostMediaBlock(p)}\
     <div class="post-body">\
       <div class="post-author-row"><span class="avatar-initial" aria-hidden="true">${safeText((p.author || '?').slice(0, 1))}</span><span>${safeText(p.author)}</span><span class="post-time">${p.is_demo ? '示例' : 'Walk 分享'}</span></div>\
@@ -1740,7 +1951,7 @@ function bindFeedCardEvents() {
       btn.classList.toggle('saved', nowSaved);
       btn.textContent = nowSaved ? '★' : '☆';
       btn.setAttribute('aria-label', nowSaved ? '取消收藏' : '收藏');
-      showToast(nowSaved ? '已收藏这条动态（本浏览器）' : '已取消收藏');
+      showToast(nowSaved ? '已收藏这条笔记（本浏览器）' : '已取消收藏');
       if (feedViewSavedOnly) renderInspire();
     };
   });
@@ -1777,7 +1988,7 @@ function renderFeedHotTags() {
   if (!holder) return;
   const top = collectFeedTagCounts();
   if (!top.length) {
-    holder.innerHTML = '<span class="feed-side-note">发布带标签的动态后，这里会显示常见话题。</span>';
+    holder.innerHTML = '<span class="feed-side-note">发布带标签的笔记后，这里会显示常见话题。</span>';
     return;
   }
   holder.innerHTML = top.map(function (pair) {
@@ -1847,7 +2058,7 @@ function renderFeed(type='全部',keyword=''){
     if(!total){
       feedEmpty.hidden=false;
       if(feedViewSavedOnly){
-        feedEmpty.innerHTML='<strong>还没有收藏动态</strong><p style="margin-top:8px;font-size:12px;color:#888">在卡片上点 ☆，把喜欢的分享收进清单。</p><button type="button" class="feed-load-more" style="margin-top:14px" id="feedExitSaved">返回全部动态</button>';
+        feedEmpty.innerHTML='<strong>还没有收藏笔记</strong><p style="margin-top:8px;font-size:12px;color:#888">在卡片上点 ☆，把喜欢的分享收进清单。</p><button type="button" class="feed-load-more" style="margin-top:14px" id="feedExitSaved">返回全部笔记</button>';
         const exit=document.getElementById('feedExitSaved');
         if(exit) exit.onclick=function(){feedViewSavedOnly=false;syncFeedSavedCounts();renderInspire();};
       }else if(type==='路线'&&!feedViewSavedOnly){
@@ -1855,7 +2066,7 @@ function renderFeed(type='全部',keyword=''){
       }else if(source.length){
         feedEmpty.innerHTML='<strong>没有找到相关内容</strong><p style="margin-top:8px;font-size:12px;color:#888">换个关键词或类型试试。</p>';
       }else{
-        feedEmpty.innerHTML='<strong>还没有动态</strong><p style="margin-top:8px;font-size:12px;color:#888">登录后点「发布」做第一个分享吧。</p>';
+        feedEmpty.innerHTML='<strong>还没有笔记</strong><p style="margin-top:8px;font-size:12px;color:#888">登录后点「发布」做第一个分享吧。</p>';
       }
     }else{
       feedEmpty.hidden=true;
@@ -2051,7 +2262,7 @@ function showPostById(id){
   document.getElementById('spotJumpBtn').style.display='none';
   document.getElementById('routeFavoriteModalBtn').style.display='none';
   setModalCoverVisual({ src: postCoverUrl(p) });
-  const kickerDemo=p.is_demo?' · 示例动态':'';
+  const kickerDemo=p.is_demo?' · 示例笔记':'';
   document.getElementById('modalKicker').textContent=`${p.city} · ${p.type} · ${p.author}${kickerDemo}`;
   document.getElementById('modalTitle').textContent=p.title;
   document.getElementById('modalLead').textContent=p.is_demo
@@ -2115,14 +2326,14 @@ function toggleSaveCurrentPost(){
     saveBtn.classList.toggle('active',nowSaved);
     saveBtn.textContent=(nowSaved?'★ ':'☆ ')+'收藏';
   }
-  showToast(nowSaved?'已收藏这条动态（本浏览器）':'已取消收藏');
+  showToast(nowSaved?'已收藏这条笔记（本浏览器）':'已取消收藏');
   renderInspire();
 }
 
 async function toggleLikePost(postId,btn){
   const demo=findCommunityPost(postId);
   if(demo&&demo.is_demo){
-    showToast('示例动态仅供浏览');
+    showToast('示例笔记仅供浏览');
     return;
   }
   if(!requireLoginForPost()) return;
@@ -2152,7 +2363,7 @@ function toggleLikeCurrentPost(){
 
 async function deleteCurrentPost(){
   if(!currentUgcPostId||!requireLoginForPost()) return;
-  if(!confirm('确定删除这条动态？')) return;
+  if(!confirm('确定删除这条笔记？')) return;
   try{
     await CitywalkCommunityApi.deletePost(currentUgcPostId);
     closeModal('routeModal');
@@ -2531,7 +2742,7 @@ Array.from(document.querySelectorAll('.modal')).forEach(m=>m.addEventListener('c
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal.show').forEach(m=>closeModal(m.id))});
 
 // nav active state（顶栏：规划 / 社区 / 找搭子）
-const sections=['home','buddies','inspire','spots','me'];
+const sections=['home','buddies','inspire','spots'];
 const navLinks=Array.from(document.querySelectorAll('.nav-links a'));
 const navLinkBySection={};
 navLinks.forEach(a=>{
@@ -2636,7 +2847,7 @@ if(integrationParams.get('walkComplete')==='1'){
 
 if(integrationParams.get('import')==='1'){
   setTimeout(function(){
-    importPlannedRouteFromSession({ awardPoints: false, openFootprintForm: true });
+    importPlannedRouteFromSession({ awardPoints: false, openFootprintForm: false });
     try{
       const cleanUrl=new URL(window.location.href);
       cleanUrl.searchParams.delete('import');
@@ -2648,7 +2859,7 @@ if(integrationParams.get('import')==='1'){
 const sharedRouteId=integrationParams.get('r');
 if(sharedRouteId&&/^[A-Za-z0-9_-]{6,24}$/.test(sharedRouteId)){
   setTimeout(function(){
-    importSharedRouteById(sharedRouteId,{ openFootprintForm:true });
+    importSharedRouteById(sharedRouteId,{ openFootprintForm:false });
     try{
       const cleanUrl=new URL(window.location.href);
       cleanUrl.searchParams.delete('r');
@@ -2658,7 +2869,20 @@ if(sharedRouteId&&/^[A-Za-z0-9_-]{6,24}$/.test(sharedRouteId)){
 }
 
 if(typeof CitywalkAuth!=='undefined'){
-  CitywalkAuth.initAuth().then(function(){ return loadCommunityUgc(); });
+  const _origAuthChrome = CitywalkAuth.updateAuthChrome.bind(CitywalkAuth);
+  CitywalkAuth.updateAuthChrome = function () {
+    _origAuthChrome();
+    updateUserAvatarPopover();
+  };
+  CitywalkAuth.initAuth().then(function () {
+    updateUserAvatarPopover();
+    return loadCommunityUgc();
+  });
 }else{
   loadCommunityUgc();
+}
+
+window.addEventListener('hashchange', syncCommunityViewFromHash);
+if (typeof location !== 'undefined' && location.hash === '#me') {
+  openMePage({ skipHash: true, instant: true });
 }

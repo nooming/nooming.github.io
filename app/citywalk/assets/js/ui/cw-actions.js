@@ -510,11 +510,13 @@ function placeRecentRoutesBlock(tabName) {
         }
         return;
     }
+    const agentReset = document.getElementById('btnResetAgent');
     const agentBtn = document.getElementById('btnAgentPlan');
     const agentBox = document.querySelector('#tab-panel-agent .agent-box')
         || document.getElementById('tab-panel-agent');
-    if (agentBtn && agentBtn.parentNode) {
-        agentBtn.parentNode.insertBefore(wrap, agentBtn.nextSibling);
+    const anchor = agentReset || agentBtn;
+    if (anchor && anchor.parentNode) {
+        anchor.parentNode.insertBefore(wrap, anchor.nextSibling);
     } else if (agentBox) {
         agentBox.appendChild(wrap);
     }
