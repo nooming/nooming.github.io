@@ -654,6 +654,60 @@ function clearPlanningMapLayers() {
     clearExploreMarkers();
 }
 
+function clearPinnedSeedMarkers() {
+    if (!CW.map || !Array.isArray(CW.pinnedSeedMarkers)) {
+        CW.pinnedSeedMarkers = [];
+        return;
+    }
+    CW.pinnedSeedMarkers.forEach(marker => {
+        try { CW.map.remove(marker); } catch (_) { /* ignore */ }
+    });
+    CW.pinnedSeedMarkers = [];
+}
+
+function syncPinnedSeedMarkers() {
+    if (!CW.map) return;
+    clearPinnedSeedMarkers();
+    const seeds = Array.isArray(CW.pinnedSeeds) ? CW.pinnedSeeds : [];
+    seeds.forEach((spot, index) => {
+        if (!spot || typeof spot.lng !== 'number' || typeof spot.lat !== 'number') return;
+        const pinHtml = `<div class="cw-mustgo-pin" data-mustgo-index="${index}">` +
+            `<span class="cw-mustgo-pin-icon">📌</span></div>`;
+        const marker = new AMap.Marker({
+            position: [spot.lng, spot.lat],
+            content: pinHtml,
+            offset: new AMap.Pixel(-15, -15),
+            zIndex: 75 + index,
+            title: `必去 · ${spot.name || '地点'}`,
+        });
+        marker.on('click', function() {
+            if (!CW.infoWindow) return;
+            const name = spot.name || '必去点';
+            CW.infoWindow.setContent(`
+                <div class="mustgo-infowin">
+                    <strong>${cwEscapeHtml(name)}</strong>
+                    <p class="mustgo-infowin-tag">必去点</p>
+                    <button type="button" class="btn-mustgo-infowin-remove" data-mustgo-index="${index}">移除必去</button>
+                </div>
+            `);
+            CW._mustGoConfirmToken = 0;
+            CW.infoWindow.open(CW.map, [spot.lng, spot.lat]);
+            setTimeout(() => {
+                const btn = document.querySelector('.btn-mustgo-infowin-remove[data-mustgo-index="' + index + '"]');
+                if (!btn) return;
+                btn.addEventListener('click', (ev) => {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    if (typeof removePinnedSeed === 'function') removePinnedSeed(index);
+                    if (CW.infoWindow) CW.infoWindow.close();
+                });
+            }, 0);
+        });
+        CW.map.add(marker);
+        CW.pinnedSeedMarkers.push(marker);
+    });
+}
+
 function _markerPinEl(marker, className) {
     if (!marker || typeof marker.getContent !== 'function') return null;
     const root = marker.getContent();

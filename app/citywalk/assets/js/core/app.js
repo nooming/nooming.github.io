@@ -557,6 +557,7 @@ ${poiText}
         window.__cwOnAMapReady = function() {
             if (!CW.map) initMap();
             if (typeof initMapLayerControls === 'function') initMapLayerControls();
+            if (typeof syncPinnedSeedMarkers === 'function') syncPinnedSeedMarkers();
             // 分享起终点须在地图存在后落点（init 早期可能已解析偏好）
             if (typeof finishShareRestoreAfterMapReady === 'function') {
                 finishShareRestoreAfterMapReady();

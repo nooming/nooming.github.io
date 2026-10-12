@@ -14,6 +14,7 @@ const CW = {
     poiMarkers: [],
     inspireMarkers: [],
     exploreMarkers: [],
+    pinnedSeedMarkers: [],
     infoWindow: null,
     searchMarker: null,
     /** 规划页地图图层开关（持久化见 cw-map.js） */

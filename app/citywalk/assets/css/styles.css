@@ -2300,6 +2300,49 @@
             box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 255, 126, 95), 0.45), 0 3px 8px rgba(0, 0, 0, 0.25);
         }
 
+        /* 必去点 · 地图 Pin */
+        .cw-mustgo-pin {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #ffb347 0%, #ff8c42 100%);
+            border: 3px solid #fff;
+            box-shadow:
+                0 0 0 1px rgba(0, 0, 0, 0.12),
+                0 3px 10px rgba(255, 120, 50, 0.45);
+            cursor: pointer;
+        }
+
+        .cw-mustgo-pin-icon {
+            font-size: 14px;
+            line-height: 1;
+        }
+
+        .mustgo-infowin strong {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .mustgo-infowin-tag {
+            margin: 0 0 8px;
+            font-size: 12px;
+            color: var(--text-medium, #666);
+        }
+
+        .btn-mustgo-infowin-remove {
+            padding: 6px 10px;
+            font-size: 12px;
+            border-radius: 8px;
+            border: 1px solid #e85d40;
+            background: #fff;
+            color: #e85d40;
+            cursor: pointer;
+        }
+
         /* 地图探索（高德）· 探索点 */
         .cw-explore-pin {
             position: relative;

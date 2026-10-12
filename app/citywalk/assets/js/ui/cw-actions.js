@@ -160,6 +160,7 @@ function renderPinnedSeeds() {
         row.appendChild(del);
         list.appendChild(row);
     });
+    if (typeof syncPinnedSeedMarkers === 'function') syncPinnedSeedMarkers();
 }
 
 function confirmPinnedOrRouteStop(spot) {
