@@ -8,7 +8,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' fill='%233b82f6'/%3E%3Cpath fill='%23fff' d='M48 18a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm-18 26h36l8 32h-10l-3-13H35l-3 13H22l8-32zm11 11h14l-2-8h-10l-2 8z'/%3E%3C/svg%3E">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' fill='%233b82f6'/%3E%3Cpath fill='%23fff' d='M48 18a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm-18 26h36l8 32h-10l-3-13H35l-3 13H22l8-32zm11 11h14l-2-8h-10l-2 8z'/%3E%3C/svg%3E">
   <link rel="shortcut icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' fill='%233b82f6'/%3E%3Cpath fill='%23fff' d='M48 18a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm-18 26h36l8 32h-10l-3-13H35l-3 13H22l8-32zm11 11h14l-2-8h-10l-2 8z'/%3E%3C/svg%3E">
-  <title>停车 · noomings</title>
+  <title>停车方案设计器</title>
   <script>window.PARKING_API_BASE = window.PARKING_API_BASE || "";</script>
   <link rel="stylesheet" href="assets/styles/tokens.css" />
   <link rel="stylesheet" href="assets/styles/app.css" />
@@ -16,11 +16,12 @@
 <body class="page-container">
   <div class="page-header">
     <div class="header-top">
-      <a href="../../" class="back-btn js-local-nav">返回</a>
+      <a href="../../" class="back-btn js-local-nav">返回上一级</a>
+      <a href="../../index.html" class="back-btn js-local-nav">返回主页</a>
     </div>
     <div class="section-header section-header--page">
-      <h1>停车</h1>
-      <p>规划布局 · 多方案对比 · 优化分配 · 到达仿真回放。场景编辑、本地优化与方案缓存可在本机完成；云端方案库与部分联机能力需配置 <code>PARKING_API_BASE</code>，未配置时相关步骤会静默不可用。</p>
+      <h1>停车方案设计器</h1>
+      <p>规划布局 · 多方案对比 · 优化分配 · 到达仿真回放。</p>
     </div>
   </div>
 
@@ -146,7 +147,75 @@
                     <option value="pso">PSO · 近似收敛</option>
                   </select>
                 </div>
-                <div class="run-progress" id="run-progress" hidden aria-hidden="true"></div>
+                <p id="optimizer-method-hint" class="panel-note panel-note--compact optimizer-method-hint">
+                  车辆数较少时优先匈牙利（全局最优）；PSO 用于观察启发式收敛与调参实验。
+                </p>
+                <div id="pso-lab-panel" class="pso-lab" hidden>
+                  <h3 class="pso-lab__title">PSO 实验室</h3>
+                  <p class="panel-note panel-note--compact">选择预设或微调参数；运行后在「结果」页查看收敛曲线与相对精确解偏差。</p>
+                  <div class="pso-preset-seg" role="group" aria-label="PSO 预设">
+                    <button type="button" class="pso-preset-btn" data-preset="speed">速度优先</button>
+                    <button type="button" class="pso-preset-btn is-active" data-preset="balanced">平衡</button>
+                    <button type="button" class="pso-preset-btn" data-preset="accuracy">精度优先</button>
+                  </div>
+                  <details class="pso-lab-advanced">
+                    <summary>高级参数</summary>
+                    <div class="prop-grid prop-grid--pair">
+                      <div class="prop-field">
+                        <label for="pso-n-particles" title="粒子数量">粒子数</label>
+                        <input type="number" id="pso-n-particles" min="4" step="1" />
+                      </div>
+                      <div class="prop-field">
+                        <label for="pso-n-iter" title="最大迭代次数">迭代上限</label>
+                        <input type="number" id="pso-n-iter" min="20" step="10" />
+                      </div>
+                    </div>
+                    <div class="prop-grid prop-grid--pair">
+                      <div class="prop-field">
+                        <label for="pso-w">惯性 w</label>
+                        <input type="range" id="pso-w" min="0.4" max="0.95" step="0.05" />
+                        <span id="pso-w-val" class="range-val"></span>
+                      </div>
+                      <div class="prop-field">
+                        <label for="pso-vmax">速度上限</label>
+                        <input type="range" id="pso-vmax" min="0.08" max="0.45" step="0.01" />
+                        <span id="pso-vmax-val" class="range-val"></span>
+                      </div>
+                    </div>
+                    <div class="prop-grid prop-grid--pair">
+                      <div class="prop-field">
+                        <label for="pso-c1">认知 c1</label>
+                        <input type="range" id="pso-c1" min="0.5" max="2.5" step="0.1" />
+                        <span id="pso-c1-val" class="range-val"></span>
+                      </div>
+                      <div class="prop-field">
+                        <label for="pso-c2">社会 c2</label>
+                        <input type="range" id="pso-c2" min="0.5" max="2.5" step="0.1" />
+                        <span id="pso-c2-val" class="range-val"></span>
+                      </div>
+                    </div>
+                    <button type="button" id="btn-pso-reset-params" class="toolbar--inline">恢复默认参数</button>
+                  </details>
+                  <div class="prop-grid">
+                    <label for="pso-seed">随机种子</label>
+                    <input type="number" id="pso-seed" step="1" placeholder="留空=随机" />
+                  </div>
+                  <div class="prop-grid">
+                    <label for="benchmark-runs">Benchmark 次数</label>
+                    <input type="number" id="benchmark-runs" min="1" step="1" value="6" />
+                  </div>
+                  <div class="toolbar">
+                    <button type="button" id="btn-run-benchmark">运行 Benchmark</button>
+                    <button type="button" id="btn-recommend-params">参数推荐</button>
+                    <button type="button" id="btn-apply-recommend" hidden>应用推荐配置</button>
+                  </div>
+                  <div id="benchmark-output" class="benchmark-summary" aria-live="polite"></div>
+                  <pre id="recommend-output" class="panel-pre" aria-live="polite"></pre>
+                  <p id="pso-lab-last-stats" class="panel-note panel-note--compact"></p>
+                </div>
+                <div class="run-progress" id="run-progress" hidden aria-hidden="true">
+                  <span id="run-progress-label" class="run-progress-label"></span>
+                </div>
               </div>
               <details class="panel panel--fold">
                 <summary>场景管理与高级实验</summary>
@@ -162,20 +231,6 @@
                   <select id="snapshot-select"></select>
                 </div>
                 <input id="scenario-import-input" type="file" accept=".json,application/json" hidden />
-                <div class="prop-grid">
-                  <label for="pso-seed">随机种子</label>
-                  <input type="number" id="pso-seed" step="1" placeholder="留空=随机" />
-                </div>
-                <div class="prop-grid">
-                  <label for="benchmark-runs">Benchmark 次数</label>
-                  <input type="number" id="benchmark-runs" min="1" step="1" value="6" />
-                </div>
-                <div class="toolbar">
-                  <button type="button" id="btn-run-benchmark">运行 Benchmark</button>
-                  <button type="button" id="btn-recommend-params">参数推荐</button>
-                </div>
-                <pre id="benchmark-output" class="panel-pre" aria-live="polite"></pre>
-                <pre id="recommend-output" class="panel-pre" aria-live="polite"></pre>
               </details>
             </section>
 
@@ -322,8 +377,20 @@
 
                 <p id="result-breakdown" class="panel-note"></p>
                 <p id="result-tip" class="result-tip"></p>
-                <div class="chart-wrap">
-                  <canvas id="chart" width="300" height="168"></canvas>
+                <p id="chart-meta" class="chart-meta" hidden></p>
+                <div class="chart-toolbar">
+                  <label class="chart-toggle">
+                    <input type="checkbox" id="chart-zoom-convergence" checked />
+                    放大收敛区
+                  </label>
+                  <label class="chart-toggle">
+                    <input type="checkbox" id="chart-show-exact-ref" checked />
+                    显示精确参考线
+                  </label>
+                  <button type="button" id="btn-pso-replay" class="chart-replay-btn" hidden>播放分配收敛</button>
+                </div>
+                <div class="chart-wrap chart-wrap--tall">
+                  <canvas id="chart" width="300" height="200"></canvas>
                 </div>
                 <p id="chart-caption" class="chart-caption"></p>
               </div>

@@ -1,4 +1,4 @@
-/* bundled app from 53 files */
+/* bundled app from 54 files */
 /* --- app\api\api-client.js --- */
 (function () {
   "use strict";
@@ -154,7 +154,11 @@
     mapCssH: 720,
     mapDpr: 1,
     chartCssW: 300,
-    chartCssH: 168,
+    chartCssH: 200,
+    lastChartDrawOpts: null,
+    lastChartExactRef: null,
+    lastRecommendBest: null,
+    psoReplay: null,
     chartDpr: 1,
     lastChartSeries: [],
     lastChartOptimizer: "pso",
@@ -248,6 +252,8 @@
       helperText: "#475569",
       line: "#0284c7",
       lineSoft: "rgba(2,132,199,0.32)",
+      psoLine: "#d97706",
+      exactRef: "rgba(100,116,139,0.85)",
       dotStroke: "#0369a1",
       labelText: "#0f172a",
     },
@@ -1684,8 +1690,11 @@ P.runBenchmark = function () {
       outputEl: out,
       timeUnit: P.uTime(),
     });
+    if (P.benchmarkResult) P.persistPsoLabStats?.(P.benchmarkResult);
     if (out && runs >= P.MAX_BENCHMARK_RUNS) {
-      out.textContent += "\n已触发上限：" + P.MAX_BENCHMARK_RUNS + " 次（防止页面卡顿）。";
+      const note = "已触发上限：" + P.MAX_BENCHMARK_RUNS + " 次（防止页面卡顿）。";
+      if (out.tagName === "PRE") out.textContent += "\n" + note;
+      else out.insertAdjacentHTML("beforeend", "<p class=\"panel-note\">" + note + "</p>");
     }
   }
 
@@ -1694,7 +1703,7 @@ P.recommendParams = function () {
     const out = document.getElementById("recommend-output");
     const seedEl = document.getElementById("pso-seed");
     const seed = seedEl && seedEl.value !== "" ? Number(seedEl.value) : 1;
-    P.analysisTools.recommendParams({
+    const res = P.analysisTools.recommendParams({
       scenario: P.scenario,
       optimizer: P.optimizer,
       normalizeOptimizeResult: P.normalizeOptimizeResult,
@@ -1702,6 +1711,13 @@ P.recommendParams = function () {
       outputEl: out,
       timeUnit: P.uTime(),
     });
+    const applyBtn = document.getElementById("btn-apply-recommend");
+    if (res?.best) {
+      P.lastRecommendBest = res.best;
+      if (applyBtn) applyBtn.hidden = false;
+    } else if (applyBtn) {
+      applyBtn.hidden = true;
+    }
   }
 })();
 
@@ -1737,6 +1753,36 @@ P.recommendParams = function () {
       stats.psoMs.toFixed(1) +
       " ms"
     );
+  }
+
+  function renderBenchmarkSummary(el, stats, timeUnit) {
+    if (!el || !stats) return;
+    if (el.tagName === "PRE") {
+      el.textContent = benchmarkText(stats, timeUnit);
+      return;
+    }
+    el.innerHTML =
+      '<table class="benchmark-table"><tbody>' +
+      "<tr><th scope=\"row\">次数</th><td>" +
+      stats.runs +
+      "</td></tr>" +
+      "<tr><th scope=\"row\">Exact 平均</th><td>" +
+      stats.exactAvg.toFixed(2) +
+      " " +
+      timeUnit +
+      "</td></tr>" +
+      "<tr><th scope=\"row\">PSO 平均</th><td>" +
+      stats.psoAvg.toFixed(2) +
+      " " +
+      timeUnit +
+      "</td></tr>" +
+      "<tr><th scope=\"row\">平均偏差</th><td class=\"benchmark-gap\">" +
+      stats.gapPct.toFixed(2) +
+      "%</td></tr>" +
+      "<tr><th scope=\"row\">PSO 耗时</th><td>" +
+      stats.psoMs.toFixed(1) +
+      " ms</td></tr>" +
+      "</tbody></table>";
   }
 
   function runBenchmark(deps) {
@@ -1779,7 +1825,7 @@ P.recommendParams = function () {
       gapPct: ((avg(psoVals) - avg(exactVals)) / Math.max(1e-6, avg(exactVals))) * 100,
       psoMs: avg(psoMs),
     };
-    if (outputEl) outputEl.textContent = benchmarkText(stats, timeUnit);
+    if (outputEl) renderBenchmarkSummary(outputEl, stats, timeUnit);
     return stats;
   }
 
@@ -1846,6 +1892,7 @@ P.recommendParams = function () {
     MAX_BENCHMARK_RUNS,
     normalizeRuns,
     benchmarkText,
+    renderBenchmarkSummary,
     runBenchmark,
     recommendParams,
   };
@@ -2032,10 +2079,12 @@ P.notifyRoadGeometryInvalid = function (reason) {
   }
 
 P.clearOptimizationResultLight = function () {
+    P.stopPsoReplay?.();
     P.lastResult = null;
     P.lastChartSeries = [];
     P.drawChart([]);
     P.updateChartCaption("idle");
+    P.renderChartMeta?.(null);
     P.renderBreakdownSummary();
     P.renderResultTip("");
     P.showWorkspaceMessage?.("场景已变更，请重新运行优化。", { level: "warn" });
@@ -2713,6 +2762,240 @@ P.scheduleAutoEntrancePreviewRefresh = function () {
   }
 })();
 
+/* --- app\ui\pso-lab-panel.js --- */
+(function () {
+  "use strict";
+  const P = window.ParkingApp;
+  if (!P) throw new Error("ParkingApp missing: app/ui/pso-lab-panel.js");
+
+  const PRESETS = {
+    speed: { label: "速度优先", n_particles: 18, n_iter: 180 },
+    balanced: { label: "平衡", n_particles: 30, n_iter: 320 },
+    accuracy: { label: "精度优先", n_particles: 45, n_iter: 650 },
+  };
+
+  const PSO_STATS_KEY = "parking-pso-lab-stats-v1";
+
+  P.PSO_PRESETS = PRESETS;
+
+  P.readPsoFromScenario = function () {
+    const pso = P.scenario?.pso || {};
+    const def = P.scenarioSource?.defaultScenario?.()?.pso || {};
+    return {
+      n_particles: Number(pso.n_particles) || def.n_particles || 40,
+      n_iter: Number(pso.n_iter) || def.n_iter || 600,
+      w: Number(pso.w ?? def.w ?? 0.7),
+      c1: Number(pso.c1 ?? def.c1 ?? 1.5),
+      c2: Number(pso.c2 ?? def.c2 ?? 1.5),
+      v_max: Number(pso.v_max ?? def.v_max ?? 0.25),
+    };
+  };
+
+  P.writePsoToScenario = function (patch) {
+    if (!P.scenario) return;
+    P.scenario.pso = { ...P.readPsoFromScenario(), ...patch };
+    P.persistCurrentStateNow?.();
+  };
+
+  P.syncPsoLabInputsFromScenario = function () {
+    const cfg = P.readPsoFromScenario();
+    const np = document.getElementById("pso-n-particles");
+    const ni = document.getElementById("pso-n-iter");
+    const w = document.getElementById("pso-w");
+    const c1 = document.getElementById("pso-c1");
+    const c2 = document.getElementById("pso-c2");
+    const vmax = document.getElementById("pso-vmax");
+    if (np) np.value = String(cfg.n_particles);
+    if (ni) ni.value = String(cfg.n_iter);
+    if (w) w.value = String(cfg.w);
+    if (c1) c1.value = String(cfg.c1);
+    if (c2) c2.value = String(cfg.c2);
+    if (vmax) vmax.value = String(cfg.v_max);
+    P.updatePsoRangeLabels?.();
+    P.detectActivePsoPreset?.();
+  };
+
+  P.updatePsoRangeLabels = function () {
+    const pairs = [
+      ["pso-w", "pso-w-val"],
+      ["pso-c1", "pso-c1-val"],
+      ["pso-c2", "pso-c2-val"],
+      ["pso-vmax", "pso-vmax-val"],
+    ];
+    for (const [id, lid] of pairs) {
+      const el = document.getElementById(id);
+      const lab = document.getElementById(lid);
+      if (el && lab) lab.textContent = el.value;
+    }
+  };
+
+  P.detectActivePsoPreset = function () {
+    const cfg = P.readPsoFromScenario();
+    let active = null;
+    for (const [key, preset] of Object.entries(PRESETS)) {
+      if (cfg.n_particles === preset.n_particles && cfg.n_iter === preset.n_iter) active = key;
+    }
+    document.querySelectorAll(".pso-preset-btn").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.preset === active);
+    });
+  };
+
+  P.applyPsoPreset = function (presetKey) {
+    const preset = PRESETS[presetKey];
+    if (!preset) return;
+    P.writePsoToScenario({ n_particles: preset.n_particles, n_iter: preset.n_iter });
+    P.syncPsoLabInputsFromScenario();
+    P.invalidateOptimizationResult?.();
+  };
+
+  P.persistPsoLabStats = function (stats) {
+    try {
+      localStorage.setItem(PSO_STATS_KEY, JSON.stringify({ ...stats, at: Date.now() }));
+    } catch (_) {
+      // ignore
+    }
+    P.renderPsoLabLastStats?.();
+  };
+
+  P.loadPsoLabStats = function () {
+    try {
+      const raw = localStorage.getItem(PSO_STATS_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (_) {
+      return null;
+    }
+  };
+
+  P.renderPsoLabLastStats = function () {
+    const el = document.getElementById("pso-lab-last-stats");
+    if (!el) return;
+    const saved = P.loadPsoLabStats();
+    if (!saved) {
+      el.textContent = "";
+      return;
+    }
+    const parts = [];
+    if (Number.isFinite(saved.gapPct)) parts.push("上次 Benchmark 平均偏差 " + saved.gapPct.toFixed(2) + "%");
+    if (Number.isFinite(saved.psoMs)) parts.push("PSO 耗时约 " + saved.psoMs.toFixed(0) + " ms");
+    el.textContent = parts.join(" · ");
+  };
+
+  P.togglePsoLabVisibility = function () {
+    const methodEl = document.getElementById("optimizer-method");
+    const panel = document.getElementById("pso-lab-panel");
+    const hint = document.getElementById("optimizer-method-hint");
+    const isPso = methodEl?.value === "pso";
+    if (panel) panel.hidden = !isPso;
+    if (hint) {
+      hint.textContent = isPso
+        ? "PSO 为启发式近似解，可与匈牙利结果对比偏差；下方实验室可调粒子数与迭代。"
+        : "车辆数较少时优先匈牙利（全局最优、无迭代曲线）。";
+    }
+    if (isPso) P.syncPsoLabInputsFromScenario();
+  };
+
+  P.wirePsoLabPanel = function () {
+    const methodEl = document.getElementById("optimizer-method");
+    methodEl?.addEventListener("change", () => {
+      P.togglePsoLabVisibility();
+      P.updateRunBarSummary?.();
+    });
+
+    document.querySelectorAll(".pso-preset-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        P.applyPsoPreset(btn.dataset.preset);
+      });
+    });
+
+    const bindNum = (id, key) => {
+      document.getElementById(id)?.addEventListener("change", () => {
+        const el = document.getElementById(id);
+        if (!el || !P.scenario) return;
+        const v = Number(el.value);
+        if (!Number.isFinite(v)) return;
+        P.writePsoToScenario({ [key]: v });
+        P.detectActivePsoPreset();
+        P.invalidateOptimizationResult?.();
+      });
+    };
+    bindNum("pso-n-particles", "n_particles");
+    bindNum("pso-n-iter", "n_iter");
+
+    const bindRange = (id, key) => {
+      document.getElementById(id)?.addEventListener("input", () => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        P.updatePsoRangeLabels();
+        P.writePsoToScenario({ [key]: Number(el.value) });
+        P.detectActivePsoPreset();
+      });
+    };
+    bindRange("pso-w", "w");
+    bindRange("pso-c1", "c1");
+    bindRange("pso-c2", "c2");
+    bindRange("pso-vmax", "v_max");
+
+    document.getElementById("btn-pso-reset-params")?.addEventListener("click", () => {
+      const def = P.scenarioSource?.defaultScenario?.()?.pso;
+      if (def) P.writePsoToScenario({ ...def });
+      else P.applyPsoPreset("balanced");
+      P.syncPsoLabInputsFromScenario();
+      P.invalidateOptimizationResult?.();
+    });
+
+    document.getElementById("btn-apply-recommend")?.addEventListener("click", () => {
+      const best = P.lastRecommendBest;
+      if (!best) return;
+      P.writePsoToScenario({ n_particles: best.n_particles, n_iter: best.n_iter });
+      P.syncPsoLabInputsFromScenario();
+      P.showWorkspaceMessage?.("已应用「" + best.label + "」配置，请点击运行优化。", { level: "info" });
+    });
+
+    ["chart-zoom-convergence", "chart-show-exact-ref"].forEach((id) => {
+      document.getElementById(id)?.addEventListener("change", () => {
+        P.drawChart(P.lastChartSeries, P.lastChartOptimizer, P.lastChartDrawOpts);
+      });
+    });
+
+    document.getElementById("btn-pso-replay")?.addEventListener("click", () => P.togglePsoReplay?.());
+
+    P.togglePsoLabVisibility();
+    P.renderPsoLabLastStats();
+  };
+
+  P.stopPsoReplay = function () {
+    if (P.psoReplay?.timerId) {
+      clearInterval(P.psoReplay.timerId);
+    }
+    P.psoReplay = null;
+    const btn = document.getElementById("btn-pso-replay");
+    if (btn) btn.textContent = "播放分配收敛";
+    P.draw();
+  };
+
+  P.togglePsoReplay = function () {
+    const samples = P.lastResult?.history_assign_samples;
+    if (!Array.isArray(samples) || samples.length < 2) return;
+    if (P.psoReplay?.timerId) {
+      P.stopPsoReplay();
+      return;
+    }
+    const btn = document.getElementById("btn-pso-replay");
+    if (btn) btn.textContent = "停止回放";
+    let idx = 0;
+    P.psoReplay = {
+      samples,
+      frameIndex: 0,
+      timerId: setInterval(() => {
+        idx = (idx + 1) % samples.length;
+        P.psoReplay.frameIndex = idx;
+        P.draw();
+      }, 420),
+    };
+    P.draw();
+  };
+})();
+
 /* --- app\ui\results-panel.js --- */
 (function () {
   "use strict";
@@ -2757,18 +3040,24 @@ P.normalizeOptimizeResult = function (raw, method, fallbackScenario) {
     out.veh_entrances = Array.isArray(raw.veh_entrances)
       ? raw.veh_entrances.map((v) => parseInt(v, 10)).filter((v) => Number.isFinite(v))
       : [];
-    out.vehicle_breakdown = Array.isArray(raw.vehicle_breakdown) ? raw.vehicle_breakdown : [];
+    out.vehicle_breakdown = Array.isArray(out.vehicle_breakdown) ? out.vehicle_breakdown : [];
     out.paths = Array.isArray(out.paths) ? out.paths : [];
     out.drive_paths = Array.isArray(raw.drive_paths) ? raw.drive_paths : [];
     out.road_segments = Array.isArray(out.road_segments) ? out.road_segments : [];
+    out.pso_stats =
+      raw.pso_stats && typeof raw.pso_stats === "object" ? raw.pso_stats : out.pso_stats || null;
+    out.history_assign_samples = Array.isArray(raw.history_assign_samples)
+      ? raw.history_assign_samples
+      : out.history_assign_samples || [];
+    out.exact_reference =
+      raw.exact_reference != null && Number.isFinite(Number(raw.exact_reference))
+        ? Number(raw.exact_reference)
+        : out.exact_reference != null
+          ? out.exact_reference
+          : null;
     return out;
-  }
+  };
 
-  /**
-   * 俯视配色参考公开资料（非贴图）：沥青/路面 #36454F 系、铺装混凝土 #d1d8dc 系、
-   * 热熔泊位线黄、混凝土屋面、绿地渐变。可选无缝贴图可自行换用 CC0：
-   * https://cc0-textures.com/ （如 Asphalt 010）等，本实现零外链以离线可用。
-   */
 P.renderBreakdownSummary = function () {
     const el = document.getElementById("result-breakdown");
     const driveEl = document.getElementById("metric-drive");
@@ -2822,20 +3111,27 @@ P.renderBreakdownSummary = function () {
         el.textContent = "无类型违约";
       }
     }
-  }
+  };
 
 P.renderResultTip = function (text) {
     const el = document.getElementById("result-tip");
     if (!el) return;
     el.textContent = text || "";
-  }
+  };
+
+P.setRunProgressLabel = function (text) {
+    const label = document.getElementById("run-progress-label");
+    if (label) label.textContent = text || "";
+};
 
 P.normalizeBenchmarkRuns = function (rawRuns) {
     if (P.analysisTools?.normalizeRuns) return P.analysisTools.normalizeRuns(rawRuns);
     const parsed = Number.parseInt(rawRuns, 10);
     const safeRuns = Number.isFinite(parsed) ? parsed : 6;
     return Math.max(1, Math.min(P.MAX_BENCHMARK_RUNS, safeRuns));
-  }
+  };
+
+  let optimizeRunId = 0;
 
 P.runOptimize = async function () {
     const gate = P.canRunOptimize?.();
@@ -2843,6 +3139,7 @@ P.runOptimize = async function () {
       P.showWorkspaceMessage?.(gate.reason, { level: "warn" });
       return;
     }
+    const runId = ++optimizeRunId;
     const runBtns = document.querySelectorAll(".js-run-optimize");
     const progressEl = document.getElementById("run-progress");
     const status = document.getElementById("result-status");
@@ -2856,18 +3153,25 @@ P.runOptimize = async function () {
       P.switchTab?.("overview");
       P.updateWorkflowGuide?.();
     }
+    P.stopPsoReplay?.();
     runBtns.forEach((btn) => {
       btn.disabled = true;
       btn.classList.add("is-loading");
     });
-    if (progressEl) progressEl.hidden = false;
+    if (progressEl) {
+      progressEl.hidden = false;
+      progressEl.setAttribute("aria-hidden", "false");
+    }
     const canLocal = !!(P.optimizer && typeof P.optimizer.runOptimize === "function");
+    const canAsync = !!(P.optimizer && typeof P.optimizer.runOptimizeAsync === "function");
     const statusPrefix =
       method === "exact"
         ? "本地计算中…（匈牙利全局最优）"
         : "本地 PSO 计算中…";
     status.textContent = statusPrefix + "（总时间单位：" + P.uTime() + "）";
+    P.setRunProgressLabel(method === "exact" ? "构建代价矩阵…" : "初始化粒子群…");
     gbestEl.style.display = "none";
+    let chartThrottle = 0;
     try {
       if (!canLocal && !P.api?.optimize) {
         status.textContent = "本地优化模块未加载（assets/js/optimizer/）。";
@@ -2877,7 +3181,27 @@ P.runOptimize = async function () {
       await new Promise((resolve) => setTimeout(resolve, 0));
       let raw = null;
       if (canLocal) {
-        raw = P.optimizer.runOptimize(P.scenario, { method, seed });
+        if (method === "pso" && canAsync) {
+          raw = await P.optimizer.runOptimizeAsync(P.scenario, {
+            method,
+            seed,
+            onIteration: (ev) => {
+              if (runId !== optimizeRunId) return;
+              P.setRunProgressLabel("PSO 迭代 " + ev.it + "/" + ev.nIter);
+              const now = performance.now();
+              if (now - chartThrottle > 48) {
+                chartThrottle = now;
+                P.drawChart(ev.historyBest || [], "pso", {
+                  exactReference: ev.exactReference,
+                  zoomConvergence: P.getChartDrawOpts?.().zoomConvergence,
+                  showExactRef: P.getChartDrawOpts?.().showExactRef,
+                });
+              }
+            },
+          });
+        } else {
+          raw = P.optimizer.runOptimize(P.scenario, { method, seed });
+        }
       } else if (P.api?.optimize) {
         try {
           const apiRes = await P.api.optimize(P.scenario, method, seed);
@@ -2886,6 +3210,7 @@ P.runOptimize = async function () {
           console.warn("API optimize fallback failed", apiErr);
         }
       }
+      if (runId !== optimizeRunId) return;
       const data = P.normalizeOptimizeResult(raw, method, P.scenario);
       if (data.error) {
         status.textContent = data.error;
@@ -2912,34 +3237,52 @@ P.runOptimize = async function () {
       gbestEl.textContent =
         Number(data.gbest_value ?? 0).toFixed(2) + " " + P.uTime();
       P.updateChartCaption(opt === "exact" ? "exact" : undefined);
-      P.drawChart(data.history_best || [], opt);
+      const chartOpts = {
+        exactReference: data.exact_reference,
+        zoomConvergence: P.getChartDrawOpts?.().zoomConvergence,
+        showExactRef: P.getChartDrawOpts?.().showExactRef,
+      };
+      P.drawChart(data.history_best || [], opt, chartOpts);
+      P.renderChartMeta?.(data);
       P.renderBreakdownSummary();
       P.updateWorkflowGuide?.();
       if (opt === "exact") {
         P.renderResultTip("当前为全局最优解，可将其作为 PSO 调参与精度对照基线。");
       } else {
-        let tip = "建议：若偏差较高，可提高 n_particles 或 n_iter，再重新对比 Benchmark。";
-        try {
-          const exactBase = P.normalizeOptimizeResult(
-            P.optimizer.runOptimize(JSON.parse(JSON.stringify(P.scenario)), { method: "exact" }),
-            "exact",
-            P.scenario
-          );
-          if (Number.isFinite(exactBase.gbest_value) && Number.isFinite(data.gbest_value)) {
-            const gap =
-              ((data.gbest_value - exactBase.gbest_value) /
-                Math.max(1e-6, exactBase.gbest_value)) *
-              100;
-            tip =
-              "相对 exact 偏差：" +
-              gap.toFixed(2) +
-              "%。 " +
-              (gap <= 2
-                ? "当前参数已较优，优先关注耗时。"
-                : "建议先使用“参数推荐”获取更稳妥配置。");
+        let tip = "建议：若偏差较高，可提高粒子数或迭代上限，或使用「参数推荐」。";
+        const ref = data.exact_reference;
+        if (ref != null && Number.isFinite(ref) && Number.isFinite(data.gbest_value)) {
+          const gap = ((data.gbest_value - ref) / Math.max(1e-6, ref)) * 100;
+          tip =
+            "相对 exact 偏差：" +
+            gap.toFixed(2) +
+            "%。 " +
+            (gap <= 2
+              ? "当前参数已较优，优先关注耗时。"
+              : "建议先使用「参数推荐」或「精度优先」预设。");
+        } else {
+          try {
+            const exactBase = P.normalizeOptimizeResult(
+              P.optimizer.runOptimize(JSON.parse(JSON.stringify(P.scenario)), { method: "exact" }),
+              "exact",
+              P.scenario
+            );
+            if (Number.isFinite(exactBase.gbest_value) && Number.isFinite(data.gbest_value)) {
+              const gap =
+                ((data.gbest_value - exactBase.gbest_value) /
+                  Math.max(1e-6, exactBase.gbest_value)) *
+                100;
+              tip =
+                "相对 exact 偏差：" +
+                gap.toFixed(2) +
+                "%。 " +
+                (gap <= 2
+                  ? "当前参数已较优，优先关注耗时。"
+                  : "建议先使用「参数推荐」获取更稳妥配置。");
+            }
+          } catch (_) {
+            // ignore
           }
-        } catch (_) {
-          // ignore exact baseline failures in tip rendering
         }
         P.renderResultTip(tip);
       }
@@ -2949,18 +3292,25 @@ P.runOptimize = async function () {
       P.updateActionGates?.();
       P.updateRunBarSummary?.();
     } catch (e) {
-      status.textContent = "网络错误";
+      status.textContent = "计算失败";
       console.error(e);
       P.renderResultTip("");
     } finally {
-      runBtns.forEach((btn) => {
-        btn.classList.remove("is-loading");
-      });
-      if (progressEl) progressEl.hidden = true;
+      if (runId === optimizeRunId) {
+        runBtns.forEach((btn) => {
+          btn.disabled = false;
+          btn.classList.remove("is-loading");
+        });
+        if (progressEl) {
+          progressEl.hidden = true;
+          progressEl.setAttribute("aria-hidden", "true");
+        }
+        P.setRunProgressLabel("");
+      }
       P.updateActionGates?.();
       P.updateRunBarSummary?.();
     }
-  }
+  };
 })();
 
 /* --- app\ui\api-status.js --- */
@@ -3047,6 +3397,11 @@ P.runOptimize = async function () {
       walkSum += Number(it.walk_time) || 0;
       if ((Number(it.penalty) || 0) > 0) mismatch++;
     }
+    let gap_to_exact = null;
+    const ref = result?.exact_reference;
+    if (ref != null && Number.isFinite(ref) && Number.isFinite(gbest)) {
+      gap_to_exact = ((gbest - ref) / Math.max(1e-6, ref)) * 100;
+    }
     return {
       gbest_value: Number.isFinite(gbest) ? gbest : null,
       worst_vehicle_time: worst || null,
@@ -3054,6 +3409,9 @@ P.runOptimize = async function () {
       slot_utilization: nSlot ? nVeh / nSlot : 0,
       type_match_rate: nVeh ? 1 - mismatch / nVeh : 1,
       mismatch_count: mismatch,
+      optimizer: result?.optimizer || null,
+      gap_to_exact,
+      pso_elapsed_ms: result?.pso_stats?.elapsed_ms ?? null,
     };
   };
 
@@ -3233,6 +3591,9 @@ P.runOptimize = async function () {
 
   const METRIC_KEYS = [
     { key: "gbest_value", label: "总优化时间", lowerBetter: true },
+    { key: "optimizer", label: "求解方式", lowerBetter: false, text: true },
+    { key: "gap_to_exact", label: "相对精确偏差", lowerBetter: true, suffix: "%" },
+    { key: "pso_elapsed_ms", label: "PSO 耗时", lowerBetter: true, suffix: " ms" },
     { key: "worst_vehicle_time", label: "最坏单车时间", lowerBetter: true },
     { key: "avg_walk_time", label: "平均步行", lowerBetter: true },
     { key: "slot_utilization", label: "车位利用率", lowerBetter: false },
@@ -3305,10 +3666,15 @@ P.runOptimize = async function () {
         const v = p.metrics?.[mk.key];
         let text = "--";
         if (v != null) {
-          text =
-            mk.key.includes("rate") || mk.key.includes("utilization")
-              ? (v * 100).toFixed(0) + "%"
-              : Number(v).toFixed(2);
+          if (mk.text) {
+            text = v === "pso" ? "PSO" : v === "exact" ? "匈牙利" : String(v);
+          } else if (mk.suffix) {
+            text = Number(v).toFixed(mk.key === "gap_to_exact" ? 2 : 1) + mk.suffix;
+          } else if (mk.key.includes("rate") || mk.key.includes("utilization")) {
+            text = (v * 100).toFixed(0) + "%";
+          } else {
+            text = Number(v).toFixed(2);
+          }
         }
         html += "<td>" + text + "</td>";
       }
@@ -5631,6 +5997,45 @@ P.drawDrivePaths = function (scale) {
     }
   };
 
+P.drawPsoReplayOverlay = function (scale) {
+    const replay = P.psoReplay;
+    if (!replay?.samples?.length || !P.scenario?.slots?.length) return;
+    const sample = replay.samples[replay.frameIndex ?? 0];
+    const assign = sample?.assign;
+    if (!Array.isArray(assign)) return;
+    const alpha = 0.35 + 0.45 * ((replay.frameIndex ?? 0) / Math.max(1, replay.samples.length - 1));
+    P.ctx.save();
+    P.ctx.globalAlpha = alpha;
+    P.ctx.strokeStyle = "#f59e0b";
+    P.ctx.lineWidth = Math.max(1.5, scale * 0.06);
+    P.ctx.setLineDash([Math.max(4, scale * 0.12), Math.max(3, scale * 0.08)]);
+    for (let vi = 0; vi < assign.length; vi++) {
+      const si = assign[vi];
+      const bi = P.lastResult?.veh_targets?.[vi] ?? P.scenario.vehicle_destinations?.[vi];
+      if (!Number.isFinite(si) || !Number.isFinite(bi)) continue;
+      const pose = P.slotPoseOf(P.scenario.slots[si]);
+      const b = P.scenario.buildings?.[bi];
+      if (!pose || !b) continue;
+      const a = P.worldToScreen(pose.x, pose.y);
+      const bpt = P.worldToScreen(b[0], b[1]);
+      P.ctx.beginPath();
+      P.ctx.moveTo(a.sx, a.sy);
+      P.ctx.lineTo(bpt.sx, bpt.sy);
+      P.ctx.stroke();
+    }
+    P.ctx.setLineDash([]);
+    P.ctx.globalAlpha = 1;
+    P.ctx.restore();
+    const label = "PSO 回放 · 迭代 " + (sample.iter ?? replay.frameIndex);
+    P.ctx.save();
+    P.ctx.font = '11px "Segoe UI", "Microsoft YaHei", sans-serif';
+    P.ctx.fillStyle = "rgba(245, 158, 11, 0.95)";
+    P.ctx.textAlign = "left";
+    P.ctx.textBaseline = "top";
+    P.ctx.fillText(label, 12, 12);
+    P.ctx.restore();
+  };
+
 P.drawResultPaths = function (scale) {
     P.drawDrivePaths(scale);
     if (!P.lastResult?.paths?.length) return;
@@ -5955,6 +6360,7 @@ P.draw = function () {
     P.drawScenarioObjects(scale);
     P.drawEntrances(scale);
     if (!P.shouldDrawPaths || P.shouldDrawPaths()) P.drawResultPaths(scale);
+    if (P.drawPsoReplayOverlay) P.drawPsoReplayOverlay(scale);
     if (P.drawVehicleChainHighlight) P.drawVehicleChainHighlight(scale);
     if (P.drawViolationSlotHighlights) P.drawViolationSlotHighlights(scale);
     if (P.drawUnderlayCalibrationMarkers) P.drawUnderlayCalibrationMarkers(scale);
@@ -5974,6 +6380,19 @@ P.draw = function () {
   const P = window.ParkingApp;
   if (!P) throw new Error("ParkingApp missing: app/canvas/chart.js");
 
+  P.getChartDrawOpts = function () {
+    return {
+      exactReference:
+        P.lastResult?.exact_reference != null
+          ? Number(P.lastResult.exact_reference)
+          : P.lastChartExactRef != null
+            ? P.lastChartExactRef
+            : null,
+      zoomConvergence: document.getElementById("chart-zoom-convergence")?.checked !== false,
+      showExactRef: document.getElementById("chart-show-exact-ref")?.checked !== false,
+    };
+  };
+
 P.updateChartCaption = function (mode) {
     const el = document.getElementById("chart-caption");
     if (!el) return;
@@ -5990,8 +6409,11 @@ P.updateChartCaption = function (mode) {
         "）；PSO = 近似解并显示迭代曲线。运行后见上图。";
       return;
     }
-    el.textContent = "横轴：迭代次数（次）；纵轴：最优总时间（" + tu + "）";
-  }
+    el.textContent =
+      "横轴：迭代次数（次）；纵轴：最优总时间（" +
+      tu +
+      "）。琥珀线为 PSO，灰色虚线为匈牙利参考（若可用）。";
+  };
 
 P.chartDrawAxisDecor = function (w, h) {
     P.cctx.fillStyle = P.CHART_THEME.axisText;
@@ -6006,9 +6428,7 @@ P.chartDrawAxisDecor = function (w, h) {
     P.cctx.textBaseline = "middle";
     P.cctx.fillText("时间（" + P.uTime() + "）", 0, 0);
     P.cctx.restore();
-  }
-
-  /** 匈牙利/精确最优仅一个标量：无迭代曲线，画水平参考线 + 圆点 + 数值 */
+  };
 
 P.chartDrawAxisDecorExact = function (w, h) {
     P.cctx.fillStyle = P.CHART_THEME.axisText;
@@ -6024,15 +6444,59 @@ P.chartDrawAxisDecorExact = function (w, h) {
     P.cctx.font = '12px "Segoe UI", "Microsoft YaHei", sans-serif';
     P.cctx.fillText("最优总时间（" + P.uTime() + "）", 0, 0);
     P.cctx.restore();
+  };
+
+  function seriesYRange(series, opts) {
+    let lo = Math.min(...series);
+    let hi = Math.max(...series);
+    const ref = opts?.exactReference;
+    if (ref != null && Number.isFinite(ref)) {
+      lo = Math.min(lo, ref);
+      hi = Math.max(hi, ref);
+    }
+    if (opts?.zoomConvergence && series.length >= 3) {
+      const tailN = Math.max(3, Math.ceil(series.length * 0.35));
+      const tail = series.slice(-tailN);
+      lo = Math.min(...tail);
+      hi = Math.max(...tail);
+      if (ref != null && Number.isFinite(ref)) {
+        lo = Math.min(lo, ref);
+        hi = Math.max(hi, ref);
+      }
+    }
+    if (hi === lo) hi = lo + 1;
+    const pad = (hi - lo) * 0.08 || 1;
+    return { lo: lo - pad, hi: hi + pad };
   }
 
-P.drawChart = function (series, optimizerKind) {
+  function drawExactRefLine(w, plotTop, plotH, pad, lo, hi, refVal) {
+    if (refVal == null || !Number.isFinite(refVal)) return;
+    const y = plotTop + (1 - (refVal - lo) / (hi - lo)) * plotH;
+    P.cctx.strokeStyle = P.CHART_THEME.exactRef || "rgba(100,116,139,0.75)";
+    P.cctx.lineWidth = 1;
+    P.cctx.setLineDash([4, 4]);
+    P.cctx.beginPath();
+    P.cctx.moveTo(pad, y);
+    P.cctx.lineTo(w - pad, y);
+    P.cctx.stroke();
+    P.cctx.setLineDash([]);
+    P.cctx.fillStyle = P.CHART_THEME.helperText;
+    P.cctx.font = '10px "Segoe UI", "Microsoft YaHei", sans-serif';
+    P.cctx.textAlign = "right";
+    P.cctx.textBaseline = "bottom";
+    P.cctx.fillText("精确 " + refVal.toFixed(2), w - pad - 2, y - 2);
+  }
+
+P.drawChart = function (series, optimizerKind, drawOpts) {
     P.syncChartCanvasSize();
     const w = P.chartCssW;
     const h = P.chartCssH;
     const kind = optimizerKind || "pso";
+    const opts = { ...P.getChartDrawOpts(), ...(drawOpts || {}) };
     P.lastChartSeries = Array.isArray(series) ? series.slice() : [];
     P.lastChartOptimizer = kind;
+    P.lastChartDrawOpts = opts;
+    if (opts.exactReference != null) P.lastChartExactRef = opts.exactReference;
     const pad = 8;
     const plotH = Math.max(h - pad - P.CHART_BOTTOM_AXIS - 4, 24);
     const plotTop = pad + 4;
@@ -6084,12 +6548,11 @@ P.drawChart = function (series, optimizerKind) {
       P.chartDrawAxisDecorExact(w, h);
       return;
     }
-    let lo = Math.min(...series);
-    let hi = Math.max(...series);
-    if (hi === lo) {
-      hi = lo + 1;
+    const { lo, hi } = seriesYRange(series, opts);
+    if (opts.showExactRef) {
+      drawExactRefLine(w, plotTop, plotH, pad, lo, hi, opts.exactReference);
     }
-    P.cctx.strokeStyle = P.CHART_THEME.line;
+    P.cctx.strokeStyle = kind === "pso" ? P.CHART_THEME.psoLine || "#d97706" : P.CHART_THEME.line;
     P.cctx.lineWidth = 2;
     P.cctx.beginPath();
     for (let i = 0; i < series.length; i++) {
@@ -6100,13 +6563,12 @@ P.drawChart = function (series, optimizerKind) {
       else P.cctx.lineTo(x, y);
     }
     P.cctx.stroke();
-    if (series.length === 1) {
-      const t = 0;
-      const x = pad + t * (w - 2 * pad);
-      const y = plotTop + (1 - (series[0] - lo) / (hi - lo)) * plotH;
-      P.cctx.fillStyle = P.CHART_THEME.line;
+    if (series.length >= 2) {
+      const lastX = pad + (w - 2 * pad);
+      const lastY = plotTop + (1 - (series[series.length - 1] - lo) / (hi - lo)) * plotH;
+      P.cctx.fillStyle = P.CHART_THEME.psoLine || "#d97706";
       P.cctx.beginPath();
-      P.cctx.arc(x, y, 5, 0, Math.PI * 2);
+      P.cctx.arc(lastX, lastY, 4, 0, Math.PI * 2);
       P.cctx.fill();
     }
     if (series.length >= 2) {
@@ -6119,7 +6581,41 @@ P.drawChart = function (series, optimizerKind) {
       P.cctx.fillText(String(series.length - 1), w - pad, h - P.CHART_BOTTOM_AXIS + 2);
     }
     P.chartDrawAxisDecor(w, h);
-  }
+  };
+
+  P.renderChartMeta = function (result) {
+    const el = document.getElementById("chart-meta");
+    const replayBtn = document.getElementById("btn-pso-replay");
+    if (!el) return;
+    if (!result || result.optimizer !== "pso") {
+      el.hidden = true;
+      el.textContent = "";
+      if (replayBtn) replayBtn.hidden = true;
+      return;
+    }
+    const stats = result.pso_stats || {};
+    const parts = [];
+    if (stats.iterations_run != null && stats.iterations_planned != null) {
+      parts.push(
+        "迭代 " +
+          stats.iterations_run +
+          "/" +
+          stats.iterations_planned +
+          (stats.early_stopped ? "（早停）" : "")
+      );
+    }
+    if (stats.elapsed_ms != null) parts.push("计算 " + Number(stats.elapsed_ms).toFixed(1) + " ms");
+    if (stats.local_search_improved) parts.push("邻域搜索已改进");
+    if (result.exact_reference != null && result.gbest_value != null) {
+      const gap =
+        ((result.gbest_value - result.exact_reference) / Math.max(1e-6, result.exact_reference)) * 100;
+      parts.push("相对精确偏差 " + gap.toFixed(2) + "%");
+    }
+    el.textContent = parts.join(" · ");
+    el.hidden = !parts.length;
+    const samples = result.history_assign_samples;
+    if (replayBtn) replayBtn.hidden = !(Array.isArray(samples) && samples.length >= 2);
+  };
 })();
 
 /* --- app\interaction\pick.js --- */
@@ -6966,6 +7462,8 @@ P.finalizeObstacleDraft = function () {
       P.syncLotInputsFromScenario?.();
       P.updateActionGates?.();
       P.updateRunBarSummary?.();
+      P.syncPsoLabInputsFromScenario?.();
+      P.togglePsoLabVisibility?.();
       P.clearWorkspaceMessage?.();
       P.draw();
     } catch (e) {
@@ -7169,9 +7667,6 @@ P.finalizeObstacleDraft = function () {
     P.updateActionGates?.();
   });
 
-  document.getElementById("optimizer-method")?.addEventListener("change", () => {
-    P.updateRunBarSummary?.();
-  });
 
   window.addEventListener("resize", () => {
     clearTimeout(P.resizeChartTimer);
@@ -7189,6 +7684,7 @@ P.finalizeObstacleDraft = function () {
   P.wireLayerControls?.();
   P.wireUnderlayPanel?.();
   P.wireWorkflowGuide?.();
+  P.wirePsoLabPanel?.();
 
   document.getElementById("btn-save-named-plan")?.addEventListener("click", () => {
     const nameEl = document.getElementById("plan-save-name");

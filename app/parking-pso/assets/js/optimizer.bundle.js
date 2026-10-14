@@ -15,6 +15,9 @@
     "drive_paths",
     "road_segments",
     "optimizer",
+    "pso_stats",
+    "history_assign_samples",
+    "exact_reference",
   ];
 
   window.ParkingCoreConstants = {
@@ -1679,6 +1682,12 @@
         [Number(seg[1][0]), Number(seg[1][1])],
       ]),
       optimizer: opts.optimizer,
+      pso_stats: opts.psoStats || undefined,
+      history_assign_samples: opts.historyAssignSamples || undefined,
+      exact_reference:
+        opts.exactReference != null && Number.isFinite(Number(opts.exactReference))
+          ? Number(opts.exactReference)
+          : undefined,
     };
   }
 
@@ -1712,6 +1721,9 @@
     "drive_paths",
     "road_segments",
     "optimizer",
+    "pso_stats",
+    "history_assign_samples",
+    "exact_reference",
   ];
 
   const defaultScenario = scenarioModule.defaultScenario || (() => ({}));
@@ -1723,8 +1735,9 @@
   const decodeParticle = psoModule.decodeParticle || (() => []);
   const makeRng = psoModule.makeRng || (() => ({ random: Math.random }));
   const gaussian = psoModule.gaussian || (() => 0);
+  const encodeAssignToPosition =
+    psoModule.encodeAssignToPosition || ((assign) => assign.map((_, i) => (i + 0.5) / Math.max(1, assign.length)));
   const packResult = packModule.packResult || ((s, opts) => ({ scenario: s, ...opts }));
-  const roadFromInner = roadModel.roadFromInner || (() => null);
 
   const N_PARTICLES_DEFAULT = scenarioDefault.N_PARTICLES_DEFAULT || 40;
   const N_ITER_DEFAULT = scenarioDefault.N_ITER_DEFAULT || 600;
@@ -1734,12 +1747,40 @@
   const V_MAX_DEFAULT = scenarioDefault.V_MAX_DEFAULT || 0.25;
   const DEFAULT_ROAD_WIDTH = scenarioDefault.DEFAULT_ROAD_WIDTH || 6.0;
 
-  function runOptimize(scenarioInput, options) {
+  function perturbPosition(basePos, rng, amount) {
+    return basePos.map((v) => Math.max(0, Math.min(1, v + (rng.random() - 0.5) * amount)));
+  }
+
+  function localSearchAssign(assign, evalAssign) {
+    let current = assign.slice();
+    let val = evalAssign(current);
+    let improved = true;
+    while (improved) {
+      improved = false;
+      for (let i = 0; i < current.length; i++) {
+        for (let j = i + 1; j < current.length; j++) {
+          const trial = current.slice();
+          const tmp = trial[i];
+          trial[i] = trial[j];
+          trial[j] = tmp;
+          const tv = evalAssign(trial);
+          if (tv < val) {
+            current = trial;
+            val = tv;
+            improved = true;
+          }
+        }
+      }
+    }
+    return { assign: current, value: val };
+  }
+
+  function buildOptimizeContext(scenarioInput, options) {
     const methodRaw = String((options && options.method) || "exact").trim().toLowerCase();
     const method = methodRaw === "pso" ? "pso" : "exact";
     const seed = options && Object.prototype.hasOwnProperty.call(options, "seed") ? options.seed : null;
     const s = normalizeScenario(scenarioInput);
-    const road = s.road || roadFromInner(s.inner, DEFAULT_ROAD_WIDTH);
+    const road = s.road || roadModel.roadFromInner?.(s.inner, DEFAULT_ROAD_WIDTH) || null;
     const obstacles = s.obstacles;
     const prep = precomputeFromNormalized(s);
     const nSlot = prep.nSlot;
@@ -1755,7 +1796,9 @@
       road_segments: [],
       optimizer: method,
     };
-    if (!nSlot || !nB || !s.n_veh) return err;
+    if (!nSlot || !nB || !s.n_veh) {
+      return { ok: false, err };
+    }
     const nVeh = Math.min(Number(s.n_veh), nSlot);
     s.n_veh = nVeh;
     normalizeVehicleDestinations(s);
@@ -1784,6 +1827,28 @@
       return { driveTime: bestDrive, entranceIndex: bestEi };
     }
 
+    function buildCostMatrix() {
+      return Array.from({ length: nVeh }, (_, i) =>
+        Array.from({ length: nSlot }, (_, j) => {
+          const drive = resolveDriveForVehicle(j, i).driveTime;
+          const walk = prep.walkMat[j][vehTargets[i]] / vWalk;
+          const penalty = vehicleSlotPenalty(s, i, j);
+          return drive + walk + penalty;
+        })
+      );
+    }
+
+    function evalAssign(assign) {
+      let total = 0;
+      for (let i = 0; i < nVeh; i++) {
+        const slotIndex = assign[i];
+        total += resolveDriveForVehicle(slotIndex, i).driveTime;
+        total += prep.walkMat[slotIndex][vehTargets[i]] / vWalk;
+        total += vehicleSlotPenalty(s, i, slotIndex);
+      }
+      return total;
+    }
+
     function buildVehicleBreakdown(bestAssign) {
       const bestEntrances = [];
       const items = [];
@@ -1807,22 +1872,11 @@
       return { bestEntrances, items };
     }
 
-    function runExactMethod() {
-      const cost = Array.from({ length: nVeh }, (_, i) =>
-        Array.from({ length: nSlot }, (_, j) => {
-          const drive = resolveDriveForVehicle(j, i).driveTime;
-          const walk = prep.walkMat[j][vehTargets[i]] / vWalk;
-          const penalty = vehicleSlotPenalty(s, i, j);
-          return drive + walk + penalty;
-        })
-      );
-      const bestAssign = hungarianRect(cost);
-      let gbestValue = 0;
-      for (let i = 0; i < nVeh; i++) gbestValue += cost[i][bestAssign[i]];
+    function packFromAssign(bestAssign, gbestValue, historyBest, optimizer, extras) {
       const breakdown = buildVehicleBreakdown(bestAssign);
       return packResult(s, {
         gbestValue,
-        historyBest: [gbestValue],
+        historyBest,
         bestAssign,
         bestEntrances: breakdown.bestEntrances,
         vehicleBreakdown: breakdown.items,
@@ -1834,11 +1888,25 @@
         navByBi: prep.navByBi,
         lot: s.lot,
         road,
-        optimizer: "exact",
+        optimizer,
+        psoStats: extras?.psoStats,
+        historyAssignSamples: extras?.historyAssignSamples,
+        exactReference: extras?.exactReference,
       });
     }
 
-    function runPsoMethod() {
+    function runExactMethod() {
+      const cost = buildCostMatrix();
+      const bestAssign = hungarianRect(cost);
+      let gbestValue = 0;
+      for (let i = 0; i < nVeh; i++) gbestValue += cost[i][bestAssign[i]];
+      return packFromAssign(bestAssign, gbestValue, [gbestValue], "exact", {
+        exactReference: gbestValue,
+      });
+    }
+
+    function* psoIterate(onProgress) {
+      const t0 = typeof performance !== "undefined" ? performance.now() : Date.now();
       const rng = makeRng(seed);
       const pso = s.pso || {};
       const nParticles = Math.max(2, Number(pso.n_particles) || N_PARTICLES_DEFAULT);
@@ -1849,23 +1917,40 @@
       const c2 = Number(pso.c2 ?? C2_DEFAULT);
       const vMax = Number(pso.v_max ?? V_MAX_DEFAULT);
       const EARLY_STOP_PATIENCE = Math.max(80, Math.round(nIter * 0.2));
+      const sampleEvery = Math.max(5, Math.floor(nIter / 40));
 
       function objective(position) {
         const assign = decodeParticle(position, nVeh, nSlot);
-        let driveTotal = 0;
-        let walkTotal = 0;
-        for (let i = 0; i < nVeh; i++) {
-          const slotIndex = assign[i];
-          driveTotal += resolveDriveForVehicle(slotIndex, i).driveTime;
-          walkTotal += prep.walkMat[slotIndex][vehTargets[i]] / vWalk;
-          walkTotal += vehicleSlotPenalty(s, i, slotIndex);
-        }
-        return driveTotal + walkTotal;
+        return evalAssign(assign);
+      }
+
+      const cost = buildCostMatrix();
+      let exactReference = null;
+      let exactAssign = null;
+      try {
+        exactAssign = hungarianRect(cost);
+        exactReference = 0;
+        for (let i = 0; i < nVeh; i++) exactReference += cost[i][exactAssign[i]];
+      } catch (_) {
+        exactReference = null;
+        exactAssign = null;
       }
 
       const positions = Array.from({ length: nParticles }, () =>
         Array.from({ length: nVeh }, () => rng.random())
       );
+      if (exactAssign) {
+        try {
+          const basePos = encodeAssignToPosition(exactAssign, nSlot);
+          const warmN = Math.max(1, Math.floor(nParticles * 0.45));
+          for (let i = 0; i < warmN; i++) {
+            positions[i] = perturbPosition(basePos, rng, 0.1 + i * 0.006);
+          }
+        } catch (_) {
+          // keep random init
+        }
+      }
+
       const velocities = Array.from({ length: nParticles }, () =>
         Array.from({ length: nVeh }, () => gaussian(rng) * 0.1)
       );
@@ -1878,7 +1963,25 @@
       let gbestPosition = pbestPositions[gbestIdx].slice();
       let gbestValue = pbestValues[gbestIdx];
       const historyBest = [gbestValue];
+      const historyAssignSamples = [{ iter: 0, assign: decodeParticle(gbestPosition, nVeh, nSlot).slice() }];
       let noImprovCount = 0;
+      let iterationsRun = 0;
+      let earlyStopped = false;
+
+      const emit = (it) => {
+        if (onProgress) {
+          onProgress({
+            it,
+            nIter,
+            gbestValue,
+            historyBest: historyBest.slice(),
+            exactReference,
+          });
+        }
+      };
+
+      emit(0);
+      yield { it: 0, nIter, gbestValue, historyBest: historyBest.slice(), exactReference };
 
       for (let it = 0; it < nIter; it++) {
         const w = nIter > 1 ? wMax - (wMax - wMin) * (it / (nIter - 1)) : wMax;
@@ -1909,31 +2012,105 @@
           noImprovCount = 0;
         } else {
           noImprovCount++;
-          if (noImprovCount >= EARLY_STOP_PATIENCE) break;
+          if (noImprovCount >= EARLY_STOP_PATIENCE) {
+            earlyStopped = true;
+            iterationsRun = it + 1;
+            historyBest.push(gbestValue);
+            if ((it + 1) % sampleEvery === 0) {
+              historyAssignSamples.push({
+                iter: it + 1,
+                assign: decodeParticle(gbestPosition, nVeh, nSlot).slice(),
+              });
+            }
+            emit(it + 1);
+            yield { it: it + 1, nIter, gbestValue, historyBest: historyBest.slice(), exactReference, done: true };
+            break;
+          }
         }
         historyBest.push(gbestValue);
+        iterationsRun = it + 1;
+        if ((it + 1) % sampleEvery === 0) {
+          historyAssignSamples.push({
+            iter: it + 1,
+            assign: decodeParticle(gbestPosition, nVeh, nSlot).slice(),
+          });
+        }
+        emit(it + 1);
+        yield { it: it + 1, nIter, gbestValue, historyBest: historyBest.slice(), exactReference };
       }
-      const bestAssign = decodeParticle(gbestPosition, nVeh, nSlot);
-      const breakdown = buildVehicleBreakdown(bestAssign);
-      return packResult(s, {
-        gbestValue,
-        historyBest,
-        bestAssign,
-        bestEntrances: breakdown.bestEntrances,
-        vehicleBreakdown: breakdown.items,
-        slotsPos: prep.slotsPos,
-        buildingsPos: prep.buildingsPos,
-        obstacles,
-        vehTargets,
-        boxesByBi: prep.boxesByBi,
-        navByBi: prep.navByBi,
-        lot: s.lot,
-        road,
-        optimizer: "pso",
+
+      let bestAssign = decodeParticle(gbestPosition, nVeh, nSlot);
+      let localSearchImproved = false;
+      const ls = localSearchAssign(bestAssign, evalAssign);
+      if (ls.value < gbestValue) {
+        gbestValue = ls.value;
+        bestAssign = ls.assign;
+        localSearchImproved = true;
+        historyBest.push(gbestValue);
+      }
+
+      const t1 = typeof performance !== "undefined" ? performance.now() : Date.now();
+      return packFromAssign(bestAssign, gbestValue, historyBest, "pso", {
+        psoStats: {
+          iterations_run: iterationsRun,
+          iterations_planned: nIter,
+          early_stopped: earlyStopped,
+          elapsed_ms: t1 - t0,
+          local_search_improved: localSearchImproved,
+          n_particles: nParticles,
+        },
+        historyAssignSamples,
+        exactReference,
       });
     }
 
-    return method === "exact" ? runExactMethod() : runPsoMethod();
+    function runPsoMethod(control) {
+      const gen = psoIterate(control?.onProgress);
+      let step = gen.next();
+      while (!step.done) {
+        step = gen.next();
+      }
+      return step.value;
+    }
+
+    async function runPsoMethodAsync(control) {
+      const yieldEvery = Math.max(1, control?.yieldEvery || 6);
+      const gen = psoIterate(control?.onProgress);
+      let step = gen.next();
+      while (!step.done) {
+        if (step.value?.it % yieldEvery === 0) {
+          control?.onProgress?.(step.value);
+          await new Promise((r) => setTimeout(r, 0));
+        }
+        step = gen.next();
+      }
+      return step.value;
+    }
+
+    return {
+      ok: true,
+      method,
+      runExactMethod,
+      runPsoMethod,
+      runPsoMethodAsync,
+    };
+  }
+
+  function runOptimize(scenarioInput, options) {
+    const ctx = buildOptimizeContext(scenarioInput, options);
+    if (!ctx.ok) return ctx.err;
+    if (ctx.method === "exact") return ctx.runExactMethod();
+    return ctx.runPsoMethod({ onProgress: options?.onIteration });
+  }
+
+  async function runOptimizeAsync(scenarioInput, options) {
+    const ctx = buildOptimizeContext(scenarioInput, options);
+    if (!ctx.ok) return ctx.err;
+    if (ctx.method === "exact") return ctx.runExactMethod();
+    return ctx.runPsoMethodAsync({
+      onProgress: options?.onIteration,
+      yieldEvery: options?.yieldEvery || 6,
+    });
   }
 
   window.ParkingOptimizer = {
@@ -1941,6 +2118,7 @@
     defaultScenario,
     normalizeScenario,
     runOptimize,
+    runOptimizeAsync,
   };
 })();
 
