@@ -1,0 +1,197 @@
+/* 文档转换 · 与换算与媒体其它工具一致的 app-panel 布局 */
+.doc-panel {
+    margin-top: 0;
+}
+
+.doc-hint {
+    color: var(--color-muted, #7f8c8d);
+    font-size: 0.95rem;
+    line-height: 1.55;
+    margin: 0 0 1.25rem;
+}
+
+.doc-upload {
+    margin: 1rem 0 1.25rem;
+    padding: 1.5rem 1.25rem;
+    border: 2px dashed var(--line-hard);
+    text-align: center;
+    transition: border-color 0.2s;
+}
+
+.doc-upload:hover {
+    border-color: var(--color-theme-deep);
+}
+
+.doc-upload input[type="file"] {
+    display: none;
+}
+
+.doc-upload-btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background: var(--gradient-theme);
+    color: var(--color-theme-ink);
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.doc-file-name {
+    margin-top: 0.75rem;
+    color: #7f8c8d;
+    word-break: break-all;
+}
+
+.doc-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
+    align-items: center;
+    margin: 1rem 0;
+}
+
+.doc-options label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.doc-options select,
+.doc-options input[type="number"] {
+    padding: 8px 12px;
+    border: 1px solid #bdc3c7;
+    font-size: 1rem;
+}
+
+.doc-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    margin: 1.25rem 0;
+}
+
+.doc-primary-btn {
+    padding: 12px 25px;
+    background: var(--gradient-theme);
+    color: var(--color-theme-ink);
+    border: none;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.doc-primary-btn:hover:not(:disabled) {
+    background: var(--gradient-theme-reverse);
+}
+
+.doc-primary-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.doc-status {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--color-muted, #7f8c8d);
+}
+
+.doc-status--error {
+    color: #c0392b;
+}
+
+.doc-progress {
+    margin-top: 0.75rem;
+    height: 6px;
+    background: #ecf0f1;
+    overflow: hidden;
+}
+
+.doc-progress > span {
+    display: block;
+    height: 100%;
+    width: 0%;
+    background: var(--color-theme-deep, #d4c500);
+    transition: width 0.15s;
+}
+
+.doc-preview-list {
+    margin-top: 1.25rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.75rem;
+}
+
+.doc-preview-list img {
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--line-ins);
+    background: #fff;
+}
+
+.doc-note {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    border: 1px solid var(--line-ins);
+    background: var(--color-card);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* ipynb 阅读 */
+.ipynb-cells {
+    margin-top: 1rem;
+}
+
+.ipynb-cell {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--line-ins);
+    background: var(--color-card);
+}
+
+.ipynb-cell--code pre {
+    margin: 0;
+    overflow-x: auto;
+    font-size: 0.88rem;
+    line-height: 1.45;
+}
+
+.ipynb-cell--markdown {
+    line-height: 1.6;
+}
+
+.ipynb-cell-type {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #95a5a6;
+    margin-bottom: 0.5rem;
+}
+
+.feature-card--muted {
+    opacity: 0.92;
+}
+
+.doc-dl-note {
+    margin: 0.75rem 0 0;
+    font-size: 0.88rem;
+    color: var(--color-muted, #7f8c8d);
+    line-height: 1.5;
+}
+
+.doc-details {
+    margin-top: 1.25rem;
+    font-size: 0.92rem;
+}
+
+.doc-details summary {
+    cursor: pointer;
+    color: var(--color-body);
+}
+
+.doc-details pre {
+    margin-top: 0.75rem;
+    white-space: pre-wrap;
+    font-family: ui-monospace, monospace;
+    font-size: 0.85rem;
+}

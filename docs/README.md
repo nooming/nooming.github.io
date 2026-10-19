@@ -22,7 +22,7 @@ GitHub Pages 静态站：枢纽页按「入口 / 实践 / 工具 / 其它」聚�
 - **物理探究**：https://physics.noomings.com（外链实验站）
 
 ### 工具
-- **换算与媒体**：[app/practical/](../app/practical/) — 音频、进制、Base64、二维码、风扇 RPM
+- **换算与媒体**：[app/practical/](../app/practical/) — 音频、进制、Base64、二维码、风扇 RPM、灯牌、[文档转换](../app/practical/doc-tools/)（PDF↔图、PDF→PPTX、读 ipynb；浏览器本机处理）
 - **决策**：[app/decision/](../app/decision/) — 多选随机、抛硬币、转盘、抽卡规划
 - **Markdown 阅读**：[app/markdown/](../app/markdown/) — 粘贴 / 打开本地 `.md`，也可 Ctrl+V 粘贴文件；`catalog.json` + `?doc=id` 加载仓库文档（GitHub Pages 不能列目录）。专题 HTML 以后可以迁进阅读器，现有两篇长文暂不转换。
 - **图片识字**：[app/ocr/](../app/ocr/) — 拖入 / 选择 / Ctrl+V 粘贴图片或截图。默认 PaddleOCR（PP-OCRv5，浏览器内 ONNX）；可选更轻的 Tesseract.js。图不离开浏览器；标准引擎首次会下载模型（约 20MB）并缓存在本机。
@@ -44,6 +44,7 @@ GitHub Pages 静态站：枢纽页按「入口 / 实践 / 工具 / 其它」聚�
 - marked + DOMPurify（Markdown 阅读；库文件在 `app/markdown/assets/js/vendor/`）
 - PaddleOCR / `@ocr-web/core`（图片识字默认引擎；PP-OCRv5 ONNX，单线程 WASM；模型与 onnxruntime-web 从 jsDelivr 加载并缓存）
 - Tesseract.js（图片识字轻量备选；按需从 CDN 加载 worker/core，语言模型从 tessdata 下载并缓存在浏览器）
+- pdf.js、pdf-lib、JSZip、PptxGenJS（文档转换；从 jsDelivr 按需加载，文件不出浏览器）
 - Canvas API (绘图功能)
 - LocalStorage (数据持久化)
 
@@ -109,10 +110,12 @@ GitHub Pages 静态站：枢纽页按「入口 / 实践 / 工具 / 其它」聚�
 │   │   └── animal-test/
 │   ├── practical/
 │   │   ├── index.html
+│   │   ├── doc-tools/          # 文档转换（PDF/图片/PPTX、ipynb 预览；windows/ 为桌面打包说明）
 │   │   ├── audio-converter/
 │   │   ├── base-converter/
 │   │   ├── base64-converter/
 │   │   ├── qr-code-generator/
+│   │   ├── light-board/
 │   │   └── fan-rpm/
 │   ├── markdown/               # Markdown 阅读（工具；纯前端）
 │   │   ├── index.html
@@ -151,6 +154,7 @@ GitHub Pages 静态站：枢纽页按「入口 / 实践 / 工具 / 其它」聚�
 - **`app/games/board-games/`** 与 **`app/games/card-games/`**：合集页为 **`index.html`**，各对局在 **`gomoku/`、`go/`、`chess/`** 或 **`texas/`、`uno/`、`hearts/`**（各目录 `index.html`）；桌游共享脚本与样式在 **`card-games/assets/`**（含 **`assets/common/`** 子模块）。
 - **全站公共脚本**：通用 Toast、剪贴板、防抖、返回顶部等仅在根 **`assets/js/utils.js`**；手写笔记专用逻辑在 **`app/notes/assets/js/notes-utils.js`**，二者勿混用文件名。
 - **`app/practical/`**：进制、Base64、二维码等工具的页面脚本与样式放在各子目录 **`assets/js/`**、**`assets/css/`**；音频转换、风扇转速等以单页内联或依赖根 **`assets/css/common.css`** / **`assets/js/utils.js`**（由页面写 `../` 链回到站根）为主。
+- **`app/practical/doc-tools/`**：文档转换合集；各子工具独立 **`index.html`**，共享 **`assets/css/doc-tools.css`**、**`assets/js/common.js`**；转换逻辑为 ES module，pdf.js 等从 CDN 动态 import。Office/COM 类能力仅在 **`windows/`** 说明，不提供 exe 下载。
 - **其他 `app/` 二级分类**（如 `decision`）：已采用 **`assets/`** 或与历史页并存的，新建页面时优先 **`assets/`** 模板，避免同分类混用多种布局。
 - **`app/proton/`**、**`app/pixelflow/`**、**`app/citywalk/`** 与 **`app/parking-pso/`**：作为独立交互应用（实践或地图类），业务脚本与样式放在各自目录的 **`assets/`**；与站根 **`assets/`** 仅通过 `../../assets/` 共享 favicon、**`common.css`**、**`utils.js`** 等，避免把应用逻辑散到站根。
 - **`app/markdown/`**：Markdown 阅读；页面脚本与样式在 **`assets/`**，第三方 **`marked`** / **`DOMPurify`** 放在 **`assets/js/vendor/`**，仓库文档清单为 **`catalog.json`**（GitHub Pages 不能列目录）。

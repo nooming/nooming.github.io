@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#FFFA00">
+    <meta name="description" content="PDF 每页渲染为位图并写入 PPTX，浏览器内完成。">
+    <title>PDF 转 PPT · noomings</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="../../../../assets/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../../../assets/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../../../assets/icons/favicon-16x16.png">
+    <link rel="manifest" href="../../../../assets/icons/site.webmanifest">
+    <link rel="shortcut icon" href="../../../../assets/icons/favicon.ico">
+    <link rel="stylesheet" href="../../../../assets/css/common.css">
+    <link rel="stylesheet" href="../assets/css/doc-tools.css">
+</head>
+<body class="page-container">
+    <div class="page-header">
+        <div class="header-top">
+            <a href="../" class="back-btn">返回</a>
+        </div>
+        <div class="section-header section-header--page">
+            <h1>PDF → PPT</h1>
+            <p>每页一张位图幻灯片，文字不可编辑。</p>
+        </div>
+    </div>
+
+    <main class="app-panel doc-panel">
+        <p class="doc-hint">对应桌面工具 <strong>pdf2ppt</strong>。幻灯片尺寸按 PDF 首页比例设定。</p>
+        <div class="doc-upload">
+            <label for="pdf-file" class="doc-upload-btn">选择 PDF</label>
+            <input type="file" id="pdf-file" accept=".pdf,application/pdf">
+            <p id="file-name" class="doc-file-name">未选择文件</p>
+        </div>
+        <div class="doc-options">
+            <label>渲染倍率
+                <select id="zoom">
+                    <option value="1.5">1.5×</option>
+                    <option value="2" selected>2×（默认）</option>
+                </select>
+            </label>
+        </div>
+        <div class="doc-actions">
+            <button type="button" class="doc-primary-btn" id="convert-btn" disabled>转换并下载 PPTX</button>
+            <p id="status" class="doc-status" aria-live="polite">请选择 PDF</p>
+        </div>
+        <div class="doc-progress" hidden id="progress-wrap"><span id="progress-bar"></span></div>
+    </main>
+
+    <footer class="site-footer" role="contentinfo">
+        <p>© 2026 noomings · 非商业使用</p>
+    </footer>
+    <script src="../../../../assets/js/utils.js"></script>
+    <script type="module" src="assets/js/pdf-to-ppt.js"></script>
+</body>
+</html>

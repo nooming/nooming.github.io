@@ -2,12 +2,13 @@
 
 ## v2.3
 
-枢纽页改为「入口 / 实践 / 工具 / 其它」，访客域名为 noomings（`app/` 目录未按栏目搬迁）；本版上线 Markdown 阅读、图片识字、灯牌，并将 Citywalk 升级为 **WanderWalk**（路线规划 + 社区）。
+枢纽页改为「入口 / 实践 / 工具 / 其它」，访客域名为 noomings（`app/` 目录未按栏目搬迁）；本版上线 Markdown 阅读、图片识字、灯牌、**文档转换**，并将 Citywalk 升级为 **WanderWalk**（路线规划 + 社区）。
 
 1. **枢纽与导航**：首页四栏、整卡链接、SEO 为 `https://noomings.com/`；简介区分纯本地与需联网；实践区外链「物理探究」。全站返回统一为「返回」；页脚「© 2026 noomings · 非商业使用」。删除 `articles/parking-pso/` 占位（应用仍在 `app/parking-pso/`）。
 2. **工具**：Markdown 阅读（`app/markdown/`，粘贴或拖入 `.md`）；图片识字（`app/ocr/`，浏览器内 PP-OCRv5，失败回退 Tesseract，图不出本机）；换算合集新增灯牌（`app/practical/light-board/`）；音频转换改本地 `lamejs`，修复 MP3 转码。
 3. **WanderWalk 规划**（`app/citywalk/`）：品牌视觉与规划面板；规划前偏好 / 节奏 / 时段 / 路线风格与最多 3 个必去点（搜索、地图 Pin、灵感勾选）；地图偏好探索与灵感候选 Pin（高德 PlaceSearch）；灵感联网博查且仅展示地理编码成功的 POI；路线去折返、贴计划时长；分享链接与 `?r=` 打开即还原参数；定位或 IP 定城、最近路线、移动搜索贴键盘；结果页叙事、天气室内重规划、逐站步行导航、可选站跳过与增删站重规划、主题色路线绘制。
 4. **WanderWalk 社区**（`app/citywalk/community/`）：Walk 灵感、找搭子、足迹（演示数据 + 邮箱登录后足迹云同步）；规划完成可「记录到社区」，经 `sessionStorage` 展示路线时间轴；粉紫品牌 token、Tab 与联动条、示例诚实标注；移动端安全区与 ≥44px 触控。
+5. **文档转换**（`app/practical/doc-tools/`）：浏览器内 PDF→PNG（ZIP）、图片→PDF（按文件名数字 1、2、3… 排序）、PDF→PPTX（整页位图）、只读 ipynb；文件不上传，脚本经 jsDelivr 加载 pdf.js、pdf-lib、JSZip、PptxGenJS。Word/PPT→PDF、PPT→图、nbopen 等依赖本机 Office/WPS 或 Jupyter，见 `windows/` 打包说明（源码在 monorepo `noomings/desktop-doc-tools/`，本站不提供 exe）。换算与媒体与首页工具区增加入口。
 
 ## v2.2
 
