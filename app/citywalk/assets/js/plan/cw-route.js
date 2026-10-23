@@ -417,11 +417,11 @@ function generateRoute(options) {
     CW.lastPlanTab = 'manual';
     const isLoop = CW.planMode === 'loop';
     if (!CW.startPoint) {
-        showToast(isLoop ? '请先选择探索中心' : '先选好起点和终点吧');
+        showToast(isLoop ? '请先选择探索中心' : '请先选择起点与终点');
         return;
     }
     if (!isLoop && !CW.endPoint) {
-        showToast('先选好起点和终点吧');
+        showToast('请先选择起点与终点');
         return;
     }
 
@@ -503,13 +503,13 @@ function generateRoute(options) {
         clearTimeout(timeoutId);
         let errorMsg = '';
         if (error.name === 'AbortError') {
-            errorMsg = "规划用时有点久，试试缩短路线或稍后再来";
+            errorMsg = "规划耗时较长 · 请缩短路线或稍后重试";
         } else if (error.message.includes('Failed to fetch')) {
-            errorMsg = "网络好像不太顺畅，稍后再试一次吧";
+            errorMsg = "网络异常 · 请稍后重试";
         } else if (error.message.includes('JSON')) {
             errorMsg = "出了点小状况，请再试一次";
         } else {
-            errorMsg = "路线没能规划出来，请再试一次";
+            errorMsg = "未能生成路线 · 请重试";
         }
         if (typeof showLoadingFailure === 'function') {
             showLoadingFailure(errorMsg, generateRoute);
@@ -1150,7 +1150,7 @@ function addStopToRouteAndReplan(spot) {
 
 function applyRouteResult(data) {
     if (!data.success) {
-        showToast(data.message || '这条路线没能规划出来，换个起终点试试');
+        showToast(data.message || '未能生成路线 · 请调整起终点');
         return;
     }
 
@@ -1160,7 +1160,7 @@ function applyRouteResult(data) {
     }
 
     if (!Array.isArray(data.path) || data.path.length === 0) {
-        showToast('这条路线没能规划出来，换个起终点试试');
+        showToast('未能生成路线 · 请调整起终点');
         return;
     }
 
@@ -1403,8 +1403,8 @@ function showLoadingFailure(message, retryFn) {
 // 按消息内容自动判定语义类型（可被第三参显式覆盖）
 function classifyToast(message) {
     const s = String(message || '');
-    // 错误：覆盖软化后的措辞（"不太顺畅/没能/换个…试试/稍后再试"等）
-    if (/失败|错误|无法|不可用|超时|出错|异常|没能|没找到|联系不上|开小差|小状况|暂不支持|不太顺畅|稍后再[试来]|再试试|请再试|请重试|换个|想久了|❌/.test(s)) return 'error';
+    // 错误：用户可见失败 / 重试类措辞
+    if (/失败|错误|无法|不可用|超时|出错|异常|未能|未找到|暂不可用|暂不支持|请稍后|请重试|网络异常|❌/.test(s)) return 'error';
     if (/成功|完成|已复制|已切换|已生成|已保存|已更新|✅|🎉/.test(s)) return 'success';
     return 'info';
 }

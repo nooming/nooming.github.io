@@ -1,10 +1,10 @@
 import {
     downloadBlob,
     isImageFile,
-    numericSortKey,
+    filesUseNumericSort,
+    orderImageFilesForPdf,
     setProgress,
     setStatus,
-    sortImageFiles,
 } from "../../../assets/js/common.js";
 
 /** webp / gif 等：经 canvas 转为 PNG 再嵌入 */
@@ -47,8 +47,7 @@ let selectedFiles = [];
 
 fileInput.addEventListener("change", () => {
     const list = fileInput.files ? [...fileInput.files] : [];
-    selectedFiles = list.filter(isImageFile);
-    selectedFiles = sortImageFiles(selectedFiles);
+    selectedFiles = orderImageFilesForPdf(list.filter(isImageFile));
 
     if (!selectedFiles.length) {
         fileNameEl.textContent = "未选择文件";
@@ -59,11 +58,9 @@ fileInput.addEventListener("change", () => {
         return;
     }
 
-    const nonNumeric = selectedFiles.filter((f) => numericSortKey(f.name)[0] === 1);
+    const byNumber = filesUseNumericSort(selectedFiles);
     let hint = `已选 ${selectedFiles.length} 张：${selectedFiles.map((f) => f.name).join("、")}`;
-    if (nonNumeric.length) {
-        hint += "（含非数字文件名，已排在后面）";
-    }
+    hint += byNumber ? "（按文件名编号排序）" : "（按选择顺序，与预览一致）";
     fileNameEl.textContent = hint;
     convertBtn.disabled = false;
     setStatus(statusEl, "可以开始合并");
@@ -71,10 +68,13 @@ fileInput.addEventListener("change", () => {
     previewEl.hidden = false;
     previewEl.innerHTML = "";
     for (const file of selectedFiles.slice(0, 12)) {
+        const cell = document.createElement("div");
+        cell.className = "doc-preview-cell";
         const img = document.createElement("img");
         img.alt = file.name;
         img.src = URL.createObjectURL(file);
-        previewEl.appendChild(img);
+        cell.appendChild(img);
+        previewEl.appendChild(cell);
     }
 });
 

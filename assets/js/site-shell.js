@@ -54,7 +54,7 @@
             {
                 id: "lab",
                 label: "实验",
-                href: "/app/lab/proton/",
+                href: "/app/lab/pixelflow/",
                 match: /^\/app\/lab/,
             },
             {
@@ -88,7 +88,7 @@
                 id: "lab",
                 label: "实验",
                 icon: "i-flask",
-                href: "/app/lab/proton/",
+                href: "/app/lab/pixelflow/",
                 match: /^\/app\/lab/,
             },
             {
@@ -136,8 +136,8 @@
             {
                 title: "实验",
                 links: [
-                    { label: "质子", href: "/app/lab/proton/" },
                     { label: "像素涌流", href: "/app/lab/pixelflow/" },
+                    { label: "质子", href: "/app/lab/proton/" },
                     { label: "风扇转速", href: "/app/lab/fan-rpm/" },
                 ],
             },
@@ -507,16 +507,16 @@
             contentWidth: "wide",
             l1: [
                 {
-                    id: "proton",
-                    label: "质子",
-                    href: "/app/lab/proton/",
-                    match: /\/proton/,
-                },
-                {
                     id: "pixel",
                     label: "像素涌流",
                     href: "/app/lab/pixelflow/",
                     match: /\/pixelflow/,
+                },
+                {
+                    id: "proton",
+                    label: "质子",
+                    href: "/app/lab/proton/",
+                    match: /\/proton/,
                 },
                 {
                     id: "fan",
@@ -527,18 +527,18 @@
             ],
             mobileDefault: [
                 {
-                    id: "proton",
-                    label: "质子",
-                    icon: "i-atom",
-                    href: "/app/lab/proton/",
-                    match: /\/proton/,
-                },
-                {
                     id: "pixel",
                     label: "像素",
                     icon: "i-numbers",
                     href: "/app/lab/pixelflow/",
                     match: /\/pixelflow/,
+                },
+                {
+                    id: "proton",
+                    label: "质子",
+                    icon: "i-atom",
+                    href: "/app/lab/proton/",
+                    match: /\/proton/,
                 },
                 {
                     id: "menu",

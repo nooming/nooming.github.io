@@ -136,10 +136,10 @@ async function sendAgentChat() {
                 if (data.success) {
                     applyRouteResult(data);
                 } else {
-                    showToast(data.message || '这条路线没能规划出来，换个起终点试试');
+                    showToast(data.message || '未能生成路线 · 请调整起终点');
                 }
             } catch (e) {
-                showToast(e.message || '没能更新起点或终点，请再试一次');
+                showToast(e.message || '未能更新起点或终点 · 请重试');
             }
             return;
         }
@@ -475,7 +475,7 @@ async function generateSmartRoute() {
         if (error.name === 'AbortError') {
             errorMsg = '智能规划想久了，描述短一点或稍后再来';
         } else if (error.message && error.message.includes('Failed to fetch')) {
-            errorMsg = '智能规划暂时联系不上，稍后再试试';
+            errorMsg = '智能规划服务暂不可用 · 请稍后重试';
         } else if (error.message && String(error.message).trim()) {
             errorMsg = String(error.message).trim();
         } else {
@@ -517,7 +517,7 @@ async function applyInspiredPlanResponse(data, useInspire) {
         return;
     }
     if (!data.parsed) {
-        showToast('没太理解你的描述，换个说法再试试');
+        showToast('未能理解描述 · 请换一种表述');
         return;
     }
 
@@ -529,7 +529,7 @@ async function applyInspiredPlanResponse(data, useInspire) {
         await setEndpointsFromParsed(data.parsed, data);
     } catch (geoErr) {
         console.error(geoErr);
-        showToast(geoErr.message || '没能定位起点或终点，换个说法再试试');
+        showToast(geoErr.message || '无法定位起点或终点 · 请调整表述');
         const q = document.getElementById('agentQueryInput');
         if (q) q.focus();
         return;
@@ -538,7 +538,7 @@ async function applyInspiredPlanResponse(data, useInspire) {
     applyAgentParsedParams(data.parsed, data);
 
     if (!data.success) {
-        showToast(data.message || '这条路线没能规划出来，换个起终点试试');
+        showToast(data.message || '未能生成路线 · 请调整起终点');
         return;
     }
 

@@ -1,6 +1,6 @@
 // ========== 图片识字 · PaddleOCR 默认 / Tesseract 轻量 ==========
 // 标准引擎：@ocr-web/core（PP-OCRv5 ONNX），单线程 WASM，不依赖 COOP/COEP。
-// 模型与 ORT wasm 从 jsDelivr 拉取，浏览器缓存；推理只在本机。
+// 模型与 ORT wasm 从 jsDelivr 拉取；推理在浏览器端完成。
 // 轻量引擎：Tesseract.js（按需加载 CDN）。标准引擎加载失败时自动改用轻量。
 // 识别后跑浏览器侧后处理；结果可编辑并 Markdown 预览。
 import { OcrEngine } from './vendor/ocr-web/index.js';

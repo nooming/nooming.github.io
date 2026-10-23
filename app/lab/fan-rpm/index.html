@@ -261,7 +261,7 @@
       <button type="button" class="btn" id="startBtn">开启摄像头并开始</button>
       <button type="button" class="btn secondary" id="stopBtn" disabled>停止</button>
       <p class="hint">
-        <strong>帧差</strong>即相邻帧对应像素灰度差的绝对值在 ROI 内取平均；其包络随扇叶扫过呈周期性。<strong>每转周期数</strong>若与真实不符，读数会按比例错（可对照已知转速调节）。对称扇叶有时主频为 2×叶片数，可把该值改为 6、8 等试试。读数平滑为对 RPM 的滑动平均。
+        <strong>帧差</strong>即相邻帧对应像素灰度差的绝对值在 ROI 内取平均；其包络随扇叶扫过呈周期性。<strong>每转周期数</strong>若与真实不符，读数会按比例错（可对照已知转速调节）。对称扇叶有时主频为 2×叶片数，可将该值设为 6、8 等再对照。读数平滑为对 RPM 的滑动平均。
       </p>
       <p class="err" id="errBox" hidden></p>
       <p class="status" id="status"></p>

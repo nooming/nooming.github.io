@@ -78,7 +78,7 @@ async function _fetchShareBackground() {
 // 生成分享长图（后端卫星地图为背景，html2canvas 合成）
 async function generateShareImage() {
     if (!CW.routeData || !CW.routeData.success) {
-        showToast('请先生成一条路线吧');
+        showToast('请先生成路线');
         return;
     }
 
@@ -204,13 +204,13 @@ async function generateShareImage() {
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            showToast('🎉 长图已生成，去分享吧');
+            showToast('长图已生成 · 可直接分享');
         }, 'image/png', 0.95);
 
         document.body.removeChild(shareCard);
     } catch (err) {
         console.error('生成图片失败:', err);
         if (shareCard.parentNode) document.body.removeChild(shareCard);
-        showToast('图片没能生成，请再试一次');
+        showToast('未能生成图片 · 请重试');
     }
 }

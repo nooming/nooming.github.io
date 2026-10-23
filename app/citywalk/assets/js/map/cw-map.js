@@ -2,7 +2,7 @@
 
 function initMap() {
     if (!window.AMap) {
-        showToast("地图加载失败了，检查下网络再刷新吧");
+        showToast("地图加载失败 · 请检查网络后刷新");
         return;
     }
 
@@ -604,7 +604,7 @@ function tryGeocodeSearch(keyword) {
                 setTimeout(() => { if (CW.searchMarker) { CW.map.remove(CW.searchMarker); CW.searchMarker = null; } }, 3000);
             } else {
                 CW._recenterSearchAfterSettle = false;
-                showToast("没找到这个地点，换个关键词试试，比如 外滩、南京路");
+                showToast("未找到该地点 · 请更换关键词（例：外滩、南京路）");
             }
         });
     });

@@ -68,7 +68,7 @@ function getCityWeather(city, forceRefresh = false) {
     function showUnavailable() {
         updateWeatherUI(
             "天气暂不可用",
-            "这里暂时没有实时天气，出门前看下当地预报吧",
+            "暂无实时天气 · 出行前请查阅当地预报",
             "⛅"
         );
     }

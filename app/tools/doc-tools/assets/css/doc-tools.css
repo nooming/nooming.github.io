@@ -89,6 +89,119 @@
     cursor: not-allowed;
 }
 
+.doc-secondary-btn {
+    padding: 12px 20px;
+    background: var(--color-card);
+    color: var(--color-ink, #0a0a0a);
+    border: 1px solid var(--line-hard, #bdc3c7);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.doc-secondary-btn:hover:not(:disabled) {
+    border-color: var(--color-theme-deep);
+    background: var(--color-theme-wash, #fffde7);
+}
+
+.doc-secondary-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.doc-page-picker {
+    margin: 1rem 0 0.5rem;
+    min-width: 0;
+}
+
+.doc-page-picker__hint {
+    margin: 0 0 0.65rem;
+    font-size: 0.88rem;
+    color: var(--color-muted, #7f8c8d);
+    line-height: 1.45;
+}
+
+.doc-pdf-preview {
+    position: relative;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 120px;
+    max-height: min(420px, 55vh);
+    overflow: auto;
+    border: 1px solid var(--line-ins);
+    background: #f4f5f6;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 0.5rem;
+}
+
+.doc-pdf-preview canvas {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+.doc-pdf-preview__loading {
+    margin: 2rem 1rem;
+    color: var(--color-muted, #7f8c8d);
+    font-size: 0.92rem;
+    text-align: center;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.doc-pdf-preview__error {
+    color: #c0392b;
+}
+
+.doc-page-nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.doc-page-nav__btn {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid var(--line-hard, #bdc3c7);
+    background: var(--color-card);
+    font-size: 1.35rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.doc-page-nav__btn:hover:not(:disabled) {
+    border-color: var(--color-theme-deep);
+    background: var(--color-theme-wash, #fffde7);
+}
+
+.doc-page-nav__btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.doc-page-nav__field {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.95rem;
+}
+
+.doc-page-nav__field input[type="number"] {
+    width: 4.25rem;
+    padding: 8px 8px;
+    border: 1px solid #bdc3c7;
+    font-size: 1rem;
+    text-align: center;
+}
+
 .doc-status {
     margin: 0;
     font-size: 0.95rem;
@@ -117,15 +230,37 @@
 .doc-preview-list {
     margin-top: 1.25rem;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(120px, 100%), 1fr));
     gap: 0.75rem;
+    max-width: 100%;
+    min-width: 0;
 }
 
-.doc-preview-list img {
+.doc-preview-cell {
+    position: relative;
+    box-sizing: border-box;
     width: 100%;
-    height: auto;
+    min-width: 0;
+    height: min(240px, 42vh);
+    overflow: hidden;
     border: 1px solid var(--line-ins);
     background: #fff;
+}
+
+.doc-preview-cell img {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+}
+
+.doc-panel {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: clip;
 }
 
 .doc-note {

@@ -20,7 +20,7 @@ GitHub Pages 静态站：顶栏 **首页 · 实验 · 工具 · 阅读 · 娱乐
 - **物理探究**：https://physics.noomings.com（外链）
 
 ### 实验（顶栏 · `app/lab/`）
-- 顶栏进入 [质子](../app/lab/proton/) · [像素涌流](../app/lab/pixelflow/) · [风扇转速](../app/lab/fan-rpm/)
+- 顶栏进入 [像素涌流](../app/lab/pixelflow/) · [质子](../app/lab/proton/) · [风扇转速](../app/lab/fan-rpm/)
 
 ### 阅读（顶栏 · `app/read/`）
 - 顶栏进入 [Markdown](../app/read/markdown/) · [开发者工具实战](../app/read/crawler-experience/) · [猫抓笔记](../app/read/cat-catch-tutorial/)
@@ -44,7 +44,7 @@ GitHub Pages 静态站：顶栏 **首页 · 实验 · 工具 · 阅读 · 娱乐
 - marked + DOMPurify（Markdown 阅读；库文件在 `app/read/markdown/assets/js/vendor/`）
 - PaddleOCR / `@ocr-web/core`（图片识字默认引擎；PP-OCRv5 ONNX，单线程 WASM；模型与 onnxruntime-web 从 jsDelivr 加载并缓存）
 - Tesseract.js（图片识字轻量备选；按需从 CDN 加载 worker/core，语言模型从 tessdata 下载并缓存在浏览器）
-- pdf.js、pdf-lib、JSZip、PptxGenJS（文档转换；从 jsDelivr 按需加载，文件不出浏览器）
+- pdf.js、pdf-lib、JSZip、PptxGenJS（文档转换；从 jsDelivr 按需加载 · 文件不发送至服务器）
 - Canvas API (绘图功能)
 - LocalStorage (数据持久化)
 

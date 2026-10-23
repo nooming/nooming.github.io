@@ -67,11 +67,11 @@
                     CW.currentCityCenter = coords;
                     applyCitySwitch(CW.currentCity, CW.currentCityCenter);
                 } else {
-                    showToast(`没找到「${cityName}」这座城市，换个名字试试`);
+                    showToast(`未找到「${cityName}」 · 请更换城市名`);
                 }
             } catch (e) {
                 console.error('城市定位失败', e);
-                showToast(`没能定位「${cityName}」，换个名字试试`);
+                showToast(`无法定位「${cityName}」 · 请更换城市名`);
             }
         }
 
@@ -185,7 +185,7 @@
                     weatherTips += '😊 今日天气舒适，适合慢慢漫步\n';
                 }
             } else {
-                weatherTips += '暂时拿不到实时天气，出门前看下当地预报吧\n';
+                weatherTips += '暂无实时天气 · 出行前请查阅当地预报\n';
             }
 
             const planText = `${greeting}，这是为你定制的 ${CW.currentCity} Citywalk 攻略
@@ -210,7 +210,7 @@ ${poiText}
             try {
                 if (navigator.clipboard && window.isSecureContext) {
                     navigator.clipboard.writeText(planText).then(() => {
-                        showToast("攻略已复制，去分享吧");
+                        showToast("攻略已复制 · 可直接分享");
                     }).catch(err => {
                         throw err;
                     });
@@ -222,7 +222,7 @@ ${poiText}
                     textArea.select();
                     document.execCommand('copy');
                     document.body.removeChild(textArea);
-                    showToast("攻略已复制，去分享吧");
+                    showToast("攻略已复制 · 可直接分享");
                 }
             } catch (err) {
                 console.error('复制失败', err);
@@ -232,7 +232,7 @@ ${poiText}
 
         async function generatePlanText() {
             if (!CW.routeData || !CW.routeData.success) {
-                showToast("请先生成一条路线吧");
+                showToast("请先生成路线");
                 return;
             }
 

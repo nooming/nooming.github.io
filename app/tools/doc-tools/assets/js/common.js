@@ -38,6 +38,26 @@ export function sortImageFiles(files) {
     });
 }
 
+/** 文件名是否按 numericSortKey 参与编号排序（纯数字或数字前缀） */
+export function filesUseNumericSort(files) {
+    return files.length > 0 && files.every((f) => numericSortKey(f.name)[0] === 0);
+}
+
+/**
+ * 合并 PDF 的页序：编号文件名 → 数值排序；否则 → 选择器顺序。
+ * 移动端相册多选时 FileList 常为「后选在前」，需反转为点选正序。
+ * @param {File[]} files
+ */
+export function orderImageFilesForPdf(files) {
+    const list = [...files];
+    if (!list.length) return list;
+    if (filesUseNumericSort(list)) return sortImageFiles(list);
+    const mobile =
+        typeof window !== "undefined" &&
+        window.matchMedia("(max-width: 767.98px)").matches;
+    return mobile ? list.reverse() : list;
+}
+
 const IMAGE_EXT = new Set([
     ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp", ".tif", ".tiff",
 ]);

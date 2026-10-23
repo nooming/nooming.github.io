@@ -41,7 +41,7 @@ async function fetchInspirationCards() {
         renderInspirationCards(data);
     } catch (err) {
         console.error('获取灵感卡片失败：', err);
-        renderInspirationEmpty('没能联系上灵感服务，稍后再试');
+        renderInspirationEmpty('灵感服务暂不可用 · 请稍后重试');
     } finally {
         if (btn) { btn.disabled = false; btn.textContent = '查看推荐点位'; }
     }
@@ -69,7 +69,7 @@ function renderInspirationEmpty(message, source) {
     }
     const empty = document.createElement('div');
     empty.className = 'inspire-empty';
-    empty.textContent = message || '这次没找到合适的候选点，换个说法或片区再试试';
+    empty.textContent = message || '未找到合适候选 · 请调整描述或片区';
     wrap.appendChild(empty);
 }
 
@@ -84,7 +84,7 @@ function renderInspirationCards(data) {
     const source = data && (data.source === 'web' || data.source === 'llm') ? data.source : '';
 
     if (spots.length === 0) {
-        renderInspirationEmpty('这次没找到可定位的候选点，换个说法或片区再试试', source);
+        renderInspirationEmpty('未找到可定位候选 · 请调整描述或片区', source);
         return;
     }
 

@@ -472,7 +472,7 @@ function syncInspireToolbarMeta(type) {
   const meta = document.getElementById('inspireToolbarMeta');
   if (!meta) return;
   let text = INSPIRE_TYPE_META[type] || INSPIRE_TYPE_META['全部'];
-  if (feedViewSavedOnly) text = '当前仅显示本机收藏的笔记。';
+  if (feedViewSavedOnly) text = '当前仅显示本地收藏的笔记。';
   meta.textContent = text;
   meta.hidden = !feedViewSavedOnly && (!type || type === '全部');
 }
@@ -554,7 +554,7 @@ function renderRoutes(city, keyword) {
   if (!data.length) {
     const key = String(keyword || '').trim();
     const msg = key
-      ? '没有匹配的路线，试试其他关键词或切换到「全部」。'
+      ? '未找到匹配路线 · 请更换关键词或切换到「全部」。'
       : '暂无路线内容。发布「路线」类笔记后会出现在这里；若示例未加载，请刷新页面。';
     routeGrid.innerHTML = '<div class="empty" style="display:block;grid-column:1/-1">' + msg + '</div>';
     return;
@@ -1432,7 +1432,7 @@ function renderFootprints(){
         </div>
       </article>`;
     }).join('');
-    empty.textContent='还没有记录过的路线。完成一次 Citywalk 后，点「记录一次 Walk」，把路线与沿途点位留在这里。';
+    empty.textContent='暂无路线记录。完成 Citywalk 后，可通过「记录一次 Walk」保存路线与沿途点位。';
   }else if(footprintView==='planned'){
     items=plannedRoutes;
     html=items.map(function (r) {
@@ -1906,7 +1906,7 @@ function handleWalkCompletion(payload={}){
   const alreadyCompleted=completionEvents.some(e=>(typeof e==='string'?e:e?.eventId)===eventId);
   if(alreadyCompleted){
     renderPointsBoard();
-    showToast('这次 Walk 已经领取过积分啦');
+    showToast('该 Walk 积分已领取');
     return {ok:true,duplicate:true,points:totalWalkPoints};
   }
   const wasRoutePanelVisible=document.getElementById('routeSpotPanel')?.style.display==='block';
@@ -2210,9 +2210,9 @@ function renderFeedMixed(keyword) {
     if (!total) {
       feedEmpty.hidden = false;
       if (source.length || getDiscoverRoutes().length) {
-        feedEmpty.innerHTML = '<strong>没有匹配的内容</strong><p style="margin-top:8px;font-size:12px;color:#888">试试其他关键词，或切换到「路线」按城市浏览。</p>';
+        feedEmpty.innerHTML = '<strong>未找到匹配内容</strong><p style="margin-top:8px;font-size:12px;color:#888">请更换关键词，或切换到「路线」按城市浏览。</p>';
       } else {
-        feedEmpty.innerHTML = '<strong>还没有灵感内容</strong><p style="margin-top:8px;font-size:12px;color:#888">登录后点「＋ 发布」，做第一个分享吧。</p>';
+        feedEmpty.innerHTML = '<strong>暂无灵感内容</strong><p style="margin-top:8px;font-size:12px;color:#888">登录后点「＋ 发布」即可创建首条分享。</p>';
       }
     } else {
       feedEmpty.hidden = true;
@@ -2256,9 +2256,9 @@ function renderFeed(type='全部',keyword=''){
       }else if(type==='路线'&&!feedViewSavedOnly){
         feedEmpty.innerHTML='<strong>路线请在上方卡片区浏览</strong><p style="margin-top:8px;font-size:12px;color:#888">笔记流不重复展示路线；切回「全部」可看打卡与攻略。</p>';
       }else if(source.length){
-        feedEmpty.innerHTML='<strong>没有找到相关内容</strong><p style="margin-top:8px;font-size:12px;color:#888">换个关键词或类型试试。</p>';
+        feedEmpty.innerHTML='<strong>未找到相关内容</strong><p style="margin-top:8px;font-size:12px;color:#888">请更换关键词或类型。</p>';
       }else{
-        feedEmpty.innerHTML='<strong>还没有笔记</strong><p style="margin-top:8px;font-size:12px;color:#888">登录后点「＋ 发布」，做第一个分享吧。</p>';
+        feedEmpty.innerHTML='<strong>暂无笔记</strong><p style="margin-top:8px;font-size:12px;color:#888">登录后点「＋ 发布」即可创建首条笔记。</p>';
       }
     }else{
       feedEmpty.hidden=true;
@@ -2328,7 +2328,7 @@ function renderBuddies(filter='全部'){
     ?'<p class="empty" style="display:block;grid-column:1/-1"><strong>还没有收藏的招募</strong><br><span style="font-size:12px;color:#888">在卡片右上角点 ☆，或在「我的 · 收藏」查看。</span></p>'
     :key
     ?'<p class="empty" style="display:block;grid-column:1/-1"><strong>没有匹配的招募</strong><br><span style="font-size:12px;color:#888">换关键词，或把范围切到「全部 / 灵感」。</span></p>'
-    :'<p class="empty" style="display:block;grid-column:1/-1">暂无招募，登录后发起一次 Walk 吧。</p>';
+    :'<p class="empty" style="display:block;grid-column:1/-1">暂无招募 · 登录后可发起 Walk。</p>';
   syncMobileFilterTriggers();
 }
 

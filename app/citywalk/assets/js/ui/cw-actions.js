@@ -307,7 +307,7 @@ function renderRouteFeedback(data) {
     if (poiType !== '无偏好') {
         lines.push(poiCount > 0
             ? `已按「<b>${poiType}</b>」为你筛选，沿途 <b>${poiCount}</b> 个打卡点。`
-            : `按「<b>${poiType}</b>」筛选后这一带暂无合适打卡点，可换个区域或选「无偏好」。`);
+            : `按「<b>${poiType}</b>」筛选后该区域暂无合适打卡点 · 请更换区域或选「无偏好」。`);
     }
 
     // 计划 vs 实际偏差的可执行建议

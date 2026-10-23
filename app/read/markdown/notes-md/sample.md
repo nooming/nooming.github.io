@@ -15,7 +15,7 @@ marked.parse(text);
 DOMPurify.sanitize(html);
 ```
 
-> 渲染只在浏览器里完成，不上传。
+> 渲染在浏览器端完成 · 不发送至服务器。
 
 | 入口 | 说明 |
 | --- | --- |

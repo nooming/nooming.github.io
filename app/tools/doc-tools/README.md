@@ -10,4 +10,4 @@
 | 读 ipynb | `ipynb-read/` | — |
 | Word/PPT → PDF 等 | `windows/` 说明 | word2pdf / ppt2pdf / ppt2img / nbopen（`noomings/desktop-doc-tools/` 自行打包） |
 
-网页版在浏览器内处理，文件不上传。依赖 jsDelivr 加载 pdf.js、pdf-lib、JSZip、PptxGenJS。
+网页版在浏览器端处理 · 文件不发送至服务器。依赖 jsDelivr 加载 pdf.js、pdf-lib、JSZip、PptxGenJS。

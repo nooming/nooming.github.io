@@ -108,7 +108,7 @@ function triggerImportNotes() {
 // 从 JSON 文件导入（覆盖前确认；只写本机 localStorage）
 function importNotesData(file) {
     if (!file) return;
-    if (!confirm('导入将覆盖当前本机笔记，确定继续？')) {
+    if (!confirm('导入将覆盖当前浏览器中的笔记数据，是否继续？')) {
         return;
     }
     const reader = new FileReader();
