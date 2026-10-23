@@ -4,7 +4,7 @@
 
 | 顶栏 | 目录 | 说明 |
 |------|------|------|
-| 首页 · 常用 | `navigation/`、`notes/`、`citywalk/` | 不挂全站壳（Citywalk 自有顶栏） |
+| 首页 · 独立入口 | `navigation/`、`notes/`、`citywalk/` | 不挂全站壳（Citywalk 自有顶栏） |
 | 首页 · 实践 | `parking-pso/` | 不挂壳 |
 | 实验 | `lab/` | 顶栏 L1 → `pixelflow/`；`proton/`、`fan-rpm/`（无域目录页） |
 | 工具 | `tools/` | 顶栏 L1 → `doc-tools/pdf-to-images/`；**工具目录** `tools/index.html` |

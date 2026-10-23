@@ -115,7 +115,7 @@
         ],
         menuGroups: [
             {
-                title: "常用",
+                title: "独立入口",
                 links: [
                     { label: "导航", href: "/app/navigation/" },
                     { label: "笔记", href: "/app/notes/" },

@@ -1,16 +1,16 @@
 # noomings
 
-顶栏导航 · 首页常用三格
+顶栏导航 · 首页独立入口三格
 
 ## 项目简介
 
-GitHub Pages 静态站：顶栏 **首页 · 实验 · 工具 · 阅读 · 娱乐**。首页 **常用**（导航 · 笔记 · Citywalk）+ **实践**（停车、物理外链）。用户可见文案见 [copy-style.md](./copy-style.md)。
+GitHub Pages 静态站：顶栏 **首页 · 实验 · 工具 · 阅读 · 娱乐**。首页 **独立入口**（导航 · 笔记 · Citywalk）+ **实践**（停车、物理外链）。用户可见文案见 [copy-style.md](./copy-style.md)。
 
 ## 功能特性
 
 下列为功能说明，入口以顶栏与首页为准。`app/` 分域说明见 [app-ia.md](./app-ia.md)。
 
-### 首页 · 常用（`#discover`）
+### 首页 · 独立入口（`#discover`）
 - **导航**：[app/navigation/](../app/navigation/) — 外链主题索引
 - **笔记**：[app/notes/](../app/notes/) — 画布 + 文本；本地持久化
 - **Citywalk**：[app/citywalk/](../app/citywalk/)（说明见 [app/citywalk/README.md](../app/citywalk/README.md)）
@@ -69,7 +69,7 @@ GitHub Pages 静态站：顶栏 **首页 · 实验 · 工具 · 阅读 · 娱乐
 ├── docs/                       # README、CHANGELOG、copy-style、app-ia
 ├── assets/                     # 全站 CSS/JS/icons；site-shell、article.css、home.css
 ├── app/
-│   ├── navigation/  notes/  citywalk/   # 首页 · 常用（Citywalk 独立壳）
+│   ├── navigation/  notes/  citywalk/   # 首页 · 独立入口（Citywalk 独立壳）
 │   ├── parking-pso/                     # 首页 · 实践
 │   ├── lab/                             # 实验：proton、pixelflow、fan-rpm
 │   ├── tools/                           # 工具：doc-tools、编码媒体、ocr、decision 随机、灯牌等
