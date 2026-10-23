@@ -74,11 +74,6 @@ function heartsTutor(step) {
         })
         return remaining
     }
-    function getButton(type, text, onclick, glyph = 0) {
-        const icon = glyph && window.UIButtons ? UIButtons.glyph(glyph) : ''
-        return `<button class="btn btn-${type}" onclick="${onclick}">${icon}${text}</button>`
-    }
-
     // Prebaked example hands (13 each)
     const you = ['C2','C5','C9','CX','DA','D5','D7','H4','H6','H9','SQ','S7','SA']
     const left = Array(13).fill('C2')

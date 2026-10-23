@@ -20,10 +20,12 @@
     <link rel="stylesheet" href="/assets/css/site-shell.css">
         <link rel="stylesheet" href="../assets/card-ui.css">
         <link rel="stylesheet" href="../assets/game-layout.css">
+        <script src="../assets/card-game-scale.js" defer></script>
 
         <script src="../../../../../assets/js/utils.js"></script>
         <script src="../assets/common/dom.js"></script>
         <script src="../assets/common/ui-buttons.js"></script>
+        <script src="../assets/common/card-table-buttons.js"></script>
         <script src="../assets/common/tutorial-shell.js"></script>
         <script src="../assets/tutor-texas.js"></script>
         <script src="../assets/texas.js"></script>
@@ -72,9 +74,7 @@
                     }
                     for (let gi = 0; gi < num; gi++) {
                         let i = (gi + offset) % num
-                        console.log(i)
                         let k = cards.p[plist[i]]
-                        console.log(k)
                         if (plist[i] != cur.you) {
                             str += drawCard(222.5, 470, k[0], 360 * gi / num, tt < 5)
                             str += drawCard(262.5, 470, k[1], 360 * gi / num, tt < 5)
@@ -154,10 +154,6 @@
                     $('.person-ready').remove()
                     $('.person-unready').css('display', 'block')
                 }, 100)
-                // $('.texas-svg-down').html(str)
-            }
-            function getButton(type, text, onclick, glyph = 0, onmouseenter = 0, onmouseleave = 0, onmousedown = 0, glyph2 = 0) {
-                return `<button class="btn btn-${type}" onclick="${onclick}" ${onmouseenter ? `onmouseenter="${onmouseenter}" ontouchstart="${onmouseenter}"` : ''} ${onmouseleave ? `onmouseleave="${onmouseleave}"` : ''} ${onmousedown ? `onmousedown="${onmousedown}"` : ''}>${glyph ? (window.UIButtons ? UIButtons.glyph(glyph) : '') : ''}${text}${glyph2 ? (window.UIButtons ? ' ' + UIButtons.glyph(glyph2).trim() : '') : ''}</button>`
             }
             function getAddButtons(up, me, max) {
                 if (!me) me = 0
@@ -302,6 +298,7 @@
             <button class="btn btn-default" onclick="startTutor();"><span class="card-icon" aria-hidden="true">※</span> 规则教程</button>
         </div>
 
+        <div class="card-game-viewport">
         <div class="card-game-stage">
         <svg class="decor" viewBox="0 0 500 500" style="width:600px;"> </svg>
         <svg class="tutor-svg-2" viewBox="0 0 500 500" style="width:500px;"> </svg>
@@ -309,10 +306,10 @@
             <!-- <button class="btn btn-default"><span class="card-icon">←</span>返回</button> -->
             <svg class="texas-svg" viewBox="0 0 500 500" style="position:absolute;width:500px;"> </svg>
             <svg class="tutor-svg" viewBox="0 0 500 500" style="position:absolute;width:500px;display:none"> </svg>
-            <!-- <svg class="texas-svg-down" viewBox="0 0 500 500" style="position:absolute;transform:rotate3d(1,0,0,70deg) translateY(290px)"> </svg> -->
-            <div class="texas-btns" style="position:absolute;margin-top:240px;margin-left:200px;"></div>
-            <div class="texas-btns-down" style="position:absolute;margin-top:520px;margin-left:-100px;width:700px;text-align:center;white-space: nowrap;"></div>
+            <div class="texas-btns"></div>
         </div>
+        </div>
+        <div class="texas-btns-down card-game-dock" aria-live="polite"></div>
         </div>
         <div class="chat" style="position: fixed;bottom:15px;right:15px;display: none;">
             <button class="btn-exit btn btn-default" onclick="$(this).hasClass('btn-danger')?(socket?(socket.send('closing'),socket.close()):endTutor()):$(this).addClass('btn-danger')"><span class="card-icon" aria-hidden="true">⎋</span> 离开</button>

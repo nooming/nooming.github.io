@@ -25,6 +25,7 @@ function startAIBattle() {
         close: () => {
             stopUnoAiTimer()
             socket = null
+            document.body.classList.remove('card-game-playing')
             $('.list-all').show()
             $('.chat').hide()
             $('.decor').show()
@@ -33,6 +34,7 @@ function startAIBattle() {
             $('.uno-btns-down').html('')
         }
     }
+    document.body.classList.add('card-game-playing')
     $('.list-all').hide()
     $('.chat').show()
     $('.decor').hide()

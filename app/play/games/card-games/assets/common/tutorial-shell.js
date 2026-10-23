@@ -27,6 +27,7 @@ $(function () {
 (function () {
     function open(opts) {
         opts = opts || {}
+        document.body.classList.add('card-game-playing')
         $('.list-all').hide()
         $('.chat').show()
         $('.decor').hide()
@@ -39,6 +40,7 @@ $(function () {
 
     function close(opts) {
         opts = opts || {}
+        document.body.classList.remove('card-game-playing')
         $('.list-all').show()
         $('.chat').hide()
         $('.decor').show()

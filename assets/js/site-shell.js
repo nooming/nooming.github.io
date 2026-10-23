@@ -77,7 +77,20 @@
             },
         ],
         mobile: [
-            { id: "home", label: "首页", icon: "i-globe", href: "/" },
+            {
+                id: "home",
+                label: "首页",
+                icon: "i-globe",
+                href: "/",
+                match: /^$|^\/app\/navigation$/,
+            },
+            {
+                id: "lab",
+                label: "实验",
+                icon: "i-flask",
+                href: "/app/lab/proton/",
+                match: /^\/app\/lab/,
+            },
             {
                 id: "tools",
                 label: "工具",
@@ -93,12 +106,11 @@
                 match: /^\/app\/read/,
             },
             {
-                id: "menu",
-                label: "菜单",
-                icon: "i-wrench",
-                action: "drawer",
-                match:
-                    /^\/(app\/(navigation|read|lab|tools|play|parking-pso)|)/,
+                id: "play",
+                label: "娱乐",
+                icon: "i-gamepad",
+                href: "/app/play/games/board-games/gomoku/",
+                match: /^\/app\/play/,
             },
         ],
         menuGroups: [
@@ -108,7 +120,6 @@
                     { label: "导航", href: "/app/navigation/" },
                     { label: "笔记", href: "/app/notes/" },
                     { label: "Citywalk", href: "/app/citywalk/" },
-                    { label: "实践区", href: "/#practice" },
                 ],
             },
             {
@@ -167,7 +178,6 @@
                     { label: "Base64", href: "/app/tools/base64-converter/" },
                     { label: "音频转换", href: "/app/tools/audio-converter/" },
                     { label: "灯牌", href: "/app/tools/light-board/" },
-                    { label: "工具目录", href: "/app/tools/" },
                 ],
             },
             {
@@ -659,19 +669,12 @@
     }
 
     function resolveGlobalMobileTabId(path) {
-        if (path === "" || path.indexOf("/app/navigation") === 0) return "home";
-        if (isReadPath(path)) return "read";
-        if (isToolsPath(path)) return "tools";
-        if (isLabPath(path) || isPlayPath(path)) return "menu";
-        return null;
+        return resolveGlobalL1Id(path);
     }
 
     function isGlobalMobileTabActive(path, tab) {
         var activeId = resolveGlobalMobileTabId(path);
         if (activeId) return tab.id === activeId;
-        if (tab.action === "drawer" && tab.match && pathMatches(path, tab.match)) {
-            return true;
-        }
         return tab.href && isActive(path, tab);
     }
 
@@ -701,6 +704,10 @@
             '" target="_blank" rel="noopener noreferrer">' +
             GLOBAL.asideLabel +
             "</a>";
+        var menuBtn =
+            '<button type="button" class="site-shell-menu-btn" data-shell-drawer="open" aria-label="站点菜单">' +
+            iconSvg("i-wrench") +
+            '<span class="site-shell-menu-btn__text">菜单</span></button>';
         return (
             '<header class="site-shell-top" role="banner">' +
             '<div class="site-shell-top__inner site-shell-top__inner--global">' +
@@ -712,6 +719,7 @@
             '<nav class="site-shell-l1 site-shell-l1--global" aria-label="全站">' +
             buildL1Links(GLOBAL.l1, path, isGlobalL1Active) +
             "</nav>" +
+            menuBtn +
             asideHtml +
             "</div></header>"
         );
@@ -741,17 +749,14 @@
             .join("");
     }
 
-    function buildSidebar(domain, path) {
-        var inner = "";
+    function getSidebarSections(domain) {
         if (domain.id === "play") {
-            inner +=
-                '<p class="site-shell-side__heading">棋类</p>' +
-                buildSideLinks(domain.l2Board, path) +
-                '<p class="site-shell-side__heading">卡牌</p>' +
-                buildSideLinks(domain.l2Card, path) +
-                '<p class="site-shell-side__heading">街机</p>' +
-                buildSideLinks(
-                    [
+            return [
+                { title: "棋类", items: domain.l2Board },
+                { title: "卡牌", items: domain.l2Card },
+                {
+                    title: "街机",
+                    items: [
                         {
                             id: "dino",
                             label: "小恐龙",
@@ -759,31 +764,31 @@
                             match: /\/dino/,
                         },
                     ],
-                    path
-                ) +
-                '<p class="site-shell-side__heading">问卷</p>' +
-                buildSideLinks(domain.psych, path) +
-                '<p class="site-shell-side__heading">游戏工具</p>' +
-                buildSideLinks(domain.gacha, path);
-        } else if (domain.id === "lab") {
-            inner += buildSideLinks(domain.l1, path);
-        } else if (domain.id === "read") {
-            inner +=
-                '<p class="site-shell-side__heading">Markdown</p>' +
-                buildSideLinks(
-                    domain.l1.filter(function (item) {
+                },
+                { title: "问卷", items: domain.psych },
+                { title: "游戏工具", items: domain.gacha },
+            ];
+        }
+        if (domain.id === "lab") {
+            return [{ title: "", items: domain.l1 }];
+        }
+        if (domain.id === "read") {
+            return [
+                {
+                    title: "Markdown",
+                    items: domain.l1.filter(function (item) {
                         return item.id === "md";
                     }),
-                    path
-                ) +
-                '<p class="site-shell-side__heading">站内长文</p>' +
-                buildSideLinks(
-                    domain.l1.filter(function (item) {
+                },
+                {
+                    title: "站内长文",
+                    items: domain.l1.filter(function (item) {
                         return item.id === "art1" || item.id === "art2";
                     }),
-                    path
-                );
-        } else if (domain.id === "tools") {
+                },
+            ];
+        }
+        if (domain.id === "tools") {
             var encode = domain.l1.filter(function (item) {
                 return (
                     item.id === "qr" ||
@@ -792,25 +797,97 @@
                     item.id === "audio"
                 );
             });
-            inner +=
-                '<p class="site-shell-side__heading">文档转换</p>' +
-                buildSideLinks(domain.l2, path) +
-                '<p class="site-shell-side__heading">编码与媒体</p>' +
-                buildSideLinks(encode, path) +
-                '<p class="site-shell-side__heading">图像</p>' +
-                buildSideLinks(domain.ocr, path) +
-                '<p class="site-shell-side__heading">随机</p>' +
-                buildSideLinks(domain.random, path) +
-                '<p class="site-shell-side__heading">展示</p>' +
-                buildSideLinks(domain.display, path);
-        } else {
-            inner += buildSideLinks(domain.l1, path);
+            return [
+                { title: "文档转换", items: domain.l2 },
+                { title: "编码与媒体", items: encode },
+                { title: "图像", items: domain.ocr },
+                { title: "随机", items: domain.random },
+                { title: "展示", items: domain.display },
+            ];
         }
+        return [{ title: "", items: domain.l1 || [] }];
+    }
+
+    function buildSidebar(domain, path) {
+        var inner = getSidebarSections(domain)
+            .map(function (section) {
+                var head = section.title
+                    ? '<p class="site-shell-side__heading">' +
+                      section.title +
+                      "</p>"
+                    : "";
+                return head + buildSideLinks(section.items, path);
+            })
+            .join("");
         return (
             '<aside class="site-shell-side" aria-label="本模块导航">' +
             inner +
             "</aside>"
         );
+    }
+
+    function buildMobModLinks(items, path) {
+        return items
+            .map(function (item) {
+                var cls = isActive(path, item) ? " is-active" : "";
+                if (item.muted) cls += " is-muted";
+                var ext =
+                    item.external
+                        ? ' target="_blank" rel="noopener noreferrer"'
+                        : "";
+                return (
+                    '<a href="' +
+                    item.href +
+                    '"' +
+                    ext +
+                    ' class="site-shell-mob-mod__link' +
+                    cls +
+                    '">' +
+                    item.label +
+                    "</a>"
+                );
+            })
+            .join("");
+    }
+
+    function buildMobileModuleRail(domain, path) {
+        var sections = getSidebarSections(domain);
+        var chunks = sections
+            .map(function (section) {
+                if (!section.items || !section.items.length) return "";
+                var label = section.title
+                    ? '<span class="site-shell-mob-mod__label">' +
+                      section.title +
+                      "</span>"
+                    : "";
+                return (
+                    '<div class="site-shell-mob-mod__group">' +
+                    label +
+                    '<div class="site-shell-mob-mod__links">' +
+                    buildMobModLinks(section.items, path) +
+                    "</div></div>"
+                );
+            })
+            .join("");
+        if (!chunks) return "";
+        return (
+            '<nav class="site-shell-mob-mod" aria-label="本模块导航">' +
+            '<div class="site-shell-mob-mod__scroll">' +
+            chunks +
+            "</div></nav>"
+        );
+    }
+
+    function scrollMobileModuleActiveIntoView() {
+        var rail = document.querySelector(".site-shell-mob-mod__scroll");
+        if (!rail) return;
+        var active = rail.querySelector(".site-shell-mob-mod__link.is-active");
+        if (!active || typeof active.scrollIntoView !== "function") return;
+        active.scrollIntoView({
+            inline: "center",
+            block: "nearest",
+            behavior: "auto",
+        });
     }
 
     function buildSubLinks(items, path) {
@@ -842,19 +919,6 @@
             return domain.l2Card;
         }
         return null;
-    }
-
-    function resolveMobileTabs(domain, path) {
-        if (domain.id === "tools" && pathMatches(path, domain.l2When)) {
-            return domain.mobileDoc;
-        }
-        if (domain.id === "play" && pathMatches(path, domain.l2BoardWhen)) {
-            return domain.mobileBoard;
-        }
-        if (domain.id === "play" && pathMatches(path, domain.l2CardWhen)) {
-            return domain.mobileCard;
-        }
-        return domain.mobileDefault;
     }
 
     function buildMobileTabs(tabs, path, activeFn) {
@@ -939,19 +1003,6 @@
         );
     }
 
-    function resolveMobileTabsForPage(ctx, domain, path) {
-        if (
-            ctx.type === "domain" &&
-            (domain.id === "tools" || domain.id === "play")
-        ) {
-            return resolveMobileTabs(domain, path);
-        }
-        if (ctx.type === "domain" && domain.mobileDefault) {
-            return domain.mobileDefault;
-        }
-        return GLOBAL.mobile;
-    }
-
     function wireDrawer() {
         var backdrop = document.getElementById("shellDrawerBackdrop");
         var drawer = document.getElementById("shellDrawer");
@@ -1019,6 +1070,7 @@
         } else {
             document.body.classList.add("shell-" + domain.id, "shell-has-sidebar");
             applyContentWidth(domain.contentWidth);
+            document.body.classList.add("shell-has-mob-mod");
 
             var subItems = resolveSub(domain, path);
             if (subItems) {
@@ -1028,35 +1080,35 @@
 
         var topHtml = buildTopBar(path);
         var sideHtml = domain ? buildSidebar(domain, path) : "";
+        var mobModHtml = domain ? buildMobileModuleRail(domain, path) : "";
         var subHtml = "";
         if (domain) {
-            var subItemsMobile = resolveSub(domain, path);
-            if (subItemsMobile) {
+            var subItemsNav = resolveSub(domain, path);
+            if (subItemsNav) {
                 subHtml =
                     '<nav class="site-shell-sub" aria-label="子导航">' +
                     '<div class="site-shell-sub__inner">' +
-                    buildSubLinks(subItemsMobile, path) +
+                    buildSubLinks(subItemsNav, path) +
                     "</div></nav>";
             }
         }
 
-        var mobileTabs = resolveMobileTabsForPage(ctx, domain, path);
-        var mobileActiveFn =
-            mobileTabs === GLOBAL.mobile ? isGlobalMobileTabActive : null;
         var bottomHtml =
             '<nav class="site-shell-bottom" aria-label="移动导航">' +
-            buildMobileTabs(mobileTabs, path, mobileActiveFn) +
+            buildMobileTabs(GLOBAL.mobile, path, isGlobalMobileTabActive) +
             "</nav>";
         var drawerHtml = buildMenuSheet(GLOBAL.menuGroups);
 
         var wrap = document.createElement("div");
-        wrap.innerHTML = topHtml + sideHtml + subHtml + bottomHtml + drawerHtml;
+        wrap.innerHTML =
+            topHtml + sideHtml + mobModHtml + subHtml + bottomHtml + drawerHtml;
         while (wrap.firstChild) {
             document.body.insertBefore(wrap.firstChild, document.body.firstChild);
         }
 
         wireDrawer();
         watchLightBoardStage();
+        scrollMobileModuleActiveIntoView();
     }
 
     if (document.readyState === "loading") {

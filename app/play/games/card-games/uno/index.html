@@ -20,10 +20,12 @@
     <link rel="stylesheet" href="/assets/css/site-shell.css">
         <link rel="stylesheet" href="../assets/card-ui.css">
         <link rel="stylesheet" href="../assets/game-layout.css">
+        <script src="../assets/card-game-scale.js" defer></script>
 
         <script src="../../../../../assets/js/utils.js"></script>
         <script src="../assets/common/dom.js"></script>
         <script src="../assets/common/ui-buttons.js"></script>
+        <script src="../assets/common/card-table-buttons.js"></script>
         <script src="../assets/common/tutorial-shell.js"></script>
         <script src="../assets/tutor-uno.js"></script>
         <script src="../assets/uno.js"></script>
@@ -225,24 +227,6 @@
                     $('.person-unready').css('display', 'block')
                 }, 100)
             }
-            function getButton(type, text, onclick, glyph = 0, onmouseenter = 0, onmouseleave = 0, onmousedown = 0, glyph2 = 0) {
-                return `<button class="btn btn-${type}" onclick="${onclick}" ${onmouseenter ? `onmouseenter="${onmouseenter}" ontouchstart="${onmouseenter}"` : ''} ${onmouseleave ? `onmouseleave="${onmouseleave}"` : ''} ${onmousedown ? `onmousedown="${onmousedown}"` : ''}>${glyph ? (window.UIButtons ? UIButtons.glyph(glyph) : '') : ''}${text}${glyph2 ? (window.UIButtons ? ' ' + UIButtons.glyph(glyph2).trim() : '') : ''}</button>`
-            }
-            function getAddButtons(up, me, max) {
-                if (!me) me = 0
-                up = parseInt(up)
-                let str = getButton('primary', `加注 ${up + 5}`, `socket.send('up ${up - me + 5}')`, 'arrow-up', `socket.send('hover up ${up + 5}')`)
-                if (up + 5 - me >= cur.cash[cur.you]) str = ''
-                let arr = [10, 15, 20, 30, 50, 70, 90, 200, 500]
-                for (let i = 0; i < arr.length; i++) {
-                    if (up + arr[i] - me >= cur.cash[cur.you]) {
-                        str += getButton('primary', `全押`, `socket.send('up ${cur.cash[cur.you]}')`, 'fire', `socket.send('hover up ${cur.cash[cur.you] + me}')`)
-                        break
-                    }
-                    str += getButton('primary btn-up', up + arr[i], `socket.send('up ${up - me + arr[i]}')`, 0, `socket.send('hover up ${up + arr[i]}')`)
-                }
-                return str
-            }
             function drawButtons(msg = '') {
                 let str = '', str2 = msg
                 $('.cards-rect').attr('fill', '#ddd').attr('onmouseenter', '').attr('onmouseleave', '').attr('onclick', '').css('cursor', '')
@@ -420,15 +404,17 @@
             <button class="btn btn-default" onclick="startTutor();"><span class="card-icon" aria-hidden="true">※</span> 规则教程</button>
         </div>
 
+        <div class="card-game-viewport">
         <div class="card-game-stage">
         <svg class="decor" viewBox="0 0 500 500" style="width:600px;"></svg>
         <svg class="tutor-svg-2" viewBox="0 0 500 500" style="width:500px;"> </svg>
         <div class="bodypad uno">
             <svg class="uno-svg" viewBox="0 0 500 500" style="position:absolute;width:500px;"> </svg>
             <svg class="tutor-svg" viewBox="0 0 500 500" style="position:absolute;width:500px;display:none"> </svg>
-            <div class="uno-btns" style="position:absolute;margin-top:230px;margin-left:200px;"></div>
-            <div class="uno-btns-down" style="position:absolute;margin-top:520px;margin-left:-100px;width:700px;text-align:center;white-space: nowrap;"></div>
+            <div class="uno-btns"></div>
         </div>
+        </div>
+        <div class="uno-btns-down card-game-dock" aria-live="polite"></div>
         </div>
         <div class="chat" style="position: fixed;bottom:15px;right:15px;display: none;">
             <button class="btn-exit btn btn-default" onclick="$(this).hasClass('btn-danger')?(socket?(socket.send('closing'),socket.close()):endTutor()):$(this).addClass('btn-danger')"><span class="card-icon" aria-hidden="true">⎋</span> 离开</button>

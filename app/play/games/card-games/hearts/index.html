@@ -20,10 +20,12 @@
     <link rel="stylesheet" href="/assets/css/site-shell.css">
         <link rel="stylesheet" href="../assets/card-ui.css">
         <link rel="stylesheet" href="../assets/game-layout.css">
+        <script src="../assets/card-game-scale.js" defer></script>
 
         <script src="../../../../../assets/js/utils.js"></script>
         <script src="../assets/common/dom.js"></script>
         <script src="../assets/common/ui-buttons.js"></script>
+        <script src="../assets/common/card-table-buttons.js"></script>
         <script src="../assets/common/tutorial-shell.js"></script>
         <script src="../assets/tutor-hearts.js"></script>
         <script src="../assets/hearts.js" defer></script>
@@ -39,10 +41,6 @@
 
             .list-table .text-muted {
                 cursor: default;
-            }
-
-            .hearts-svg {
-                width: 500px;
             }
 
             .card-face {
@@ -66,11 +64,6 @@
 
             .hearts-btns .btn {
                 margin: 0 4px 6px;
-            }
-
-            .hearts-btns-down {
-                color: #555;
-                line-height: 1.6;
             }
 
             .hearts-alert {
@@ -131,15 +124,17 @@
             </div>
         </div>
 
+        <div class="card-game-viewport">
         <div class="card-game-stage">
         <svg class="decor" viewBox="0 0 500 500" style="width:600px;"> </svg>
         <svg class="tutor-svg-2" viewBox="0 0 500 500" style="width:500px;"> </svg>
         <div class="bodypad hearts">
             <svg class="hearts-svg" viewBox="0 0 500 500" style="position:absolute;width:500px;"> </svg>
             <svg class="tutor-svg" viewBox="0 0 500 500" style="position:absolute;width:500px;display:none"> </svg>
-            <div class="hearts-btns" style="position:absolute;margin-top:240px;margin-left:200px;"></div>
-            <div class="hearts-btns-down" style="position:absolute;margin-top:520px;margin-left:-100px;width:700px;text-align:center;white-space: nowrap;"></div>
+            <div class="hearts-btns"></div>
         </div>
+        </div>
+        <div class="hearts-btns-down card-game-dock" aria-live="polite"></div>
         </div>
 
         <div class="chat" style="position: fixed;bottom:15px;right:15px;display: none;">

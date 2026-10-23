@@ -4,7 +4,7 @@
 
 顶栏与 `app/` 目录对齐；首页枢纽与阅读域重组；全站注入导航壳（`site-shell`）。旧路径不保留跳转。
 
-1. **全站导航壳**（`assets/css/site-shell.css`、`assets/js/site-shell.js`）：顶栏 **首页 · 实验 · 工具 · 阅读 · 娱乐**；L1 点击进常用子页（质子 / 二维码 / Markdown / 五子棋）；仅 **工具** 保留 `tools/index.html` 总览；桌面侧栏 + 移动底栏 + 分组菜单；首页与 `app/navigation/` 同 hub 壳。**笔记 / 停车 / Citywalk** 仍不挂壳；顶栏 L1 互斥高亮。
+1. **全站导航壳**（`assets/css/site-shell.css`、`assets/js/site-shell.js`）：顶栏 **首页 · 实验 · 工具 · 阅读 · 娱乐**；L1 点击进常用子页（质子 / 二维码 / Markdown / 五子棋）；仅 **工具** 保留 `tools/index.html` 总览；桌面侧栏 + 移动底栏（五栏与顶栏 L1 对齐）+ 顶栏「菜单」抽屉；域内页移动横向模块条与侧栏同源；首页与 `app/navigation/` 同 hub 壳。**笔记 / 停车 / Citywalk** 仍不挂壳；顶栏 L1 互斥高亮。
 2. **首页**：`#discover` **常用** 三格（导航 · 笔记 · Citywalk）；`#practice` 停车 + 物理外链；hub 标题与入口横幅样式调整。
 3. **阅读**（`app/read/`）：Markdown 迁入 `read/markdown/`；原 `articles/` 长文迁入 `read/`；共用 `assets/css/article.css`。删除根级 `articles/`、`app/markdown/`。
 4. **`app/` 分域**：`lab/`、`tools/`、`read/`、`play/` 物理分目录；路径与 IA 见 `docs/app-ia.md`。

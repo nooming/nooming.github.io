@@ -254,6 +254,7 @@ function renderButtons() {
     if (AI_ONLY_MODE && repairEmptyTurnIfNeeded()) return
     const btns = []
     const detail = []
+    let downMeta = ''
     if (!socket && !AI_ONLY_MODE) {
         $('.hearts-btns').html('<button class="btn btn-default" disabled>未连接到牌桌</button>')
         $('.hearts-btns-down').html('请选择左侧的牌桌加入对局。')
@@ -277,22 +278,53 @@ function renderButtons() {
         const alreadyPassed = hasAlreadyPassed()
         const canSubmit = !alreadyPassed && !state.passQueued && state.selected.size === 3
         const passDir = ['arrow-right', 'arrow-left', 'arrow-up', '无需传牌'][state.cur.passDirection] || '传牌'
-        const btnText = alreadyPassed ? '已传牌' : (state.passQueued ? '提交中...' : `${window.UIButtons ? UIButtons.glyph(passDir) : ''}传牌 ${state.selected.size} / 3`)
-        detail.push(`<button class="btn btn-primary" ${canSubmit ? '' : 'disabled'} onclick="window.heartsSubmitPass && heartsSubmitPass()">${btnText}</button>`)
+        const passLabel = alreadyPassed
+            ? '已传牌'
+            : state.passQueued
+              ? '提交中...'
+              : `传牌 ${state.selected.size} / 3`
+        if (window.UIButtons && UIButtons.build) {
+            detail.push(
+                UIButtons.build('primary', passLabel, 'window.heartsSubmitPass && heartsSubmitPass()', {
+                    glyph: alreadyPassed || state.passQueued ? '' : passDir,
+                    disabled: !canSubmit
+                })
+            )
+        } else {
+            detail.push(
+                `<button class="btn btn-primary" ${canSubmit ? '' : 'disabled'} onclick="window.heartsSubmitPass && heartsSubmitPass()">${passLabel}</button>`
+            )
+        }
     } else if (state.tt === 2) {
         const card = Array.from(state.selected)[0]
         const canUse = card && state.cur.now === you && canPlayCard(card)
-        if (you == state.cur.now) detail.push(`<button class="btn btn-primary" ${canUse ? '' : 'disabled'} onclick="window.heartsPlay && heartsPlay()">出牌</button>`)
+        if (you == state.cur.now) {
+            if (window.UIButtons && UIButtons.build) {
+                detail.push(
+                    UIButtons.build('primary', '出牌', 'window.heartsPlay && heartsPlay()', {
+                        disabled: !canUse
+                    })
+                )
+            } else {
+                detail.push(`<button class="btn btn-primary" ${canUse ? '' : 'disabled'} onclick="window.heartsPlay && heartsPlay()">出牌</button>`)
+            }
+        }
     } else if (state.tt === 3) {
         const you = state.cur.you
         const playerCount = state.cur.num || (state.cur.plist ? state.cur.plist.length : 0) || 0
         const youReady = state.cur.isReady && state.cur.isReady[you]
         const almostStart = !youReady && (state.cur.readyCnt || 0) === (playerCount - 1)
         const label = almostStart ? '开始' : '下一局'
-        btns.push(`${buildReadyButton(label, 'play')} ${readySummary}`)
+        detail.push(buildReadyButton(label, 'play'))
+        downMeta = readySummary
     }
     $('.hearts-btns').html(btns.join(' '))
-    $('.hearts-btns-down').html(detail.filter(Boolean).join('<br>'))
+    const down = detail.filter(Boolean)
+    $('.hearts-btns-down').html(
+        down.length
+            ? `<div class="btn-group">${down.join('')}</div>${downMeta ? ' ' + downMeta : ''}`
+            : ''
+    )
     ensureAiProgress()
 }
 
@@ -398,6 +430,9 @@ function buildReadyButton(label, glyph = 'play') {
     const danger = state.cur.wasReady !== undefined && state.cur.wasReady !== -1 ? ' btn-danger' : ''
     const icon = glyph === 'repeat' ? 'repeat' : 'play'
     const action = AI_ONLY_MODE ? "window.heartsReady && heartsReady()" : "socket && socket.send('ready')"
+    if (window.UIButtons && UIButtons.build) {
+        return UIButtons.build(`default${danger} btn-ready`, label, action, { glyph: icon })
+    }
     return `<button class="btn btn-default${danger} btn-ready" onclick="${action}">${window.UIButtons ? UIButtons.glyph(icon) : ''}${label}</button>`
 }
 
@@ -510,6 +545,7 @@ function startAIBattle() {
         wasReady: -1
     }
     state.tt = 0
+    document.body.classList.add('card-game-playing')
     $('.list-all').hide()
     $('.chat').show()
     $('.decor').hide()

@@ -9,12 +9,15 @@ body.proton-page.page-container {
 }
 
 .proton-page .btn {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35em;
     padding: 6px 12px;
     margin-bottom: 0;
     font-size: 14px;
     font-weight: 400;
-    line-height: 1.42857143;
+    line-height: 1.25;
     text-align: center;
     white-space: nowrap;
     vertical-align: middle;
@@ -121,15 +124,17 @@ body.proton-page.page-container {
 
 .proton-toolbar .btn.btn-primary,
 .proton-toolbar .btn-group .btn.btn-primary {
-    background: var(--color-ink) !important;
-    color: var(--color-theme, #FFFA00) !important;
-    border-color: var(--color-ink) !important;
+    background: var(--btn-emphasis-bg) !important;
+    color: var(--btn-emphasis-fg) !important;
+    border-color: var(--btn-emphasis-border) !important;
+    font-weight: 500;
 }
 
 .proton-toolbar .btn.btn-primary:hover,
 .proton-toolbar .btn.btn-primary:focus {
-    background: #1a1a1a !important;
-    color: var(--color-theme, #FFFA00) !important;
+    background: var(--btn-emphasis-bg-hover) !important;
+    color: var(--btn-emphasis-fg) !important;
+    border-color: var(--btn-emphasis-border) !important;
 }
 
 /* 画布旁清除电场/磁场小按钮 */
@@ -366,8 +371,56 @@ body.proton-page.page-container {
     margin-top: 0;
 }
 
-.help-block .note-tight {
-    display: block;
-    margin-top: -10px;
-    margin-bottom: 10px;
+.help-block p:not(.text-note) {
+    margin-bottom: 0.65em;
+}
+
+.help-block p.text-note {
+    margin-top: 0.25em;
+    margin-bottom: 0.85em;
+}
+
+/* 窄屏：视口宽 = 缩放后宽度，裁剪内层，避免整页横向拖动 */
+@media (max-width: 767.98px) {
+    body.proton-page .bodypad.sim-root {
+        --proton-bleed: 48px;
+        --proton-stage-w: calc(620px + var(--proton-bleed));
+        --proton-scale: min(1, calc((100vw - 24px) / var(--proton-stage-w)));
+        padding: 0;
+        min-width: 0;
+        min-height: 0;
+        width: calc(var(--proton-stage-w) * var(--proton-scale));
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+        overflow: hidden;
+        height: calc(600px * var(--proton-scale));
+    }
+
+    body.proton-page .sim-root {
+        min-width: 0;
+    }
+
+    body.proton-page .sim-stage {
+        box-sizing: border-box;
+        width: var(--proton-stage-w);
+        max-width: none;
+        padding-left: var(--proton-bleed);
+        min-height: 600px;
+        transform: scale(var(--proton-scale));
+        transform-origin: top left;
+        margin-bottom: 0;
+    }
+
+    body.proton-page .proton-toolbar {
+        gap: 8px;
+    }
+
+    body.proton-page .proton-toolbar__speed {
+        width: 100%;
+        padding-left: 0;
+        margin-left: 0;
+        text-align: center;
+        order: 10;
+    }
 }

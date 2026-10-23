@@ -3,7 +3,8 @@
 :root {
     --shell-top-h: 56px;
     --shell-sub-h: 44px;
-    --shell-bottom-h: 56px;
+    --shell-bottom-h: 58px;
+    --shell-mob-mod-h: 50px;
     --shell-side-w: 220px;
 }
 
@@ -21,17 +22,22 @@ body.shell-active {
 
 @media (max-width: 767.98px) {
     body.shell-active {
-        --shell-top-pad: 0;
+        --shell-top-pad: var(--shell-top-h);
         --shell-bottom-pad: calc(var(--shell-bottom-h) + env(safe-area-inset-bottom, 0px));
     }
 
-    body.shell-active .section-header--page p {
-        display: none;
+    body.shell-has-mob-mod.shell-active {
+        --shell-top-pad: calc(var(--shell-top-h) + var(--shell-mob-mod-h));
     }
 
     body.shell-active .section-header--page h1 {
-        font-size: 1.25rem;
-        padding-bottom: 8px;
+        font-size: 1.35rem;
+        padding-bottom: 6px;
+    }
+
+    body.shell-active .section-header--page p {
+        font-size: 0.92rem;
+        line-height: 1.45;
     }
 }
 
@@ -77,18 +83,12 @@ body.shell-active.shell-content-wide main {
     border-top: 4px solid var(--color-theme, #fffa00);
     border-bottom: 1px solid var(--line-ins);
     box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
-    display: none;
+    display: block;
 }
 
 header.site-shell-top::before {
     content: none;
     display: none;
-}
-
-@media (min-width: 768px) {
-    .site-shell-top {
-        display: block;
-    }
 }
 
 .site-shell-top__inner {
@@ -189,6 +189,73 @@ header.site-shell-top::before {
     text-decoration: underline;
 }
 
+.site-shell-menu-btn {
+    display: none;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35em;
+    padding: 6px 10px;
+    min-height: 40px;
+    border: 1px solid var(--line-ins, rgba(0, 0, 0, 0.1));
+    border-radius: 0;
+    background: var(--color-surface-dim, rgba(0, 0, 0, 0.04));
+    color: var(--color-ink, #0a0a0a);
+    font-size: 0.72rem;
+    font-weight: 650;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.site-shell-menu-btn .site-shell-tab__icon {
+    width: 1.125em;
+    height: 1.125em;
+    min-width: 1.125em;
+    min-height: 1.125em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    line-height: 0;
+}
+
+.site-shell-menu-btn .site-shell-tab__icon svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.site-shell-menu-btn__text {
+    line-height: 1.25;
+}
+
+@media (max-width: 767.98px) {
+    .site-shell-top__inner {
+        padding: 0 10px;
+        gap: 8px;
+    }
+
+    .site-shell-l1--global {
+        display: none;
+    }
+
+    .site-shell-aside {
+        display: none;
+    }
+
+    .site-shell-menu-btn {
+        display: inline-flex;
+    }
+
+    .site-shell-brand {
+        flex: 1 1 auto;
+    }
+
+    .site-shell-brand__word {
+        font-size: 0.88rem;
+    }
+}
+
 .site-shell-l1--global {
     flex: 1 1 auto;
     max-width: none;
@@ -279,6 +346,101 @@ header.site-shell-top::before {
     color: rgba(0, 0, 0, 0.45);
 }
 
+/* 移动：与桌面侧栏同源的横向模块导航 */
+.site-shell-mob-mod {
+    display: none;
+}
+
+@media (max-width: 767.98px) {
+    .site-shell-mob-mod {
+        display: block;
+        position: fixed;
+        top: var(--shell-top-h);
+        left: 0;
+        right: 0;
+        z-index: 99;
+        height: var(--shell-mob-mod-h);
+        background: var(--color-card, #fff);
+        border-bottom: 1px solid var(--line-ins, rgba(0, 0, 0, 0.08));
+    }
+
+    .site-shell-mob-mod__scroll {
+        display: flex;
+        align-items: center;
+        height: 100%;
+        overflow-x: auto;
+        padding: 5px 10px;
+        gap: 10px;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .site-shell-mob-mod__scroll::-webkit-scrollbar {
+        display: none;
+    }
+
+    .site-shell-mob-mod__group {
+        flex-shrink: 0;
+        display: flex;
+        align-items: stretch;
+        max-height: 40px;
+        background: var(--color-surface-dim, rgba(0, 0, 0, 0.045));
+        border: 1px solid var(--line-ins, rgba(0, 0, 0, 0.1));
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+    }
+
+    .site-shell-mob-mod__label {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        padding: 0 9px;
+        font-size: 0.58rem;
+        font-weight: 750;
+        letter-spacing: 0.02em;
+        line-height: 1.15;
+        max-width: 4.2rem;
+        text-align: center;
+        color: rgba(0, 0, 0, 0.48);
+        background: rgba(0, 0, 0, 0.06);
+        border-right: 1px solid var(--line-ins, rgba(0, 0, 0, 0.1));
+    }
+
+    .site-shell-mob-mod__links {
+        display: flex;
+        align-items: stretch;
+        gap: 0;
+    }
+
+    .site-shell-mob-mod__link {
+        flex-shrink: 0;
+        padding: 0 10px;
+        min-height: 38px;
+        display: inline-flex;
+        align-items: center;
+        font-size: 0.76rem;
+        font-weight: 600;
+        color: rgba(0, 0, 0, 0.58);
+        text-decoration: none;
+        border-radius: 0;
+        border: none;
+        border-right: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .site-shell-mob-mod__links .site-shell-mob-mod__link:last-child {
+        border-right: none;
+    }
+
+    .site-shell-mob-mod__link.is-active {
+        color: var(--color-ink, #0a0a0a);
+        background: var(--color-theme-wash, #fffde7);
+        box-shadow: inset 0 -2px 0 var(--color-theme, #fffa00);
+    }
+
+    .site-shell-mob-mod__link.is-muted {
+        color: rgba(0, 0, 0, 0.42);
+    }
+}
+
 /* 枢纽首页仍用与 home.css 一致的居中栏宽，避免宽屏下区块贴 viewport 左缘 */
 body.shell-active.shell-content-hub {
     max-width: 1200px;
@@ -296,12 +458,12 @@ body.shell-hub.shell-active {
     }
 }
 
-/* 桌面顶栏已有顶黄线，首页 hero 不再重复 */
-@media (min-width: 768px) {
-    body.shell-hub.shell-active header.hub-hero::before {
-        display: none;
-    }
+/* 顶栏已有顶黄线，首页 hero 不再重复 */
+body.shell-hub.shell-active header.hub-hero::before {
+    display: none;
+}
 
+@media (min-width: 768px) {
     body.shell-hub.shell-active header.hub-hero {
         padding-top: 10px;
     }
@@ -400,11 +562,12 @@ body.shell-has-sub .site-shell-sub {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2px;
-    padding: 6px 4px 8px;
+    gap: 3px;
+    padding: 8px 2px 10px;
+    min-height: var(--shell-bottom-h);
     text-decoration: none;
     color: rgba(0, 0, 0, 0.5);
-    font-size: 0.62rem;
+    font-size: 0.65rem;
     font-weight: 650;
     border: none;
     background: transparent;
@@ -413,9 +576,13 @@ body.shell-has-sub .site-shell-sub {
 }
 
 .site-shell-tab .site-shell-tab__icon {
-    width: 22px;
-    height: 22px;
-    display: block;
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    line-height: 0;
 }
 
 .site-shell-tab.is-active {
@@ -423,9 +590,9 @@ body.shell-has-sub .site-shell-sub {
     box-shadow: inset 0 3px 0 var(--color-theme);
 }
 
-.site-shell-tab__icon svg {
-    width: 22px;
-    height: 22px;
+.site-shell-tab .site-shell-tab__icon svg {
+    width: 100%;
+    height: 100%;
     display: block;
 }
 
@@ -524,4 +691,19 @@ body.shell-has-sub .site-shell-sub {
 
 .site-shell-menu__group a:last-child {
     border-bottom: none;
+}
+
+body.shell-chrome-hidden .site-shell-mob-mod {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+@media (max-width: 767.98px) {
+    body.shell-active .back-to-top {
+        bottom: calc(
+            var(--shell-bottom-h) + env(safe-area-inset-bottom, 0px) + 12px
+        );
+        right: 16px;
+        z-index: 90;
+    }
 }

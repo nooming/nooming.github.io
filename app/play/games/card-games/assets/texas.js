@@ -22,6 +22,7 @@ function startAIBattle() {
         close: () => {
             stopTexasAiTimer()
             socket = null
+            document.body.classList.remove('card-game-playing')
             $('.list-all').show()
             $('.chat').hide()
             $('.decor').show()
@@ -30,6 +31,7 @@ function startAIBattle() {
             $('.texas-btns-down').html('')
         }
     }
+    document.body.classList.add('card-game-playing')
     $('.list-all').hide()
     $('.chat').show()
     $('.decor').hide()

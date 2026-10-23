@@ -77,7 +77,7 @@ function tutor(step) {
                 + `<text x="340" y="294" text-anchor="middle" fill="#333" transform="rotate(-50,340,294)">≥<text/>`
             $('.texas-svg').css('opacity', '1')
             $('.texas-btns-down').html(`<div class="btn-group" onmouseleave="drawTable()">${getButton('danger', `放弃`, `$(this).css('color','transparent')`, 'remove', `procHover(['nope'],'0')`)}`
-                + `${getButton('default', `跟注 ${prec(50)}<span style="position:absolute;display:inline-block;margin-top:-30px;margin-left:-60px">下一步</span>`, `tutor(5)`, 'arrow-right', `procHover(['follow','50'],'0')`)}`
+                + `${getButton('default', `跟注 ${prec(50)}`, `tutor(5)`, 'arrow-right', `procHover(['follow','50'],'0')`)}`
                 + `${getTutorAddButtons(50, 5)}</div>`)
             break
         case 5:
@@ -139,7 +139,7 @@ function tutor(step) {
             cur.cash = { 0: 950, 1: 990, 2: 900 }
             $('.texas-svg').css('opacity', '1')
             $('.texas-btns-down').html(`<div class="btn-group" onmouseleave="drawTable()">${getButton('danger', `放弃`, `$(this).css('color','transparent')`, 'remove', `procHover(['nope'],'0')`)}`
-                + `${getButton('default', `跟注 ${prec(100)}<span style="position:absolute;display:inline-block;margin-top:-30px;margin-left:-60px">下一步</span>`, `tutor(10)`, 'arrow-right', `procHover(['follow','100'],'0')`)}`
+                + `${getButton('default', `跟注 ${prec(100)}`, `tutor(10)`, 'arrow-right', `procHover(['follow','100'],'0')`)}`
                 + `${getTutorAddButtons(100, 50)}</div>`)
             break
         case 10:
@@ -164,7 +164,7 @@ function tutor(step) {
             cur.givenup[1] = 1
             $('.texas-svg').css('opacity', '1')
             $('.texas-btns-down').html(`<div class="btn-group" onmouseleave="drawTable()">`
-                + `${getButton('default', `过<span style="position:absolute;display:inline-block;margin-top:-30px;margin-left:-43px">下一步</span>`, `tutor(12)`, 'arrow-right', `procHover(['follow','100'],'0')`)}`
+                + `${getButton('default', `过`, `tutor(12)`, 'arrow-right', `procHover(['follow','100'],'0')`)}`
                 + `${getTutorAddButtons(100, 100)}</div>`)
             break
         case 12:
@@ -205,7 +205,7 @@ function tutor(step) {
             cur.givenup[1] = 1
             $('.texas-svg').css('opacity', '1')
             $('.texas-btns-down').html(`<div class="btn-group" onmouseleave="drawTable()">`
-                + `${getButton('default', `过<span style="position:absolute;display:inline-block;margin-top:-30px;margin-left:-43px">下一步</span>`, `tutor(16)`, 'arrow-right', `procHover(['follow','100'],'0')`)}`
+                + `${getButton('default', `过`, `tutor(16)`, 'arrow-right', `procHover(['follow','100'],'0')`)}`
                 + `${getTutorAddButtons(100, 100)}</div>`)
             break
         case 16:

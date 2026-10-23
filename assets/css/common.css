@@ -43,6 +43,15 @@
     --color-label-bg: #0a0a0a;
     --color-label-fg: #FFFA00;
     --color-label-fg-alt: #ffffff;
+    /* 成组/工具栏主操作：浅黄底墨字（避免墨底亮字长条） */
+    --btn-emphasis-bg: var(--color-theme-wash);
+    --btn-emphasis-fg: var(--color-ink);
+    --btn-emphasis-border: var(--color-theme-deep);
+    --btn-emphasis-bg-hover: var(--color-theme-hover);
+    /* 独立主 CTA：黄底墨字（与 .tool-btn、页头返回一致） */
+    --btn-cta-bg: var(--gradient-theme);
+    --btn-cta-fg: var(--color-theme-ink);
+    --btn-cta-bg-hover: var(--gradient-theme-reverse);
     --font-mono: ui-monospace, "Cascadia Mono", "Consolas", "SF Mono", monospace;
     --bar-accent: 4px;
     /* 首页「浮岛」卡片阴影（枢纽页 .feature-card 等复用） */
@@ -78,7 +87,46 @@ body {
     overflow-x: hidden;
 }
 
-/* 抽卡规划页技术标签（其它页不使用此类名） */
+/* 正文下方的灰色补充说明（紧接上一段，不重叠） */
+.text-note {
+    display: block;
+    margin: 0.35em 0 0.85em;
+    font-size: 0.8125rem;
+    font-weight: 400;
+    line-height: 1.55;
+    color: var(--color-ink-muted);
+}
+
+p + .text-note,
+p + small.text-note {
+    margin-top: 0.35em;
+}
+
+.text-note:last-child {
+    margin-bottom: 0;
+}
+
+/* 强调按钮：牌桌/质子工具栏等成组主操作，可单独加 .btn-emphasis */
+.btn-emphasis {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35em;
+    background: var(--btn-emphasis-bg);
+    color: var(--btn-emphasis-fg);
+    border: 1px solid var(--btn-emphasis-border);
+    font-weight: 500;
+}
+
+.btn-emphasis:hover,
+.btn-emphasis:focus {
+    background: var(--btn-emphasis-bg-hover);
+    color: var(--btn-emphasis-fg);
+    border-color: var(--btn-emphasis-border);
+    outline: none;
+}
+
+/* 抽卡规划页技术标签（墨底黄字仅保留给小徽标，不作长按钮条） */
 .hub-label {
     display: inline-block;
     margin: 0 0 10px;
@@ -338,9 +386,9 @@ a.feature-card:focus-visible {
     font-size: 0.95rem;
     text-decoration: none !important;
     margin-top: 14px;
-    color: var(--color-theme-ink) !important;
+    color: var(--btn-cta-fg) !important;
     font-weight: 600;
-    background: var(--gradient-theme);
+    background: var(--btn-cta-bg);
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     position: relative;
@@ -357,7 +405,7 @@ a.feature-card:focus-visible {
 }
 
 .tool-btn:hover {
-    background: var(--gradient-theme-reverse);
+    background: var(--btn-cta-bg-hover);
     transform: translateY(-2px);
     box-shadow: var(--shadow-tool);
 }
@@ -720,6 +768,41 @@ body.page-container {
     height: 100%;
     display: block;
     overflow: visible;
+}
+
+/* 按钮内 .card-icon 不用卡片 2.5rem；按钮内容 flex 居中 */
+button .card-icon,
+.btn .card-icon {
+    width: 1.125em;
+    height: 1.125em;
+    min-width: 1.125em;
+    min-height: 1.125em;
+    margin-right: 0;
+    font-size: 1em;
+    font-weight: inherit;
+    line-height: 1;
+}
+
+button.btn,
+button[class*="btn-"],
+.card-game-page .btn,
+.proton-page .btn,
+.pixelflow-page .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35em;
+    line-height: 1.25;
+    text-align: center;
+}
+
+.card-game-page .btn .card-icon,
+.card-game-page button .card-icon {
+    width: 1em;
+    height: 1em;
+    min-width: 1em;
+    min-height: 1em;
+    line-height: 1;
 }
 
 /* 特色标签：细边 + 墨字，黄色留给顶条 / 标题线 / 主按钮 */

@@ -20,12 +20,12 @@
 }
 
 .btn-primary {
-    background: var(--gradient-theme);
-    color: var(--color-theme-ink);
+    background: var(--btn-cta-bg);
+    color: var(--btn-cta-fg);
 }
 
 .btn-primary:hover {
-    background: var(--gradient-theme-reverse);
+    background: var(--btn-cta-bg-hover);
 }
 
 .result-type {

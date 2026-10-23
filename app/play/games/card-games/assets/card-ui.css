@@ -1,12 +1,17 @@
 /* Card-table UI: replaces Bootstrap 3 btn / muted styles. Hard edges, site ink/theme. */
 
 .card-game-page .btn {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35em;
+    appearance: none;
+    -webkit-appearance: none;
     padding: 6px 12px;
     margin-bottom: 0;
     font-size: 14px;
     font-weight: 400;
-    line-height: 1.42857143;
+    line-height: 1.25;
     text-align: center;
     white-space: nowrap;
     vertical-align: middle;
@@ -32,7 +37,7 @@
 
 .card-game-page .btn:disabled,
 .card-game-page .btn.disabled {
-    opacity: 0.55;
+    opacity: 0.72;
     cursor: not-allowed;
     pointer-events: none;
 }
@@ -44,16 +49,32 @@
 }
 
 .card-game-page .btn-primary {
-    background: var(--color-ink, #0a0a0a);
-    color: var(--color-theme, #FFFA00);
-    border-color: var(--color-ink, #0a0a0a);
+    background: var(--btn-emphasis-bg, #fffce0);
+    color: var(--btn-emphasis-fg, #0a0a0a);
+    border-color: var(--btn-emphasis-border, #d4c800);
+    font-weight: 500;
 }
 
 .card-game-page .btn-primary:hover,
 .card-game-page .btn-primary:focus {
-    background: #1a1a1a;
-    color: var(--color-theme, #FFFA00);
-    border-color: #1a1a1a;
+    background: var(--btn-emphasis-bg-hover, #ebe300);
+    color: var(--btn-emphasis-fg, #0a0a0a);
+    border-color: var(--btn-emphasis-border, #d4c800);
+}
+
+.card-game-page .btn-primary:disabled,
+.card-game-page .btn-primary.disabled {
+    background: var(--btn-emphasis-bg, #fffce0) !important;
+    color: var(--btn-emphasis-fg, #0a0a0a) !important;
+    border-color: var(--btn-emphasis-border, #d4c800) !important;
+    opacity: 0.72;
+}
+
+.card-game-page .btn-danger:disabled,
+.card-game-page .btn-danger.disabled {
+    background: #c9302c !important;
+    color: #fff !important;
+    opacity: 0.72;
 }
 
 .card-game-page .btn-danger {
@@ -71,12 +92,19 @@
 
 .card-game-page .btn-group {
     display: inline-flex;
+    align-items: stretch;
+    justify-content: center;
     vertical-align: middle;
+    max-width: 100%;
+    flex-wrap: wrap;
 }
 
 .card-game-page .btn-group > .btn {
     position: relative;
     float: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .card-game-page .btn-group > .btn + .btn {
@@ -97,10 +125,20 @@
     list-style: none;
 }
 
-.card-game-page .card-icon {
-    display: inline-block;
+.card-game-page .btn .card-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     font-style: normal;
     font-weight: 600;
+    width: 1em;
+    height: 1em;
+    min-width: 1em;
+    min-height: 1em;
+    margin: 0;
+    padding: 0;
+    flex-shrink: 0;
     line-height: 1;
-    margin-right: 2px;
+    color: currentColor;
+    opacity: 0.82;
 }

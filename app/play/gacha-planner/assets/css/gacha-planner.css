@@ -174,14 +174,14 @@ details.gp-rules[open] {
     margin: 0;
 }
 
-/* 主计算 CTA：墨底 + 亮黄字/黄边 */
+/* 主计算 CTA：与全站一致，默认浅黄强调、悬停黄底 */
 .gp-primary {
     margin-top: 14px;
     width: 100%;
     padding: 11px 14px;
-    border: 1px solid var(--color-theme);
-    background: var(--color-ink);
-    color: var(--color-label-fg);
+    border: 1px solid var(--btn-emphasis-border);
+    background: var(--btn-emphasis-bg);
+    color: var(--btn-emphasis-fg);
     font-weight: 800;
     font-size: 0.82rem;
     cursor: pointer;
@@ -189,9 +189,9 @@ details.gp-rules[open] {
 }
 
 .gp-primary:hover {
-    background: var(--color-theme);
-    color: var(--color-theme-ink);
-    border-color: var(--color-ink);
+    background: var(--btn-cta-bg);
+    color: var(--btn-cta-fg);
+    border-color: var(--btn-emphasis-border);
     transform: none;
 }
 

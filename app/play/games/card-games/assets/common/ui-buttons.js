@@ -20,7 +20,7 @@
     function glyphSpan(name) {
         if (!name) return ''
         var t = GLYPH_TEXT[name] || String(name)
-        return '<span class="card-icon" aria-hidden="true">' + t + '</span> '
+        return '<span class="card-icon" aria-hidden="true">' + t + '</span>'
     }
 
     function buildButton(type, text, onclick, opts) {
@@ -30,7 +30,20 @@
         var onmouseleave = opts.onmouseleave || ''
         var onmousedown = opts.onmousedown || ''
         var glyph2 = opts.glyph2 || ''
-        return '<button class="btn btn-' + type + '" onclick="' + onclick + '"' +
+        var typeParts = String(type || 'default').trim().split(/\s+/).filter(Boolean)
+        var mainType = typeParts[0] || 'default'
+        var modClasses = typeParts.slice(1).join(' ')
+        var disabled =
+            opts.disabled || modClasses.indexOf('disabled') !== -1 ? ' disabled' : ''
+        var extraClass = opts.extraClass ? ' ' + opts.extraClass : ''
+        return (
+            '<button class="btn btn-' +
+            mainType +
+            (modClasses ? ' ' + modClasses : '') +
+            extraClass +
+            '"' +
+            disabled +
+            (onclick ? ' onclick="' + onclick + '"' : '') +
             (onmouseenter ? ' onmouseenter="' + onmouseenter + '" ontouchstart="' + onmouseenter + '"' : '') +
             (onmouseleave ? ' onmouseleave="' + onmouseleave + '"' : '') +
             (onmousedown ? ' onmousedown="' + onmousedown + '"' : '') + '>' +
