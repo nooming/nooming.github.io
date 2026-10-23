@@ -1,0 +1,79 @@
+/* 阅读域 · 站内长文（app/read/*） */
+.article-body {
+    line-height: 1.8;
+}
+
+.article-body h3 {
+    color: #0a0a0a;
+    margin: 28px 0 16px;
+    font-size: 1.28rem;
+}
+
+.article-body p {
+    margin-bottom: 14px;
+    font-size: 1.02rem;
+}
+
+.article-body ul {
+    margin-left: 20px;
+    margin-top: 8px;
+}
+
+.article-body li {
+    margin-bottom: 8px;
+}
+
+.article-step {
+    padding: 12px 18px;
+    margin: 14px 0;
+    border-radius: 0;
+    border-left: 4px solid var(--color-theme-deep);
+    background-color: #e8f4f8;
+}
+
+.article-step strong {
+    color: var(--color-theme-text-end);
+}
+
+.article-tip {
+    background-color: #e8f8f5;
+    border-left: 4px solid #1abc9c;
+    padding: 14px 18px;
+    border-radius: 0;
+    margin: 18px 0;
+    color: #117864;
+}
+
+.article-warning {
+    background-color: #fff3cd;
+    border-left: 4px solid #ffc107;
+    padding: 14px 18px;
+    border-radius: 0;
+    margin: 18px 0;
+    color: #856404;
+}
+
+.article-code {
+    background-color: #f4f4f4;
+    border: 1px solid #ddd;
+    border-radius: 0;
+    padding: 12px 15px;
+    margin: 12px 0;
+    font-family: "Courier New", monospace;
+    font-size: 0.9rem;
+    overflow-x: auto;
+}
+
+@media (max-width: 767.98px) {
+    .article-body h3 {
+        font-size: 1.15rem;
+    }
+
+    .back-to-top {
+        width: 45px;
+        height: 45px;
+        bottom: 20px;
+        right: 70px;
+        font-size: 20px;
+    }
+}

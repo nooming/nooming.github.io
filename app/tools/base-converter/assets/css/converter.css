@@ -1,0 +1,176 @@
+/* 页面特定样式（背景网格由 common body / body.page-container 提供） */
+body {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 25px 20px;
+    min-height: 100vh;
+    color: var(--color-body);
+}
+
+h1 {
+    color: var(--gradient-theme-title);
+    margin-bottom: 20px;
+    font-size: 2rem;
+    font-weight: 700;
+    background: none;
+    -webkit-background-clip: unset;
+    -webkit-text-fill-color: unset;
+    background-clip: unset;
+    letter-spacing: -0.5px;
+}
+
+@media (max-width: 767.98px) {
+    body {
+        padding: 15px 12px;
+    }
+    h1 {
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+    }
+}
+
+
+/* 进制转换器整体样式 */
+.converter {
+    background-color: var(--color-card);
+    padding: 25px;
+    border-radius: 0;
+    border: 1px solid var(--line-ins);
+    box-shadow: var(--shadow-ins);
+}
+
+/* 输入区域样式 */
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--gradient-theme-title);
+    font-weight: bold;
+}
+
+.input-row {
+    display: flex;
+    gap: 10px;
+}
+
+select, input[type="text"] {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 0;
+    flex: 1;
+    font-family: "Microsoft YaHei", sans-serif;
+    font-size: 14px;
+}
+
+input[type="text"] {
+    flex: 3;
+}
+
+/* 错误提示样式 */
+.error-tip {
+    color: #e74c3c;
+    font-size: 14px;
+    margin-top: 5px;
+    display: none;
+}
+
+/* 按钮组样式 */
+.btn-group {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 0;
+    cursor: pointer;
+    font-family: "Microsoft YaHei", sans-serif;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+button.btn-quiet {
+    border: 1px solid var(--line-hard);
+    background: var(--color-card);
+    color: var(--color-ink);
+}
+
+button.btn-quiet:hover {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: var(--color-ink);
+}
+
+.convert-btn {
+    background: var(--gradient-theme);
+    color: var(--color-theme-ink);
+}
+
+.convert-btn:hover {
+    background: var(--gradient-theme-reverse);
+}
+
+/* 结果区域样式 */
+.result-group {
+    margin-top: 20px;
+}
+
+.result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 5px;
+}
+
+.result-item span:first-child {
+    color: #34495e;
+    font-size: 14px;
+}
+
+.result-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.result-item span:last-child {
+    color: var(--gradient-theme-title);
+    font-family: "Consolas", monospace;
+    font-size: 14px;
+}
+
+/* 复制按钮样式 */
+.copy-btn {
+    padding: 5px 10px;
+    background-color: #f0f0f0;
+    color: #666;
+    font-size: 12px;
+}
+
+.copy-btn:hover {
+    background-color: #e0e0e0;
+}
+
+/* 响应式适配（手机端） */
+@media (max-width: 600px) {
+    .input-row {
+        flex-direction: column;
+    }
+    input[type="text"] {
+        flex: 1;
+    }
+    .btn-group {
+        flex-direction: column;
+    }
+    .result-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+}

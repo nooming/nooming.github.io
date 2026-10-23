@@ -1,0 +1,280 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+    <meta name="theme-color" content="#FFFA00">
+    <title>多选随机 · noomings</title>
+    <meta name="description" content="每行一项，随机保留一项。"><link rel="stylesheet" href="../../../../assets/css/common.css">
+    <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
+    <link rel="manifest" href="/assets/icons/site.webmanifest">
+    <link rel="stylesheet" href="/assets/css/site-shell.css">
+    <link as="style" href="../assets/css/style.min.css" rel="preload">
+    <link href="../assets/css/style.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/decision-shell.css">
+    <style>
+        /* 快速选择工具样式 */
+        .quick-choice-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .quick-choice-title {
+            font-size: 1.5rem;
+            color: var(--gradient-theme-title);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .input-section {
+            margin-bottom: 25px;
+        }
+        .input-section label {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--gradient-theme-title);
+            font-weight: 500;
+        }
+        .input-section textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #ecf0f1;
+            border-radius: 0;
+            font-size: 1rem;
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+        .input-section textarea:focus {
+            outline: none;
+            border-color: var(--color-theme-deep);
+        }
+        .input-hint {
+            font-size: 0.85rem;
+            color: #95a5a6;
+            margin-top: 8px;
+        }
+        .preset-section {
+            margin-bottom: 20px;
+        }
+        .preset-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .preset-btn {
+            padding: 8px 16px;
+            background-color: #ecf0f1;
+            color: var(--gradient-theme-title);
+            border: 1px solid #bdc3c7;
+            border-radius: 0;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .preset-btn:hover {
+            background: var(--gradient-theme);
+            color: var(--color-theme-ink);
+            border-color: var(--color-theme-deep);
+        }
+        .button-section {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .choice-btn {
+            padding: 12px 40px;
+            background: var(--gradient-theme);
+            color: var(--color-theme-ink);
+            border: none;
+            border-radius: 0;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .choice-btn:hover {
+            background: var(--gradient-theme-reverse);
+        }
+        .choice-btn:active {
+            transform: scale(0.98);
+        }
+        .result-section {
+            margin-top: 30px;
+            padding: 25px;
+            background-color: #f8f9fa;
+            border-radius: 0;
+            text-align: center;
+            min-height: 100px;
+            display: none;
+        }
+        .result-section.show {
+            display: block;
+        }
+        .result-label {
+            font-size: 0.9rem;
+            color: #95a5a6;
+            margin-bottom: 10px;
+        }
+        .result-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--gradient-theme-title);
+            margin: 0;
+        }
+
+        @media (max-width: 767.98px) {
+            .quick-choice-title {
+                font-size: 1.2rem !important;
+            }
+        }
+    </style>
+</head>
+<body class="page-container quick-choice-page decision-tool-page">
+    <div class="page-header">
+        <div class="section-header section-header--page">
+            <h1>多选随机</h1>
+            <p>每行一项，随机保留一项。</p>
+        </div>
+    </div>
+<main class="decision-tool-main">
+    <div class="app-panel">
+    <div class="quick-choice-container">
+        <h2 class="quick-choice-title">随机一项</h2>
+        
+        <div class="input-section">
+            <label for="options-input">每行一项：</label>
+            <textarea id="options-input" placeholder="选项1&#10;选项2&#10;选项3&#10;..."></textarea>
+            <div class="input-hint">换行分隔；点击按钮随机保留一行。</div>
+        </div>
+
+        <div class="preset-section">
+            <div class="preset-buttons">
+                <button class="preset-btn" id="preset-abcd-btn">选ABCD</button>
+            </div>
+        </div>
+
+        <div class="button-section">
+            <button class="choice-btn" id="choice-btn">随机</button>
+        </div>
+
+        <div class="result-section" id="result-section">
+            <div class="result-label">结果</div>
+            <p class="result-text" id="result-text"></p>
+        </div>
+    </div>
+    </div>
+</main>
+
+    <footer class="site-footer" role="contentinfo">
+        <p>© 2026 noomings · 非商用</p>
+    </footer>
+
+<script src="../assets/js/decision-lang-normalize.js"></script>
+<script>
+    function makeChoice() {
+        const input = document.getElementById('options-input');
+        const resultSection = document.getElementById('result-section');
+        const resultText = document.getElementById('result-text');
+        
+        const inputValue = input.value.trim();
+        
+        if (!inputValue) {
+            if (typeof showToast === 'function') {
+                showToast('至少填写一项。', 'error');
+            } else {
+                alert('至少填写一项。');
+            }
+            return;
+        }
+        
+        // 按换行符分割选项，过滤空行
+        const options = inputValue.split('\n')
+            .map(opt => opt.trim())
+            .filter(opt => opt.length > 0);
+        
+        if (options.length === 0) {
+            if (typeof showToast === 'function') {
+                showToast('至少填写一项。', 'error');
+            } else {
+                alert('至少填写一项。');
+            }
+            return;
+        }
+        
+        // 随机选择一个选项
+        const randomIndex = Math.floor(Math.random() * options.length);
+        const selectedOption = options[randomIndex];
+        
+        // 显示结果
+        resultText.textContent = selectedOption;
+        resultSection.classList.add('show');
+        
+        // 添加动画效果
+        resultSection.style.animation = 'none';
+        setTimeout(() => {
+            resultSection.style.animation = 'fadeIn 0.5s ease-in';
+        }, 10);
+    }
+    
+    // 添加CSS动画
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // 加载预设
+    function loadPreset(presetName) {
+        const input = document.getElementById('options-input');
+        
+        if (presetName === 'ABCD') {
+            input.value = 'A\nB\nC\nD';
+        }
+        
+        // 聚焦到输入框
+        input.focus();
+    }
+    
+    // 绑定事件
+    document.addEventListener('DOMContentLoaded', function() {
+        const choiceBtn = document.getElementById('choice-btn');
+        const presetBtn = document.getElementById('preset-abcd-btn');
+        const input = document.getElementById('options-input');
+        
+        if (choiceBtn) {
+            choiceBtn.addEventListener('click', makeChoice);
+        }
+        
+        if (presetBtn) {
+            presetBtn.addEventListener('click', function() {
+                loadPreset('ABCD');
+            });
+        }
+        
+        // 支持回车键快速选择（Ctrl+Enter）
+        if (input) {
+            input.addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === 'Enter') {
+                    makeChoice();
+                }
+            });
+        }
+    });
+    </script>
+    
+    <!-- 公共工具函数 -->
+    <script src="../../../../assets/js/utils.js" defer></script>
+    <script src="/assets/js/site-shell.js" defer></script>
+</body>
+</html>
+

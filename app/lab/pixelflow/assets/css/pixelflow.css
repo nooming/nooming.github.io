@@ -1,0 +1,524 @@
+/* ========== 像素涌流：原版布局 + 全站配色 ========== */
+
+.pixelflow-page .main-layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    grid-template-areas:
+        "left canvas"
+        "left params";
+    gap: 20px;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto 28px;
+    align-items: start;
+}
+
+.pixelflow-page .left-panel {
+    grid-area: left;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 220px;
+}
+
+.pixelflow-page .upload-panel {
+    background: var(--color-card);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    box-shadow: var(--shadow-card-float);
+}
+
+.pixelflow-page .upload-panel h3 {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--color-theme-ink);
+    letter-spacing: 0;
+    align-self: stretch;
+    text-align: left;
+}
+
+.pixelflow-page .upload-zone {
+    width: 100%;
+    aspect-ratio: 1;
+    border: 2px dashed var(--line-hard);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    overflow: hidden;
+    background: var(--color-surface-dim);
+}
+
+.pixelflow-page .upload-zone:hover {
+    border-color: var(--color-ink);
+    background: var(--color-theme-wash);
+}
+
+.pixelflow-page .upload-zone.has-image {
+    border-style: solid;
+    border-color: var(--line-ins);
+}
+
+.pixelflow-page .upload-zone img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+}
+
+.pixelflow-page .upload-zone .placeholder {
+    text-align: center;
+    color: #5a6c7d;
+    pointer-events: none;
+}
+
+.pixelflow-page .upload-zone .placeholder span {
+    font-size: 0.8rem;
+}
+
+.pixelflow-page .upload-panel label.file-btn {
+    display: inline-block;
+    padding: 7px 18px;
+    background: var(--color-card);
+    color: var(--color-ink) !important;
+    border: 1px solid var(--line-hard);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.pixelflow-page .upload-panel label.file-btn:hover {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: var(--color-ink);
+}
+
+.pixelflow-page .upload-panel input[type="file"] {
+    display: none;
+}
+
+.pixelflow-page .upload-panel .info {
+    font-size: 0.7rem;
+    color: #5a6c7d;
+    text-align: center;
+}
+
+.pixelflow-page .canvas-panel {
+    grid-area: canvas;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.pixelflow-page .canvas-wrapper {
+    background: #0a0a0a;
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    line-height: 0;
+    box-shadow: var(--shadow-ins);
+    width: fit-content;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.pixelflow-page .canvas-wrapper.is-empty {
+    background: var(--color-surface-dim);
+    border: 2px dashed var(--line-hard);
+    box-shadow: none;
+    aspect-ratio: 1;
+    max-width: 100%;
+    box-sizing: border-box;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    line-height: normal;
+}
+
+.pixelflow-page .canvas-wrapper.is-empty canvas#mainCanvas {
+    display: none !important;
+}
+
+.pixelflow-page .canvas-empty {
+    margin: 0;
+    padding: 0;
+    width: auto;
+    max-width: calc(100% - 8px);
+    text-align: center;
+    text-wrap: balance;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: #5a6c7d;
+}
+
+.pixelflow-page canvas#mainCanvas {
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+.pixelflow-page canvas#mainCanvas[hidden] {
+    display: none !important;
+}
+
+.pixelflow-page .status {
+    text-align: center;
+    font-size: 0.82rem;
+    color: #5a6c7d;
+    min-height: 20px;
+    transition: color 0.2s;
+}
+
+.pixelflow-page .status.ready {
+    color: var(--color-theme-ink);
+    font-weight: 600;
+}
+
+.pixelflow-page .status.animating {
+    color: var(--color-ink-muted);
+}
+
+.pixelflow-page .params-panel {
+    grid-area: params;
+    background: var(--color-card);
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    box-shadow: var(--shadow-card-float);
+    padding: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+    justify-content: center;
+    align-self: start;
+}
+
+.pixelflow-page .controls-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    width: 100%;
+    background: var(--color-card);
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    box-shadow: var(--shadow-card-float);
+}
+
+.pixelflow-page .controls-action-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.pixelflow-page .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    align-items: center;
+}
+
+.pixelflow-page .control-group label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--color-theme-ink);
+    letter-spacing: 0.02em;
+}
+
+.pixelflow-page .control-group select,
+.pixelflow-page .control-group input[type="range"] {
+    background: var(--color-card);
+    border: 1px solid var(--line-hard);
+    color: var(--color-ink);
+    padding: 5px 8px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.pixelflow-page .control-group select {
+    min-width: 100px;
+}
+
+.pixelflow-page .control-group input[type="range"] {
+    width: 90px;
+    appearance: none;
+    height: 5px;
+    background: var(--color-surface-dim);
+    outline: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+.pixelflow-page .control-group input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--color-theme);
+    border: 1px solid var(--color-ink);
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.pixelflow-page .control-group .range-value {
+    font-size: 0.75rem;
+    color: #5a6c7d;
+}
+
+.pixelflow-page .range-number {
+    width: 56px;
+    background: var(--color-card);
+    border: 1px solid var(--line-hard);
+    color: var(--color-ink);
+    text-align: center;
+    padding: 2px 4px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    -moz-appearance: textfield;
+    cursor: text;
+}
+
+.pixelflow-page .range-number::-webkit-inner-spin-button,
+.pixelflow-page .range-number::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+}
+
+.pixelflow-page .range-number:focus {
+    outline: none;
+    border-color: var(--color-ink);
+}
+
+.pixelflow-page .res-warn {
+    font-size: 0.65rem;
+    color: #b45309;
+    min-height: 10px;
+}
+
+.pixelflow-page .btn {
+    padding: 10px 24px;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s, background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.pixelflow-page .btn:active {
+    transform: scale(0.97);
+}
+
+.pixelflow-page .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.pixelflow-page .btn-transform {
+    background: var(--gradient-theme);
+    color: var(--color-theme-ink) !important;
+    font-size: 1rem;
+    padding: 12px 32px;
+    box-shadow: var(--shadow-theme);
+}
+
+.pixelflow-page .btn-transform:hover:not(:disabled) {
+    background: var(--gradient-theme-reverse);
+    box-shadow: var(--shadow-theme-hover);
+}
+
+.pixelflow-page .btn-reset {
+    background: var(--color-card);
+    color: var(--color-ink) !important;
+    border: 1px solid var(--line-hard);
+}
+
+.pixelflow-page .btn-reset:hover:not(:disabled) {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: var(--color-ink);
+}
+
+.pixelflow-page .btn-toggle {
+    background: var(--color-card);
+    color: #5a6c7d;
+    border: 1px solid var(--line-hard);
+    padding: 7px 14px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.pixelflow-page .btn-toggle:hover:not(:disabled) {
+    border-color: var(--color-ink);
+    color: var(--color-ink);
+}
+
+.pixelflow-page .btn-toggle.active {
+    background: var(--color-theme-wash);
+    color: var(--color-theme-ink);
+    border-color: var(--color-ink);
+    font-weight: 600;
+}
+
+.pixelflow-page .progress-bar-wrap {
+    width: 100%;
+    max-width: 400px;
+    height: 4px;
+    background: var(--color-surface-dim);
+    border: 1px solid var(--line-ins);
+    overflow: hidden;
+}
+
+.pixelflow-page .progress-bar {
+    height: 100%;
+    width: 0%;
+    background: var(--color-theme);
+    transition: width 0.05s linear;
+}
+
+.pixelflow-page .btn-download {
+    background: var(--color-card);
+    color: var(--color-ink) !important;
+    border: 1px solid var(--line-hard);
+}
+
+.pixelflow-page .btn-download:hover:not(:disabled) {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: var(--color-ink);
+}
+
+@media (min-width: 1200px) {
+    .pixelflow-page .main-layout {
+        grid-template-columns: 220px 1fr 240px;
+        grid-template-areas: "left canvas params";
+    }
+
+    .pixelflow-page .params-panel {
+        flex-direction: column;
+        flex-wrap: nowrap;
+        align-items: stretch;
+        justify-content: flex-start;
+        gap: 14px;
+    }
+
+    .pixelflow-page .params-panel .control-group {
+        align-items: stretch;
+    }
+
+    .pixelflow-page .params-panel .control-group label {
+        text-align: left;
+    }
+
+    .pixelflow-page .params-panel .control-group select,
+    .pixelflow-page .params-panel .control-group input[type="range"] {
+        width: 100%;
+        min-width: unset;
+    }
+
+    .pixelflow-page .params-panel .btn-toggle {
+        width: 100%;
+    }
+
+    .pixelflow-page .params-panel #trailStrengthGroup {
+        width: 100%;
+    }
+}
+
+@media (max-width: 850px) {
+    .pixelflow-page .main-layout {
+        grid-template-columns: 1fr;
+        grid-template-areas: "left" "canvas" "params";
+        gap: 10px;
+    }
+
+    .pixelflow-page .left-panel {
+        flex-direction: row;
+        width: 100%;
+        max-width: 500px;
+        gap: 8px;
+    }
+
+    .pixelflow-page .upload-panel {
+        flex: 1;
+        padding: 10px;
+        gap: 6px;
+    }
+
+    .pixelflow-page .upload-panel h3 {
+        font-size: 0.75rem;
+    }
+
+    .pixelflow-page .left-panel .upload-zone {
+        aspect-ratio: unset;
+        height: 80px;
+    }
+
+    .pixelflow-page .upload-panel label.file-btn {
+        font-size: 0.75rem;
+        padding: 5px 12px;
+    }
+
+    .pixelflow-page .upload-panel .info {
+        font-size: 0.65rem;
+    }
+
+    .pixelflow-page .canvas-panel {
+        width: 100%;
+        gap: 8px;
+    }
+
+    .pixelflow-page .params-panel {
+        padding: 10px 12px;
+        gap: 8px;
+    }
+
+    .pixelflow-page .controls-actions {
+        padding: 10px 12px;
+        gap: 8px;
+    }
+
+    .pixelflow-page .btn {
+        font-size: 0.78rem;
+        padding: 8px 16px;
+    }
+
+    .pixelflow-page .btn-transform {
+        font-size: 0.9rem;
+        padding: 10px 22px;
+    }
+
+    .pixelflow-page .btn-toggle {
+        font-size: 0.72rem;
+        padding: 6px 10px;
+    }
+
+    .pixelflow-page .control-group label {
+        font-size: 0.65rem;
+    }
+
+    .pixelflow-page .control-group select,
+    .pixelflow-page .control-group input[type="range"] {
+        font-size: 0.75rem;
+        padding: 4px 6px;
+    }
+
+    .pixelflow-page .control-group select {
+        min-width: 80px;
+    }
+
+    .pixelflow-page .control-group input[type="range"] {
+        width: 70px;
+    }
+
+    .pixelflow-page .status {
+        font-size: 0.7rem;
+        min-height: 16px;
+    }
+}

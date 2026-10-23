@@ -1,5 +1,17 @@
 # 更新日志
 
+## v2.4
+
+顶栏与 `app/` 目录对齐；首页枢纽与阅读域重组；全站注入导航壳（`site-shell`）。旧路径不保留跳转。
+
+1. **全站导航壳**（`assets/css/site-shell.css`、`assets/js/site-shell.js`）：顶栏 **首页 · 实验 · 工具 · 阅读 · 娱乐**；L1 点击进常用子页（质子 / 二维码 / Markdown / 五子棋）；仅 **工具** 保留 `tools/index.html` 总览；桌面侧栏 + 移动底栏 + 分组菜单；首页与 `app/navigation/` 同 hub 壳。**笔记 / 停车 / Citywalk** 仍不挂壳；顶栏 L1 互斥高亮。
+2. **首页**：`#discover` **常用** 三格（导航 · 笔记 · Citywalk）；`#practice` 停车 + 物理外链；hub 标题与入口横幅样式调整。
+3. **阅读**（`app/read/`）：Markdown 迁入 `read/markdown/`；原 `articles/` 长文迁入 `read/`；共用 `assets/css/article.css`。删除根级 `articles/`、`app/markdown/`。
+4. **`app/` 分域**：`lab/`、`tools/`、`read/`、`play/` 物理分目录；路径与 IA 见 `docs/app-ia.md`。
+5. **文案**：用户可见表述收敛至 `docs/copy-style.md`；`sitemap.xml` 与站内链同步新路径。
+6. **索引扁平化**：删除中间目录页及 **`lab/`、`read/`、`play/` 域目录页**（子项少、与侧栏重复）；保留 **`tools/index.html`**；`tools/doc-tools/` 等 hub 已删；侧栏无自指目录项。
+7. **母品牌标**（`assets/brand/`）：定稿「n 是窗，月亮在窗里」；圆角黑底白门 + 黄月牙；顶栏与首页 hero 用 `noomings-mark.svg`；全站标签页 `favicon.svg`，主屏幕 PNG 由主标导出。WanderWalk 不变。
+
 ## v2.3
 
 枢纽页改为「入口 / 实践 / 工具 / 其它」，访客域名为 noomings（`app/` 目录未按栏目搬迁）；本版上线 Markdown 阅读、图片识字、灯牌、**文档转换**，并将 Citywalk 升级为 **WanderWalk**（路线规划 + 社区）。

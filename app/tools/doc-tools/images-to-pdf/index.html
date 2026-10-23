@@ -1,0 +1,45 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#FFFA00">
+    <meta name="description" content="多张图片按数字文件名排序合并为一个 PDF，浏览器内完成。">
+    <title>图片转 PDF · noomings</title><link rel="stylesheet" href="../../../../assets/css/common.css">
+    <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
+    <link rel="manifest" href="/assets/icons/site.webmanifest">
+    <link rel="stylesheet" href="/assets/css/site-shell.css">
+    <link rel="stylesheet" href="../../assets/css/doc-tools.css">
+</head>
+<body class="page-container">
+    <div class="page-header">
+        <div class="section-header section-header--page">
+            <h1>图片 → PDF</h1>
+            <p>按文件名数字 1、2、3… 排序。文件不上传。</p>
+        </div>
+    </div>
+
+    <main class="app-panel doc-panel">
+        <p class="doc-hint">对应桌面工具 <strong>img2pdf</strong>。支持 png / jpg / webp 等；非数字文件名会排在数字文件之后。</p>
+        <div class="doc-upload">
+            <label for="img-files" class="doc-upload-btn">选择多张图片</label>
+            <input type="file" id="img-files" accept="image/*" multiple>
+            <p id="file-name" class="doc-file-name">未选择文件</p>
+        </div>
+        <div class="doc-actions">
+            <button type="button" class="doc-primary-btn" id="convert-btn" disabled>合并为 PDF</button>
+            <p id="status" class="doc-status" aria-live="polite">请选择图片</p>
+        </div>
+        <div class="doc-progress" hidden id="progress-wrap"><span id="progress-bar"></span></div>
+        <div id="preview" class="doc-preview-list" hidden></div>
+    </main>
+
+    <footer class="site-footer" role="contentinfo">
+        <p>© 2026 noomings · 非商用</p>
+    </footer>
+    <script src="../../../../assets/js/utils.js"></script>
+    <script type="module" src="assets/js/images-to-pdf.js"></script>
+    <script src="/assets/js/site-shell.js" defer></script>
+</body>
+</html>

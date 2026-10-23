@@ -13,7 +13,28 @@ body {
     background-size: var(--bg-grid-size) var(--bg-grid-size);
 }
 
-header {
+.top-banners--hub-lead {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    width: 100%;
+}
+
+.top-banners--hub-lead .top-entry {
+    flex: 1 1 0;
+    min-width: 220px;
+    min-height: 64px;
+    padding: 16px 20px;
+    font-size: 1rem;
+}
+
+.top-banners--hub-lead .top-entry .card-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+/* 仅首页 hero；勿用裸 header 选择器（会与 .site-shell-top 冲突） */
+header.hub-hero {
     text-align: center;
     margin-bottom: 18px;
     padding: 16px 20px 12px;
@@ -24,7 +45,7 @@ header {
     overflow: visible;
 }
 
-header::before {
+header.hub-hero::before {
     content: '';
     position: absolute;
     top: 0;
@@ -44,6 +65,31 @@ h1 {
     -webkit-text-fill-color: unset;
     background-clip: unset;
     letter-spacing: -0.5px;
+}
+
+header.hub-hero .hub-hero__title {
+    font-size: clamp(2.125rem, 5.5vw, 3rem);
+    line-height: 1.1;
+    margin-bottom: 10px;
+    letter-spacing: -0.03em;
+}
+
+header.hub-hero .hub-hero__lockup {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(10px, 2.5vw, 14px);
+}
+
+header.hub-hero .hub-hero__mark {
+    width: clamp(44px, 11vw, 56px);
+    height: clamp(44px, 11vw, 56px);
+    flex-shrink: 0;
+    display: block;
+}
+
+header.hub-hero .hub-hero__word {
+    color: var(--gradient-theme-title);
 }
 
 .intro {
@@ -77,7 +123,7 @@ h1 {
     padding-bottom: 0;
 }
 
-.tips-cards, .features {
+.features {
     display: grid;
     grid-template-columns: 1fr;
     gap: 18px;
@@ -86,28 +132,6 @@ h1 {
 @media (min-width: 768px) {
     .features {
         grid-template-columns: repeat(2, 1fr);
-    }
-    .tips-cards {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (min-width: 1024px) {
-    .tips-cards:not(.tips-cards--pair):not(.tips-cards--practice):not(.tips-cards--other) {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-.tips-cards.tips-cards--pair {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    max-width: 920px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-@media (max-width: 575.98px) {
-    .tips-cards.tips-cards--pair {
-        grid-template-columns: 1fr;
     }
 }
 
@@ -123,7 +147,7 @@ h1 {
     height: 2rem;
 }
 
-.tips-title, .feature-title {
+.feature-title {
     margin: 0;
     font-size: 1.25rem;
     font-weight: 700;
@@ -132,73 +156,6 @@ h1 {
     color: var(--color-feature-title);
 }
 
-.feature-card p.feature-desc {
-    color: #95a5a6;
-    font-size: 0.9rem;
-    margin-top: 8px;
-}
-
-.tips-tag, .feature-tag {
-    display: inline-block;
-    padding: 2px 8px;
-    font-size: 0.75rem;
-    margin-bottom: 10px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    line-height: 1.4;
-    background: transparent;
-    color: var(--color-ink);
-    border: 1px solid var(--color-ink);
-}
-
-.tips-btn, .tool-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 11px 22px;
-    font-size: 0.95rem;
-    text-decoration: none !important;
-    margin-top: 14px;
-    color: var(--color-theme-ink) !important;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    position: relative;
-    overflow: hidden;
-}
-
-.tips-btn::after, .tool-btn::after {
-    content: '→';
-    transition: transform 0.3s ease;
-}
-
-.tips-btn:hover::after, .tool-btn:hover::after {
-    transform: translateX(4px);
-}
-
-.tips-btn {
-    color: #fff !important;
-    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-}
-
-.tips-btn:hover {
-    background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
-}
-
-.tool-btn {
-    color: var(--color-theme-ink) !important;
-    background: var(--gradient-theme);
-}
-
-.tool-btn:hover {
-    background: var(--gradient-theme-reverse);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-tool);
-}
-
-/* 入口：图标 + 短名，约原灰横幅三分之一高 */
 .top-banners {
     display: flex;
     flex-wrap: wrap;
@@ -258,79 +215,30 @@ h1 {
     min-width: 0;
 }
 
-#practice .features.features--practice,
-#tools .features.features--tools,
-#other .features.features--other {
+#practice .features.features--practice {
     grid-template-columns: 1fr;
     max-width: 920px;
 }
 
 @media (min-width: 768px) {
-    #practice .features.features--practice,
-    #tools .features.features--tools,
-    #other .features.features--other {
+    #practice .features.features--practice {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
-.feature-card--compact {
-    padding: 14px 16px;
-}
-
-.feature-card--compact .card-icon-title {
-    margin-bottom: 0;
-}
-
-.feature-card--compact .card-icon {
-    width: 1.6rem;
-    height: 1.6rem;
-}
-
-.feature-card--compact .feature-title {
-    font-size: 1.05rem;
-}
-
-.other-articles {
-    margin-top: 18px;
-    max-width: 920px;
-}
-
-.other-articles-title {
-    margin: 0 0 8px;
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: var(--color-theme-ink);
-}
-
-.other-links {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.other-links a {
-    color: #000000;
-    font-weight: 700;
-    font-size: 0.9rem;
-    text-decoration: none;
-    line-height: 1.45;
-}
-
-.other-links a:hover {
-    color: var(--color-theme-secondary);
-    text-decoration: underline;
-}
-
 @media (max-width: 575.98px) {
-    #practice .features.features--practice,
-    #tools .features.features--tools,
-    #other .features.features--other,
-    .tips-cards.tips-cards--pair {
+    #practice .features.features--practice {
         grid-template-columns: 1fr;
     }
 
-    .top-entry {
-        flex: 1 1 calc(50% - 8px);
+    .top-banners--hub-lead {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .top-banners--hub-lead .top-entry {
+        min-width: 0;
+        width: 100%;
     }
 }
 
@@ -339,7 +247,7 @@ h1 {
         padding: 15px 12px;
     }
 
-    header {
+    header.hub-hero {
         padding: 14px 12px 10px;
         margin-bottom: 14px;
     }
@@ -349,11 +257,16 @@ h1 {
         margin-bottom: 6px;
     }
 
+    header.hub-hero .hub-hero__title {
+        font-size: 2.25rem;
+        margin-bottom: 8px;
+    }
+
     .intro {
         font-size: 0.95rem;
     }
 
-    .tips-cards, .features {
+    .features {
         gap: 14px;
     }
 
@@ -367,14 +280,8 @@ h1 {
         margin-bottom: 8px;
     }
 
-    .tips-title, .feature-title {
+    .feature-title {
         font-size: 1.15rem;
-    }
-
-    .tips-btn, .tool-btn {
-        padding: 10px 20px;
-        font-size: 0.9rem;
-        margin-top: 12px;
     }
 
     .top-banners {
@@ -392,6 +299,17 @@ h1 {
         height: 1.25rem;
     }
 
+    .top-banners--hub-lead .top-entry {
+        min-height: 56px;
+        padding: 14px 16px;
+        font-size: 0.95rem;
+    }
+
+    .top-banners--hub-lead .top-entry .card-icon {
+        width: 1.4rem;
+        height: 1.4rem;
+    }
+
     footer.site-footer {
         margin-top: 30px;
         padding: 12px 4px 4px;
@@ -400,6 +318,10 @@ h1 {
 }
 
 /* 枢纽首页：左对齐区块标题、整卡点击、键盘焦点 */
+.hub-home .section--tight {
+    padding-inline: 16px;
+}
+
 .hub-home .section-header {
     text-align: left;
     padding: 8px 0 0;
@@ -419,23 +341,12 @@ h1 {
     height: 2px;
 }
 
-.hub-home .section-header p {
-    margin: 8px 0 0;
-    max-width: none;
-}
-
-.hub-home a.tips-card,
 .hub-home a.feature-card {
     display: block;
     color: inherit;
     text-decoration: none;
     cursor: pointer;
     overflow: visible;
-}
-
-.hub-home a.tips-card--compact .card-icon-title,
-.hub-home a.feature-card--compact .card-icon-title {
-    margin-bottom: 0;
 }
 
 .hub-home .card-ext-hint {
@@ -452,19 +363,15 @@ h1 {
     border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.hub-home a.tips-card:focus-visible,
 .hub-home a.feature-card:focus-visible,
 .hub-home .top-entry:focus-visible,
-.hub-home .other-links a:focus-visible,
 .hub-home .github-link:focus-visible {
     outline: 2px solid var(--color-theme-ink);
     outline-offset: 3px;
 }
 
-.hub-home a.tips-card:focus:not(:focus-visible),
 .hub-home a.feature-card:focus:not(:focus-visible),
 .hub-home .top-entry:focus:not(:focus-visible),
-.hub-home .other-links a:focus:not(:focus-visible),
 .hub-home .github-link:focus:not(:focus-visible) {
     outline: none;
 }

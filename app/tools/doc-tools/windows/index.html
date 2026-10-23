@@ -1,0 +1,44 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#FFFA00">
+    <meta name="description" content="Word/PPT 转 PDF 等 Windows 本地工具说明；需 Office/WPS 或 Jupyter，请自行打包。">
+    <title>文档转换 · Windows 桌面版 · noomings</title><link rel="stylesheet" href="../../../../assets/css/common.css">
+    <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
+    <link rel="manifest" href="/assets/icons/site.webmanifest">
+    <link rel="stylesheet" href="/assets/css/site-shell.css">
+    <link rel="stylesheet" href="../../assets/css/doc-tools.css">
+</head>
+<body class="page-container">
+    <div class="page-header">
+        <div class="section-header section-header--page">
+            <h1>Windows 桌面版</h1>
+            <p>依赖本机 Office / WPS 或 Jupyter；PDF 与图片互转请用<a href="../">网页版</a>。</p>
+        </div>
+    </div>
+
+    <main class="app-panel doc-panel">
+        <div class="doc-note">
+            <p><strong>桌面专用</strong>：word2pdf、ppt2pdf、ppt2img、nbopen（拖文件到 exe 或命令行运行）。</p>
+            <p>Word / PPT 需 <strong>Office</strong> 或 <strong>WPS</strong>；nbopen 需本机 <strong>Jupyter</strong>。</p>
+        </div>
+
+        <details class="doc-details doc-note" open>
+            <summary>本地打包</summary>
+            <pre>cd noomings/desktop-doc-tools
+pip install -r requirements.txt
+build_all.bat</pre>
+            <p class="doc-dl-note">产物在 <code>dist\</code>。也可直接 <code>python tools/...</code> 运行，见该目录 README。</p>
+        </details>
+    </main>
+
+    <footer class="site-footer" role="contentinfo">
+        <p>© 2026 noomings · 非商用</p>
+    </footer>
+    <script src="../../../../assets/js/utils.js" defer></script>
+    <script src="/assets/js/site-shell.js" defer></script>
+</body>
+</html>

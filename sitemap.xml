@@ -24,21 +24,27 @@
         <priority>0.8</priority>
     </url>
     
-    <!-- 其它：专题 HTML -->
+    <!-- 阅读 -->
     <url>
-        <loc>https://nooming.github.io/articles/crawler-experience/</loc>
-        <lastmod>2025-01-27</lastmod>
+        <loc>https://nooming.github.io/app/read/markdown/</loc>
+        <lastmod>2026-10-23</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.85</priority>
+    </url>
+    <url>
+        <loc>https://nooming.github.io/app/read/crawler-experience/</loc>
+        <lastmod>2026-10-23</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>https://nooming.github.io/articles/cat-catch-tutorial/</loc>
-        <lastmod>2025-01-27</lastmod>
+        <loc>https://nooming.github.io/app/read/cat-catch-tutorial/</loc>
+        <lastmod>2026-10-23</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>https://nooming.github.io/app/pixelflow/</loc>
+        <loc>https://nooming.github.io/app/lab/pixelflow/</loc>
         <lastmod>2026-05-22</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
@@ -64,33 +70,27 @@
         <priority>0.75</priority>
     </url>
     
-    <!-- 选择辅助工具 -->
+    <!-- 随机工具 -->
     <url>
-        <loc>https://nooming.github.io/app/decision/</loc>
+        <loc>https://nooming.github.io/app/tools/decision/wheel/</loc>
         <lastmod>2025-01-27</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
     <url>
-        <loc>https://nooming.github.io/app/decision/wheel/</loc>
+        <loc>https://nooming.github.io/app/tools/decision/coin-flip/</loc>
         <lastmod>2025-01-27</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
     <url>
-        <loc>https://nooming.github.io/app/decision/coin-flip/</loc>
+        <loc>https://nooming.github.io/app/tools/decision/quick-choice/</loc>
         <lastmod>2025-01-27</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
     <url>
-        <loc>https://nooming.github.io/app/decision/quick-choice/</loc>
-        <lastmod>2025-01-27</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.7</priority>
-    </url>
-    <url>
-        <loc>https://nooming.github.io/app/decision/gacha-planner/</loc>
+        <loc>https://nooming.github.io/app/play/gacha-planner/</loc>
         <lastmod>2026-04-21</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.65</priority>
@@ -98,19 +98,13 @@
     
     <!-- 心理测试 -->
     <url>
-        <loc>https://nooming.github.io/app/psychological/</loc>
+        <loc>https://nooming.github.io/app/play/psychological/mbti-test/</loc>
         <lastmod>2025-01-27</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
     <url>
-        <loc>https://nooming.github.io/app/psychological/mbti-test/</loc>
-        <lastmod>2025-01-27</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.7</priority>
-    </url>
-    <url>
-        <loc>https://nooming.github.io/app/psychological/animal-test/</loc>
+        <loc>https://nooming.github.io/app/play/psychological/animal-test/</loc>
         <lastmod>2025-01-27</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
@@ -118,55 +112,49 @@
     
     <!-- 实用工具 -->
     <url>
-        <loc>https://nooming.github.io/app/practical/</loc>
+        <loc>https://nooming.github.io/app/tools/</loc>
         <lastmod>2025-01-27</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>https://nooming.github.io/app/practical/audio-converter/</loc>
+        <loc>https://nooming.github.io/app/tools/audio-converter/</loc>
         <lastmod>2025-01-27</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
     <url>
-        <loc>https://nooming.github.io/app/practical/base-converter/</loc>
+        <loc>https://nooming.github.io/app/tools/base-converter/</loc>
         <lastmod>2025-01-27</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
     <url>
-        <loc>https://nooming.github.io/app/practical/base64-converter/</loc>
+        <loc>https://nooming.github.io/app/tools/base64-converter/</loc>
         <lastmod>2025-01-27</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
     <url>
-        <loc>https://nooming.github.io/app/practical/qr-code-generator/</loc>
+        <loc>https://nooming.github.io/app/tools/qr-code-generator/</loc>
         <lastmod>2025-01-27</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
     <url>
-        <loc>https://nooming.github.io/app/practical/fan-rpm/</loc>
+        <loc>https://nooming.github.io/app/lab/fan-rpm/</loc>
         <lastmod>2026-04-18</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.65</priority>
     </url>
     <url>
-        <loc>https://nooming.github.io/app/practical/light-board/</loc>
+        <loc>https://nooming.github.io/app/tools/light-board/</loc>
         <lastmod>2026-10-08</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
     <url>
-        <loc>https://nooming.github.io/app/markdown/</loc>
-        <lastmod>2026-09-11</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.75</priority>
-    </url>
-    <url>
-        <loc>https://nooming.github.io/app/ocr/</loc>
+        <loc>https://nooming.github.io/app/tools/ocr/</loc>
         <lastmod>2026-09-11</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.75</priority>
@@ -174,67 +162,49 @@
 
     <!-- 小游戏 -->
     <url>
-        <loc>https://nooming.github.io/app/games/</loc>
+        <loc>https://nooming.github.io/app/play/games/board-games/gomoku/</loc>
+        <lastmod>2026-05-22</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.65</priority>
+    </url>
+    <url>
+        <loc>https://nooming.github.io/app/play/games/board-games/go/</loc>
+        <lastmod>2026-05-22</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.65</priority>
+    </url>
+    <url>
+        <loc>https://nooming.github.io/app/play/games/board-games/chess/</loc>
+        <lastmod>2026-05-22</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.65</priority>
+    </url>
+    <url>
+        <loc>https://nooming.github.io/app/play/games/dino/</loc>
         <lastmod>2025-01-27</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
     <url>
-        <loc>https://nooming.github.io/app/games/board-games/</loc>
-        <lastmod>2026-04-18</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.65</priority>
-    </url>
-    <url>
-        <loc>https://nooming.github.io/app/games/board-games/gomoku/</loc>
-        <lastmod>2026-05-22</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.65</priority>
-    </url>
-    <url>
-        <loc>https://nooming.github.io/app/games/board-games/go/</loc>
-        <lastmod>2026-05-22</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.65</priority>
-    </url>
-    <url>
-        <loc>https://nooming.github.io/app/games/board-games/chess/</loc>
-        <lastmod>2026-05-22</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.65</priority>
-    </url>
-    <url>
-        <loc>https://nooming.github.io/app/games/dino/</loc>
-        <lastmod>2025-01-27</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.7</priority>
-    </url>
-    <url>
-        <loc>https://nooming.github.io/app/games/card-games/</loc>
-        <lastmod>2026-04-18</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.65</priority>
-    </url>
-    <url>
-        <loc>https://nooming.github.io/app/games/card-games/texas/</loc>
+        <loc>https://nooming.github.io/app/play/games/card-games/texas/</loc>
         <lastmod>2026-04-18</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://nooming.github.io/app/games/card-games/uno/</loc>
+        <loc>https://nooming.github.io/app/play/games/card-games/uno/</loc>
         <lastmod>2026-04-18</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://nooming.github.io/app/games/card-games/hearts/</loc>
+        <loc>https://nooming.github.io/app/play/games/card-games/hearts/</loc>
         <lastmod>2026-04-18</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://nooming.github.io/app/proton/</loc>
+        <loc>https://nooming.github.io/app/lab/proton/</loc>
         <lastmod>2026-05-22</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>

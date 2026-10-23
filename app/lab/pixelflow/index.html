@@ -1,0 +1,121 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#FFFA00">
+    <meta name="description" content="上传两张图，按明度或饱和度等排序重排像素，动画拼出目标图；支持拖尾与 PNG 导出，纯本地处理。">
+    <meta name="keywords" content="像素涌流,像素排序,图像变换,PixelFlow,在线工具">
+    <meta name="author" content="nooming">
+    <link rel="canonical" href="https://noomings.com/app/lab/pixelflow/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="像素涌流 · noomings">
+    <meta property="og:description" content="双图像素排序重排与动画过渡，本地导出 PNG。">
+    <meta property="og:url" content="https://noomings.com/app/lab/pixelflow/">
+    <title>像素涌流 · noomings</title><link rel="stylesheet" href="../../../assets/css/common.css">
+    <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
+    <link rel="manifest" href="/assets/icons/site.webmanifest">
+    <link rel="stylesheet" href="/assets/css/site-shell.css">
+    <link rel="stylesheet" href="assets/css/pixelflow.css">
+</head>
+<body class="page-container pixelflow-page">
+    <div class="page-header">
+        <div class="section-header section-header--page">
+            <h1>像素涌流</h1>
+            <p>两张图 · 按明度或饱和度排序像素，动画拼成目标图 · 本地导出 PNG</p>
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <div class="left-panel">
+            <div class="upload-panel">
+                <h3>图片 A（源）</h3>
+                <div class="upload-zone" id="zoneA">
+                    <div class="placeholder"><span>点击或拖拽上传</span></div>
+                </div>
+                <label class="file-btn" for="fileA">选择图片 A</label>
+                <input type="file" id="fileA" accept="image/*">
+                <div class="info" id="infoA"></div>
+            </div>
+
+            <div class="upload-panel">
+                <h3>图片 B（目标）</h3>
+                <div class="upload-zone" id="zoneB">
+                    <div class="placeholder"><span>点击或拖拽上传</span></div>
+                </div>
+                <label class="file-btn" for="fileB">选择图片 B</label>
+                <input type="file" id="fileB" accept="image/*">
+                <div class="info" id="infoB"></div>
+            </div>
+        </div>
+
+        <div class="canvas-panel">
+            <div class="canvas-wrapper is-empty" id="canvasWrapper">
+                <p class="canvas-empty" id="canvasEmpty">上传 A、B 后在此预览</p>
+                <canvas id="mainCanvas" hidden></canvas>
+            </div>
+            <div class="controls-actions">
+                <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
+                <div class="status" id="status">请先上传两张图片</div>
+                <div class="controls-action-row">
+                    <button type="button" class="btn btn-transform" id="btnTransform" disabled>⟳ 开始变换</button>
+                    <button type="button" class="btn btn-reset" id="btnReset" disabled>↺ 重置</button>
+                    <button type="button" class="btn btn-download" id="btnDownload" disabled>⬇ 下载图片</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="params-panel">
+            <div class="control-group">
+                <label for="resolution">分辨率</label>
+                <input type="range" id="resolution" min="50" max="600" value="120" step="10">
+                <input type="number" id="resVal" class="range-value range-number" value="120" min="50" max="600" step="10">
+                <span class="res-warn" id="resWarn"></span>
+            </div>
+            <div class="control-group">
+                <label for="sortMethod">排序依据</label>
+                <select id="sortMethod">
+                    <option value="luminance">明度</option>
+                    <option value="saturation">饱和度</option>
+                    <option value="hue">色相</option>
+                    <option value="red">红色通道</option>
+                    <option value="green">绿色通道</option>
+                    <option value="blue">蓝色通道</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="duration">动画时长</label>
+                <input type="range" id="duration" min="500" max="8000" value="2500" step="100">
+                <span class="range-value" id="durVal">2.5 秒</span>
+            </div>
+            <div class="control-group">
+                <label for="easingMethod">缓动曲线</label>
+                <select id="easingMethod">
+                    <option value="easeInOut">缓入缓出</option>
+                    <option value="linear">匀速</option>
+                    <option value="easeIn">缓入</option>
+                    <option value="easeOut">缓出</option>
+                    <option value="bounce">弹跳</option>
+                    <option value="elastic">弹性</option>
+                </select>
+            </div>
+            <button type="button" class="btn btn-toggle" id="btnTrail">✨ 运动拖尾</button>
+            <div class="control-group" id="trailStrengthGroup" style="display:none">
+                <label for="trailStrength">拖尾强度</label>
+                <input type="range" id="trailStrength" min="1" max="10" value="5" step="1">
+                <span class="range-value" id="trailVal">5</span>
+            </div>
+        </div>
+    </div>
+
+    <footer class="site-footer" role="contentinfo">
+        <p>© 2026 noomings · 非商用 · 图像仅在浏览器内处理</p>
+    </footer>
+
+    <button class="back-to-top" id="backToTop" aria-label="返回顶部">↑</button>
+    <script src="../../../assets/js/utils.js" defer></script>
+    <script src="assets/js/pixelflow.js" defer></script>
+    <script src="/assets/js/site-shell.js" defer></script>
+</body>
+</html>
