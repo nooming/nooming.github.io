@@ -26,7 +26,7 @@ GitHub Pages 静态站：顶栏 **首页 · 实验 · 工具 · 阅读 · 娱乐
 - 顶栏进入 [Markdown](../app/read/markdown/) · [开发者工具实战](../app/read/crawler-experience/) · [猫抓笔记](../app/read/cat-catch-tutorial/)
 
 ### 工具（顶栏 · `app/tools/`）
-- 顶栏默认 [二维码](../app/tools/qr-code-generator/) · 全量入口 [工具目录](../app/tools/)
+- 顶栏默认 [PDF→图](../app/tools/doc-tools/pdf-to-images/) · 全量入口 [工具目录](../app/tools/)
 
 ### 娱乐（顶栏 · `app/play/`）
 - 顶栏进入 [五子棋](../app/play/games/board-games/gomoku/) · 侧栏 / 移动菜单见棋类、卡牌、问卷等

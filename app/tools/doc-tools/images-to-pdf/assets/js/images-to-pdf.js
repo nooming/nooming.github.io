@@ -5,7 +5,7 @@ import {
     orderImageFilesForPdf,
     setProgress,
     setStatus,
-} from "../../../assets/js/common.js";
+} from "/app/tools/doc-tools/assets/js/common.js";
 
 /** webp / gif 等：经 canvas 转为 PNG 再嵌入 */
 function imageFileToPngBytes(file) {
@@ -44,38 +44,130 @@ const previewEl = document.getElementById("preview");
 
 /** @type {File[]} */
 let selectedFiles = [];
+/** @type {string[]} */
+let previewObjectUrls = [];
+let orderTouched = false;
 
-fileInput.addEventListener("change", () => {
-    const list = fileInput.files ? [...fileInput.files] : [];
-    selectedFiles = orderImageFilesForPdf(list.filter(isImageFile));
+function revokePreviewUrls() {
+    for (const url of previewObjectUrls) URL.revokeObjectURL(url);
+    previewObjectUrls = [];
+}
 
+function updateFileNameHint() {
     if (!selectedFiles.length) {
         fileNameEl.textContent = "未选择文件";
-        convertBtn.disabled = true;
-        previewEl.hidden = true;
-        previewEl.innerHTML = "";
-        setStatus(statusEl, "请选择至少一张图片");
         return;
     }
+    const names = selectedFiles.map((f) => f.name).join("、");
+    let suffix;
+    if (orderTouched) {
+        suffix = "（已手动调整顺序，与预览一致）";
+    } else if (filesUseNumericSort(selectedFiles)) {
+        suffix = "（按文件名编号排序）";
+    } else {
+        suffix = "（按选择顺序，与预览一致）";
+    }
+    fileNameEl.textContent = `已选 ${selectedFiles.length} 张：${names}${suffix}`;
+}
 
-    const byNumber = filesUseNumericSort(selectedFiles);
-    let hint = `已选 ${selectedFiles.length} 张：${selectedFiles.map((f) => f.name).join("、")}`;
-    hint += byNumber ? "（按文件名编号排序）" : "（按选择顺序，与预览一致）";
-    fileNameEl.textContent = hint;
-    convertBtn.disabled = false;
-    setStatus(statusEl, "可以开始合并");
+function moveFile(index, delta) {
+    const next = index + delta;
+    if (next < 0 || next >= selectedFiles.length) return;
+    const list = selectedFiles;
+    [list[index], list[next]] = [list[next], list[index]];
+    orderTouched = true;
+    renderPreview();
+    updateFileNameHint();
+    setStatus(statusEl, `第 ${index + 1} 张与第 ${next + 1} 张已对调`);
+}
 
-    previewEl.hidden = false;
-    previewEl.innerHTML = "";
-    for (const file of selectedFiles.slice(0, 12)) {
+function renderPreview() {
+    if (!previewEl) return;
+    revokePreviewUrls();
+    previewEl.replaceChildren();
+
+    selectedFiles.forEach((file, index) => {
+        const item = document.createElement("div");
+        item.className = "doc-preview-item";
+
+        const head = document.createElement("div");
+        head.className = "doc-preview-item__head";
+
+        const indexEl = document.createElement("span");
+        indexEl.className = "doc-preview-item__index";
+        indexEl.textContent = `第 ${index + 1} 页`;
+
+        const move = document.createElement("div");
+        move.className = "doc-preview-item__move";
+
+        const btnLeft = document.createElement("button");
+        btnLeft.type = "button";
+        btnLeft.className = "doc-preview-order-btn";
+        btnLeft.textContent = "←";
+        btnLeft.disabled = index === 0;
+        btnLeft.setAttribute("aria-label", `第 ${index + 1} 张向左移动`);
+        btnLeft.addEventListener("click", () => moveFile(index, -1));
+
+        const btnRight = document.createElement("button");
+        btnRight.type = "button";
+        btnRight.className = "doc-preview-order-btn";
+        btnRight.textContent = "→";
+        btnRight.disabled = index === selectedFiles.length - 1;
+        btnRight.setAttribute("aria-label", `第 ${index + 1} 张向右移动`);
+        btnRight.addEventListener("click", () => moveFile(index, 1));
+
+        move.append(btnLeft, btnRight);
+        head.append(indexEl, move);
+
         const cell = document.createElement("div");
         cell.className = "doc-preview-cell";
         const img = document.createElement("img");
         img.alt = file.name;
-        img.src = URL.createObjectURL(file);
+        const url = URL.createObjectURL(file);
+        previewObjectUrls.push(url);
+        img.src = url;
         cell.appendChild(img);
-        previewEl.appendChild(cell);
+
+        const name = document.createElement("p");
+        name.className = "doc-preview-item__name";
+        name.textContent = file.name;
+        name.title = file.name;
+
+        item.append(head, cell, name);
+        previewEl.appendChild(item);
+    });
+}
+
+function clearSelection() {
+    selectedFiles = [];
+    orderTouched = false;
+    revokePreviewUrls();
+    if (previewEl) {
+        previewEl.hidden = true;
+        previewEl.replaceChildren();
     }
+    convertBtn.disabled = true;
+    fileNameEl.textContent = "未选择文件";
+    setStatus(statusEl, "请选择至少一张图片");
+}
+
+fileInput.addEventListener("change", () => {
+    const list = fileInput.files ? [...fileInput.files] : [];
+    orderTouched = false;
+    selectedFiles = orderImageFilesForPdf(list.filter(isImageFile));
+
+    if (!selectedFiles.length) {
+        clearSelection();
+        if (list.length) setStatus(statusEl, "未识别到图片文件");
+        return;
+    }
+
+    updateFileNameHint();
+    convertBtn.disabled = false;
+    setStatus(statusEl, "可以开始合并；预览区 ← → 可调整页序");
+
+    previewEl.hidden = false;
+    renderPreview();
 });
 
 convertBtn.addEventListener("click", async () => {

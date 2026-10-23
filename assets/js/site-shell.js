@@ -60,7 +60,7 @@
             {
                 id: "tools",
                 label: "工具",
-                href: "/app/tools/qr-code-generator/",
+                href: "/app/tools/doc-tools/pdf-to-images/",
                 match: /^\/app\/tools/,
             },
             {
@@ -95,7 +95,7 @@
                 id: "tools",
                 label: "工具",
                 icon: "i-gear",
-                href: "/app/tools/qr-code-generator/",
+                href: "/app/tools/doc-tools/pdf-to-images/",
                 match: /^\/app\/tools/,
             },
             {
