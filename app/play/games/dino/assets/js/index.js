@@ -888,24 +888,48 @@
         },
 
         /**
+         * 可用宽度：嵌入全站壳时不用整窗 innerWidth（否则会被侧栏挡住）。
+         */
+        getArcadeLayoutBox: function () {
+            var pad = 24;
+            var wrap = document.querySelector('.game-wrapper');
+            var width = wrap && wrap.clientWidth > 0
+                ? wrap.clientWidth - pad
+                : (this.outerContainerEl && this.outerContainerEl.clientWidth > 0
+                    ? this.outerContainerEl.clientWidth - pad
+                    : window.innerWidth - pad);
+
+            var header = document.querySelector('.page-header');
+            var footer = document.querySelector('.site-footer');
+            var top = header ? header.getBoundingClientRect().bottom : 0;
+            var bottom = footer ? footer.getBoundingClientRect().top : window.innerHeight;
+            var height = Math.max(180, bottom - top - pad);
+
+            return { width: Math.max(200, width), height: height };
+        },
+
+        /**
          * Sets the scaling for arcade mode.
          */
         setArcadeModeContainerScale() {
-            const windowHeight = window.innerHeight;
-            const scaleHeight = windowHeight / this.dimensions.HEIGHT;
-            const scaleWidth = window.innerWidth / this.dimensions.WIDTH;
-            const scale = Math.max(1, Math.min(scaleHeight, scaleWidth));
-            const scaledCanvasHeight = this.dimensions.HEIGHT * scale;
-            // Positions the game container at 10% of the available vertical window
-            // height minus the game container height.
-            const translateY = Math.ceil(Math.max(0, (windowHeight - scaledCanvasHeight -
-                                                      Runner.config.ARCADE_MODE_INITIAL_TOP_POSITION) *
-                                                  Runner.config.ARCADE_MODE_TOP_POSITION_PERCENT)) *
-                  window.devicePixelRatio;
+            var box = this.getArcadeLayoutBox();
+            var scaleHeight = box.height / this.dimensions.HEIGHT;
+            var scaleWidth = box.width / this.dimensions.WIDTH;
+            var shellDesktop = window.matchMedia('(min-width: 768px)').matches &&
+                document.body.classList.contains('shell-active');
+            var scale = Math.min(scaleHeight, scaleWidth);
+            if (shellDesktop) {
+                scale = Math.min(1.35, Math.max(0.45, scale));
+            } else {
+                scale = Math.max(1, scale);
+            }
+            var scaledCanvasHeight = this.dimensions.HEIGHT * scale;
+            var translateY = Math.ceil(Math.max(0, (box.height - scaledCanvasHeight -
+                Runner.config.ARCADE_MODE_INITIAL_TOP_POSITION) *
+                Runner.config.ARCADE_MODE_TOP_POSITION_PERCENT));
 
-            const cssScale = scale;
             this.containerEl.style.transform =
-                'scale(' + cssScale + ') translateY(' + translateY + 'px)';
+                'scale(' + scale + ') translateY(' + translateY + 'px)';
         },
         
         /**

@@ -155,6 +155,18 @@ html, body {
   overflow: hidden;
 }
 
+@media (min-width: 768px) {
+  body.shell-active.arcade-mode .interstitial-wrapper {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  body.shell-active.arcade-mode .game-wrapper {
+    overflow: hidden;
+  }
+}
+
 .arcade-mode .runner-container {
   left: 0;
   margin: auto;
