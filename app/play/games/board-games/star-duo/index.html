@@ -329,33 +329,65 @@ function genTri() {
   pixels.forEach((p, i) => { map[String(i)] = [p[0] + sx, p[1] + sy, p[2]]; });
   return map;
 }
-function buildLines() {
-  const centers = {};
-  for (const pid in id2tri) centers[pid] = [id2tri[pid][0], id2tri[pid][1]];
-  const ids = Object.keys(centers);
-  const ang = [0, 60, 120, 180, 240, 300].map(a => a * Math.PI / 180);
-  const res = {};
-  for (const pid of ids) res[pid] = Array.from({ length: 6 }, () => []);
-  const step = TRI_SIZE;
-  for (const pid of ids) {
-    const [cx, cy] = centers[pid];
-    for (let d = 0; d < 6; d++) {
-      let curX = cx, curY = cy;
-      while (true) {
-        curX += step * Math.cos(ang[d]);
-        curY += step * Math.sin(ang[d]);
-        let best = null, bd = step * 0.55;
-        for (const oid of ids) {
-          if (oid === pid) continue;
-          const [ox, oy] = centers[oid];
-          const dist = Math.hypot(curX - ox, curY - oy);
-          if (dist < bd) { bd = dist; best = oid; }
-        }
-        if (best === null) break;
-        if (res[pid][d].includes(best)) break;
-        res[pid][d].push(best);
-        [curX, curY] = centers[best];
+function buildTriNeigh() {
+  const ids = Object.keys(id2tri);
+  const maxD = TRI_SIZE * 1.02;
+  const maxD2 = maxD * maxD;
+  const neigh = {};
+  for (const pid of ids) neigh[pid] = [];
+  for (let i = 0; i < ids.length; i++) {
+    for (let j = i + 1; j < ids.length; j++) {
+      const a = ids[i], b = ids[j];
+      const dx = id2tri[a][0] - id2tri[b][0];
+      const dy = id2tri[a][1] - id2tri[b][1];
+      if (dx * dx + dy * dy <= maxD2) {
+        neigh[a].push(b);
+        neigh[b].push(a);
       }
+    }
+  }
+  return neigh;
+}
+function buildLines() {
+  const ids = Object.keys(id2tri);
+  const ang = [0, 60, 120, 180, 240, 300].map(a => a * Math.PI / 180);
+  const neigh = buildTriNeigh();
+  const res = {};
+  for (const pid of ids) {
+    res[pid] = Array.from({ length: 6 }, () => []);
+    const cx = id2tri[pid][0], cy = id2tri[pid][1];
+    for (let d = 0; d < 6; d++) {
+      const ux = Math.cos(ang[d]), uy = Math.sin(ang[d]);
+      let first = null, bestDot = 0.42;
+      for (let ni = 0; ni < neigh[pid].length; ni++) {
+        const nb = neigh[pid][ni];
+        const dx = id2tri[nb][0] - cx, dy = id2tri[nb][1] - cy;
+        const len = Math.hypot(dx, dy);
+        if (len < 1e-6) continue;
+        const dot = (dx / len) * ux + (dy / len) * uy;
+        if (dot > bestDot) { bestDot = dot; first = nb; }
+      }
+      if (!first) continue;
+      const line = [];
+      let cur = first, prev = pid;
+      while (cur) {
+        if (line.indexOf(cur) >= 0) break;
+        line.push(cur);
+        const ncx = id2tri[cur][0], ncy = id2tri[cur][1];
+        let next = null, nDot = 0.5;
+        for (let ni = 0; ni < neigh[cur].length; ni++) {
+          const nb = neigh[cur][ni];
+          if (nb === prev) continue;
+          const dx = id2tri[nb][0] - ncx, dy = id2tri[nb][1] - ncy;
+          const len = Math.hypot(dx, dy);
+          if (len < 1e-6) continue;
+          const dot = (dx / len) * ux + (dy / len) * uy;
+          if (dot > nDot) { nDot = dot; next = nb; }
+        }
+        prev = cur;
+        cur = next;
+      }
+      res[pid][d] = line;
     }
   }
   return res;
@@ -407,10 +439,7 @@ function getFlips(pid, player) {
   }
   return [...flips];
 }
-const movesMemo = {};
 function getValidMoves(player) {
-  const hit = movesMemo[player];
-  if (hit && hit.ver === boardVer) return hit.data;
   const moves = {};
   for (const pid in id2tri) {
     if (board[pid] === 0) {
@@ -418,7 +447,6 @@ function getValidMoves(player) {
       if (f.length) moves[pid] = f;
     }
   }
-  movesMemo[player] = { ver: boardVer, data: moves };
   return moves;
 }
 let cntVer = -1, cntB = 0, cntW = 0;
@@ -748,35 +776,46 @@ function bindViewport() {
     window.visualViewport.addEventListener('scroll', fitBoardSoon);
   }
 }
+function bumpSkip(msg, ms) {
+  skipNote = msg;
+  skipUntil = Date.now() + (ms || 900);
+  lastStatusHtml = '';
+  updateStatus();
+  draw();
+}
 function handleTileClick(pid) {
-  if (gameOver || currentPlayer === 0 || animating || botThinking || botPending) return;
+  if (gameOver || currentPlayer === 0) return;
+  if (animating || botThinking || botPending || searchMode) {
+    bumpSkip('请稍候（动画或演算中）', 850);
+    return;
+  }
   if (pveMode && currentPlayer === botColor) return;
-  const valid = getValidMoves(currentPlayer);
-  if (!valid[pid]) {
-    if (pveMode && currentPlayer === myColor) {
-      skipNote = '此处不可落子';
-      skipUntil = Date.now() + 900;
-      updateStatus();
-    }
+  if (!getFlips(pid, currentPlayer).length) {
+    bumpSkip('此处不可落子', 900);
     return;
   }
   skipNote = '';
-  if (!makeMove(pid, currentPlayer)) return;
+  if (!makeMove(pid, currentPlayer)) {
+    bumpSkip('落子失败，请重试', 900);
+    return;
+  }
   afterMove();
 }
 function draw() {
-  if (!gameOver && !animating && currentPlayer !== 0) resolveStuck();
+  const boardBusy = animating || botThinking || botPending || searchMode;
+  if (!gameOver && !boardBusy && currentPlayer !== 0) resolveStuck();
   if (pendingAnim) {
     const a = pendingAnim;
     pendingAnim = null;
     playAnim(a);
   }
   const now = Date.now();
-  let valid = null;
-  if (!gameOver && currentPlayer !== 0) {
-    let show = true;
-    if (pveMode && currentPlayer === botColor) show = false;
-    if (show) valid = getValidMoves(currentPlayer);
+  let showHints = false;
+  let hintPlayer = 0;
+  if (!gameOver && !boardBusy && currentPlayer !== 0) {
+    showHints = true;
+    if (pveMode && currentPlayer === botColor) showHints = false;
+    else hintPlayer = currentPlayer;
   }
   let hintCount = 0;
   for (const pid in id2tri) {
@@ -785,7 +824,7 @@ function draw() {
     const busy = !!(busyUntil[pid] && busyUntil[pid] > now);
     if (!busy) setFaceStates(pid, board[pid]);
     const isLast = settings.showAiHint && (pid === lastBotPid);
-    const isHint = !!(valid && valid[pid] && board[pid] === 0);
+    const isHint = !!(showHints && hintPlayer && board[pid] === 0 && getFlips(pid, hintPlayer).length);
     if (isHint) hintCount++;
     if (t.last !== isLast) { t.last = isLast; t.root.classList.toggle('lastbot', isLast); }
     if (t.hint !== isHint) { t.hint = isHint; t.root.classList.toggle('hint', isHint); }
@@ -1148,6 +1187,13 @@ function restoreBoard(snap) {
     board[pid] = snap.cells[pid] !== undefined ? snap.cells[pid] : 0;
   }
   boardVer = snap.ver;
+}
+function syncBoardFaces() {
+  const now = Date.now();
+  for (const pid in id2tri) {
+    const busy = !!(busyUntil[pid] && busyUntil[pid] > now);
+    if (!busy) setFaceStates(pid, board[pid]);
+  }
 }
 function hellMainLineScore(player, pid) {
   searchMode = true;
@@ -1774,6 +1820,7 @@ function hellBestMove(player) {
   } finally {
     restoreBoard(liveSnap);
     searchMode = false;
+    syncBoardFaces();
   }
 }
 
