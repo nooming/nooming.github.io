@@ -156,7 +156,7 @@
         <button class="tbtn" id="timer-btn" onclick="toggleTimer()">计时:关</button>
         <button class="tbtn" id="reset-btn" onclick="resetBoard()">重开一局</button>
       </div>
-      <div class="mhint"><i></i>蓝 = 待选棋位</div>
+      <div class="mhint" id="xd-move-hint"><i></i>蓝 = 可落子 · 红边 = AI 刚下的位置</div>
       <div class="legend" id="score-line">黑 0 平 0 白 0</div>
     </div>
   </div>
@@ -237,6 +237,7 @@ let difficulty = '标准';
 let firstPlayer = 0;
 let history = [0, 0, 0];
 let lastBotPid = null;
+let botHintTimer = null;
 let animating = false;
 let id2tri = {};
 let id2disp = {}, disp2id = {};
@@ -389,7 +390,7 @@ function resetBoardData() {
   boardVer++;
   currentPlayer = 0;
   gameOver = false;
-  lastBotPid = null;
+  clearBotHint();
   animating = false;
 }
 function getFlips(pid, player) {
@@ -748,11 +749,19 @@ function bindViewport() {
   }
 }
 function handleTileClick(pid) {
-  if (gameOver || currentPlayer === 0 || animating) return;
+  if (gameOver || currentPlayer === 0 || animating || botThinking || botPending) return;
   if (pveMode && currentPlayer === botColor) return;
   const valid = getValidMoves(currentPlayer);
-  if (!valid[pid]) return;
-  makeMove(pid, currentPlayer);
+  if (!valid[pid]) {
+    if (pveMode && currentPlayer === myColor) {
+      skipNote = '此处不可落子';
+      skipUntil = Date.now() + 900;
+      updateStatus();
+    }
+    return;
+  }
+  skipNote = '';
+  if (!makeMove(pid, currentPlayer)) return;
   afterMove();
 }
 function draw() {
@@ -832,7 +841,7 @@ function resetPlaySession() {
 function goSelect() {
   closeModal();
   resetPlaySession();
-  pveMode = false;;
+  pveMode = false;
   inCustomGame = false;
   isCustomGame = false;
   editorBoard = {};
@@ -1014,6 +1023,22 @@ let botThinking = false;
 let pveWatchTimer = null;
 function scheduleBot(delay, force) {
   if (!pveMode || gameOver || currentPlayer !== botColor) return;
+  if (force) {
+    setTimeout(function () {
+      if (!pveMode || gameOver || currentPlayer !== botColor) return;
+      if (botPending || botThinking) {
+        scheduleBot(Math.max(40, (delay | 0) >> 1), true);
+        return;
+      }
+      botThinking = true;
+      try { botMove(); }
+      finally { botThinking = false; }
+      if (pveMode && !gameOver && currentPlayer === botColor) {
+        scheduleBot(Math.max(560, animRemaining() + 280));
+      }
+    }, delay | 0);
+    return;
+  }
   if (botPending || botThinking) return;
   botPending = true;
   setTimeout(function () {
@@ -1163,50 +1188,78 @@ function hellMainTwoPly(player) {
   searchMode = false;
   return bestPid;
 }
+function clearBotHint() {
+  if (botHintTimer) { clearTimeout(botHintTimer); botHintTimer = null; }
+  lastBotPid = null;
+}
+function showBotMoveHint(pid) {
+  if (!settings.showAiHint || !pid) return;
+  lastBotPid = pid;
+  if (botHintTimer) clearTimeout(botHintTimer);
+  const ms = Math.max(settings.aiHintDuration | 0, animRemaining() + 520);
+  botHintTimer = setTimeout(function () {
+    botHintTimer = null;
+    lastBotPid = null;
+    draw();
+  }, ms);
+}
 function botMove() {
   if (gameOver || currentPlayer !== botColor) return;
+  clearBotHint();
   searchMode = true;
-  const moves = getValidMoves(botColor);
-  const keys = Object.keys(moves);
-  if (!keys.length) { searchMode = false; afterMove(); return; }
-  let bestPid;
-  if (difficulty === '体验') {
-    bestPid = keys.reduce(function (a, b) { return moves[a].length >= moves[b].length ? a : b; });
-  } else if (difficulty === '标准') {
-    let best = -Infinity;
-    for (const pid of keys) {
-      const score = (edgeWeight[pid] || 0) * 3 + moves[pid].length + (Math.random() - 0.5) * 4;
-      if (score > best) { best = score; bestPid = pid; }
-    }
-  } else if (difficulty === '危机合约') {
-    try { bestPid = hellBestMove(botColor); }
-    catch (e) { bestPid = null; }
-    if (!bestPid || !moves[bestPid]) bestPid = keys[0];
-  } else {
-    let best = -Infinity;
-    for (const pid of keys) {
-      const saved = Object.assign({}, board);
-      makeMove(pid, botColor);
-      const myScore = evaluate(botColor);
-      const oppMoves = getValidMoves(3 - botColor);
-      let oppBest = -Infinity;
-      for (const opid of Object.keys(oppMoves)) {
-        const saved2 = Object.assign({}, board);
-        makeMove(opid, 3 - botColor);
-        const sc = evaluate(3 - botColor);
-        if (sc > oppBest) oppBest = sc;
-        board = saved2;
+  let bestPid = null;
+  try {
+    const moves = getValidMoves(botColor);
+    const keys = Object.keys(moves);
+    if (!keys.length) {
+      bestPid = null;
+    } else if (difficulty === '体验') {
+      bestPid = keys.reduce(function (a, b) { return moves[a].length >= moves[b].length ? a : b; });
+    } else if (difficulty === '标准') {
+      let best = -Infinity;
+      for (const pid of keys) {
+        const score = (edgeWeight[pid] || 0) * 3 + moves[pid].length + (Math.random() - 0.5) * 4;
+        if (score > best) { best = score; bestPid = pid; }
       }
-      const total = myScore - (oppBest === -Infinity ? -1000 : oppBest) * 1.2 + (Math.random() - 0.5) * 2;
-      if (total > best) { best = total; bestPid = pid; }
-      board = saved;
+    } else if (difficulty === '危机合约') {
+      try { bestPid = hellBestMove(botColor); }
+      catch (e) { bestPid = null; }
+    } else {
+      let best = -Infinity;
+      for (const pid of keys) {
+        const snap = snapBoard();
+        makeMove(pid, botColor);
+        const myScore = evaluate(botColor);
+        const oppMoves = getValidMoves(3 - botColor);
+        let oppBest = -Infinity;
+        for (const opid of Object.keys(oppMoves)) {
+          const snap2 = snapBoard();
+          makeMove(opid, 3 - botColor);
+          const sc = evaluate(3 - botColor);
+          if (sc > oppBest) oppBest = sc;
+          restoreBoard(snap2);
+        }
+        const total = myScore - (oppBest === -Infinity ? -1000 : oppBest) * 1.2 + (Math.random() - 0.5) * 2;
+        if (total > best) { best = total; bestPid = pid; }
+        restoreBoard(snap);
+      }
     }
+  } finally {
+    searchMode = false;
   }
-  searchMode = false;
-  lastBotPid = bestPid;
-  makeMove(bestPid, botColor);
+  const live = getValidMoves(botColor);
+  const liveKeys = Object.keys(live);
+  if (!liveKeys.length) {
+    afterMove();
+    return;
+  }
+  if (!bestPid || !live[bestPid]) bestPid = liveKeys[0];
+  if (!makeMove(bestPid, botColor)) {
+    scheduleBot(120, true);
+    return;
+  }
+  showBotMoveHint(bestPid);
   draw();
-  setTimeout(function () { lastBotPid = null; draw(); }, settings.aiHintDuration);
   afterMove();
 }
 function evaluate(player) {
@@ -1502,7 +1555,17 @@ function contractNegamax(b, player, depth, alpha, beta, empties, ply) {
   return best;
 }
 function contractRootPick(b, player, empties, maxDepth, deadline, floorPid) {
-  const floorScore = hellMainLineScore(player, floorPid);
+  hellDeadline = deadline;
+  hellAbort = false;
+  hellNodes = 0;
+  const liveSnap = snapBoard();
+  let floorScore;
+  try {
+    floorScore = hellMainLineScore(player, floorPid);
+  } finally {
+    restoreBoard(liveSnap);
+    searchMode = false;
+  }
   let floorI = -1;
   for (let i = 0; i < aiPids.length; i++) {
     if (aiPids[i] === floorPid) { floorI = i; break; }
@@ -1529,18 +1592,38 @@ function contractRootPick(b, player, empties, maxDepth, deadline, floorPid) {
     if (m > 0 && Date.now() >= deadline) break;
     const mv = moves[m];
     const pid = aiPids[mv.i];
-    const s2 = hellMainLineScore(player, pid);
+    let s2;
+    try {
+      s2 = hellMainLineScore(player, pid);
+    } finally {
+      restoreBoard(liveSnap);
+      searchMode = false;
+    }
     if (s2 + 0.01 < floorScore) continue;
     hellApply(b, mv.i, player, mv.flips);
     const sDeep = -contractNegamax(b, opp, plySearch - 1, -HELL_INF, HELL_INF, empties - 1, 1);
     hellUndo(b, mv.i, player, mv.flips);
-    if (sDeep > bestDeep || (sDeep === bestDeep && (s2 > hellMainLineScore(player, aiPids[bestI]) || (s2 === hellMainLineScore(player, aiPids[bestI]) && mv.i < bestI)))) {
+    let sBest = 0;
+    try {
+      sBest = hellMainLineScore(player, aiPids[bestI]);
+    } finally {
+      restoreBoard(liveSnap);
+      searchMode = false;
+    }
+    if (sDeep > bestDeep || (sDeep === bestDeep && (s2 > sBest || (s2 === sBest && mv.i < bestI)))) {
       bestDeep = sDeep;
       bestI = mv.i;
     }
   }
   if (bestDeep <= -HELL_INF / 2) return floorI;
-  if (hellMainLineScore(player, aiPids[bestI]) + 0.01 < floorScore) return floorI;
+  let sFinal;
+  try {
+    sFinal = hellMainLineScore(player, aiPids[bestI]);
+  } finally {
+    restoreBoard(liveSnap);
+    searchMode = false;
+  }
+  if (sFinal + 0.01 < floorScore) return floorI;
   if (bestI !== floorI && bestDeep <= floorDeep) return floorI;
   return bestI;
 }
@@ -1649,40 +1732,49 @@ function hellRoot(b, player, depth, empties) {
 }
 function hellBestMove(player) {
   if ((player !== 1 && player !== 2) || !aiPids.length) return null;
-  ensureHellTT();
-  const n = aiPids.length;
-  const b = new Uint8Array(n);
-  let empties = 0;
-  for (let i = 0; i < n; i++) {
-    const v = board[aiPids[i]] | 0;
-    b[i] = (v === 1 || v === 2) ? v : 0;
-    if (!b[i]) empties++;
+  const liveSnap = snapBoard();
+  try {
+    ensureHellTT();
+    const n = aiPids.length;
+    const b = new Uint8Array(n);
+    let empties = 0;
+    for (let i = 0; i < n; i++) {
+      const v = board[aiPids[i]] | 0;
+      b[i] = (v === 1 || v === 2) ? v : 0;
+      if (!b[i]) empties++;
+    }
+    const root0 = genMovesInto(b, player, 0, true);
+    const nRoot = root0.count;
+    if (!nRoot) return null;
+    if (nRoot === 1) return aiPids[root0[0].i];
+    const onlyI = root0[0].i;
+    searchMode = true;
+    const floorPid = hellMainTwoPly(player);
+    searchMode = false;
+    if (!floorPid) return aiPids[onlyI];
+    hellHist[1].fill(0);
+    hellHist[2].fill(0);
+    for (let i = 0; i < hellKill.length; i++) {
+      const k = hellKill[i];
+      if (k) { k[0] = -1; k[1] = -1; }
+    }
+    hellAge++;
+    if (hellAge >= 65535) { hellTTAge.fill(0); hellAge = 1; }
+    let budget = 1600;
+    if (empties <= 32) budget = 2200;
+    if (empties <= 22) budget = 3000;
+    if (empties <= 14) budget = 4000;
+    const deadline = Date.now() + budget;
+    hellDeadline = deadline;
+    hellAbort = false;
+    hellNodes = 0;
+    let maxDepth = empties > 30 ? 6 : 7;
+    const pickI = contractRootPick(b, player, empties, maxDepth, deadline, floorPid);
+    return aiPids[pickI >= 0 ? pickI : onlyI];
+  } finally {
+    restoreBoard(liveSnap);
+    searchMode = false;
   }
-  const root0 = genMovesInto(b, player, 0, true);
-  const nRoot = root0.count;
-  if (!nRoot) return null;
-  if (nRoot === 1) return aiPids[root0[0].i];
-  const onlyI = root0[0].i;
-  searchMode = true;
-  const floorPid = hellMainTwoPly(player);
-  searchMode = false;
-  if (!floorPid) return aiPids[onlyI];
-  hellHist[1].fill(0);
-  hellHist[2].fill(0);
-  for (let i = 0; i < hellKill.length; i++) {
-    const k = hellKill[i];
-    if (k) { k[0] = -1; k[1] = -1; }
-  }
-  hellAge++;
-  if (hellAge >= 65535) { hellTTAge.fill(0); hellAge = 1; }
-  let budget = 1600;
-  if (empties <= 32) budget = 2200;
-  if (empties <= 22) budget = 3000;
-  if (empties <= 14) budget = 4000;
-  const deadline = Date.now() + budget;
-  let maxDepth = empties > 30 ? 6 : 7;
-  const pickI = contractRootPick(b, player, empties, maxDepth, deadline, floorPid);
-  return aiPids[pickI >= 0 ? pickI : onlyI];
 }
 
 let timerLimit = 0;
@@ -1767,7 +1859,7 @@ function confirmReturn() {
 }
 function returnToEditor() {
   resetPlaySession();
-  pveMode = false;;
+  pveMode = false;
   gameOver = false; overText = '';
   inCustomGame = false;
   updateResetBtn();
