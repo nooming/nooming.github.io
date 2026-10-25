@@ -1,9 +1,28 @@
+window.TutorTexasUI = {
+    preview: function (key) {
+        if (key === 'small-blind') {
+            $('.line-0').hide()
+            $('.line-0-blue').show()
+            $('.in-0').attr('fill', '#337ab7').text('◉5')
+        }
+    },
+    reset: function (key) {
+        if (key === 'small-blind') {
+            $('.line-0').show()
+            $('.line-0-blue').hide()
+            $('.in-0').attr('fill', '#ddd').text('')
+        } else if (key === 'hover') {
+            if (typeof procHover === 'function') procHover(['nothing'], '0')
+        }
+    }
+}
+
 function tutor(step) {
     let str = '', str2 = ''
     cur = {
         plist: [0, 1, 2],
         cards: { n: ["D5", "C9", "SK", "H9", "HA"], p: { 0: ["C4", "H9"], 1: ["SA", "C9"], 2: ["CA", "C5"] } },
-        name: { 0: sso.realname, 1: '李行', 2: '甄历骇' },
+        name: CardGameCopy.aiNameMap(2),
         isIngame: { 0: 1, 1: 1, 2: 1 },
         isReady: { 0: 1, 1: 1, 2: 1 },
         cash: { 0: 1000, 1: 1000, 2: 1000 },
@@ -26,8 +45,6 @@ function tutor(step) {
             str += `<line x1="180" y1="470" x2="203" y2="470" stroke="#333" stroke-width="1.5" marker-end="url(#arrow)"/>`
             str += `<text x="145" y="478" font-size="20">×2</text>`
             str += `<rect x="130" y="460" width="14" height="20" rx="2" fill="#ddd" stroke="#333" stroke-width="1.5"></rect>`
-            // str += `<line x1="150" y1="470" x2="200" y2="470" stroke="#333" stroke-width="1.5" transform="rotate(120,250,250)" marker-end="url(#arrow)"/>`
-            // str += `<line x1="150" y1="470" x2="200" y2="470" stroke="#333" stroke-width="1.5" transform="rotate(240,250,250)" marker-end="url(#arrow)"/>`
             str += `<line x1="160" y1="275" x2="183" y2="275" stroke="#333" stroke-width="1.5" marker-end="url(#arrow)"/>`
             str += `<text x="125" y="283" font-size="20">×5</text>`
             str += `<rect x="110" y="265" width="14" height="20" rx="2" fill="#ddd" stroke="#333" stroke-width="1.5"></rect>`
@@ -37,13 +54,13 @@ function tutor(step) {
             $('.tutor').html('<h3>② 下注 Ⅰ</h3><p>前两位玩家强制下注，称为盲注。<span style="color:#337ab7">小盲</span>是大盲的一半。</p>')
             str += `<line class="line-0" x1="250" y1="399" x2="250" y2="340" stroke="#333" stroke-width="1.5" marker-end="url(#arrow)"></line>`
                 + `<line class="line-0-blue" x1="250" y1="399" x2="250" y2="340" stroke="#337ab7" stroke-width="1.5" marker-end="url(#arrow-blue)" style="display:none"></line>`
-                + `<text class="in-t" x="260" y="370" transform="rotate(0,250,250) rotate(90,260,370)" text-anchor="middle" fill="#337ab7"></text>`
+                + `<text class="in-0" x="260" y="370" transform="rotate(0,250,250) rotate(90,260,370)" text-anchor="middle" fill="#ddd"></text>`
                 + `<text x="250" y="440" text-anchor="middle">${sso.realname}</text>`
                 + `<circle cx="${sso.realname.length * 8 + 258}" cy="434" r="5" class="blink"></circle>`
                 + `<text x="250" y="420" text-anchor="middle" fill="#999">◉1000</text>`
             str += `<path d="M 280 414 Q 316,404 283,374" fill="transparent" stroke="white" stroke-width="4.5"/>`
             str += `<path d="M 280 414 Q 316,404 283,374" fill="transparent" stroke="#337ab7" stroke-width="1.5" marker-end="url(#arrow-blue)"/>`
-            $('.texas-btns-down').html(`${getButton('primary', `小盲 5`, `tutor(2)`, 'arrow-up', `$('.line-0').hide();$('.line-0-blue').show();$('.in-t').attr('fill', '#337ab7').text('◉5')`, `$('.line-0').show();$('.line-0-blue').hide();$('.in-t').text('')`)}`)
+            $('.texas-btns-down').html(`${getButton('primary', `小盲 5`, `tutor(2)`, 'arrow-up', `TutorTexasUI.preview('small-blind')`, `TutorTexasUI.reset('small-blind')`)}`)
             break
         case 2:
             $('.tutor').html('<h3>② 下注 Ⅰ</h3><p>前两位玩家强制下注，称为盲注。大盲是小盲的两倍。</p>')
@@ -74,10 +91,10 @@ function tutor(step) {
             cur.cash = { 0: 995, 1: 990, 2: 950 }
             str += `<text class="in-2" x="260" y="370" transform="rotate(240,250,250) rotate(90,260,370)" text-anchor="middle" fill="#333">◉50</text>`
                 + `<path d="M 344 196 Q 390,314 283,360" fill="transparent" stroke="#333" stroke-width="1.5" marker-end="url(#arrow)" marker-start="url(#arrow)"/>`
-                + `<text x="340" y="294" text-anchor="middle" fill="#333" transform="rotate(-50,340,294)">≥<text/>`
+                + `<text x="340" y="294" text-anchor="middle" fill="#333" transform="rotate(-50,340,294)">≥</text>`
             $('.texas-svg').css('opacity', '1')
-            $('.texas-btns-down').html(`<div class="btn-group" onmouseleave="drawTable()">${getButton('danger', `放弃`, `$(this).css('color','transparent')`, 'remove', `procHover(['nope'],'0')`)}`
-                + `${getButton('default', `跟注 ${prec(50)}`, `tutor(5)`, 'arrow-right', `procHover(['follow','50'],'0')`)}`
+            $('.texas-btns-down').html(`<div class="btn-group" data-tutor-leave="redraw-table">${getButton('danger', `放弃`, 0, 'remove', `procHover(['nope'],'0')`, `TutorTexasUI.reset('hover')`)}`
+                + `${getButton('default', `跟注 ${prec(50)}`, `tutor(5)`, 'arrow-right', `procHover(['follow','50'],'0')`, `TutorTexasUI.reset('hover')`)}`
                 + `${getTutorAddButtons(50, 5)}</div>`)
             break
         case 5:
@@ -87,7 +104,7 @@ function tutor(step) {
             cur.cash = { 0: 950, 1: 990, 2: 950 }
             str += `<text class="in-2" x="260" y="370" transform="rotate(0,250,250) rotate(90,260,370)" text-anchor="middle" fill="#333">◉50</text>`
                 + `<path d="M 344 196 Q 390,314 283,360" fill="transparent" transform="rotate(120,250,250)" stroke="#333" stroke-width="1.5" marker-end="url(#arrow)" marker-start="url(#arrow)"/>`
-                + `<text x="340" y="294" text-anchor="middle" fill="#333" transform="rotate(120,250,250) rotate(-50,340,294)">≥<text/>`
+                + `<text x="340" y="294" text-anchor="middle" fill="#333" transform="rotate(120,250,250) rotate(-50,340,294)">≥</text>`
             $('.texas-svg').css('opacity', '1')
             $('.texas-btns-down').html(`<div class="btn-group">${getButton('default', `上一步`, `tutor(3)`, 'arrow-left')}${getButton('default', `下一步`, `tutor(6)`, 0, 0, 0, 0, 'arrow-right')}</div>`)
             break
@@ -112,7 +129,6 @@ function tutor(step) {
                 + drawCard(202.5, 275, cur.cards.n[0], 0)
                 + drawCard(242.5, 275, cur.cards.n[1], 0)
                 + drawCard(282.5, 275, cur.cards.n[2], 0)
-            // str += `<line x1="160" y1="275" x2="183" y2="275" stroke="#333" stroke-width="1.5" marker-end="url(#arrow)"/>`
             str += `<text x="145" y="283" font-size="20">×3</text>`
             str += `<rect x="130" y="265" width="14" height="20" rx="2" fill="#ddd" stroke="#333" stroke-width="1.5"></rect>`
                 + `<path d="M 129 280 Q 98,275 131,274.2" fill="transparent" stroke="white" stroke-width="3"></path>`
@@ -138,8 +154,8 @@ function tutor(step) {
             cur.in = { 0: 50, 1: 10, 2: 100 }
             cur.cash = { 0: 950, 1: 990, 2: 900 }
             $('.texas-svg').css('opacity', '1')
-            $('.texas-btns-down').html(`<div class="btn-group" onmouseleave="drawTable()">${getButton('danger', `放弃`, `$(this).css('color','transparent')`, 'remove', `procHover(['nope'],'0')`)}`
-                + `${getButton('default', `跟注 ${prec(100)}`, `tutor(10)`, 'arrow-right', `procHover(['follow','100'],'0')`)}`
+            $('.texas-btns-down').html(`<div class="btn-group" data-tutor-leave="redraw-table">${getButton('danger', `放弃`, 0, 'remove', `procHover(['nope'],'0')`, `TutorTexasUI.reset('hover')`)}`
+                + `${getButton('default', `跟注 ${prec(100)}`, `tutor(10)`, 'arrow-right', `procHover(['follow','100'],'0')`, `TutorTexasUI.reset('hover')`)}`
                 + `${getTutorAddButtons(100, 50)}</div>`)
             break
         case 10:
@@ -149,8 +165,7 @@ function tutor(step) {
             cur.givenup[1] = 1
             str += `<text class="in-2" x="260" y="370" transform="rotate(0,250,250) rotate(90,260,370)" text-anchor="middle" fill="#333">◉100</text>`
                 + `<text class="in-2" x="260" y="370" transform="rotate(240,250,250) rotate(90,260,370)" text-anchor="middle" fill="#333">◉100</text>`
-            str += drawCard(222.5, 220, cur.cards.n[3], 0, 0)
-            // str += `<line x1="160" y1="275" x2="183" y2="275" stroke="#333" stroke-width="1.5" marker-end="url(#arrow)"/>`
+            str += drawCard(222.5, 220, cur.cards.n[3], 0)
             str += `<rect x="190" y="210" width="14" height="20" rx="2" fill="#ddd" stroke="#333" stroke-width="1.5"></rect>`
                 + `<path d="M 189 225 Q 168,220 191,219.3" fill="transparent" stroke="white" stroke-width="3"></path>`
                 + `<path d="M 190 225 Q 165,220 198,219" fill="transparent" stroke="#333" stroke-width="1.5" marker-end="url(#arrow)"></path>`
@@ -163,8 +178,8 @@ function tutor(step) {
             cur.now = 0
             cur.givenup[1] = 1
             $('.texas-svg').css('opacity', '1')
-            $('.texas-btns-down').html(`<div class="btn-group" onmouseleave="drawTable()">`
-                + `${getButton('default', `过`, `tutor(12)`, 'arrow-right', `procHover(['follow','100'],'0')`)}`
+            $('.texas-btns-down').html(`<div class="btn-group" data-tutor-leave="redraw-table">`
+                + `${getButton('default', `过`, `tutor(12)`, 'arrow-right', `procHover(['follow','100'],'0')`, `TutorTexasUI.reset('hover')`)}`
                 + `${getTutorAddButtons(100, 100)}</div>`)
             break
         case 12:
@@ -182,8 +197,7 @@ function tutor(step) {
             cur.givenup[1] = 1
             str += `<text class="in-2" x="260" y="370" transform="rotate(0,250,250) rotate(90,260,370)" text-anchor="middle" fill="#333">◉100</text>`
                 + `<text class="in-2" x="260" y="370" transform="rotate(240,250,250) rotate(90,260,370)" text-anchor="middle" fill="#333">◉100</text>`
-            str += drawCard(262.5, 220, cur.cards.n[4], 0, 0)
-            // str += `<line x1="160" y1="275" x2="183" y2="275" stroke="#333" stroke-width="1.5" marker-end="url(#arrow)"/>`
+            str += drawCard(262.5, 220, cur.cards.n[4], 0)
             str += `<rect x="305" y="210" width="14" height="20" rx="2" fill="#ddd" stroke="#333" stroke-width="1.5"></rect>`
                 + `<path d="M 304 225 Q 283,220 306,219.4" fill="transparent" stroke="white" stroke-width="3"></path>`
                 + `<path d="M 305 225 Q 280,220 313,219" fill="transparent" stroke="#333" stroke-width="1.5" marker-end="url(#arrow)"></path>`
@@ -204,8 +218,8 @@ function tutor(step) {
             cur.now = 0
             cur.givenup[1] = 1
             $('.texas-svg').css('opacity', '1')
-            $('.texas-btns-down').html(`<div class="btn-group" onmouseleave="drawTable()">`
-                + `${getButton('default', `过`, `tutor(16)`, 'arrow-right', `procHover(['follow','100'],'0')`)}`
+            $('.texas-btns-down').html(`<div class="btn-group" data-tutor-leave="redraw-table">`
+                + `${getButton('default', `过`, `tutor(16)`, 'arrow-right', `procHover(['follow','100'],'0')`, `TutorTexasUI.reset('hover')`)}`
                 + `${getTutorAddButtons(100, 100)}</div>`)
             break
         case 16:
@@ -215,9 +229,8 @@ function tutor(step) {
             cur.givenup[1] = 1
             cur.winner = { 0: 1, 1: 0, 2: 0 }
             cur.won = { 0: 110 }
-            // cur.type = { 0: [3, 7, 12], 1: [6, 7, 12], 2: [2, 12, 7, 11] }
             cur.type = { 0: [10, 7, 12], 1: [10, 7, 12], 2: [10, 12, 7, 11] }
-            str += `<circle cx="250" cy="250" r="150" stroke="#333" stroke-width="1.5" fill="white"></circle>`
+            str += window.CardTableSurface ? CardTableSurface.circleTableWithDefs() : `<circle cx="250" cy="250" r="150" stroke="#333" stroke-width="1.5" fill="white"></circle>`
                 + drawCard(202.5, 245, cur.cards.n[0], 0)
                 + drawCard(242.5, 245, cur.cards.n[1], 0)
                 + drawCard(282.5, 245, cur.cards.n[2], 0)
@@ -238,9 +251,8 @@ function tutor(step) {
             cur.givenup[1] = 1
             cur.winner = { 0: 1, 1: 0, 2: 0 }
             cur.won = { 0: 110 }
-            // cur.type = { 0: [3, 7, 12], 1: [6, 7, 12], 2: [2, 12, 7, 11] }
             cur.type = { 0: [3, 7, 12], 1: [10, 7, 12], 2: [10, 12, 7, 11] }
-            str += `<circle cx="250" cy="250" r="150" stroke="#333" stroke-width="1.5" fill="white"></circle>`
+            str += window.CardTableSurface ? CardTableSurface.circleTableWithDefs() : `<circle cx="250" cy="250" r="150" stroke="#333" stroke-width="1.5" fill="white"></circle>`
                 + drawCard(202.5, 245, cur.cards.n[0], 0, 1)
                 + drawCard(242.5, 245, cur.cards.n[1], 0)
                 + drawCard(282.5, 245, cur.cards.n[2], 0)
@@ -261,9 +273,8 @@ function tutor(step) {
             cur.givenup[1] = 1
             cur.winner = { 0: 1, 1: 0, 2: 0 }
             cur.won = { 0: 110 }
-            // cur.type = { 0: [3, 7, 12], 1: [6, 7, 12], 2: [2, 12, 7, 11] }
             cur.type = { 0: [3, 7, 12], 1: [6, 7, 12], 2: [10, 12, 7, 11] }
-            str += `<circle cx="250" cy="250" r="150" stroke="#333" stroke-width="1.5" fill="white"></circle>`
+            str += window.CardTableSurface ? CardTableSurface.circleTableWithDefs() : `<circle cx="250" cy="250" r="150" stroke="#333" stroke-width="1.5" fill="white"></circle>`
                 + drawCard(202.5, 275, cur.cards.n[0], 0, 1)
                 + drawCard(242.5, 275, cur.cards.n[1], 0)
                 + drawCard(282.5, 275, cur.cards.n[2], 0, 1)
@@ -285,9 +296,8 @@ function tutor(step) {
             cur.givenup[1] = 1
             cur.winner = { 0: 1, 1: 0, 2: 0 }
             cur.won = { 0: 110 }
-            // cur.type = { 0: [3, 7, 12], 1: [6, 7, 12], 2: [2, 12, 7, 11] }
             cur.type = { 0: [3, 7, 12], 1: [6, 7, 12], 2: [2, 12, 7, 11] }
-            str += `<circle cx="250" cy="250" r="150" stroke="#333" stroke-width="1.5" fill="white"></circle>`
+            str += window.CardTableSurface ? CardTableSurface.circleTableWithDefs() : `<circle cx="250" cy="250" r="150" stroke="#333" stroke-width="1.5" fill="white"></circle>`
                 + drawCard(202.5, 275, cur.cards.n[0], 0)
                 + drawCard(242.5, 275, cur.cards.n[1], 0, 1)
                 + drawCard(282.5, 275, cur.cards.n[2], 0)
@@ -311,13 +321,13 @@ function tutor(step) {
             cur.givenup[1] = 1
             cur.winner = { 0: 1, 1: 0, 2: 0 }
             cur.won = { 0: 110 }
-            // cur.type = { 0: [3, 7, 12], 1: [6, 7, 12], 2: [2, 12, 7, 11] }
             cur.type = { 0: [3, 7, 12], 1: [6, 7, 12], 2: [2, 12, 7, 11] }
             $('.texas-svg').css('opacity', '1')
             $('.texas-btns-down').html(`<div class="btn-group">${getButton('default', `上一步`, `tutor(19)`, 'arrow-left')}${getButton('default', `牌型`, `tutor(21)`, 0, 0, 0, 0, 'arrow-right')}</div>`)
             break
         case 21:
             $('.tutor').html('<h3>牌型</h3><p>先比牌型大小。牌型相同，再比数字大小。</p>')
+            str2 = '<defs>' + (window.getTexasCardSymbolDefs ? window.getTexasCardSymbolDefs() : '') + '</defs>'
             str2 += drawFiveCards(12, 50, ['TS2', 'TC7', 'TH4', 'DK', 'TH3'], '① 高牌')
             str2 += drawFiveCards(12, 140, ['S2', 'C2', 'TH4', 'TDK', 'TH3'], '② 一对')
             str2 += drawFiveCards(12, 230, ['S7', 'C7', 'H4', 'D4', 'TH3'], '③ 两对')
@@ -343,7 +353,7 @@ function drawTransparentCard(x, y, card, rot = 0, flipped = 1) {
     let colMap = { 'C': 'club', 'D': 'diamond', 'H': 'heart', 'S': 'spade' }
     let colColMap = { 'C': '#333', 'D': 'red', 'H': 'red', 'S': '#333' }
     let str = ''
-    str = `<rect x="${x - 10}" y="${y - 25}" transform="rotate(${rot},250,250)" width="35" height="50" rx="5" fill="transparent" stroke="#333" stroke-width="1.5" ${flipped ? 'opacity="0.3"' : ''}></rect>
+    str = `<rect x="${x - 10}" y="${y - 25}" transform="rotate(${rot},250,250)" width="35" height="50" rx="5" fill="white" stroke="#333" stroke-width="1.5" ${flipped ? 'opacity="0.35"' : ''}></rect>
         <use x="${x - 4}" y="${y - 8}" transform="rotate(${rot},250,250)" href="#${colMap[col]}" ${flipped ? 'opacity="0.3"' : ''}/>
         <text x="${x - 7}" y="${y - 8}" transform="rotate(${rot},250,250)" font-size="16" fill="${colColMap[col]}" ${flipped ? 'opacity="0.3"' : ''}>${num}</text>`
     return str
@@ -360,15 +370,15 @@ function drawFiveCards(x, y, card, text) {
 function getTutorAddButtons(up, me, max) {
     if (!me) me = 0
     up = parseInt(up)
-    let str = getButton('primary', `加注 ${up + 5}`, `procHover(['up','${up + 5}'],'0')`, 'arrow-up', `procHover(['up','${up + 5}'],'0')`)
+    let str = getButton('primary', `加注 ${up + 5}`, 0, 'arrow-up', `procHover(['up','${up + 5}'],'0')`, `TutorTexasUI.reset('hover')`)
     if (up + 5 - me >= cur.cash[cur.you]) str = ''
     let arr = [10, 15, 20, 30, 50, 70, 90, 190, 490]
     for (let i = 0; i < arr.length; i++) {
         if (up + arr[i] - me >= cur.cash[cur.you]) {
-            str += getButton('primary', `全押`, `procHover(['up','${cur.cash[cur.you] + me}'],'0')`, 'fire', `procHover(['up','${cur.cash[cur.you] + me}'],'0')`)
+            str += getButton('primary', `全押`, 0, 'fire', `procHover(['up','${cur.cash[cur.you] + me}'],'0')`, `TutorTexasUI.reset('hover')`)
             break
         }
-        str += getButton('primary btn-up', up + arr[i], `procHover(['up','${up + arr[i]}'],'0')`, 0, `procHover(['up','${up + arr[i]}'],'0')`)
+        str += getButton('primary btn-up', up + arr[i], 0, 0, `procHover(['up','${up + arr[i]}'],'0')`, `TutorTexasUI.reset('hover')`)
     }
     return str
 }

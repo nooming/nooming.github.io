@@ -155,6 +155,7 @@
                     { label: "五子棋", href: "/app/play/games/board-games/gomoku/" },
                     { label: "围棋", href: "/app/play/games/board-games/go/" },
                     { label: "象棋", href: "/app/play/games/board-games/chess/" },
+                    { label: "星铎棋", href: "/app/play/games/board-games/star-duo/" },
                     { label: "德州扑克", href: "/app/play/games/card-games/texas/" },
                     { label: "UNO", href: "/app/play/games/card-games/uno/" },
                     { label: "红心大战", href: "/app/play/games/card-games/hearts/" },
@@ -384,6 +385,12 @@
                     href: "/app/play/games/board-games/chess/",
                     match: /\/chess/,
                 },
+                {
+                    id: "star-duo",
+                    label: "星铎棋",
+                    href: "/app/play/games/board-games/star-duo/",
+                    match: /\/star-duo/,
+                },
             ],
             l2CardWhen: /\/card-games\//,
             l2Card: [
@@ -445,6 +452,12 @@
                     label: "象棋",
                     icon: "i-chess",
                     href: "/app/play/games/board-games/chess/",
+                },
+                {
+                    id: "star-duo",
+                    label: "星铎",
+                    icon: "i-go",
+                    href: "/app/play/games/board-games/star-duo/",
                 },
                 {
                     id: "menu",
@@ -1034,6 +1047,8 @@
     }
 
     function watchLightBoardStage() {
+        var path = normalizePath(window.location.pathname);
+        if (path.indexOf("/tools/light-board") === -1) return;
         var stage = document.getElementById("stage");
         if (!stage) return;
         var sync = function () {

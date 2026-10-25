@@ -98,10 +98,6 @@ body.proton-page.page-container {
     font-weight: normal !important;
 }
 
-.greyer {
-    color: #bbb;
-}
-
 .proton-toolbar .btn {
     font-size: 16px;
     text-align: right;
@@ -151,14 +147,44 @@ body.proton-page.page-container {
 .proton-toolbar {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
+    align-items: flex-start;
     margin-top: 6px;
     margin-bottom: 4px;
     color: var(--color-body);
+    padding-left: 20px;
+    padding-right: 20px;
+    box-sizing: border-box;
+}
+
+@media (min-width: 699px) {
+    .proton-toolbar {
+        padding-left: 75px;
+        padding-right: 75px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .proton-toolbar {
+        padding-left: 150px;
+        padding-right: 150px;
+    }
 }
 
 .proton-toolbar__cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     text-align: center;
+}
+
+.proton-toolbar__cell .btn,
+.proton-toolbar__cell .btn-group {
+    flex-shrink: 0;
+}
+
+.proton-page .kbd-hint--spacer {
+    visibility: hidden;
+    user-select: none;
 }
 
 .proton-toolbar__cell--gap {
@@ -274,6 +300,26 @@ body.proton-page.page-container {
     width: 500px;
 }
 
+.m-div .m-svg,
+.m-div .trail-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.m-div .trail-svg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    pointer-events: none;
+    z-index: 3;
+}
+
+.m-div .m-svg {
+    position: relative;
+    z-index: 1;
+}
+
 .f-div {
     border: 2px solid #ddd;
     position: absolute;
@@ -378,6 +424,37 @@ body.proton-page.page-container {
 .help-block p.text-note {
     margin-top: 0.25em;
     margin-bottom: 0.85em;
+}
+
+.help-block .help-mobile-only {
+    display: none;
+}
+
+.proton-page .kbd-hint {
+    font-size: 12px;
+    color: var(--color-ink-muted);
+}
+
+body.proton-touch .kbd-hint,
+body.proton-touch .key-hint,
+body.proton-touch .help-block .help-desktop-only {
+    display: none !important;
+}
+
+body.proton-touch .help-block .help-mobile-only {
+    display: inline;
+}
+
+@media (max-width: 767.98px) {
+    body.proton-page .kbd-hint,
+    body.proton-page .key-hint,
+    body.proton-page .help-block .help-desktop-only {
+        display: none !important;
+    }
+
+    body.proton-page .help-block .help-mobile-only {
+        display: inline;
+    }
 }
 
 /* 窄屏：视口宽 = 缩放后宽度，裁剪内层，避免整页横向拖动 */

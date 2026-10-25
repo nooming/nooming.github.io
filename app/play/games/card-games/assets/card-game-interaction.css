@@ -1,0 +1,59 @@
+/* Delegated SVG / table interactions (UNO, shared) */
+.uno-svg .card-hit {
+    cursor: pointer;
+}
+
+.uno-svg .card-hit.selected {
+    stroke: #333;
+}
+
+.uno-svg .card-hit:not(.selected):hover,
+.uno-svg .card-hit.card-hovered:not(.selected) {
+    translate: 0 -3px;
+}
+
+.uno-svg .card.selected,
+.uno-svg .card-hit.selected {
+    translate: 0 -8px;
+}
+
+.uno-svg.draw-pile-active .cards-rect,
+.uno-svg .draw-pile-tutor {
+    cursor: pointer;
+}
+
+.uno-svg .draw-pile-tutor:hover {
+    translate: 0 3px;
+}
+
+.uno-svg.draw-pile-active.draw-pile-hover .cards-rect,
+.uno-svg.draw-pile-active .cards-rect:hover {
+    translate: 0 3px;
+}
+
+.uno-svg .cards-rect[data-draw-pile] {
+    cursor: pointer;
+}
+
+.uno-svg .sel,
+.uno-svg .sel-h {
+    cursor: pointer;
+}
+
+.uno-svg .sel-h {
+    display: none;
+}
+
+.hearts-svg [data-hearts-card]:not([data-disabled='true']) {
+    cursor: pointer;
+}
+
+.card-table-surface {
+    pointer-events: none;
+}
+
+.card-game-page .btn-group[data-hover-leave] {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}

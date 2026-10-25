@@ -7,6 +7,106 @@ body.card-game-page.page-container {
     font-size: 16px;
     line-height: 1.6;
     padding-bottom: 16px;
+    background-color: var(--color-canvas);
+    background-image: var(--bg-canvas-grid);
+    background-size: var(--bg-grid-size) var(--bg-grid-size);
+}
+
+/* —— 开局浮岛（noomings 卡片） —— */
+.card-game-lobby {
+    max-width: 760px;
+    margin: 0 auto 16px;
+    padding: 0 16px;
+    box-sizing: border-box;
+}
+
+.card-game-lobby__panel {
+    padding: 22px 24px 20px;
+    background: var(--color-card);
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    box-shadow: var(--shadow-card-float);
+    box-sizing: border-box;
+}
+
+.card-game-lobby__lead {
+    margin: 0 0 12px;
+    color: var(--color-body);
+    font-size: 0.9375rem;
+    line-height: 1.65;
+}
+
+.card-game-lobby__list-item {
+    margin: 0 0 16px;
+    padding: 0;
+    list-style: none;
+    color: var(--color-ink-muted);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    cursor: default;
+}
+
+.card-game-lobby__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.card-game-lobby__note {
+    margin: 0;
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    color: var(--color-ink-muted);
+}
+
+.card-game-page .tutor {
+    display: none;
+    max-width: 760px;
+    margin: 0 auto 12px;
+    padding: 20px 24px;
+    box-sizing: border-box;
+    background: var(--color-card);
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    box-shadow: var(--shadow-card-float);
+    color: var(--color-body);
+}
+
+.card-game-page .tutor h3 {
+    margin: 0 0 8px;
+    color: var(--gradient-theme-title);
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.card-game-page .tutor p {
+    margin: 0;
+    line-height: 1.65;
+    font-size: 0.9375rem;
+}
+
+.card-game-page .hearts-alert {
+    border: 1px solid var(--line-ins);
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    border-radius: 0;
+    background: var(--color-theme-wash);
+    color: var(--color-body);
+    font-size: 0.875rem;
+    line-height: 1.55;
+}
+
+@keyframes card-game-blink {
+    0% { fill: var(--color-ink, #333); }
+    100% { fill: #ddd; }
+}
+
+.card-game-page .blink {
+    animation: card-game-blink 0.8s infinite cubic-bezier(0.17, -1.01, 0.76, 1.87);
+}
+
+.card-game-page .blink-fast {
+    animation: card-game-blink 0.2s infinite cubic-bezier(0.17, -1.01, 0.76, 1.87);
 }
 
 body.card-game-page.page-container > footer.site-footer {

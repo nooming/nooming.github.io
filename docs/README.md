@@ -84,7 +84,7 @@ GitHub Pages 静态站：顶栏 **首页 · 实验 · 工具 · 阅读 · 娱乐
 根级 **`assets/`** 与各页目录下 **`assets/`** 的分工、相对引用方式与本地预览注意点如下。
 
 - **`app/play/games/` 下各小游戏**：页面内静态资源优先放在各游戏目录的 **`assets/css/`**、**`assets/js/`**、**`assets/img/`**（可按需增删子目录），页面入口统一为 **`index.html`**，便于与「仅 HTML + 散落 css/js」的异构布局区分。
-- **`app/play/games/board-games/`** 与 **`app/play/games/card-games/`**：无中间目录页；各对局在 **`gomoku/`、`go/`、`chess/`** 或 **`texas/`、`uno/`、`hearts/`**（各目录 `index.html`）；卡牌共享脚本与样式在 **`card-games/assets/`**（含 **`assets/common/`**）。
+- **`app/play/games/board-games/`** 与 **`app/play/games/card-games/`**：无中间目录页；各对局在 **`gomoku/`、`go/`、`chess/`、`star-duo/`** 或 **`texas/`、`uno/`、`hearts/`**（各目录 `index.html`）；卡牌共享脚本与样式在 **`card-games/assets/`**（含 **`assets/common/`**）。
 - **全站公共脚本**：通用 Toast、剪贴板、防抖、返回顶部等仅在根 **`assets/js/utils.js`**；手写笔记专用逻辑在 **`app/notes/assets/js/notes-utils.js`**，二者勿混用文件名。
 - **`app/tools/`**：进制、Base64、二维码等工具的页面脚本与样式放在各子目录 **`assets/js/`**、**`assets/css/`**；音频转换、风扇转速等以单页内联或依赖根 **`assets/css/common.css`** / **`assets/js/utils.js`**（由页面写 `../` 链回到站根）为主。
 - **导航壳**：`assets/css/site-shell.css`、`assets/js/site-shell.js` — 顶栏五域、桌面侧栏、移动底栏 + 分组菜单；批量注入见 `scripts/apply_site_shell.py`。**不挂壳**：`app/notes/`、`app/parking-pso/`、`app/citywalk/`（实验/工具/阅读/娱乐域内页挂壳）。

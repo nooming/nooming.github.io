@@ -11,6 +11,8 @@
 5. **文案**：用户可见表述收敛至 `docs/copy-style.md`；`sitemap.xml` 与站内链同步新路径。
 6. **索引扁平化**：删除中间目录页及 **`lab/`、`read/`、`play/` 域目录页**（子项少、与侧栏重复）；保留 **`tools/index.html`**；`tools/doc-tools/` 等 hub 已删；侧栏无自指目录项。
 7. **母品牌标**（`assets/brand/`）：定稿「n 是窗，月亮在窗里」；圆角黑底白门 + 黄月牙；顶栏与首页 hero 用 `noomings-mark.svg`；全站标签页 `favicon.svg`，主屏幕 PNG 由主标导出。WanderWalk 不变。
+8. **卡牌三件套**（`card-games/texas/`、`uno/`、`hearts/`）：开局浮岛与主题按钮 noomings 化；统一「本地人机」文案与人机对手名（`CardGameCopy.aiNameMap`）；昵称键 `noomings_card_nick`；教程区卡片样式。**技术升级**：牌桌逻辑迁出 `index.html`（`uno-table.js`、`texas-table.js`）；`card-game-actions.js` 统一委托；牌桌椭圆底（`game-layout.css`）；红心/大厅 `window.startAIBattle` 与 `data-action="hearts.ready"`；德州教程 hover 改为 `data-tutor-hover` / `TutorTexasUI`。
+9. **星铎棋**（路径 `star-duo/`，原 `xingduo/` 跳转）：六角翻转棋；**本地双人 · 人机**（无互联网联机）；菜单/弹窗 noomings 浮岛卡片与 `modal-copy`；对局/编辑器全屏沉浸（`shell-chrome-hidden`）；对局 brass 原视觉（`star-duo.css`）；娱乐侧栏与棋类 L2 入口。
 
 ## v2.3
 

@@ -17,10 +17,17 @@ $(function () {
         var nick = q.get('nick')
         if (nick) {
             nick = decodeURIComponent(nick).trim().slice(0, 32)
-            if (nick) localStorage.setItem('SDSZ_STANDALONE_NICK', nick)
+            if (nick) localStorage.setItem('noomings_card_nick', nick)
         }
-        var stored = localStorage.getItem('SDSZ_STANDALONE_NICK')
-        if (stored && stored.trim()) sso.realname = stored.trim().slice(0, 32)
+        var stored =
+            localStorage.getItem('noomings_card_nick') ||
+            localStorage.getItem('SDSZ_STANDALONE_NICK')
+        if (stored && stored.trim()) {
+            sso.realname = stored.trim().slice(0, 32)
+            try {
+                localStorage.setItem('noomings_card_nick', sso.realname)
+            } catch (e) {}
+        }
     } catch (e) {}
 })
 

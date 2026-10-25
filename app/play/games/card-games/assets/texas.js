@@ -1,5 +1,7 @@
 /* global sso, cur, tt, socket, drawTexasAll, drawTable, drawButtons, procHover, $ */
 
+window.socket = null
+
 const texasAi = {
     enabled: false,
     timer: null,
@@ -15,13 +17,13 @@ function stopTexasAiTimer() {
 }
 
 function startAIBattle() {
-    if (socket) socket.close()
+    if (window.socket) window.socket.close()
     texasAi.enabled = true
-    socket = {
+    window.socket = {
         send: handleTexasAiCommand,
         close: () => {
             stopTexasAiTimer()
-            socket = null
+            window.socket = null
             document.body.classList.remove('card-game-playing')
             $('.list-all').show()
             $('.chat').hide()
@@ -45,7 +47,7 @@ function initTexasAiTable() {
         num: 4,
         plist: players,
         you: 0,
-        name: { 0: sso.realname || '你', 1: 'AI-1', 2: 'AI-2', 3: 'AI-3' },
+        name: CardGameCopy.aiNameMap(3),
         cards: { n: [], p: { 0: [], 1: [], 2: [], 3: [] } },
         isIngame: { 0: 1, 1: 1, 2: 1, 3: 1 },
         isReady: { 0: 0, 1: 1, 2: 1, 3: 1 },
@@ -72,8 +74,8 @@ function initTexasAiTable() {
 }
 
 function handleTexasAiCommand(cmd) {
-    if (!texasAi.enabled || !socket) return
-    if (cmd == 'closing') return socket.close()
+    if (!texasAi.enabled || !window.socket) return
+    if (cmd == 'closing') return window.socket.close()
     if (cmd == 'ready' && (tt == 0 || tt == 5)) return startTexasAiRound()
     if (cmd.startsWith('hover ')) return handleTexasHover(cmd.slice(6))
     if (tt >= 5) return
@@ -436,8 +438,8 @@ function scheduleTexasAiTurn() {
     if (!texasAi.enabled || tt >= 5 || cur.now == cur.you) return
     texasAi.timer = setTimeout(() => {
         const uid = cur.now
-        if (cur.dstep == 1) return socket.send(`up ${Math.ceil(cur.bb / 2)}`)
-        if (cur.dstep == 2) return socket.send(`up ${cur.bb}`)
+        if (cur.dstep == 1) return window.socket.send(`up ${Math.ceil(cur.bb / 2)}`)
+        if (cur.dstep == 2) return window.socket.send(`up ${cur.bb}`)
         const need = Math.max(0, cur.up - cur.in[uid])
         const cash = cur.cash[uid]
         const strength = texasHandStrength(uid)
@@ -447,23 +449,29 @@ function scheduleTexasAiTurn() {
         const feel = Math.max(0, Math.min(1, strength + jitter))
 
         if (need > 0) {
-            if (cash <= need) return socket.send('follow')
+            if (cash <= need) return window.socket.send('follow')
             // Weak vs bet -> fold; strong -> call/raise
-            if (feel < Math.max(0.22, potOdds * 0.85)) return socket.send('nope')
+            if (feel < Math.max(0.22, potOdds * 0.85)) return window.socket.send('nope')
             if (feel > 0.78 && cash > need + cur.bb) {
                 const raiseAmt = Math.max(cur.bb, Math.floor(Math.min(cash / 3, pot * 0.7 + cur.bb)))
-                return socket.send(`up ${raiseAmt}`)
+                return window.socket.send(`up ${raiseAmt}`)
             }
-            if (feel > 0.55 || feel >= potOdds) return socket.send('follow')
-            if (feel < 0.35 && Math.random() < 0.7) return socket.send('nope')
-            return socket.send('follow')
+            if (feel > 0.55 || feel >= potOdds) return window.socket.send('follow')
+            if (feel < 0.35 && Math.random() < 0.7) return window.socket.send('nope')
+            return window.socket.send('follow')
         }
         // No bet: weak check, strong sometimes raise
-        if (feel < 0.42 || Math.random() < 0.55) return socket.send('follow')
+        if (feel < 0.42 || Math.random() < 0.55) return window.socket.send('follow')
         if (feel > 0.7 && cash > cur.bb) {
             const raiseAmt = Math.max(cur.bb, Math.floor(Math.min(cash / 4, pot * 0.5 + cur.bb)))
-            return socket.send(`up ${raiseAmt}`)
+            return window.socket.send(`up ${raiseAmt}`)
         }
-        return socket.send('follow')
+        return window.socket.send('follow')
     }, 700)
 }
+
+window.startAIBattle = startAIBattle
+
+$(function () {
+    $('.btn-start-ai').on('click', startAIBattle)
+})

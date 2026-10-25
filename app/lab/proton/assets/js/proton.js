@@ -8,6 +8,14 @@ let isfr = 1, bound = 0
 const lx = 0, rx = 500, ly = 0, ry = 500, fr = 0.01, mFr = 0.2
 let t = 1
 let delay = 0
+let showTrail = false
+let trailPoints = []
+let trailAccX = 0
+let trailAccY = 0
+let lastStepDx = 0
+let lastStepDy = 0
+const TRAIL_MAX = 4000
+const TRAIL_SCREEN_BREAK = 180
 
 function qs(sel) {
     return document.querySelector(sel)
@@ -55,6 +63,7 @@ function toggleBound(btn) {
     bound = !bound
     setMiddle()
     drawBound()
+    if (showTrail) resetTrailRecording()
 }
 
 function setSpeed(btn, speed) {
@@ -63,6 +72,84 @@ function setSpeed(btn, speed) {
         if (sib !== btn) sib.classList.remove('btn-primary')
     })
     t = speed
+}
+
+function resetTrailRecording() {
+    trailAccX = 0
+    trailAccY = 0
+    trailPoints = []
+    if (showTrail) trailPoints.push([0, 0])
+}
+
+function toggleTrail(btn) {
+    btn.classList.toggle('btn-primary')
+    showTrail = btn.classList.contains('btn-primary')
+    if (showTrail) resetTrailRecording()
+    else {
+        trailPoints = []
+        drawTrail()
+    }
+}
+
+function recordTrail() {
+    if (!showTrail || !t) return
+    if (!bound) {
+        trailAccX += lastStepDx
+        trailAccY += lastStepDy
+        trailPoints.push([trailAccX, trailAccY])
+    } else {
+        trailPoints.push([x, y])
+    }
+    while (trailPoints.length > TRAIL_MAX) trailPoints.shift()
+}
+
+/** 无边界：最新点在粒子（中心），更早的点留在画布上；有边界：与红点同一套坐标 */
+function trailPointToSvg(p) {
+    if (!bound) {
+        return [250 + p[0] - trailAccX, 250 + p[1] - trailAccY]
+    }
+    return [p[0] - 20 - cbx, p[1] - cby]
+}
+
+function drawTrail() {
+    const svg = qs('.trail-svg')
+    if (!svg) return
+    if (!showTrail || !trailPoints.length) {
+        svg.innerHTML = ''
+        return
+    }
+    let d = ''
+    let penDown = false
+    let lastSx = null
+    let lastSy = null
+    for (let i = 0; i < trailPoints.length; i++) {
+        const p = trailPoints[i]
+        if (!p) {
+            penDown = false
+            lastSx = lastSy = null
+            continue
+        }
+        const disp = trailPointToSvg(p)
+        const sx = disp[0]
+        const sy = disp[1]
+        if (penDown && lastSx != null && (Math.abs(sx - lastSx) > TRAIL_SCREEN_BREAK || Math.abs(sy - lastSy) > TRAIL_SCREEN_BREAK)) {
+            penDown = false
+        }
+        if (!penDown) {
+            d += 'M' + sx.toFixed(2) + ' ' + sy.toFixed(2)
+            penDown = true
+        } else {
+            d += 'L' + sx.toFixed(2) + ' ' + sy.toFixed(2)
+        }
+        lastSx = sx
+        lastSy = sy
+    }
+    svg.innerHTML = '<path fill="none" stroke="#c9302c" stroke-width="2.5" stroke-opacity="0.9" stroke-linecap="round" stroke-linejoin="round" d="' + d + '"/>'
+}
+
+function applyProtonInputMode() {
+    const touchLike = window.matchMedia('(hover: none) and (pointer: coarse)').matches
+    document.body.classList.toggle('proton-touch', touchLike)
 }
 
 function loop() {
@@ -75,7 +162,10 @@ function loop() {
                 </defs>`
 
                 if (t) {
-                    x += vx * t, y += vy * t
+                    lastStepDx = vx * t
+                    lastStepDy = vy * t
+                    x += lastStepDx
+                    y += lastStepDy
                     dvx += forcex, dvy += forcey
                     dvx += ex, dvy += ey
                     bvx = vy * b * t * 0.1, bvy = -vx * b * t * 0.1
@@ -223,6 +313,8 @@ function loop() {
                     vb -= vb * 0.1 * t
                 }
                 setStyle('.B-div', 'top', `${390 + cb}px`)
+                recordTrail()
+                drawTrail()
             }
             function setforce(e, leave = 0) {
                 if (delay) return
@@ -393,6 +485,8 @@ function loop() {
             }
             let fst = 0
             function initProton() {
+                applyProtonInputMode()
+                window.matchMedia('(hover: none) and (pointer: coarse)').addEventListener('change', applyProtonInputMode)
                 hideEl('.rmE')
                 hideEl('.rmB')
                 setInterval(loop, 10)

@@ -1,0 +1,460 @@
+/* noomings：壳 + 菜单/弹窗/编辑器；仅 #screen-game 对局舞台保留原视觉 */
+
+html {
+  color-scheme: light;
+}
+
+body.page-container.star-duo-root {
+  background-color: var(--color-canvas);
+  background-image: var(--bg-canvas-grid);
+  background-size: var(--bg-grid-size) var(--bg-grid-size);
+  color: var(--color-body);
+  min-height: 100%;
+  height: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body.page-container.star-duo-root.shell-active:not(.xd-immersive) {
+  overflow-y: auto !important;
+  height: auto !important;
+}
+
+body.page-container.star-duo-root.shell-active .xd-app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 16px 24px;
+  box-sizing: border-box;
+}
+
+body.page-container.star-duo-root.shell-active .page-header.star-duo-chrome,
+body.page-container.star-duo-root.shell-active .site-footer.star-duo-chrome {
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 16px;
+  padding-right: 16px;
+  box-sizing: border-box;
+}
+
+body.star-duo-root.xd-immersive {
+  overflow: hidden;
+  height: 100%;
+  background: #0b0908;
+  background-image: none;
+}
+
+body.star-duo-root.xd-immersive .star-duo-chrome {
+  display: none !important;
+}
+
+body.star-duo-root.xd-immersive.shell-active .stage,
+body.star-duo-root.xd-immersive.shell-active .editor-panel {
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+body.star-duo-root .xd-app .screen.active {
+  max-height: none;
+}
+
+/* —— 菜单屏（非对局舞台）：noomings 流式布局 —— */
+body.star-duo-root #screen-select.active,
+body.star-duo-root #screen-first.active,
+body.star-duo-root #screen-difficulty.active {
+  position: relative;
+  inset: auto;
+  justify-content: flex-start;
+  align-items: center;
+  max-width: 520px;
+  margin: 0 auto 32px;
+  padding: 0 0 24px;
+  color: var(--color-body);
+  color-scheme: light;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.star-duo-root .star-duo-menu-card {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 22px 24px 26px;
+  background: var(--color-card);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: var(--shadow-card-float);
+}
+
+#screen-select .title {
+  display: none;
+}
+
+#screen-select .subtitle {
+  font-size: 0.875rem;
+  letter-spacing: 0.06em;
+  color: var(--color-ink-muted);
+  margin: 0 0 24px;
+  text-align: center;
+  width: 100%;
+}
+
+#screen-select .menu-topbar {
+  position: relative;
+  top: auto;
+  left: auto;
+  justify-content: center;
+  width: 100%;
+  margin: 0 0 12px;
+}
+
+#screen-first .xd-screen-title,
+#screen-difficulty .xd-screen-title {
+  color: var(--gradient-theme-title);
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  padding: 8px 0 16px;
+}
+
+.star-duo-root .topbar {
+  padding: 8px 0 0;
+}
+
+/* noomings 按钮：仅菜单与编辑器工具栏，不作用于对局舞台内 */
+.star-duo-root #screen-select .btn,
+.star-duo-root #screen-first .btn,
+.star-duo-root #screen-difficulty .btn,
+.star-duo-root .editor-toolbar .ed-btn,
+.star-duo-root .overlay .btn {
+  border-radius: 0;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+  font-family: inherit;
+  box-shadow: var(--shadow-ins);
+  border: 1px solid var(--line-ins);
+  background: var(--color-card);
+  color: var(--color-ink);
+  transition: background 0.15s, border-color 0.15s, transform 0.05s;
+}
+
+.star-duo-root #screen-select .menu-btns .btn,
+.star-duo-root #screen-select .btn:not(.light):not(.small),
+.star-duo-root .overlay .btn:not(.light):not(.small) {
+  background: var(--btn-cta-bg);
+  border: 2px solid var(--color-theme-secondary);
+  color: var(--btn-cta-fg);
+  box-shadow: var(--shadow-theme);
+}
+
+.star-duo-root #screen-select .menu-btns .btn:hover,
+.star-duo-root #screen-select .btn:not(.light):not(.small):hover,
+.star-duo-root .overlay .btn:not(.light):not(.small):hover {
+  background: var(--btn-cta-bg-hover);
+}
+
+.star-duo-root #screen-select .btn.light,
+.star-duo-root #screen-first .btn.light,
+.star-duo-root #screen-difficulty .btn.light,
+.star-duo-root .overlay .btn.light {
+  background: var(--color-card);
+  color: var(--color-ink);
+}
+
+.star-duo-root #screen-select .btn.light:hover,
+.star-duo-root #screen-first .btn.light:hover,
+.star-duo-root #screen-difficulty .btn.light:hover {
+  background: var(--color-theme-wash);
+  border-color: var(--color-theme-deep);
+}
+
+.star-duo-root #screen-first .color-btn,
+.star-duo-root #screen-difficulty .color-btn {
+  border-radius: 0;
+  border: 2px solid var(--color-theme-secondary);
+  letter-spacing: 0.04em;
+  font-weight: 500;
+}
+
+.star-duo-root #screen-first .color-btn.black,
+.star-duo-root #screen-difficulty .color-btn.black {
+  background: var(--color-ink);
+  color: var(--color-theme);
+  border-color: var(--color-ink);
+}
+
+.star-duo-root #screen-first .color-btn.white,
+.star-duo-root #screen-difficulty .color-btn.white {
+  background: var(--color-card);
+  color: var(--color-ink);
+  border-color: var(--line-hard);
+}
+
+.star-duo-root #screen-first .color-btn.random,
+.star-duo-root #screen-difficulty .color-btn.random {
+  background: var(--color-theme-wash);
+  color: var(--color-ink);
+  border-color: var(--color-theme-deep);
+}
+
+.star-duo-root #screen-difficulty .star-duo-menu-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.star-duo-root #screen-difficulty .diff-btns {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 0 4px;
+  box-sizing: border-box;
+}
+
+.star-duo-root #screen-difficulty .diff-btns > .btn {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.star-duo-root #screen-difficulty .diff-btn {
+  width: 100%;
+  max-width: none;
+  padding: 14px 18px;
+  border-radius: 0;
+  border: 1px solid var(--line-ins);
+  background: var(--color-card);
+  color: var(--color-ink);
+  letter-spacing: 0.04em;
+  filter: none;
+  transform: none;
+  box-shadow: none;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+  box-sizing: border-box;
+}
+
+/* 未选中：浅底色 + 左侧色条区分难度，仍保持 noomings 可读性 */
+.star-duo-root #screen-difficulty .diff-btn.easy:not(.selected) {
+  background: #f3faf5;
+  border-color: #cfe8d8;
+  border-left: 3px solid #5a9a6e;
+}
+
+.star-duo-root #screen-difficulty .diff-btn.normal:not(.selected) {
+  background: var(--color-theme-wash);
+  border-color: #e5dea8;
+  border-left: 3px solid var(--color-theme-deep);
+}
+
+.star-duo-root #screen-difficulty .diff-btn.hard:not(.selected) {
+  background: #fff6ee;
+  border-color: #ecd9c4;
+  border-left: 3px solid #b87840;
+}
+
+.star-duo-root #screen-difficulty .diff-btn.hell:not(.selected) {
+  background: #fff5f7;
+  border-color: #f0d0d6;
+  border-left: 3px solid #c45c6a;
+}
+
+.star-duo-root #screen-difficulty .diff-btn:not(.selected):hover {
+  filter: none;
+  border-color: var(--color-theme-deep);
+  box-shadow: var(--shadow-ins);
+}
+
+.star-duo-root #screen-difficulty .diff-btn .diff-btn-title {
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+}
+
+.star-duo-root #screen-difficulty .diff-btn .diff-btn-desc {
+  font-size: 0.75rem;
+  line-height: 1.45;
+  margin-top: 6px;
+  color: var(--color-ink-muted);
+  letter-spacing: 0.02em;
+  opacity: 1;
+}
+
+.star-duo-root #screen-difficulty .diff-btn.selected {
+  background: var(--btn-cta-bg);
+  color: var(--btn-cta-fg);
+  border: 2px solid var(--color-theme-secondary);
+  box-shadow: var(--shadow-theme);
+  transform: none;
+}
+
+.star-duo-root #screen-difficulty .diff-btn.selected .diff-btn-desc {
+  color: var(--color-ink-muted);
+}
+
+/* 弹窗 */
+.star-duo-root .overlay {
+  background: rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(4px);
+}
+
+.star-duo-root .modal {
+  border-radius: 0;
+  background: var(--color-card);
+  color: var(--color-body);
+  border: 1px solid var(--line-ins);
+  box-shadow: var(--shadow-card-float);
+}
+
+.star-duo-root .modal h3 {
+  color: var(--gradient-theme-title);
+  letter-spacing: 0.1em;
+  font-size: 1.125rem;
+}
+
+.star-duo-root .modal input,
+.star-duo-root .modal input[type="number"] {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  border: 1px solid var(--line-hard);
+  border-radius: 0;
+}
+
+.star-duo-root .modal label {
+  color: var(--color-ink);
+}
+
+.star-duo-root .modal .modal-copy {
+  text-align: left;
+  font-size: 0.8125rem;
+  line-height: 1.75;
+  color: var(--color-body);
+  margin: 0 0 12px;
+}
+
+.star-duo-root .modal .modal-copy--field {
+  margin-top: 12px;
+}
+
+.star-duo-root .modal .modal-copy b {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+/* 弹窗内勿沿用对局 HUD 的 .hint 浅色 */
+.star-duo-root .modal .hint {
+  color: var(--color-body);
+}
+
+/* 自定义编辑器：工具栏/侧栏 noomings，棋盘预览区保持原暗色 */
+.star-duo-root .editor-panel {
+  background: var(--color-canvas);
+  background-image: var(--bg-canvas-grid);
+  background-size: var(--bg-grid-size) var(--bg-grid-size);
+}
+
+.star-duo-root .editor-toolbar {
+  background: var(--color-card);
+  border-bottom: 1px solid var(--line-ins);
+}
+
+.star-duo-root .editor-toolbar .ed-btn:hover {
+  background: var(--color-theme-wash);
+  border-color: var(--color-theme-deep);
+  color: var(--color-ink);
+}
+
+.star-duo-root .editor-toolbar .ed-btn.active {
+  background: var(--btn-cta-bg);
+  border: 2px solid var(--color-theme-secondary);
+  color: var(--color-ink);
+  box-shadow: var(--shadow-theme);
+}
+
+.star-duo-root .editor-toolbar .ed-btn.green {
+  background: var(--btn-emphasis-bg);
+  border-color: var(--btn-emphasis-border);
+}
+
+.star-duo-root .editor-side {
+  background: var(--color-card);
+  border: 1px solid var(--line-ins);
+  border-radius: 0;
+  box-shadow: var(--shadow-ins);
+}
+
+.star-duo-root .editor-side-title {
+  color: var(--color-ink-muted);
+}
+
+.star-duo-root .preset-item {
+  border-radius: 0;
+  background: var(--color-canvas);
+  border: 1px solid var(--line-ins);
+  color: var(--color-ink);
+}
+
+.star-duo-root .preset-item.active,
+.star-duo-root .preset-item:hover {
+  background: var(--color-theme-wash);
+  border-color: var(--color-theme-deep);
+  color: var(--color-ink);
+  box-shadow: none;
+}
+
+.star-duo-root .preset-item.preset-item--custom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 10px 10px 12px;
+  margin-bottom: 8px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.star-duo-root .preset-item-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.star-duo-root .preset-item-delete {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  cursor: pointer;
+  border-radius: 0;
+  border: 1px solid var(--line-hard);
+  background: var(--color-card);
+  color: var(--color-ink-muted);
+  font-family: inherit;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.star-duo-root .preset-item-delete:hover {
+  background: #fff0f0;
+  border-color: #e8a0a0;
+  color: #a03030;
+}
+
+.star-duo-root .preset-item.preset-item--custom.active .preset-item-delete {
+  border-color: var(--line-hard);
+  background: rgba(255, 255, 255, 0.65);
+}
+
+/* 编辑器内棋盘预览：不 noomings 化 */
+.star-duo-root .editor-body {
+  background: radial-gradient(120% 90% at 50% 45%, rgba(0, 0, 0, 0) 34%, rgba(0, 0, 0, 0.72) 100%),
+    linear-gradient(150deg, #262019, #16120e 55%, #0b0908);
+}
+
+/* 对局舞台 #screen-game 内全部由 star-duo.css 原样呈现，此处不覆盖 */

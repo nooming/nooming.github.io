@@ -1,0 +1,2051 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#FFFA00">
+<title>星铎棋 · noomings</title>
+<meta name="description" content="星铎棋：六角翻转棋；本地双人或人机。">
+<link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
+<link rel="stylesheet" href="../../../../../assets/css/common.css">
+<link rel="stylesheet" href="/assets/css/site-shell.css">
+<link rel="stylesheet" href="assets/css/star-duo.css">
+<link rel="stylesheet" href="assets/css/star-duo-noomings.css">
+</head>
+
+<body class="page-container star-duo-root">
+
+<header class="page-header star-duo-chrome" id="xd-chrome-head">
+  <div class="section-header section-header--page">
+    <h1>星铎棋</h1>
+    <p id="xd-page-sub">六角翻转 · 本地双人 · 人机</p>
+  </div>
+</header>
+
+<div class="app xd-app">
+
+  <div id="screen-select" class="screen active">
+    <div class="star-duo-menu-card">
+      <div class="menu-topbar">
+        <button class="btn small light" onclick="showRules()">规则</button>
+        <button class="btn small light" onclick="showSettings()">设置</button>
+      </div>
+      <div class="title">星铎棋</div>
+      <p class="subtitle">本地双人 · 人机</p>
+      <div class="menu-btns">
+        <button class="btn" onclick="startLocalPVP()">双人对战</button>
+        <button class="btn" onclick="startPVE()">人机对战</button>
+      </div>
+      <div style="text-align:center;padding:20px 0 4px">
+        <button class="btn light" onclick="openCustomEditor()">自定义模式</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="screen-first" class="screen">
+    <div class="star-duo-menu-card">
+      <div class="topbar"><button class="btn small light" onclick="goSelect()">返回</button></div>
+      <h2 id="first-title" class="xd-screen-title">选择先手</h2>
+      <div id="first-btns" class="color-btns" style="flex-wrap:wrap;gap:12px"></div>
+    </div>
+  </div>
+
+  <div id="screen-difficulty" class="screen">
+    <div class="star-duo-menu-card">
+      <div class="topbar"><button class="btn small light" onclick="backFromDifficulty()">返回</button></div>
+      <h2 class="xd-screen-title">选择难度</h2>
+      <div id="diff-btns" class="diff-btns"></div>
+    </div>
+  </div>
+
+  <div id="screen-game" class="screen">
+    <div class="stage" id="xd-stage">
+      <div class="disc"></div>
+      <div class="boardwrap" id="boardwrap">
+        <svg class="boardart" viewBox="0 0 880 780" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="v14wood" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#cdbd9c"/><stop offset="45%" stop-color="#a99a7d"/>
+              <stop offset="100%" stop-color="#877a62"/>
+            </linearGradient>
+            <radialGradient id="v14base" cx="50%" cy="42%" r="72%">
+              <stop offset="0" stop-color="#332a1a"/><stop offset="100%" stop-color="#120e08"/>
+            </radialGradient>
+            <filter id="v14blurA" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="14"/>
+            </filter>
+            <filter id="v14blurB" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="6"/>
+            </filter>
+          </defs>
+          <polygon points="787.8,390.0 613.9,691.2 266.1,691.2 92.2,390.0 266.1,88.8 613.9,88.8" fill="rgba(0,0,0,.55)" filter="url(#v14blurA)"/>
+          <polygon points="777.8,390.0 608.9,682.5 271.1,682.5 102.2,390.0 271.1,97.5 608.9,97.5" fill="url(#v14wood)"/>
+          <polygon points="777.8,390.0 608.9,682.5 271.1,682.5 102.2,390.0 271.1,97.5 608.9,97.5" fill="none" stroke="rgba(255,244,214,.35)" stroke-width="2"/>
+          <polygon points="769.8,390.0 604.9,675.6 275.1,675.6 110.2,390.0 275.1,104.4 604.9,104.4" fill="none" stroke="rgba(70,52,28,.45)" stroke-width="3"/>
+          <polygon points="745.8,390.0 592.9,654.8 287.1,654.8 134.2,390.0 287.1,125.2 592.9,125.2" fill="none" stroke="rgba(255,240,205,.18)" stroke-width="2"/>
+          <polygon points="738.8,390.0 589.4,648.8 290.6,648.8 141.2,390.0 290.6,131.2 589.4,131.2" fill="url(#v14base)"/>
+          <polygon points="738.8,390.0 589.4,648.8 290.6,648.8 141.2,390.0 290.6,131.2 589.4,131.2" fill="none" stroke="rgba(0,0,0,.65)" stroke-width="3"/>
+          <polygon points="729.8,390.0 584.9,641.0 295.1,641.0 150.2,390.0 295.1,139.0 584.9,139.0" fill="none" stroke="rgba(64,124,255,.5)" stroke-width="12" filter="url(#v14blurB)"/>
+        </svg>
+        <div class="board gameboard" id="board"></div>
+        <svg class="boardglow" viewBox="0 0 880 780" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="v14blurG" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="5"/>
+            </filter>
+          </defs>
+          <polygon points="729.8,390.0 584.9,641.0 295.1,641.0 150.2,390.0 295.1,139.0 584.9,139.0" fill="none" stroke="rgba(78,142,255,.75)" stroke-width="5" filter="url(#v14blurG)"/>
+          <polygon points="729.8,390.0 584.9,641.0 295.1,641.0 150.2,390.0 295.1,139.0 584.9,139.0" fill="none" stroke="rgba(170,210,255,.5)" stroke-width="1.4"/>
+        </svg>
+      </div>
+      <button class="closebtn" onclick="confirmReturn()" title="返回">&#215;</button>
+      <div class="pile"><i></i><i></i><i></i></div>
+      <div class="beam beam-l"></div>
+      <div class="beam beam-r"></div>
+      <div class="side side-l">
+        <div class="arrow"></div>
+        <div class="avatar av-blue">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <defs><radialGradient id="avb" cx="50%" cy="34%" r="78%">
+              <stop offset="0" stop-color="#333a46"/><stop offset="1" stop-color="#08090d"/>
+            </radialGradient></defs>
+            <rect width="100" height="100" fill="url(#avb)"/>
+            <path d="M50 15c-15 0-25 10-25 24 0 7 2 12 4 16-1 3-2 6-2 9 2-6 6-9 6-9 2 6 5 10 9 12h16c4-2 7-6 9-12 0 0 4 3 6 9 0-3-1-6-2-9 2-4 4-9 4-16 0-14-10-24-25-24z" fill="#111a2c"/>
+            <path d="M13 100c3-19 17-28 37-28s34 9 37 28z" fill="#0c1220"/>
+            <ellipse cx="50" cy="45" rx="15" ry="18" fill="#f2dccb"/>
+            <path d="M35 41c1-11 7-18 15-18s14 7 15 18c-4-7-9-11-15-11s-11 4-15 11z" fill="#0d1322"/>
+            <path d="M25 98c3-17 14-26 25-26s22 9 25 26z" fill="#1d3a68"/>
+            <path d="M43 48h4M53 48h4" stroke="#3a2b22" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="tally"><span class="num" id="cnt-blue">0</span><span class="pic">
+          <svg viewBox="0 0 24 22" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 3 L21 19 L3 19 Z" fill="none" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M5.4 15 H18.6" stroke="currentColor" stroke-width="1.2"/>
+          </svg>
+        </span></div>
+      </div>
+      <div class="side side-r">
+        <div class="tally"><span class="pic white">
+          <svg viewBox="0 0 24 22" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 3 L21 19 L3 19 Z" fill="none" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M5.4 15 H18.6" stroke="currentColor" stroke-width="1.2"/>
+          </svg>
+        </span><span class="num" id="cnt-white">0</span></div>
+        <div class="avatar av-white">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <defs><radialGradient id="avw" cx="50%" cy="34%" r="78%">
+              <stop offset="0" stop-color="#fdfaf2"/><stop offset="1" stop-color="#cec6b3"/>
+            </radialGradient></defs>
+            <rect width="100" height="100" fill="url(#avw)"/>
+            <path d="M13 100c3-19 17-28 37-28s34 9 37 28z" fill="#5c5648"/>
+            <path d="M50 15c-15 0-25 10-25 24 0 7 2 12 4 16-1 3-2 6-2 9 2-6 6-9 6-9 2 6 5 10 9 12h16c4-2 7-6 9-12 0 0 4 3 6 9 0-3-1-6-2-9 2-4 4-9 4-16 0-14-10-24-25-24z" fill="#e7e1d2"/>
+            <ellipse cx="50" cy="45" rx="15" ry="18" fill="#f7e4d4"/>
+            <path d="M35 41c1-11 7-18 15-18s14 7 15 18c-4-7-9-11-15-11s-11 4-15 11z" fill="#ddd5c3"/>
+            <path d="M25 98c3-17 14-26 25-26s22 9 25 26z" fill="#b9b0a0"/>
+            <path d="M43 48h4M53 48h4" stroke="#6b5d4c" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="arrow"></div>
+      </div>
+      <div class="turnbar bar-l" id="status-line">等待开始...</div>
+      <div class="result" id="result-banner"></div>
+      <div class="tools">
+        <button class="tbtn" id="timer-btn" onclick="toggleTimer()">计时:关</button>
+        <button class="tbtn" id="reset-btn" onclick="resetBoard()">重开一局</button>
+      </div>
+      <div class="mhint"><i></i>蓝 = 待选棋位</div>
+      <div class="legend" id="score-line">黑 0 平 0 白 0</div>
+    </div>
+  </div>
+
+  <div id="editor-panel" class="editor-panel">
+    <div class="editor-toolbar">
+      <button class="ed-btn" id="ed-black" onclick="setEditMode(1)">⬛ 黑子</button>
+      <button class="ed-btn" id="ed-white" onclick="setEditMode(2)">⬜ 白子</button>
+      <button class="ed-btn" id="ed-erase" onclick="setEditMode(0)">🧹 橡皮</button>
+      <button class="ed-btn" onclick="editorClear()">清空</button>
+      <button class="ed-btn green" onclick="editorStartGame()">开始游戏</button>
+      <button class="ed-btn" id="ed-toggle-preset" onclick="toggleEditorPreset()">📋 预设</button>
+      <button class="ed-btn" onclick="saveCustomPreset()">保存预设</button>
+      <button class="ed-btn" onclick="closeEditor()">返回</button>
+    </div>
+    <div class="editor-body">
+      <div class="disc"></div>
+      <div class="editor-board-wrap">
+        <div class="editor-stage" id="editor-stage">
+          <svg class="editor-boardart" viewBox="0 0 880 780" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="e-wood" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#cdbd9c"/><stop offset="45%" stop-color="#a99a7d"/>
+                <stop offset="100%" stop-color="#877a62"/>
+              </linearGradient>
+              <radialGradient id="e-base" cx="50%" cy="42%" r="72%">
+                <stop offset="0" stop-color="#332a1a"/><stop offset="100%" stop-color="#120e08"/>
+              </radialGradient>
+              <filter id="e-blurA" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="14"/>
+              </filter>
+              <filter id="e-blurB" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="6"/>
+              </filter>
+            </defs>
+            <polygon points="787.8,390.0 613.9,691.2 266.1,691.2 92.2,390.0 266.1,88.8 613.9,88.8" fill="rgba(0,0,0,.55)" filter="url(#e-blurA)"/>
+            <polygon points="777.8,390.0 608.9,682.5 271.1,682.5 102.2,390.0 271.1,97.5 608.9,97.5" fill="url(#e-wood)"/>
+            <polygon points="777.8,390.0 608.9,682.5 271.1,682.5 102.2,390.0 271.1,97.5 608.9,97.5" fill="none" stroke="rgba(255,244,214,.35)" stroke-width="2"/>
+            <polygon points="769.8,390.0 604.9,675.6 275.1,675.6 110.2,390.0 275.1,104.4 604.9,104.4" fill="none" stroke="rgba(70,52,28,.45)" stroke-width="3"/>
+            <polygon points="745.8,390.0 592.9,654.8 287.1,654.8 134.2,390.0 287.1,125.2 592.9,125.2" fill="none" stroke="rgba(255,240,205,.18)" stroke-width="2"/>
+            <polygon points="738.8,390.0 589.4,648.8 290.6,648.8 141.2,390.0 290.6,131.2 589.4,131.2" fill="url(#e-base)"/>
+            <polygon points="738.8,390.0 589.4,648.8 290.6,648.8 141.2,390.0 290.6,131.2 589.4,131.2" fill="none" stroke="rgba(0,0,0,.65)" stroke-width="3"/>
+            <polygon points="729.8,390.0 584.9,641.0 295.1,641.0 150.2,390.0 295.1,139.0 584.9,139.0" fill="none" stroke="rgba(64,124,255,.5)" stroke-width="12" filter="url(#e-blurB)"/>
+          </svg>
+          <div class="editor-board gameboard" id="editor-board"></div>
+        </div>
+      </div>
+      <div class="editor-side">
+        <div class="editor-side-title">预设</div>
+        <div id="editor-preset-list"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer class="site-footer star-duo-chrome" id="xd-chrome-foot" role="contentinfo">
+  <p>© 2026 noomings · 非商用</p>
+</footer>
+
+<div id="overlay" class="overlay">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<script>
+const TRI_SIZE = 55;
+const FACE_K = 0.955;
+const CANVAS_W = 700, CANVAS_H = 580;
+
+let board = {};
+let boardVer = 0;
+let currentPlayer = 0;
+let gameOver = false;
+let myColor = 0;
+let pveMode = false;
+let botColor = 0;
+let difficulty = '标准';
+let firstPlayer = 0;
+let history = [0, 0, 0];
+let lastBotPid = null;
+let animating = false;
+let id2tri = {};
+let id2disp = {}, disp2id = {};
+let lines = {};
+let edgeWeight = {};
+
+let editorBoard = {};
+let editorMode = 1;
+let inCustomGame = false;
+let customBoardForGame = null;
+let isCustomGame = false;
+let flowPlayerColor = 1;
+let flowFirstChoice = null;
+let flowDifficulty = '标准';
+
+let customPresets = {};
+const PRESETS_STORAGE_KEY = 'star_duo_custom_presets';
+function loadCustomPresets() {
+  try {
+    const raw = localStorage.getItem(PRESETS_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) customPresets = parsed;
+    }
+  } catch (e) {
+    customPresets = {};
+  }
+}
+function persistCustomPresets() {
+  try { localStorage.setItem(PRESETS_STORAGE_KEY, JSON.stringify(customPresets)); } catch (e) {}
+}
+loadCustomPresets();
+
+const DEFAULT_SETTINGS = { animation: true, showAiHint: true, aiHintDuration: 1200, turnHintDuration: 900 };
+let settings = { ...DEFAULT_SETTINGS };
+try {
+  const saved = localStorage.getItem('starchess_settings');
+  if (saved) settings = { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+} catch (e) {}
+function saveSettings() {
+  try { localStorage.setItem('starchess_settings', JSON.stringify(settings)); } catch (e) {}
+}
+
+function genTri() {
+  const size = TRI_SIZE, radius = 3;
+  const verts = [];
+  for (let q = -radius; q <= radius; q++)
+    for (let r = -radius; r <= radius; r++) {
+      const s = -q - r;
+      if (Math.max(Math.abs(q), Math.abs(r), Math.abs(s)) <= radius) verts.push([q, r]);
+    }
+  const vset = new Set(verts.map(v => v.join(',')));
+  const tris = new Set();
+  for (const [q, r] of verts) {
+    if (vset.has(`${q+1},${r}`) && vset.has(`${q},${r+1}`))
+      tris.add(JSON.stringify([[q,r],[q+1,r],[q,r+1]].sort()));
+    if (vset.has(`${q-1},${r}`) && vset.has(`${q},${r-1}`))
+      tris.add(JSON.stringify([[q,r],[q-1,r],[q,r-1]].sort()));
+  }
+  const dx = size * Math.sqrt(3), dy = size * 1.5;
+  let pixels = [];
+  for (const t of tris) {
+    const tri = JSON.parse(t);
+    const pts = tri.map(([q, r]) => [q * dx + r * dx / 2, r * dy]);
+    const cx = pts.reduce((s, p) => s + p[0], 0) / 3;
+    const cy = pts.reduce((s, p) => s + p[1], 0) / 3;
+    const ys = pts.map(p => p[1]);
+    const minY = Math.min(...ys);
+    const dir = ys.filter(y => Math.abs(y - minY) < 0.01).length === 1 ? 'up' : 'down';
+    pixels.push([cx, cy, dir]);
+  }
+  const ax = pixels.reduce((s, p) => s + p[0], 0) / pixels.length;
+  const ay = pixels.reduce((s, p) => s + p[1], 0) / pixels.length;
+  let ci = 0, minD = Infinity;
+  pixels.forEach((p, i) => {
+    const d = (p[0] - ax) ** 2 + (p[1] - ay) ** 2;
+    if (d < minD) { minD = d; ci = i; }
+  });
+  [pixels[0], pixels[ci]] = [pixels[ci], pixels[0]];
+  const rest = pixels.slice(1).sort((a, b) => a[1] - b[1] || a[0] - b[0]);
+  pixels = [pixels[0], ...rest];
+  const minx = Math.min(...pixels.map(p => p[0]));
+  const maxx = Math.max(...pixels.map(p => p[0]));
+  const miny = Math.min(...pixels.map(p => p[1]));
+  const maxy = Math.max(...pixels.map(p => p[1]));
+  const sx = CANVAS_W / 2 - (minx + maxx) / 2;
+  const sy = CANVAS_H / 2 - (miny + maxy) / 2;
+  const map = {};
+  pixels.forEach((p, i) => { map[String(i)] = [p[0] + sx, p[1] + sy, p[2]]; });
+  return map;
+}
+function buildLines() {
+  const centers = {};
+  for (const pid in id2tri) centers[pid] = [id2tri[pid][0], id2tri[pid][1]];
+  const ids = Object.keys(centers);
+  const ang = [0, 60, 120, 180, 240, 300].map(a => a * Math.PI / 180);
+  const res = {};
+  for (const pid of ids) res[pid] = Array.from({ length: 6 }, () => []);
+  const step = TRI_SIZE;
+  for (const pid of ids) {
+    const [cx, cy] = centers[pid];
+    for (let d = 0; d < 6; d++) {
+      let curX = cx, curY = cy;
+      while (true) {
+        curX += step * Math.cos(ang[d]);
+        curY += step * Math.sin(ang[d]);
+        let best = null, bd = step * 0.55;
+        for (const oid of ids) {
+          if (oid === pid) continue;
+          const [ox, oy] = centers[oid];
+          const dist = Math.hypot(curX - ox, curY - oy);
+          if (dist < bd) { bd = dist; best = oid; }
+        }
+        if (best === null) break;
+        if (res[pid][d].includes(best)) break;
+        res[pid][d].push(best);
+        [curX, curY] = centers[best];
+      }
+    }
+  }
+  return res;
+}
+function assignIds() {
+  const items = Object.keys(id2tri).map(pid => [pid, id2tri[pid][0], id2tri[pid][1]]);
+  items.sort((a, b) => a[2] - b[2] || a[1] - b[1]);
+  const i2d = {}, d2i = {};
+  items.forEach(([pid], i) => { i2d[pid] = String(i); d2i[String(i)] = pid; });
+  return [i2d, d2i];
+}
+function initGeometry() {
+  id2tri = genTri();
+  lines = buildLines();
+  [id2disp, disp2id] = assignIds();
+  edgeWeight = {};
+  for (const pid in id2tri) {
+    const cnt = lines[pid].filter(l => l.length > 0).length;
+    edgeWeight[pid] = Math.max(0, 6 - cnt);
+  }
+  indexAiGeometry();
+}
+
+function resetBoardData() {
+  clearAnim();
+  pendingMoves = [];
+  timerStop();
+  board = {};
+  for (const pid in id2tri) board[pid] = 0;
+  const setup = { '0':0,'18':2,'19':0,'22':0,'23':1,'24':1,'25':0,'29':2,'30':2,'35':1 };
+  for (const d in setup) if (disp2id[d]) board[disp2id[d]] = setup[d];
+  boardVer++;
+  currentPlayer = 0;
+  gameOver = false;
+  lastBotPid = null;
+  animating = false;
+}
+function getFlips(pid, player) {
+  const opp = 3 - player;
+  if (board[pid] !== 0) return [];
+  const flips = new Set();
+  for (let d = 0; d < 6; d++) {
+    const line = lines[pid][d];
+    if (!line.length || board[line[0]] !== opp) continue;
+    let j = 0;
+    while (j < line.length && board[line[j]] === opp) j++;
+    if (j < line.length && board[line[j]] === player)
+      for (let k = 0; k < j; k++) flips.add(line[k]);
+  }
+  return [...flips];
+}
+const movesMemo = {};
+function getValidMoves(player) {
+  const hit = movesMemo[player];
+  if (hit && hit.ver === boardVer) return hit.data;
+  const moves = {};
+  for (const pid in id2tri) {
+    if (board[pid] === 0) {
+      const f = getFlips(pid, player);
+      if (f.length) moves[pid] = f;
+    }
+  }
+  movesMemo[player] = { ver: boardVer, data: moves };
+  return moves;
+}
+let cntVer = -1, cntB = 0, cntW = 0;
+function pieceCounts() {
+  if (cntVer !== boardVer) {
+    let b = 0, w = 0;
+    for (const pid in board) {
+      const v = board[pid];
+      if (v === 1) b++;
+      else if (v === 2) w++;
+    }
+    cntB = b; cntW = w; cntVer = boardVer;
+  }
+  return [cntB, cntW];
+}
+function makeMove(pid, player) {
+  const f = getFlips(pid, player);
+  if (!f.length) return false;
+  board[pid] = player;
+  f.forEach(fid => { board[fid] = player; });
+  boardVer++;
+  if (!searchMode) pendingAnim = { pid: pid, player: player, flips: f };
+  return true;
+}
+function checkWinner() {
+  const c = pieceCounts();
+  return c[0] > c[1] ? 1 : c[1] > c[0] ? 2 : 0;
+}
+function serializeBoard() {
+  const out = {};
+  for (const pid in board) out[pid] = board[pid];
+  return out;
+}
+function deserializeBoard(data) {
+  board = {};
+  for (const pid in id2tri) board[pid] = 0;
+  if (data) for (const pid in data) if (pid in board) {
+    const v = data[pid];
+    board[pid] = (v === 1 || v === 2) ? v : 0;
+  }
+  boardVer++;
+}
+
+let FACE_MS = 420;
+let RING_MS = 100;
+let tileEls = {};
+let boardEl = null;
+let busyUntil = {};
+let animTouched = {};
+let pendingAnim = null;
+let animTimer = null;
+let animEndAt = 0;
+let pendingMoves = [];
+let searchMode = false;
+let skipNote = '';
+let skipUntil = 0;
+let overText = '';
+
+function triPath(dir, k) {
+  const S = TRI_SIZE, H = TRI_SIZE * Math.sqrt(3) / 2;
+  const cx0 = S / 2, cy0 = (dir === 'up') ? (2 * H / 3) : (H / 3);
+  const raw = (dir === 'up')
+    ? [[S / 2, 0], [0, H], [S, H]]
+    : [[S / 2, H], [0, 0], [S, 0]];
+  const parts = [];
+  for (let i = 0; i < 3; i++) {
+    const x = cx0 + (raw[i][0] - cx0) * k;
+    const y = cy0 + (raw[i][1] - cy0) * k;
+    parts.push(x.toFixed(2) + 'px ' + y.toFixed(2) + 'px');
+  }
+  return 'polygon(' + parts.join(',') + ')';
+}
+function faceState(el, v) {
+  const k = (v === 1) ? 'st1' : (v === 2 ? 'st2' : 'st0');
+  el.classList.remove('st0', 'st1', 'st2');
+  el.classList.add(k);
+}
+function buildTiles() {
+  const wrap = document.getElementById('board');
+  if (!wrap) return;
+  boardEl = wrap;
+  const S = TRI_SIZE, H = TRI_SIZE * Math.sqrt(3) / 2;
+  const cpFull = {}, cpIn = {};
+  for (const d of ['up', 'down']) { cpFull[d] = triPath(d, 1); cpIn[d] = triPath(d, FACE_K); }
+  const html = [], pids = [];
+  for (const pid in id2tri) {
+    const cx = id2tri[pid][0], cy = id2tri[pid][1], dir = id2tri[pid][2];
+    const pf = cpFull[dir], ps = cpIn[dir];
+    const face = function (cls) {
+      return '<div class="face ' + cls + '"><div class="plate" style="clip-path:' + pf
+        + '"><div class="surf" style="clip-path:' + ps + '"><div class="etch"></div></div></div></div>';
+    };
+    html.push('<div class="tile ' + dir + '" data-pid="' + pid + '" style="left:' + (cx - S / 2)
+      + 'px;top:' + ((dir === 'up') ? (cy - 2 * H / 3) : (cy - H / 3)) + 'px;width:' + S
+      + 'px;height:' + H + 'px">'
+      + '<div class="tinner">' + face('fa') + face('fb') + '</div>'
+      + '<div class="halo"></div></div>');
+    pids.push(pid);
+  }
+  wrap.innerHTML = html.join('');
+  tileEls = {};
+  const roots = wrap.children;
+  for (let i = 0; i < pids.length; i++) {
+    const root = roots[i];
+    const inner = root.children[0];
+    tileEls[pids[i]] = { root: root, inner: inner, fa: inner.children[0], fb: inner.children[1],
+                         st: -1, hint: false, last: false };
+  }
+  if (!wrap.__clickBound) {
+    wrap.__clickBound = true;
+    wrap.addEventListener('click', function (e) {
+      let el = e.target;
+      while (el && el !== wrap && !el.classList.contains('tile')) el = el.parentElement;
+      if (!el || el === wrap) return;
+      handleTileClick(el.dataset.pid);
+    });
+  }
+}
+function ringDistances(pid) {
+  const dist = {};
+  dist[pid] = 0;
+  const q = [pid];
+  while (q.length) {
+    const cur = q.shift();
+    const line = lines[cur] || [];
+    for (let d = 0; d < 6; d++) {
+      const nb = line[d] && line[d].length ? line[d][0] : null;
+      if (nb && dist[nb] === undefined) {
+        dist[nb] = dist[cur] + 1;
+        q.push(nb);
+      }
+    }
+  }
+  return dist;
+}
+function setFaceStates(pid, v) {
+  const t = tileEls[pid];
+  if (!t) return;
+  if (t.st === v) return;
+  t.st = v;
+  faceState(t.fa, v);
+  faceState(t.fb, v);
+}
+function snapReset(el) {
+  el.style.transition = 'none';
+  el.classList.remove('flip');
+  void el.offsetWidth;
+  el.style.transition = '';
+}
+let animGen = 0;
+let animTimers = [];
+function animLater(fn, ms, gen) {
+  const id = setTimeout(function () {
+    const k = animTimers.indexOf(id);
+    if (k >= 0) animTimers.splice(k, 1);
+    if (gen !== animGen) return;
+    fn();
+  }, ms);
+  animTimers.push(id);
+  return id;
+}
+function clearAnim() {
+  clearTimeout(animTimer);
+  animTimer = null;
+  animGen++;
+  for (let i = 0; i < animTimers.length; i++) clearTimeout(animTimers[i]);
+  animTimers = [];
+  busyUntil = {};
+  animating = false;
+  animEndAt = 0;
+  const back = [];
+  for (const pid in animTouched) {
+    const t = tileEls[pid];
+    if (!t) continue;
+    if (t.inner.classList.contains('drop')) t.inner.classList.remove('drop');
+    if (t.inner.classList.contains('flip')) {
+      t.inner.style.transition = 'none';
+      t.inner.classList.remove('flip');
+      back.push(t.inner);
+    }
+  }
+  if (back.length) void back[0].offsetWidth;
+  for (let i = 0; i < back.length; i++) back[i].style.transition = '';
+  animTouched = {};
+  if (lastBotPid !== null) {
+    const lt = tileEls[lastBotPid];
+    if (lt) { lt.root.classList.remove('lastbot'); lt.last = false; }
+  }
+}
+function animRemaining() { return Math.max(0, animEndAt - Date.now()); }
+function startFlip(pid, player, delay, place) {
+  const t = tileEls[pid];
+  if (!t) return;
+  const gen = animGen;
+  animTouched[pid] = 1;
+  if (place) {
+    setFaceStates(pid, player);
+    t.inner.classList.add('drop');
+    animLater(function () { t.inner.classList.remove('drop'); }, delay + 420, gen);
+    return;
+  }
+  busyUntil[pid] = Date.now() + delay + FACE_MS + 120;
+  faceState(t.fb, player);
+  animLater(function () {
+    t.inner.classList.add('flip');
+    animLater(function () {
+      setFaceStates(pid, player);
+      snapReset(t.inner);
+      delete busyUntil[pid];
+    }, FACE_MS + 60, gen);
+  }, delay, gen);
+}
+function playAnim(a) {
+  if (!settings.animation) {
+    setFaceStates(a.pid, a.player);
+    for (let i = 0; i < a.flips.length; i++) setFaceStates(a.flips[i], a.player);
+    draw();
+    flushMoves();
+    return;
+  }
+  clearAnim();
+  const gen = animGen;
+  const dist = ringDistances(a.pid);
+  const list = [];
+  for (let i = 0; i < a.flips.length; i++) {
+    const f = a.flips[i];
+    list.push([f, dist[f] === undefined ? 1 : dist[f]]);
+  }
+  list.sort(function (x, y) { return x[1] - y[1]; });
+  let maxD = 0;
+  for (let i = 0; i < list.length; i++) maxD = Math.max(maxD, list[i][1]);
+  animating = true;
+  animEndAt = Date.now() + (list.length ? (maxD * RING_MS + FACE_MS + 200) : 380);
+  startFlip(a.pid, a.player, 0, true);
+  for (let i = 0; i < list.length; i++) startFlip(list[i][0], a.player, list[i][1] * RING_MS, false);
+  clearTimeout(animTimer);
+  animTimer = animLater(function () {
+    animating = false;
+    animEndAt = 0;
+    busyUntil = {};
+    draw();
+    flushMoves();
+  }, Math.max(0, animEndAt - Date.now()) + 30, gen);
+}
+function flushMoves() {
+  if (animating) return;
+  const msg = pendingMoves.shift();
+  if (!msg) return;
+  if (!gameOver && currentPlayer !== 0 && currentPlayer !== myColor) {
+    if (getValidMoves(currentPlayer)[msg.pid]) {
+      makeMove(msg.pid, currentPlayer);
+      afterMove();
+      return;
+    }
+  }
+  flushMoves();
+}
+const __hud = {};
+function hudEl(id) {
+  let e = __hud[id];
+  if (!e || !e.isConnected) { e = document.getElementById(id); __hud[id] = e; }
+  return e;
+}
+function setText(el, v) {
+  if (el && el.textContent !== v) el.textContent = v;
+}
+let lastResetCanShow = null;
+function updateResetBtn() {
+  const btn = document.getElementById('reset-btn');
+  if (!btn) return;
+  const canReset = true;
+  if (lastResetCanShow === canReset) return;
+  lastResetCanShow = canReset;
+  btn.classList.toggle('hidden', !canReset);
+}
+function syncHud() {
+  const c = pieceCounts();
+  setText(hudEl('cnt-blue'), String(c[0]));
+  setText(hudEl('cnt-white'), String(c[1]));
+  const st = hudEl('xd-stage');
+  const turn = String(gameOver ? 0 : currentPlayer);
+  if (st && st.dataset.turn !== turn) st.dataset.turn = turn;
+  setText(hudEl('score-line'), '黑 ' + history[0] + ' · 平 ' + history[2] + ' · 白 ' + history[1]);
+  const bn = hudEl('result-banner');
+  if (bn) {
+    setText(bn, overText);
+    const show = !!(overText && gameOver);
+    if (bn.classList.contains('show') !== show) bn.classList.toggle('show', show);
+  }
+  updateResetBtn();
+  updateStatus();
+}
+
+let fitLast = '', fitRaf = 0;
+function fitBoardSoon() {
+  if (fitRaf) return;
+  fitRaf = requestAnimationFrame(function () { fitRaf = 0; fitBoard(); });
+}
+function fitBoard() {
+  const vv = window.visualViewport;
+  const vw = Math.round((vv && vv.width) || window.innerWidth || 1280);
+  const vh = Math.round((vv && vv.height) || window.innerHeight || 720);
+  const wrap = document.getElementById('boardwrap');
+  if (!wrap) return;
+  const vkey = vw + 'x' + vh;
+  if (fitLast === vkey) return;
+  fitLast = vkey;
+  const tiny = vw <= 820 || vh <= 520;
+  let s;
+  if (tiny) {
+    const padY = (vh < vw) ? 140 : 176;
+    s = Math.min((vw - 18) / 700, Math.max(150, vh - padY) / 580);
+  } else {
+    s = Math.min(vw * 0.58 / 700, vh * 0.94 / 580);
+  }
+  wrap.style.setProperty('--s', Math.max(0.3, Math.min(2.4, s)).toFixed(4));
+}
+let viewportBound = false;
+function bindViewport() {
+  fitBoard();
+  if (viewportBound) return;
+  viewportBound = true;
+  window.addEventListener('resize', fitBoardSoon);
+  window.addEventListener('orientationchange', function () { setTimeout(fitBoardSoon, 200); });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', fitBoardSoon);
+    window.visualViewport.addEventListener('scroll', fitBoardSoon);
+  }
+}
+function handleTileClick(pid) {
+  if (gameOver || currentPlayer === 0 || animating) return;
+  if (pveMode && currentPlayer === botColor) return;
+  const valid = getValidMoves(currentPlayer);
+  if (!valid[pid]) return;
+  makeMove(pid, currentPlayer);
+  afterMove();
+}
+function draw() {
+  if (!gameOver && !animating && currentPlayer !== 0) resolveStuck();
+  if (pendingAnim) {
+    const a = pendingAnim;
+    pendingAnim = null;
+    playAnim(a);
+  }
+  const now = Date.now();
+  let valid = null;
+  if (!gameOver && currentPlayer !== 0) {
+    let show = true;
+    if (pveMode && currentPlayer === botColor) show = false;
+    if (show) valid = getValidMoves(currentPlayer);
+  }
+  let hintCount = 0;
+  for (const pid in id2tri) {
+    const t = tileEls[pid];
+    if (!t) continue;
+    const busy = !!(busyUntil[pid] && busyUntil[pid] > now);
+    if (!busy) setFaceStates(pid, board[pid]);
+    const isLast = settings.showAiHint && (pid === lastBotPid);
+    const isHint = !!(valid && valid[pid] && board[pid] === 0);
+    if (isHint) hintCount++;
+    if (t.last !== isLast) { t.last = isLast; t.root.classList.toggle('lastbot', isLast); }
+    if (t.hint !== isHint) { t.hint = isHint; t.root.classList.toggle('hint', isHint); }
+  }
+  const bel = boardEl || (boardEl = document.getElementById('board'));
+  if (bel) {
+    const np = String(hintCount > 12);
+    if (bel.dataset.nopulse !== np) {
+      bel.dataset.nopulse = np;
+      bel.classList.toggle('nopulse', hintCount > 12);
+    }
+  }
+  syncTimer();
+  syncHud();
+}
+
+function updateStarDuoPageSubtitle() {
+  const el = document.getElementById('xd-page-sub');
+  if (!el) return;
+  if (document.body.classList.contains('xd-immersive')) {
+    el.textContent = '';
+    return;
+  }
+  if (document.getElementById('screen-select').classList.contains('active')) {
+    el.textContent = '六角翻转 · 本地双人 · 人机';
+  } else if (document.getElementById('screen-first').classList.contains('active')) {
+    el.textContent = (pveMode ? '人机对战' : '双人对战') + ' · 选择先手';
+  } else if (document.getElementById('screen-difficulty').classList.contains('active')) {
+    el.textContent = '人机对战 · 选择难度';
+  }
+}
+
+function syncStarDuoChrome() {
+  const inGame = document.getElementById('screen-game').classList.contains('active');
+  const inEditor = document.getElementById('editor-panel').classList.contains('active');
+  const immersive = inGame || inEditor;
+  document.body.classList.toggle('xd-immersive', immersive);
+  document.body.classList.toggle('shell-chrome-hidden', immersive);
+  updateStarDuoPageSubtitle();
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+  syncStarDuoChrome();
+}
+function resetPlaySession() {
+  clearInterval(pveWatchTimer); pveWatchTimer = null; botPending = false;
+  clearAnim();
+  timerStop();
+}
+function goSelect() {
+  closeModal();
+  resetPlaySession();
+  pveMode = false;;
+  inCustomGame = false;
+  isCustomGame = false;
+  editorBoard = {};
+  document.getElementById('editor-panel').classList.remove('active');
+  updateResetBtn();
+  showScreen('screen-select');
+}
+function showModal(html) {
+  document.getElementById('modal-content').innerHTML = html;
+  document.getElementById('overlay').classList.add('active');
+}
+function closeModal() {
+  document.getElementById('overlay').classList.remove('active');
+}
+
+function showRules() {
+  showModal(
+    '<h3>游戏规则</h3>' +
+    '<p class="modal-copy">' +
+    '星铎棋 · 六边形翻转棋<br>' +
+    '· 棋盘由 54 个小三角组成大正六边形。<br>' +
+    '· 落子时，从该格 6 个方向出发：若某方向存在<b>连续对方棋子</b>且尽头为<b>己方棋子</b>，则这些对方棋子翻转为己方颜色。<br>' +
+    '· 无合法位置时自动跳过；双方均无法落子时结算，<b>棋子多的一方获胜</b>。' +
+    '</p>' +
+    '<div class="row"><button class="btn small light" onclick="closeModal()">知道了</button></div>'
+  );
+}
+function showSettings() {
+  showModal(
+    '<h3>设置</h3>' +
+    '<label><input type="checkbox" id="st-anim"' + (settings.animation ? ' checked' : '') + '>启用落子动画</label>' +
+    '<label><input type="checkbox" id="st-hint"' + (settings.showAiHint ? ' checked' : '') + '>显示 AI 下子位置（红边）</label>' +
+    '<div class="modal-copy modal-copy--field">AI 位置提示时长 (ms)：<input type="number" id="st-aidur" min="200" max="5000" step="100" value="' + settings.aiHintDuration + '"></div>' +
+    '<div class="modal-copy modal-copy--field">回合提示时长 (ms)：<input type="number" id="st-turndur" min="200" max="5000" step="100" value="' + settings.turnHintDuration + '"></div>' +
+    '<div class="row" style="margin-top:16px">' +
+    '<button class="btn small light" onclick="resetSettings()">恢复默认</button> ' +
+    '<button class="btn small green" onclick="applySettings()">应用</button> ' +
+    '<button class="btn small light" onclick="closeModal()">取消</button>' +
+    '</div>'
+  );
+}
+function applySettings() {
+  const a = document.getElementById('st-anim');
+  const h = document.getElementById('st-hint');
+  const d1 = document.getElementById('st-aidur');
+  const d2 = document.getElementById('st-turndur');
+  settings.animation = !!(a && a.checked);
+  settings.showAiHint = !!(h && h.checked);
+  const v1 = parseInt(d1 && d1.value, 10);
+  const v2 = parseInt(d2 && d2.value, 10);
+  settings.aiHintDuration = isFinite(v1) ? Math.max(200, Math.min(5000, v1)) : 1200;
+  settings.turnHintDuration = isFinite(v2) ? Math.max(200, Math.min(5000, v2)) : 900;
+  saveSettings();
+  closeModal();
+  draw();
+}
+function resetSettings() {
+  settings = { ...DEFAULT_SETTINGS };
+  saveSettings();
+  showSettings();
+}
+
+function showPVPChoose() { startLocalPVP(); }
+function startLocalPVP() {
+  closeModal();
+pveMode = false;
+  isCustomGame = false; customBoardForGame = null;
+  inCustomGame = false;
+  updateResetBtn();
+  showFirstChoice('pvp');
+}
+function startPVE() {
+;
+  isCustomGame = false; customBoardForGame = null;
+  inCustomGame = false;
+  updateResetBtn();
+  showModal(
+    '<h3>人机对战</h3>' +
+    '<div class="color-btns">' +
+    '<div class="color-btn black" onclick="startPVEColor(1)">玩家执黑</div>' +
+    '<div class="color-btn white" onclick="startPVEColor(2)">玩家执白</div>' +
+    '</div>' +
+    '<div class="row"><button class="btn small light" onclick="closeModal()">取消</button></div>'
+  );
+}
+function startPVEColor(color) {
+  closeModal();
+  pveMode = true;;
+  myColor = color; botColor = 3 - color;
+  flowPlayerColor = color;
+  updateResetBtn();
+  showFirstChoice('pve');
+}
+function showFirstChoice(mode) {
+  showScreen('screen-first');
+  const box = document.getElementById('first-btns');
+  const h2 = document.getElementById('first-title');
+  box.innerHTML = '';
+  if (mode === 'pvp') {
+    h2.textContent = '选择先手颜色';
+    box.innerHTML =
+      '<div class="color-btn black" onclick="startLocalGame(1)">黑方先手</div>' +
+      '<div class="color-btn random" onclick="startLocalGame(Math.random()<0.5?1:2)">随机先手</div>' +
+      '<div class="color-btn white" onclick="startLocalGame(2)">白方先手</div>';
+  } else if (mode === 'pve') {
+    h2.textContent = '选择先手';
+    if (myColor === 1) {
+      box.innerHTML =
+        '<div class="color-btn black" onclick="startPVEFirst(\'player\')">黑方先手</div>' +
+        '<div class="color-btn random" onclick="startPVEFirst(\'random\')">随机先手</div>' +
+        '<div class="color-btn white" onclick="startPVEFirst(\'ai\')">白方先手</div>';
+    } else {
+      box.innerHTML =
+        '<div class="color-btn black" onclick="startPVEFirst(\'ai\')">黑方先手</div>' +
+        '<div class="color-btn random" onclick="startPVEFirst(\'random\')">随机先手</div>' +
+        '<div class="color-btn white" onclick="startPVEFirst(\'player\')">白方先手</div>';
+    }
+  }
+}
+function startLocalGame(first) {
+  firstPlayer = first;
+  resetBoardData();
+  if (isCustomGame && customBoardForGame) deserializeBoard(customBoardForGame);
+  currentPlayer = first;
+  pveMode = false;
+  showScreen('screen-game');
+  draw(); updateStatus();
+}
+function startPVEFirst(who) {
+  flowFirstChoice = who;
+  if (who === 'player') firstPlayer = myColor;
+  else if (who === 'ai') firstPlayer = botColor;
+  else firstPlayer = Math.random() < 0.5 ? myColor : botColor;
+  flowDifficulty = '标准';
+  showDifficultyScreen();
+}
+function showDifficultyScreen() {
+  showScreen('screen-difficulty');
+  const box = document.getElementById('diff-btns');
+  box.innerHTML = '';
+  const diffs = [
+    { key: '体验', cls: 'easy',   desc: '轻松上手 · AI 选择翻子最多的位置' },
+    { key: '标准', cls: 'normal', desc: '均衡难度 · AI 考虑边角权重' },
+    { key: '磨难', cls: 'hard',   desc: '全力应战 · AI 搜索两步最优' },
+    { key: '危机合约', cls: 'hell',   desc: '极限挑战 · AI 迭代加深搜索最优' }
+  ];
+  for (const d of diffs) {
+    const btn = document.createElement('div');
+    btn.className = 'diff-btn ' + d.cls + (flowDifficulty === d.key ? ' selected' : '');
+    btn.innerHTML = '<div class="diff-btn-title">' + d.key + '</div>' +
+      '<div class="diff-btn-desc">' + d.desc + '</div>';
+    btn.onclick = (function (key) {
+      return function () { flowDifficulty = key; showDifficultyScreen(); };
+    })(d.key);
+    box.appendChild(btn);
+  }
+  const startBtn = document.createElement('button');
+  startBtn.className = 'btn green';
+  startBtn.textContent = '开始对局';
+  startBtn.style.marginTop = '4px';
+  startBtn.onclick = function () { pveBeginGame(); };
+  box.appendChild(startBtn);
+}
+function backFromDifficulty() { showScreen('screen-first'); }
+function pveBeginGame() {
+  difficulty = flowDifficulty;
+  resetBoardData();
+  if (isCustomGame && customBoardForGame) deserializeBoard(customBoardForGame);
+  currentPlayer = firstPlayer;
+  gameOver = false; overText = '';
+  showScreen('screen-game');
+  draw(); updateStatus();
+  startPveWatch();
+  scheduleBot(600);
+}
+
+let botPending = false;
+let botThinking = false;
+let pveWatchTimer = null;
+function scheduleBot(delay, force) {
+  if (!pveMode || gameOver || currentPlayer !== botColor) return;
+  if (botPending || botThinking) return;
+  botPending = true;
+  setTimeout(function () {
+    botPending = false;
+    botThinking = true;
+    try { botMove(); }
+    finally { botThinking = false; }
+    if (pveMode && !gameOver && currentPlayer === botColor) {
+      scheduleBot(Math.max(560, animRemaining() + 280));
+    }
+  }, delay);
+}
+function startPveWatch() {
+  clearInterval(pveWatchTimer);
+  pveWatchTimer = setInterval(function () {
+    if (!pveMode) { clearInterval(pveWatchTimer); pveWatchTimer = null; return; }
+    if (gameOver || animating || botPending || botThinking) return;
+    if (currentPlayer === botColor) scheduleBot(500);
+  }, 1200);
+}
+function updateStatus(text) {
+  const el = document.getElementById('status-line');
+  if (!el) return;
+  el.classList.remove('hidden');
+  let msg = text;
+  if (!msg) {
+    if (gameOver) {
+      msg = overText || '对局结束';
+    } else if (skipNote && Date.now() < skipUntil) {
+      msg = skipNote;
+    } else if (currentPlayer === 0) {
+      msg = '等待开始...';
+    } else if (pveMode) {
+      msg = (currentPlayer === myColor) ? '你的回合' : (difficulty === '危机合约' ? '危机合约演算中......' : '思索中......');
+    } else {
+      msg = (currentPlayer === 1) ? '黑方回合' : '白方回合';
+    }
+  }
+  const secs = timerSecondsLeft();
+  const html = (secs >= 0) ? msg + '<span class="tsec">' + secs + 's</span>' : msg;
+  if (lastStatusHtml !== html) { lastStatusHtml = html; el.innerHTML = html; }
+  const warn = (secs >= 0 && secs <= 10);
+  if (el.classList.contains('timer-warn') !== warn) el.classList.toggle('timer-warn', warn);
+  const bar = gameOver ? 'bar-c' : (currentPlayer === 2 ? 'bar-r' : 'bar-l');
+  if (el.dataset.bar !== bar) {
+    el.dataset.bar = bar;
+    el.classList.remove('bar-l', 'bar-r', 'bar-c');
+    el.classList.add(bar);
+  }
+}
+function settleGame() {
+  if (gameOver) return;
+  gameOver = true;
+  timerStop();
+  const w = checkWinner();
+  overText = (w === 1) ? '黑方获胜！' : (w === 2) ? '白方获胜！' : '平局！';
+  skipNote = '';
+  history[w === 1 ? 0 : w === 2 ? 1 : 2]++;
+  draw();
+}
+function settleTimeout(loser) {
+  if (gameOver) return;
+  gameOver = true;
+  timerStop();
+  overText = (loser === 1) ? '黑方超时，白方获胜！' : '白方超时，黑方获胜！';
+  skipNote = '';
+  history[loser === 1 ? 1 : 0]++;
+  draw();
+}
+function hasMoves(who) {
+  return who !== 0 && Object.keys(getValidMoves(who)).length > 0;
+}
+function resolveStuck() {
+  if (gameOver || currentPlayer === 0) return false;
+  let acted = false, guard = 0;
+  while (guard++ < 6 && currentPlayer !== 0 && !hasMoves(currentPlayer)) {
+    const other = 3 - currentPlayer;
+    if (!hasMoves(other)) { settleGame(); return true; }
+    skipNote = (currentPlayer === 1 ? '黑方' : '白方') + '无法落子，回合跳过';
+    skipUntil = Date.now() + 1800;
+    currentPlayer = other;
+    acted = true;
+  }
+  if (acted) {
+    const stamp = skipUntil;
+    setTimeout(function () {
+      if (!gameOver && skipUntil === stamp) { skipNote = ''; draw(); }
+    }, 1900);
+  }
+  return acted;
+}
+function afterMove() {
+  if (gameOver) { draw(); return; }
+  if (currentPlayer === 0) { draw(); updateStatus(); return; }
+  skipNote = '';
+  currentPlayer = 3 - currentPlayer;
+  resolveStuck();
+  draw();
+  scheduleBot(Math.max(560, animRemaining() + 280));
+}
+
+function snapBoard() {
+  return { cells: Object.assign({}, board), ver: boardVer };
+}
+function restoreBoard(snap) {
+  for (const pid in board) {
+    board[pid] = snap.cells[pid] !== undefined ? snap.cells[pid] : 0;
+  }
+  boardVer = snap.ver;
+}
+function hellMainLineScore(player, pid) {
+  searchMode = true;
+  const moves = getValidMoves(player);
+  if (!moves[pid]) { searchMode = false; return -HELL_INF; }
+  const opp = 3 - player;
+  const snap = snapBoard();
+  makeMove(pid, player);
+  const myScore = evaluate(player);
+  const oppMoves = getValidMoves(opp);
+  let oppBest = -Infinity;
+  for (const opid in oppMoves) {
+    const snap2 = snapBoard();
+    makeMove(opid, opp);
+    const sc = evaluate(opp);
+    if (sc > oppBest) oppBest = sc;
+    restoreBoard(snap2);
+  }
+  restoreBoard(snap);
+  searchMode = false;
+  return myScore - (oppBest === -Infinity ? -1000 : oppBest) * 1.2;
+}
+function hellMainTwoPly(player) {
+  searchMode = true;
+  const moves = getValidMoves(player);
+  const keys = Object.keys(moves);
+  if (!keys.length) { searchMode = false; return null; }
+  let best = -Infinity;
+  let bestPid = keys[0];
+  for (let i = 0; i < keys.length; i++) {
+    const pid = keys[i];
+    const sc = hellMainLineScore(player, pid);
+    if (sc > best || (sc === best && pid < bestPid)) {
+      best = sc;
+      bestPid = pid;
+    }
+  }
+  searchMode = false;
+  return bestPid;
+}
+function botMove() {
+  if (gameOver || currentPlayer !== botColor) return;
+  searchMode = true;
+  const moves = getValidMoves(botColor);
+  const keys = Object.keys(moves);
+  if (!keys.length) { searchMode = false; afterMove(); return; }
+  let bestPid;
+  if (difficulty === '体验') {
+    bestPid = keys.reduce(function (a, b) { return moves[a].length >= moves[b].length ? a : b; });
+  } else if (difficulty === '标准') {
+    let best = -Infinity;
+    for (const pid of keys) {
+      const score = (edgeWeight[pid] || 0) * 3 + moves[pid].length + (Math.random() - 0.5) * 4;
+      if (score > best) { best = score; bestPid = pid; }
+    }
+  } else if (difficulty === '危机合约') {
+    try { bestPid = hellBestMove(botColor); }
+    catch (e) { bestPid = null; }
+    if (!bestPid || !moves[bestPid]) bestPid = keys[0];
+  } else {
+    let best = -Infinity;
+    for (const pid of keys) {
+      const saved = Object.assign({}, board);
+      makeMove(pid, botColor);
+      const myScore = evaluate(botColor);
+      const oppMoves = getValidMoves(3 - botColor);
+      let oppBest = -Infinity;
+      for (const opid of Object.keys(oppMoves)) {
+        const saved2 = Object.assign({}, board);
+        makeMove(opid, 3 - botColor);
+        const sc = evaluate(3 - botColor);
+        if (sc > oppBest) oppBest = sc;
+        board = saved2;
+      }
+      const total = myScore - (oppBest === -Infinity ? -1000 : oppBest) * 1.2 + (Math.random() - 0.5) * 2;
+      if (total > best) { best = total; bestPid = pid; }
+      board = saved;
+    }
+  }
+  searchMode = false;
+  lastBotPid = bestPid;
+  makeMove(bestPid, botColor);
+  draw();
+  setTimeout(function () { lastBotPid = null; draw(); }, settings.aiHintDuration);
+  afterMove();
+}
+function evaluate(player) {
+  const opp = 3 - player;
+  let score = 0;
+  for (const pid in board) {
+    const v = board[pid];
+    if (v === player) score += 10 + (edgeWeight[pid] || 0) * 5;
+    else if (v === opp) score -= 10 + (edgeWeight[pid] || 0) * 5;
+  }
+  return score;
+}
+
+// 危机合约：迭代加深的 Alpha-Beta。中盘看重行动力与边角，残局按子数算到底。
+let aiPids = [];
+let aiLines = [];
+let aiNeigh = [];
+let aiEdge = [];
+let aiCorner = 3;
+let hellZ1 = null, hellZ2 = null, hellSide1 = 0, hellSide2 = 0;
+let hellHist = [null, null, null];
+let hellKill = [];
+let hellMoveBuf = [];
+let hellTTKey1 = null, hellTTKey2 = null, hellTTDepth = null, hellTTScore = null;
+let hellTTFlag = null, hellTTMove = null, hellTTAge = null, hellTTMask = 0;
+let hellSeen = null;
+let hellStamp = 1;
+let hellAge = 0, hellNodes = 0, hellAbort = false, hellDeadline = 0;
+let HH1 = 0, HH2 = 0;
+const HELL_INF = 1000000000;
+
+function aiRand32(seed) {
+  let a = seed.s | 0;
+  a = a + 0x6D2B79F5 | 0;
+  seed.s = a;
+  let t = Math.imul(a ^ (a >>> 15), 1 | a);
+  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+  return (t ^ (t >>> 14)) >>> 0;
+}
+function indexAiGeometry() {
+  aiPids = Object.keys(id2tri);
+  const idx = Object.create(null);
+  const n = aiPids.length;
+  for (let i = 0; i < n; i++) idx[aiPids[i]] = i;
+  aiLines = new Array(n);
+  aiNeigh = new Array(n);
+  aiEdge = new Array(n);
+  let maxE = 0;
+  for (let i = 0; i < n; i++) {
+    const pid = aiPids[i];
+    const dirs = lines[pid] || [];
+    const darr = new Array(6);
+    const nb = [];
+    for (let d = 0; d < 6; d++) {
+      const src = dirs[d] || [];
+      const arr = new Array(src.length);
+      for (let k = 0; k < src.length; k++) arr[k] = idx[src[k]];
+      darr[d] = arr;
+      if (arr.length) nb.push(arr[0]);
+    }
+    aiLines[i] = darr;
+    aiNeigh[i] = nb;
+    const ew = edgeWeight[pid] | 0;
+    aiEdge[i] = ew;
+    if (ew > maxE) maxE = ew;
+  }
+  aiCorner = maxE >= 3 ? 3 : 99;
+  hellHist = [null, new Int32Array(n), new Int32Array(n)];
+  hellSeen = new Uint8Array(n);
+  hellStamp = 1;
+  hellZ1 = new Uint32Array(n * 2);
+  hellZ2 = new Uint32Array(n * 2);
+  const seed = { s: 0x51a7c0de };
+  for (let i = 0; i < n * 2; i++) {
+    hellZ1[i] = aiRand32(seed) || 1;
+    hellZ2[i] = aiRand32(seed) || 1;
+  }
+  hellSide1 = aiRand32(seed) || 1;
+  hellSide2 = aiRand32(seed) || 1;
+  hellTTKey1 = null;
+}
+function ensureHellTT() {
+  if (hellTTKey1) return;
+  const S = 1 << 18;
+  hellTTMask = S - 1;
+  hellTTKey1 = new Uint32Array(S);
+  hellTTKey2 = new Uint32Array(S);
+  hellTTDepth = new Int16Array(S);
+  hellTTScore = new Int32Array(S);
+  hellTTFlag = new Uint8Array(S);
+  hellTTMove = new Int16Array(S);
+  hellTTAge = new Uint16Array(S);
+}
+function hellHash(b, player) {
+  let h1 = player === 2 ? hellSide1 : 0;
+  let h2 = player === 2 ? hellSide2 : 0;
+  const zA = hellZ1, zB = hellZ2, n = b.length;
+  for (let i = 0; i < n; i++) {
+    const v = b[i];
+    if (v) {
+      const p = (i << 1) + v - 1;
+      h1 ^= zA[p];
+      h2 ^= zB[p];
+    }
+  }
+  HH1 = h1 >>> 0;
+  HH2 = h2 >>> 0;
+}
+function hellTTProbe(h1, h2) {
+  const i = h1 & hellTTMask;
+  if (hellTTAge[i] === hellAge && hellTTKey1[i] === h1 && hellTTKey2[i] === h2) return i;
+  return -1;
+}
+function hellTTStore(h1, h2, depth, score, flag, move) {
+  const i = h1 & hellTTMask;
+  if (hellTTAge[i] === hellAge && hellTTKey1[i] === h1 && hellTTKey2[i] === h2 && hellTTDepth[i] > depth) return;
+  hellTTAge[i] = hellAge;
+  hellTTKey1[i] = h1;
+  hellTTKey2[i] = h2;
+  hellTTDepth[i] = depth;
+  hellTTScore[i] = score;
+  hellTTFlag[i] = flag;
+  hellTTMove[i] = move;
+}
+function genMovesInto(b, player, ply, needFlips) {
+  const opp = 3 - player;
+  let buf = hellMoveBuf[ply];
+  if (!buf) buf = hellMoveBuf[ply] = [];
+  const linesOf = aiLines;
+  const N = b.length;
+  let n = 0;
+  for (let i = 0; i < N; i++) {
+    if (b[i] !== 0) continue;
+    const dirs = linesOf[i];
+    let mv = null;
+    for (let d = 0; d < 6; d++) {
+      const line = dirs[d];
+      const len = line.length;
+      if (!len || b[line[0]] !== opp) continue;
+      let j = 0;
+      while (j < len && b[line[j]] === opp) j++;
+      if (j >= len || b[line[j]] !== player) continue;
+      if (!mv) {
+        mv = buf[n];
+        if (!mv) mv = buf[n] = { i: 0, flips: [], ord: 0 };
+        mv.i = i;
+        if (needFlips) {
+          mv.flips.length = 0;
+          if (++hellStamp >= 250) { hellSeen.fill(0); hellStamp = 1; }
+        }
+      }
+      if (!needFlips) break;
+      for (let k = 0; k < j; k++) {
+        const f = line[k];
+        if (hellSeen[f] === hellStamp) continue;
+        hellSeen[f] = hellStamp;
+        mv.flips.push(f);
+      }
+    }
+    if (mv) n++;
+  }
+  buf.count = n;
+  return buf;
+}
+function hellApply(b, i, player, flips) {
+  b[i] = player;
+  for (let k = 0; k < flips.length; k++) b[flips[k]] = player;
+}
+function hellUndo(b, i, player, flips) {
+  const opp = 3 - player;
+  b[i] = 0;
+  for (let k = 0; k < flips.length; k++) b[flips[k]] = opp;
+}
+function hellSort(arr, n) {
+  for (let i = 1; i < n; i++) {
+    const v = arr[i];
+    const o = v.ord;
+    let j = i - 1;
+    while (j >= 0 && arr[j].ord < o) {
+      arr[j + 1] = arr[j];
+      j--;
+    }
+    arr[j + 1] = v;
+  }
+}
+function hellOrder(moves, n, player, ply, ttMove, empties) {
+  const late = empties <= 14;
+  const k = hellKill[ply];
+  const k0 = k ? k[0] : -1;
+  const k1 = k ? k[1] : -1;
+  const hist = hellHist[player];
+  const edge = aiEdge;
+  const corner = aiCorner;
+  for (let i = 0; i < n; i++) {
+    const mv = moves[i];
+    const sq = mv.i;
+    let s = hist[sq];
+    if (sq === ttMove) s += 10000000;
+    else if (sq === k0) s += 5000000;
+    else if (sq === k1) s += 4000000;
+    const ew = edge[sq];
+    s += ew * 20000;
+    if (ew >= corner) s += 300000;
+    s += mv.flips.length * (late ? 60 : 28) + ew * 120;
+    mv.ord = s;
+  }
+  hellSort(moves, n);
+}
+function hellTerminal(b, player) {
+  const opp = 3 - player;
+  let my = 0, op = 0;
+  for (let i = 0; i < b.length; i++) {
+    const v = b[i];
+    if (v === player) my++;
+    else if (v === opp) op++;
+  }
+  const diff = my - op;
+  if (diff > 0) return 100000 + diff * 50;
+  if (diff < 0) return -100000 + diff * 50;
+  return 0;
+}
+function evalIndexed(b, player) {
+  const opp = 3 - player;
+  let score = 0;
+  for (let i = 0; i < b.length; i++) {
+    const v = b[i];
+    const ew = aiEdge[i];
+    if (v === player) score += 10 + ew * 5;
+    else if (v === opp) score -= 10 + ew * 5;
+  }
+  return score;
+}
+function evalIndexedMobility(b, player, empties, myMoves, oppMoves) {
+  const mobW = empties > 28 ? 12 : (empties > 16 ? 8 : 4);
+  return evalIndexed(b, player) + (myMoves.count - oppMoves.count) * mobW;
+}
+function hellEval(b, player, empties, myMoves, oppMoves) {
+  if (empties <= 12) return evalIndexed(b, player);
+  return evalIndexedMobility(b, player, empties, myMoves, oppMoves);
+}
+function hellIndexedHardScore(b, player, sqI) {
+  const opp = 3 - player;
+  const root = genMovesInto(b, player, 0, true);
+  let mv = null;
+  for (let i = 0; i < root.count; i++) {
+    if (root[i].i === sqI) { mv = root[i]; break; }
+  }
+  if (!mv) return -HELL_INF;
+  hellApply(b, mv.i, player, mv.flips);
+  const myScore = evalIndexed(b, player);
+  const oppMoves = genMovesInto(b, opp, 1, true);
+  let oppBest = -Infinity;
+  for (let i = 0; i < oppMoves.count; i++) {
+    const om = oppMoves[i];
+    hellApply(b, om.i, opp, om.flips);
+    const sc = evalIndexed(b, opp);
+    if (sc > oppBest) oppBest = sc;
+    hellUndo(b, om.i, opp, om.flips);
+  }
+  hellUndo(b, mv.i, player, mv.flips);
+  return myScore - (oppBest === -Infinity ? -1000 : oppBest) * 1.2;
+}
+function contractEval(b, player, empties, ply) {
+  const moves = genMovesInto(b, player, ply, false);
+  const opp = 3 - player;
+  const oppMoves = genMovesInto(b, opp, ply + 1, false);
+  return evalIndexedMobility(b, player, empties, moves, oppMoves);
+}
+function contractNegamax(b, player, depth, alpha, beta, empties, ply) {
+  const opp = 3 - player;
+  const moves = genMovesInto(b, player, ply, depth > 0);
+  const nMoves = moves.count;
+  if (nMoves === 0) {
+    const oppMoves = genMovesInto(b, opp, ply + 1, false);
+    if (oppMoves.count === 0) return hellTerminal(b, player);
+    return -contractNegamax(b, opp, depth, -beta, -alpha, empties, ply + 1);
+  }
+  if (depth === 0) return contractEval(b, player, empties, ply);
+  hellOrder(moves, nMoves, player, ply, -1, empties);
+  let best = -HELL_INF;
+  for (let m = 0; m < nMoves; m++) {
+    const mv = moves[m];
+    hellApply(b, mv.i, player, mv.flips);
+    let sc = -contractNegamax(b, opp, depth - 1, -beta, -alpha, empties - 1, ply + 1);
+    hellUndo(b, mv.i, player, mv.flips);
+    if (sc > best) best = sc;
+    if (sc > alpha) alpha = sc;
+    if (alpha >= beta) {
+      hellHist[player][mv.i] += depth * depth;
+      break;
+    }
+  }
+  return best;
+}
+function contractRootPick(b, player, empties, maxDepth, deadline, floorPid) {
+  const floorScore = hellMainLineScore(player, floorPid);
+  let floorI = -1;
+  for (let i = 0; i < aiPids.length; i++) {
+    if (aiPids[i] === floorPid) { floorI = i; break; }
+  }
+  if (floorI < 0) return 0;
+  const moves = genMovesInto(b, player, 0, true);
+  if (!moves.count) return floorI;
+  hellOrder(moves, moves.count, player, 0, -1, empties);
+  const opp = 3 - player;
+  const plySearch = Math.max(4, Math.min(maxDepth | 0, empties > 32 ? 5 : (empties > 18 ? 6 : 7)));
+  let bestI = floorI;
+  let bestDeep = -HELL_INF;
+  let floorDeep = -HELL_INF;
+  for (let m = 0; m < moves.count; m++) {
+    if (aiPids[moves[m].i] === floorPid) {
+      hellApply(b, moves[m].i, player, moves[m].flips);
+      floorDeep = -contractNegamax(b, opp, plySearch - 1, -HELL_INF, HELL_INF, empties - 1, 1);
+      hellUndo(b, moves[m].i, player, moves[m].flips);
+      bestDeep = floorDeep;
+      break;
+    }
+  }
+  for (let m = 0; m < moves.count; m++) {
+    if (m > 0 && Date.now() >= deadline) break;
+    const mv = moves[m];
+    const pid = aiPids[mv.i];
+    const s2 = hellMainLineScore(player, pid);
+    if (s2 + 0.01 < floorScore) continue;
+    hellApply(b, mv.i, player, mv.flips);
+    const sDeep = -contractNegamax(b, opp, plySearch - 1, -HELL_INF, HELL_INF, empties - 1, 1);
+    hellUndo(b, mv.i, player, mv.flips);
+    if (sDeep > bestDeep || (sDeep === bestDeep && (s2 > hellMainLineScore(player, aiPids[bestI]) || (s2 === hellMainLineScore(player, aiPids[bestI]) && mv.i < bestI)))) {
+      bestDeep = sDeep;
+      bestI = mv.i;
+    }
+  }
+  if (bestDeep <= -HELL_INF / 2) return floorI;
+  if (hellMainLineScore(player, aiPids[bestI]) + 0.01 < floorScore) return floorI;
+  if (bestI !== floorI && bestDeep <= floorDeep) return floorI;
+  return bestI;
+}
+function hellNegamax(b, player, depth, alpha, beta, empties, ply) {
+  if (hellAbort) return 0;
+  hellNodes++;
+  if ((hellNodes & 1023) === 0 && (Date.now() >= hellDeadline || hellNodes > 3000000)) {
+    hellAbort = true;
+    return 0;
+  }
+  const alphaOrig = alpha;
+  hellHash(b, player);
+  const h1 = HH1, h2 = HH2;
+  let ttMove = -1;
+  const ti = hellTTProbe(h1, h2);
+  if (ti >= 0) {
+    ttMove = hellTTMove[ti];
+    if (hellTTDepth[ti] >= depth) {
+      const fl = hellTTFlag[ti];
+      const sc = hellTTScore[ti];
+      if (fl === 0) return sc;
+      if (fl === 1 && sc > alpha) alpha = sc;
+      else if (fl === 2 && sc < beta) beta = sc;
+      if (alpha >= beta) return sc;
+    }
+  }
+  const opp = 3 - player;
+  const moves = genMovesInto(b, player, ply, depth > 0);
+  const nMoves = moves.count;
+  if (nMoves === 0) {
+    const oppMoves = genMovesInto(b, opp, ply + 1, false);
+    if (oppMoves.count === 0) {
+      const sc = hellTerminal(b, player);
+      hellTTStore(h1, h2, 64, sc, 0, -1);
+      return sc;
+    }
+    if (depth === 0) return hellEval(b, player, empties, moves, oppMoves);
+    const sc = -hellNegamax(b, opp, depth, -beta, -alpha, empties, ply + 1);
+    if (hellAbort) return 0;
+    return sc;
+  }
+  if (depth === 0) {
+    const oppMoves = genMovesInto(b, opp, ply + 1, false);
+    return hellEval(b, player, empties, moves, oppMoves);
+  }
+  hellOrder(moves, nMoves, player, ply, ttMove, empties);
+  let best = -HELL_INF;
+  let bestI = moves[0].i;
+  for (let m = 0; m < nMoves; m++) {
+    const mv = moves[m];
+    hellApply(b, mv.i, player, mv.flips);
+    let sc;
+    if (m === 0) sc = -hellNegamax(b, opp, depth - 1, -beta, -alpha, empties - 1, ply + 1);
+    else {
+      sc = -hellNegamax(b, opp, depth - 1, -alpha - 1, -alpha, empties - 1, ply + 1);
+      if (!hellAbort && sc > alpha && sc < beta)
+        sc = -hellNegamax(b, opp, depth - 1, -beta, -alpha, empties - 1, ply + 1);
+    }
+    hellUndo(b, mv.i, player, mv.flips);
+    if (hellAbort) return 0;
+    if (sc > best) { best = sc; bestI = mv.i; }
+    if (sc > alpha) alpha = sc;
+    if (alpha >= beta) {
+      hellHist[player][mv.i] += depth * depth;
+      const kk = hellKill[ply] || (hellKill[ply] = [-1, -1]);
+      if (kk[0] !== mv.i) { kk[1] = kk[0]; kk[0] = mv.i; }
+      break;
+    }
+  }
+  let flag = 0;
+  if (best <= alphaOrig) flag = 2;
+  else if (best >= beta) flag = 1;
+  hellTTStore(h1, h2, depth, best, flag, bestI);
+  return best;
+}
+function hellRoot(b, player, depth, empties) {
+  const moves = genMovesInto(b, player, 0, true);
+  const nMoves = moves.count;
+  hellHash(b, player);
+  const h1 = HH1, h2 = HH2;
+  const ti = hellTTProbe(h1, h2);
+  const ttMove = ti >= 0 ? hellTTMove[ti] : -1;
+  hellOrder(moves, nMoves, player, 0, ttMove, empties);
+  const opp = 3 - player;
+  let alpha = -HELL_INF;
+  let best = -HELL_INF;
+  let bestI = moves[0].i;
+  for (let m = 0; m < nMoves; m++) {
+    if (m > 0 && Date.now() >= hellDeadline) { hellAbort = true; break; }
+    const mv = moves[m];
+    hellApply(b, mv.i, player, mv.flips);
+    let sc;
+    if (m === 0) sc = -hellNegamax(b, opp, depth - 1, -HELL_INF, -alpha, empties - 1, 1);
+    else {
+      sc = -hellNegamax(b, opp, depth - 1, -alpha - 1, -alpha, empties - 1, 1);
+      if (!hellAbort && sc > alpha)
+        sc = -hellNegamax(b, opp, depth - 1, -HELL_INF, -alpha, empties - 1, 1);
+    }
+    hellUndo(b, mv.i, player, mv.flips);
+    if (hellAbort) break;
+    if (sc > best) { best = sc; bestI = mv.i; }
+    if (sc > alpha) alpha = sc;
+  }
+  if (!hellAbort) hellTTStore(h1, h2, depth, best, 0, bestI);
+  return { move: bestI, score: best };
+}
+function hellBestMove(player) {
+  if ((player !== 1 && player !== 2) || !aiPids.length) return null;
+  ensureHellTT();
+  const n = aiPids.length;
+  const b = new Uint8Array(n);
+  let empties = 0;
+  for (let i = 0; i < n; i++) {
+    const v = board[aiPids[i]] | 0;
+    b[i] = (v === 1 || v === 2) ? v : 0;
+    if (!b[i]) empties++;
+  }
+  const root0 = genMovesInto(b, player, 0, true);
+  const nRoot = root0.count;
+  if (!nRoot) return null;
+  if (nRoot === 1) return aiPids[root0[0].i];
+  const onlyI = root0[0].i;
+  searchMode = true;
+  const floorPid = hellMainTwoPly(player);
+  searchMode = false;
+  if (!floorPid) return aiPids[onlyI];
+  hellHist[1].fill(0);
+  hellHist[2].fill(0);
+  for (let i = 0; i < hellKill.length; i++) {
+    const k = hellKill[i];
+    if (k) { k[0] = -1; k[1] = -1; }
+  }
+  hellAge++;
+  if (hellAge >= 65535) { hellTTAge.fill(0); hellAge = 1; }
+  let budget = 1600;
+  if (empties <= 32) budget = 2200;
+  if (empties <= 22) budget = 3000;
+  if (empties <= 14) budget = 4000;
+  const deadline = Date.now() + budget;
+  let maxDepth = empties > 30 ? 6 : 7;
+  const pickI = contractRootPick(b, player, empties, maxDepth, deadline, floorPid);
+  return aiPids[pickI >= 0 ? pickI : onlyI];
+}
+
+let timerLimit = 0;
+let timerTurn = 0;
+let timerDeadline = 0;
+let timerTick = null;
+let lastStatusHtml = '';
+function timerSecondsLeft() {
+  if (!timerLimit || gameOver || currentPlayer === 0) return -1;
+  if (!timerDeadline) return timerLimit;
+  return Math.max(0, Math.ceil((timerDeadline - Date.now()) / 1000));
+}
+function timerStop() {
+  timerTurn = 0;
+  timerDeadline = 0;
+  if (timerTick) { clearInterval(timerTick); timerTick = null; }
+}
+function timerHold(player) { timerTurn = player; timerDeadline = 0; }
+function timerStart(player) {
+  timerTurn = player;
+  timerDeadline = Date.now() + timerLimit * 1000;
+  if (!timerTick) timerTick = setInterval(timerPulse, 250);
+  updateStatus();
+}
+function syncTimer() {
+  if (!timerLimit || gameOver || currentPlayer === 0) { timerStop(); return; }
+  if (animating) { timerHold(currentPlayer); return; }
+  if (timerTurn !== currentPlayer || !timerDeadline) timerStart(currentPlayer);
+}
+function timerPulse() {
+  if (!timerLimit || gameOver) { timerStop(); return; }
+  if (!timerDeadline) return;
+  if (Date.now() < timerDeadline) { updateStatus(); return; }
+  const loser = timerTurn;
+  timerStop();
+  settleTimeout(loser);
+}
+function updateTimerBtn() {
+  const b = document.getElementById('timer-btn');
+  if (b) setText(b, timerLimit ? ('计时:' + timerLimit + '秒') : '计时:关');
+}
+function setTimerLimit(n) {
+  const v = Math.round(Number(n) || 0);
+  timerLimit = (v > 0) ? Math.min(600, v) : 0;
+  updateTimerBtn();
+  timerStop();
+  draw();
+}
+function toggleTimer() {
+  function opt(n, label) {
+    const on = (timerLimit === n);
+    return '<div class="color-btn" style="background:' + (on ? '#8d6b45' : '#CDBA96')
+      + ';color:' + (on ? '#fff' : '#3E2A1F') + ';font-size:16px;padding:12px 22px" '
+      + 'onclick="chooseTimer(' + n + ')">' + (on ? '✓ ' : '') + label + '</div>';
+  }
+  showModal(
+    '<h3>计时设置</h3>' +
+    '<p class="modal-copy">每步限时，超时判负</p>' +
+    '<div class="color-btns">' +
+    opt(0, '不限时') + opt(15, '15 秒') + opt(30, '30 秒') +
+    opt(60, '60 秒') + opt(120, '120 秒') +
+    '</div>' +
+    '<div class="row"><button class="btn small light" onclick="closeModal()">取消</button></div>'
+  );
+}
+function chooseTimer(n) { closeModal(); setTimerLimit(n); }
+function resetBoard() {
+  resetBoardData();
+  if (isCustomGame && customBoardForGame) deserializeBoard(customBoardForGame);
+  currentPlayer = firstPlayer;
+  gameOver = false; overText = ''; skipNote = '';
+  draw(); updateStatus();
+  startPveWatch();
+  scheduleBot(560);
+}
+function confirmReturn() {
+  if (inCustomGame) {
+    returnToEditor();
+    return;
+  }
+  goSelect();
+}
+function returnToEditor() {
+  resetPlaySession();
+  pveMode = false;;
+  gameOver = false; overText = '';
+  inCustomGame = false;
+  updateResetBtn();
+  
+  // 确保抽屉隐藏
+  const side = document.querySelector('.editor-side');
+  if (side) side.classList.remove('show');
+
+  document.getElementById('editor-panel').classList.add('active');
+  setTimeout(function () {
+    if (!document.getElementById('editor-board').children.length) {
+      buildEditorTiles(document.getElementById('editor-board'));
+    }
+    fitEditorBoard();
+    renderEditor();
+    refreshPresetHighlight();
+  }, 20);
+}
+
+// ============================================================
+// 编辑器
+// ============================================================
+function toggleEditorPreset() {
+  const side = document.querySelector('.editor-side');
+  if (side) side.classList.toggle('show');
+}
+
+function openCustomEditor() {
+  closeModal();
+  editorBoard = {};
+  for (const pid in id2tri) editorBoard[pid] = 0;
+  editorDefaultToBoard();
+  editorMode = 1;
+  updateEditorModeBtns();
+  
+  // 隐藏预设抽屉
+  const side = document.querySelector('.editor-side');
+  if (side) side.classList.remove('show');
+  
+  const wrap = document.getElementById('editor-board');
+  wrap.innerHTML = '';
+  buildEditorTiles(wrap);
+  document.getElementById('editor-panel').classList.add('active');
+  syncStarDuoChrome();
+  refreshPresetList();
+  setTimeout(function () {
+    fitEditorBoard();
+    renderEditor();
+  }, 20);
+}
+function editorDefaultToBoard() {
+  const setup = { '0':0,'18':2,'19':0,'22':0,'23':1,'24':1,'25':0,'29':2,'30':2,'35':1 };
+  for (const d in setup) if (disp2id[d]) editorBoard[disp2id[d]] = setup[d];
+}
+function refreshPresetList() {
+  const list = document.getElementById('editor-preset-list');
+  if (!list) return;
+  list.innerHTML = '';
+  const builtin = [
+    { key: '__default__', label: '默认开局' },
+    { key: '__endgame__', label: '残局' }
+  ];
+  for (const p of builtin) {
+    const item = document.createElement('div');
+    item.className = 'preset-item';
+    item.dataset.key = p.key;
+    item.textContent = p.label;
+    item.onclick = (function (k) { return function () { applyPreset(k); }; })(p.key);
+    list.appendChild(item);
+  }
+  const names = Object.keys(customPresets).sort(function (a, b) { return a.localeCompare(b, 'zh-CN'); });
+  for (let i = 0; i < names.length; i++) {
+    const name = names[i];
+    const item = document.createElement('div');
+    item.className = 'preset-item preset-item--custom';
+    item.dataset.key = '__custom__' + name;
+    item.onclick = (function (n) { return function () { applyCustomPreset(n); }; })(name);
+    const label = document.createElement('span');
+    label.className = 'preset-item-label';
+    label.textContent = name;
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'preset-item-delete';
+    del.setAttribute('aria-label', '删除预设「' + name + '」');
+    del.textContent = '删除';
+    del.onclick = (function (n) {
+      return function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        deleteCustomPreset(n);
+      };
+    })(name);
+    item.appendChild(label);
+    item.appendChild(del);
+    list.appendChild(item);
+  }
+}
+function refreshPresetHighlight() {
+  const list = document.getElementById('editor-preset-list');
+  if (!list) return;
+  const items = list.querySelectorAll('.preset-item');
+  for (const it of items) it.classList.remove('active');
+}
+function applyPreset(key) {
+  if (key === '__default__') {
+    for (const pid in editorBoard) editorBoard[pid] = 0;
+    editorDefaultToBoard();
+  } else if (key === '__endgame__') {
+    const emptyIds = [5, 38, 43, 47, 51, 53, 50, 42, 32];
+    const whiteIds = [35];
+    for (const pid in editorBoard) editorBoard[pid] = 0;
+    for (let i = 0; i < 54; i++) {
+      const dpid = disp2id[String(i)];
+      if (!dpid) continue;
+      if (emptyIds.indexOf(i) !== -1) editorBoard[dpid] = 0;
+      else if (whiteIds.indexOf(i) !== -1) editorBoard[dpid] = 2;
+      else editorBoard[dpid] = 1;
+    }
+  }
+  renderEditor();
+  const list = document.getElementById('editor-preset-list');
+  if (list) {
+    const items = list.querySelectorAll('.preset-item');
+    for (const it of items) it.classList.toggle('active', it.dataset.key === key);
+  }
+}
+function applyCustomPreset(name) {
+  const snap = customPresets[name];
+  if (!snap) return;
+  for (const pid in editorBoard) editorBoard[pid] = snap[pid] || 0;
+  renderEditor();
+  const list = document.getElementById('editor-preset-list');
+  if (list) {
+    const items = list.querySelectorAll('.preset-item');
+    for (const it of items) it.classList.toggle('active', it.dataset.key === '__custom__' + name);
+  }
+}
+function saveCustomPreset() {
+  const name = prompt('输入预设名称：');
+  if (!name || !name.trim()) return;
+  const key = name.trim();
+  const snap = {};
+  for (const pid in editorBoard) snap[pid] = editorBoard[pid];
+  customPresets[key] = snap;
+  persistCustomPresets();
+  refreshPresetList();
+  applyCustomPreset(key);
+  alert('预设「' + key + '」已保存');
+}
+function deleteCustomPreset(name) {
+  if (!customPresets[name]) return;
+  if (!confirm('删除预设「' + name + '」？此操作不可恢复。')) return;
+  delete customPresets[name];
+  persistCustomPresets();
+  refreshPresetList();
+  refreshPresetHighlight();
+}
+function buildEditorTiles(container) {
+  const S = TRI_SIZE, H = TRI_SIZE * Math.sqrt(3) / 2;
+  const cpFull = {}, cpIn = {};
+  for (const d of ['up', 'down']) { cpFull[d] = triPath(d, 1); cpIn[d] = triPath(d, FACE_K); }
+  const html = [], pids = [];
+  for (const pid in id2tri) {
+    const cx = id2tri[pid][0], cy = id2tri[pid][1], dir = id2tri[pid][2];
+    const pf = cpFull[dir], ps = cpIn[dir];
+    const face = function (cls) {
+      return '<div class="face ' + cls + '"><div class="plate" style="clip-path:' + pf +
+        '"><div class="surf" style="clip-path:' + ps + '"><div class="etch"></div></div></div></div>';
+    };
+    html.push('<div class="tile ' + dir + '" data-pid="' + pid + '" style="left:' + (cx - S / 2) +
+      'px;top:' + ((dir === 'up') ? (cy - 2 * H / 3) : (cy - H / 3)) + 'px;width:' + S +
+      'px;height:' + H + 'px"><div class="tinner">' + face('fa') + face('fb') +
+      '</div><div class="halo"></div></div>');
+    pids.push(pid);
+  }
+  container.innerHTML = html.join('');
+  if (!container.__edBound) {
+    container.__edBound = true;
+    container.addEventListener('click', function (e) {
+      let el = e.target;
+      while (el && el !== container && !el.classList.contains('tile')) el = el.parentElement;
+      if (!el || el === container) return;
+      editorBoard[el.dataset.pid] = editorMode;
+      renderEditor();
+      refreshPresetHighlight();
+    });
+  }
+}
+function renderEditor() {
+  const wrap = document.getElementById('editor-board');
+  if (!wrap) return;
+  const tiles = wrap.querySelectorAll('.tile');
+  for (let i = 0; i < tiles.length; i++) {
+    const el = tiles[i];
+    const pid = el.dataset.pid;
+    const v = editorBoard[pid] || 0;
+    const inner = el.children[0];
+    faceState(inner.children[0], v);
+    faceState(inner.children[1], v);
+  }
+}
+function setEditMode(m) { editorMode = m; updateEditorModeBtns(); }
+function updateEditorModeBtns() {
+  document.getElementById('ed-black').classList.toggle('active', editorMode === 1);
+  document.getElementById('ed-white').classList.toggle('active', editorMode === 2);
+  document.getElementById('ed-erase').classList.toggle('active', editorMode === 0);
+}
+function editorClear() {
+  for (const pid in editorBoard) editorBoard[pid] = 0;
+  renderEditor();
+  refreshPresetHighlight();
+}
+function editorStartGame() {
+  customBoardForGame = {};
+  for (const pid in editorBoard) customBoardForGame[pid] = editorBoard[pid];
+  isCustomGame = true;
+  inCustomGame = true;
+  showModal(
+    '<h3>选择对战模式</h3>' +
+    '<div class="row"><button class="btn light" style="width:100%" onclick="closeModal();startCustomLocal()">本地双人</button></div>' +
+    '<div class="row"><button class="btn" style="width:100%" onclick="closeModal();startCustomPVE()">人机对战</button></div>' +
+    '<div class="row"><button class="btn small light" onclick="closeModal()">取消</button></div>'
+  );
+}
+function startCustomLocal() {
+  closeEditor();
+pveMode = false;
+  flowFirstChoice = null;
+  updateResetBtn();
+  showFirstChoice('pvp');
+}
+function startCustomPVE() {
+  closeEditor();
+;
+  showModal(
+    '<h3>选择你的颜色</h3>' +
+    '<div class="color-btns">' +
+    '<div class="color-btn black" onclick="closeModal();customPVEColor(1)">玩家执黑</div>' +
+    '<div class="color-btn white" onclick="closeModal();customPVEColor(2)">玩家执白</div>' +
+    '</div>' +
+    '<div class="row"><button class="btn small light" onclick="closeModal()">取消</button></div>'
+  );
+}
+function customPVEColor(color) {
+  flowPlayerColor = color; myColor = color; botColor = 3 - color;
+  pveMode = true;;
+  updateResetBtn();
+  showFirstChoice('pve');
+}
+function closeEditor() {
+  document.getElementById('editor-panel').classList.remove('active');
+  syncStarDuoChrome();
+}
+function fitEditorBoard() {
+  const wrap = document.querySelector('.editor-board-wrap');
+  if (!wrap) return;
+  const vw = wrap.clientWidth - 20, vh = wrap.clientHeight - 20;
+  const s = Math.min(vw / 700, vh / 580);
+  document.getElementById('editor-stage').style.setProperty('--es', Math.max(0.3, s).toFixed(3));
+}
+window.addEventListener('resize', function () {
+  if (document.getElementById('editor-panel').classList.contains('active')) fitEditorBoard();
+});
+
+// ============================================================
+// 启动
+// ============================================================
+initGeometry();
+buildTiles();
+resetBoardData();
+draw();
+bindViewport();
+updateTimerBtn();
+updateResetBtn();
+syncStarDuoChrome();
+
+console.log('[星铎棋] noomings 本地版已就绪');
+</script>
+<script src="/assets/js/site-shell.js" defer></script>
+</body>
+</html>

@@ -180,6 +180,12 @@
         <priority>0.65</priority>
     </url>
     <url>
+        <loc>https://nooming.github.io/app/play/games/board-games/star-duo/</loc>
+        <lastmod>2026-10-25</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.65</priority>
+    </url>
+    <url>
         <loc>https://nooming.github.io/app/play/games/dino/</loc>
         <lastmod>2025-01-27</lastmod>
         <changefreq>monthly</changefreq>

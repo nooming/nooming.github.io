@@ -9,7 +9,7 @@ function tutor(step) {
             2: ["!+", "B2", "B8", "G7", "R4", "Y+", "Y3"]
         },
         allLeft: 93,
-        name: { 0: sso.realname, 1: '李行', 2: '甄历骇' },
+        name: CardGameCopy.aiNameMap(2),
         isIngame: { 0: 1, 1: 1, 2: 1 },
         isReady: { 0: 1, 1: 1, 2: 1 },
         left: { 0: 7, 1: 7, 2: 7 },
@@ -35,9 +35,6 @@ function tutor(step) {
             str += `<line x1="80" y1="460" x2="103" y2="460" stroke="#333" stroke-width="1.5" marker-end="url(#arrow)"/>`
             str += `<text x="45" y="468" font-size="20">×7</text>`
             str += `<rect x="30" y="450" width="14" height="20" rx="2" fill="#ddd" stroke="#333" stroke-width="1.5"></rect>`
-            // str += `<line x1="180" y1="250" x2="203" y2="250" stroke="#333" stroke-width="1.5" marker-end="url(#arrow)"/>`
-            // str += `<text x="135" y="258" font-size="20">×93</text>`
-            // str += `<rect x="120" y="240" width="14" height="20" rx="2" fill="#ddd" stroke="#333" stroke-width="1.5"></rect>`
             str += `<line x1="320" y1="250" x2="297" y2="250" stroke="#333" stroke-width="1.5" marker-end="url(#arrow)"/>`
             str += `<text x="340" y="258" font-size="20">×1</text>`
             str += `<rect x="325" y="240" width="14" height="20" rx="2" fill="#ddd" stroke="#333" stroke-width="1.5"></rect>`
@@ -113,7 +110,7 @@ function tutor(step) {
             cens[5] = ''
             me.card = ''
             $('.uno-svg').css('opacity', '0.3')
-            str += `<rect class="cards-rect" x="212.5" y="225" transform="rotate(0,250,250)" width="35" height="50" rx="5" fill="white" stroke="#333" stroke-width="1.5" onmouseenter="$('.cards-rect,.cards-left,.cards-arrow').css('translate','0 3px')" onmouseleave="$('.cards-rect,.cards-left,.cards-arrow').css('translate','0')" onclick="tutor(5)" style="cursor: pointer;"></rect>`
+            str += `<rect class="cards-rect draw-pile-tutor" data-tutor-draw="5" x="212.5" y="225" transform="rotate(0,250,250)" width="35" height="50" rx="5" fill="white" stroke="#333" stroke-width="1.5"></rect>`
                 + `<text class="nomouse cards-arrow" x="229.5" y="270" text-anchor="middle" font-size="14" fill="#333">↓</text>`
                 + `<text class="nomouse cards-left" x="229.5" y="243" text-anchor="middle" font-size="12" fill="#333">摸牌</text>`
             $('.uno-btns-down').html(`${getButton('primary disabled', `出牌`, ``, 'arrow-up')}`)
@@ -141,7 +138,7 @@ function tutor(step) {
                 }
             }
             $('.uno-svg').css('opacity', '0.3')
-            str += `<rect class="cards-rect" x="212.5" y="225" transform="rotate(0,250,250)" width="35" height="50" rx="5" fill="white" stroke="#333" stroke-width="1.5" onmouseenter="$('.cards-rect,.cards-left,.cards-arrow').css('translate','0 3px')" onmouseleave="$('.cards-rect,.cards-left,.cards-arrow').css('translate','0')" onclick="tutor(5)" style="cursor: pointer;"></rect>`
+            str += `<rect class="cards-rect draw-pile-tutor" data-tutor-draw="5" x="212.5" y="225" transform="rotate(0,250,250)" width="35" height="50" rx="5" fill="white" stroke="#333" stroke-width="1.5"></rect>`
                 + `<text class="nomouse cards-arrow" x="229.5" y="270" text-anchor="middle" font-size="14" fill="#333">↓</text>`
                 + `<text class="nomouse cards-left" x="229.5" y="243" text-anchor="middle" font-size="12" fill="#333">摸牌</text>`
             str += `<text class="card-text nomouse card-6-text" x="395" y="455" width="40" textWrap="wrap" transform="rotate(0,250,250)" font-size="12" fill="#333" style="display: none;">强制下一玩家<tspan x="395" y="472">摸两张牌</tspan></text>`
@@ -245,12 +242,11 @@ function tutor(step) {
             cur.cen = cens[12]
             cur.now = 1
             str2 += drawCard(10, 75, 'X-', 0)
-            // str += drawCard(122.5, 250, 'X-', 30)
             $('.uno-svg').css('opacity', '1')
             $('.uno-btns-down').html(`<div class="btn-group">${getButton('default', `上一步`, `tutor(10)`, 'arrow-left')}${getButton('default', `下一步`, `tutor(13)`, 0, 0, 0, 0, 'arrow-right')}</div>`)
             break
         case 13:
-            $('.tutor').html(`<h3>④ 功能牌</h3><p></p>`)
+            $('.tutor').html(`<h3>④ 功能牌</h3><p>下家被跳过时，轮到你继续出牌。</p>`)
             cur.left = { 0: 5, 1: 5, 2: 10 }
             cur.cards[0] = ["R-", "R8", "R5", "R9", "RR", "Y9"]
             cur.cards[1] = ["!+", "B2", "B8", "G7", "R4"]
@@ -305,7 +301,7 @@ function tutor(step) {
             cur.rot = 0
             cur.banDraw = cur.toDraw = 4
             str2 += drawCard(10, 75, '!+', 0)
-            str += `<rect class="cards-rect" x="212.5" y="225" transform="rotate(0,250,250)" width="35" height="50" rx="5" fill="white" stroke="#333" stroke-width="1.5" onmouseenter="$('.cards-rect,.cards-left,.cards-arrow').css('translate','0 3px')" onmouseleave="$('.cards-rect,.cards-left,.cards-arrow').css('translate','0')" onclick="tutor(17)" style="cursor: pointer;"></rect>`
+            str += `<rect class="cards-rect draw-pile-tutor" data-tutor-draw="17" x="212.5" y="225" transform="rotate(0,250,250)" width="35" height="50" rx="5" fill="white" stroke="#333" stroke-width="1.5"></rect>`
                 + `<text class="nomouse cards-arrow" x="229.5" y="270" text-anchor="middle" font-size="14" fill="#333">↓</text>`
                 + `<text class="nomouse cards-left" x="229.5" y="243" text-anchor="middle" font-size="12" fill="#333">摸牌</text>`
             $('.uno-svg').css('opacity', '1')
@@ -321,7 +317,7 @@ function tutor(step) {
             cur.rot = 0
             cur.banDraw = cur.toDraw = 3
             str2 += drawCard(10, 75, '!+', 0)
-            str += `<rect class="cards-rect" x="212.5" y="225" transform="rotate(0,250,250)" width="35" height="50" rx="5" fill="white" stroke="#333" stroke-width="1.5" onmouseenter="$('.cards-rect,.cards-left,.cards-arrow').css('translate','0 3px')" onmouseleave="$('.cards-rect,.cards-left,.cards-arrow').css('translate','0')" onclick="tutor(18)" style="cursor: pointer;"></rect>`
+            str += `<rect class="cards-rect draw-pile-tutor" data-tutor-draw="18" x="212.5" y="225" transform="rotate(0,250,250)" width="35" height="50" rx="5" fill="white" stroke="#333" stroke-width="1.5"></rect>`
                 + `<text class="nomouse cards-arrow" x="229.5" y="270" text-anchor="middle" font-size="14" fill="#333">↓</text>`
                 + `<text class="nomouse cards-left" x="229.5" y="243" text-anchor="middle" font-size="12" fill="#333">摸牌</text>`
             $('.uno-svg').css('opacity', '1')
@@ -337,7 +333,7 @@ function tutor(step) {
             cur.rot = 0
             cur.banDraw = cur.toDraw = 2
             str2 += drawCard(10, 75, '!+', 0)
-            str += `<rect class="cards-rect" x="212.5" y="225" transform="rotate(0,250,250)" width="35" height="50" rx="5" fill="white" stroke="#333" stroke-width="1.5" onmouseenter="$('.cards-rect,.cards-left,.cards-arrow').css('translate','0 3px')" onmouseleave="$('.cards-rect,.cards-left,.cards-arrow').css('translate','0')" onclick="tutor(19)" style="cursor: pointer;"></rect>`
+            str += `<rect class="cards-rect draw-pile-tutor" data-tutor-draw="19" x="212.5" y="225" transform="rotate(0,250,250)" width="35" height="50" rx="5" fill="white" stroke="#333" stroke-width="1.5"></rect>`
                 + `<text class="nomouse cards-arrow" x="229.5" y="270" text-anchor="middle" font-size="14" fill="#333">↓</text>`
                 + `<text class="nomouse cards-left" x="229.5" y="243" text-anchor="middle" font-size="12" fill="#333">摸牌</text>`
             $('.uno-svg').css('opacity', '1')
@@ -353,7 +349,7 @@ function tutor(step) {
             cur.rot = 0
             cur.banDraw = cur.toDraw = 1
             str2 += drawCard(10, 75, '!+', 0)
-            str += `<rect class="cards-rect" x="212.5" y="225" transform="rotate(0,250,250)" width="35" height="50" rx="5" fill="white" stroke="#333" stroke-width="1.5" onmouseenter="$('.cards-rect,.cards-left,.cards-arrow').css('translate','0 3px')" onmouseleave="$('.cards-rect,.cards-left,.cards-arrow').css('translate','0')" onclick="tutor(20)" style="cursor: pointer;"></rect>`
+            str += `<rect class="cards-rect draw-pile-tutor" data-tutor-draw="20" x="212.5" y="225" transform="rotate(0,250,250)" width="35" height="50" rx="5" fill="white" stroke="#333" stroke-width="1.5"></rect>`
                 + `<text class="nomouse cards-arrow" x="229.5" y="270" text-anchor="middle" font-size="14" fill="#333">↓</text>`
                 + `<text class="nomouse cards-left" x="229.5" y="243" text-anchor="middle" font-size="12" fill="#333">摸牌</text>`
             $('.uno-svg').css('opacity', '1')
@@ -371,9 +367,6 @@ function tutor(step) {
             str2 += drawCard(10, 75, '!+', 0)
             str += `<line x1="320" y1="250" x2="300" y2="250" stroke="#333" stroke-width="1.5" marker-end="url(#arrow)"/>`
             str += drawCard(335, 250, cur.cen[2] + 'X', 0)
-            str += `<rect class="cards-rect" x="212.5" y="225" transform="rotate(0,250,250)" width="35" height="50" rx="5" fill="white" stroke="#333" stroke-width="1.5" onmouseenter="$('.cards-rect,.cards-left,.cards-arrow').css('translate','0 3px')" onmouseleave="$('.cards-rect,.cards-left,.cards-arrow').css('translate','0')" onclick="tutor(17)" style="cursor: pointer;"></rect>`
-                + `<text class="nomouse cards-arrow" x="229.5" y="270" text-anchor="middle" font-size="14" fill="#333">↓</text>`
-                + `<text class="nomouse cards-left" x="229.5" y="243" text-anchor="middle" font-size="12" fill="#333">摸牌</text>`
             $('.uno-svg').css('opacity', '1')
             $('.uno-btns-down').html(`<div class="btn-group">${getButton('default', `上一步`, `tutor(15)`, 'arrow-left')}${getButton('default', `下一步`, `tutor(21)`, 0, 0, 0, 0, 'arrow-right')}</div>`)
             break
@@ -419,10 +412,11 @@ function tutor(step) {
             cur.rot = 0
             cur.st = 3
             $('.uno-svg').css('opacity', '0.3')
-            $('.uno-btns-down').html(`<div class="btn-group">${getButton('default', `④`, `tutor(22)`, 'arrow-left')}${getButton('default', `牌型`, `tutor(24)`, 0, 0, 0, 0, 'arrow-right')}</div>`)
+            $('.uno-btns-down').html(`<div class="btn-group">${getButton('default', `⑤`, `tutor(22)`, 'arrow-left')}${getButton('default', `牌型`, `tutor(24)`, 0, 0, 0, 0, 'arrow-right')}</div>`)
             break
         case 24:
             $('.tutor').html(`<h3>牌型</h3>`)
+            str2 = '<defs>' + (window.getUnoCardSymbolDefs ? window.getUnoCardSymbolDefs() : '') + '</defs>'
             str2 += drawCardsDes(10, 80, ['R0', 'Y1', 'G2', 'B3'], '数字牌。')
             str2 += drawCardsDes(10, 140, ['R+', 'G+', 'B+', 'Y+'], '强制下家摸两张牌。')
             str2 += drawCardsDes(10, 200, ['G-', 'B-', 'Y-', 'R-'], '禁止下家出牌或摸牌。')
@@ -442,11 +436,17 @@ function tutor(step) {
     if (step <= 23) drawTable(), $('.uno-svg').show()
     else ($('.uno-svg').hide())
     if (cur.now == 0 && cur.toDraw) {
-        $('.cards-rect').attr('fill', 'white').attr('onmouseenter', `$('.cards-rect,.cards-left,.cards-arrow').css('translate','0 3px')`).attr('onmouseleave', `$('.cards-rect,.cards-left,.cards-arrow').css('translate','0')`).css('cursor', 'pointer')
-        $('.cards-arrow').attr('fill', '#333')
-        $('.cards-left').text('摸牌').attr('fill', '#333')
+        if (window.CardGameActions) CardGameActions.setUnoDrawPile('draw')
+        else {
+            $('.cards-rect').attr('fill', 'white')
+            $('.cards-arrow').attr('fill', '#333')
+            $('.cards-left').text('摸牌').attr('fill', '#333')
+        }
+    } else if (window.CardGameActions) {
+        CardGameActions.setUnoDrawPile(null)
+        $('.cards-left').text(cur.allLeft).attr('fill', '#999')
     } else {
-        $('.cards-rect').attr('fill', '#ddd').attr('onmouseenter', '').attr('onmouseleave', '').attr('onclick', '').css('cursor', '')
+        $('.cards-rect').attr('fill', '#ddd')
         $('.cards-arrow').attr('fill', '#bbb')
         $('.cards-left').text(cur.allLeft).attr('fill', '#999')
     }
@@ -462,20 +462,20 @@ function drawCardsDes(x, y, card, text) {
 }
 function drawCardDes(x, y, card, rot = 0, flipped = 0, cl = 0) {
     let col = card[0], num = card[1]
-    let colMap = { 'C': 'club', 'D': 'diamond', 'H': 'heart', 'S': 'spade' }
     let colColMap = { 'R': '#ed1c25', 'G': '#01a24f', 'B': '#0095da', 'Y': '#fede02' }
     if (num == '+') num = col != '!' ? '+2' : '+4'
     let str = ''
-    // <use x="${x - 4}" y="${y - 8}" transform="rotate(${rot},${x},${y})" href="#${colMap[col]}" />
     if (flipped == 2) str = `<rect class="cards-rect" x="${x - 10}" y="${y - 25}" transform="rotate(${rot},${x},${y})" width="35" height="50" rx="5" fill="#ddd" stroke="#333" stroke-width="1.5"></rect>`
         + `<text class="nomouse cards-arrow" x="${x + 7}" y="${y + 20}" text-anchor="middle" font-size="14">↓</text>`
         + `<text class="nomouse cards-left" x="${x + 7}" y="${y - 7}" text-anchor="middle" font-size="12"></text>`
         + `<text class="nomouse cards-text" x="${x + 7}" y="${y - 30}" text-anchor="middle" font-size="12" fill="#333"></text>`
     else if (flipped) str = `<rect x="${x - 10}" y="${y - 25}" transform="rotate(${rot},${x},${y})" width="35" height="50" rx="5" fill="#ddd" stroke="#333" stroke-width="1.5"></rect>`
     else {
-        // str = `<rect ${cl ? `class="card ${cl}"` : ''} style="cursor:pointer" x="${x - 11}" y="${y - 26}" transform="rotate(${rot},${x},${y})" width="37" height="52" rx="6" fill="${colColMap[col]}" stroke="#333" stroke-width="5"></rect>`
-        str = `<rect ${(cl) ? `class="card ${cl}" onmouseenter="$(this).attr('class').match('selected')?1:($('.${cl}').css('translate','0 -3px'),$('.${cl}-text').show())" onmouseleave="$(this).attr('class').match('selected')?1:($('.${cl}').css('translate','0'),$('.${cl}-text').hide())" onclick="selectCard('${cl}')"` : ''} style="cursor:pointer" x="${x - 10}" y="${y - 25}" transform="rotate(${rot},${x},${y})" width="35" height="50" rx="5" fill="${colColMap[col]}" stroke-width="1.5" stroke="white"></rect>`
-        if (cl && cl.match('card-old')) str = `<rect class="card ${cl}" style="cursor:pointer" x="${x - 10}" y="${y - 25}" transform="rotate(${rot},${x},${y})" width="35" height="50" rx="5" fill="${colColMap[col]}" stroke-width="1.5" stroke="white"></rect>`
+        if (cl && String(cl).match('card-old')) {
+            str = `<rect class="card ${cl}" x="${x - 10}" y="${y - 25}" transform="rotate(${rot},${x},${y})" width="35" height="50" rx="5" fill="${colColMap[col]}" stroke-width="1.5" stroke="white"></rect>`
+        } else {
+            str = `<rect ${cl ? `class="card card-hit ${cl}" data-card-slot="${cl}"` : ''} x="${x - 10}" y="${y - 25}" transform="rotate(${rot},${x},${y})" width="35" height="50" rx="5" fill="${colColMap[col]}" stroke-width="1.5" stroke="white"></rect>`
+        }
         if (cl) cl = 'nomouse ' + cl
         if (col == '!' && card[2]) {
             str += `<circle cx="${x + 6}" cy="${y + 40}" r="8" fill="${colColMap[card[2]]}" stroke="#333" stroke-width="1.5"></circle>`

@@ -1,5 +1,7 @@
 /* global sso, cur, me, tt, socket, drawTable, drawButtons, drawUnoAll, validCard, $ */
 
+window.socket = null
+
 const unoAi = {
     enabled: false,
     timer: null,
@@ -18,13 +20,13 @@ function stopUnoAiTimer() {
 }
 
 function startAIBattle() {
-    if (socket) socket.close()
+    if (window.socket) window.socket.close()
     unoAi.enabled = true
-    socket = {
+    window.socket = {
         send: handleUnoAiCommand,
         close: () => {
             stopUnoAiTimer()
-            socket = null
+            window.socket = null
             document.body.classList.remove('card-game-playing')
             $('.list-all').show()
             $('.chat').hide()
@@ -43,8 +45,8 @@ function startAIBattle() {
 }
 
 function handleUnoAiCommand(cmd) {
-    if (!unoAi.enabled || !socket) return
-    if (cmd === 'closing') return socket.close()
+    if (!unoAi.enabled || !window.socket) return
+    if (cmd === 'closing') return window.socket.close()
     if (cmd === 'ready' && (tt == 0 || tt == 3)) return initUnoAiRound()
     if (cmd.startsWith('hover')) return
     if (cmd === 'down') return unoAiDrawAction()
@@ -59,7 +61,7 @@ function handleUnoAiCommand(cmd) {
 function initUnoAiRound() {
     stopUnoAiTimer()
     const players = [0, 1, 2, 3]
-    const names = { 0: sso.realname || '你', 1: 'AI-1', 2: 'AI-2', 3: 'AI-3' }
+    const names = CardGameCopy.aiNameMap(3)
     unoAi.deck = drawUnoAll()
     unoAiShuffle(unoAi.deck)
     unoAi.discard = []
@@ -344,3 +346,9 @@ function scheduleUnoAiTurn() {
         return unoAiApplyTurnAdvance(unoAiNextPlayer(uid))
     }, 650)
 }
+
+window.startAIBattle = startAIBattle
+
+$(function () {
+    $('.btn-start-ai').on('click', startAIBattle)
+})

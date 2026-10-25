@@ -29,10 +29,13 @@
 
     <div class="proton-toolbar">
         <span class="proton-toolbar__cell">
-            <button type="button" class="spf btn btn-default btn-primary" onclick="toggleFriction(this)">阻力</button><br> [F]
+            <button type="button" class="spf btn btn-default btn-primary" onclick="toggleFriction(this)">阻力</button><br><span class="kbd-hint" aria-hidden="true">[F]</span>
         </span>
         <span class="proton-toolbar__cell proton-toolbar__cell--gap">
-            <button type="button" class="sps btn btn-default" onclick="toggleBound(this)">边界</button><br> [S]
+            <button type="button" class="sps btn btn-default" onclick="toggleBound(this)">边界</button><br><span class="kbd-hint" aria-hidden="true">[S]</span>
+        </span>
+        <span class="proton-toolbar__cell proton-toolbar__cell--gap">
+            <button type="button" class="strail btn btn-default" onclick="toggleTrail(this)">轨迹</button><br><span class="kbd-hint kbd-hint--spacer" aria-hidden="true">·</span>
         </span>
         <span class="proton-toolbar__cell proton-toolbar__cell--gap">
             <div class="btn-group">
@@ -40,7 +43,7 @@
                 <button type="button" class="sp2 btn btn-default" onclick="setSpeed(this, 0.1)">0.1x</button>
                 <button type="button" class="sp3 btn btn-default" onclick="setSpeed(this, 0.5)">0.5x</button>
                 <button type="button" class="sp4 btn btn-default btn-primary" onclick="setSpeed(this, 1)" aria-label="播放"><svg class="icon-svg" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1 L11 6 L3 11 Z"/></svg></button>
-            </div><br> [1~4]
+            </div><br><span class="kbd-hint" aria-hidden="true">[1~4]</span>
         </span>
         <span class="proton-toolbar__speed" aria-live="polite" title="速率标量 |v|">速度 <span class="v">0.00</span></span>
     </div>
@@ -58,6 +61,7 @@
 
         <div class="m-div">
             <svg class="m-svg" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg"></svg>
+            <svg class="trail-svg" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
         </div>
 
         <div class="f-div" onmousemove="setforce(event)" onmouseleave="setforce(0,1)">
@@ -80,14 +84,15 @@
 
     <div class="help-block bodypad">
         <h3>说明</h3>
-        <p>鼠标在框中点击，可设置 <span style="color:#27c63a">电场</span> 和 <span style="color:#4d70c2">磁场</span>，也可在受力图中临时施加一个力。<br>
-            设置 <span style="color:#27c63a">电场</span>、<span style="color:#4d70c2">磁场</span> 后，可点击 <span class="icon-close">×</span> 或用快捷键 <span style="color:#27c63a">[E]</span>、<span style="color:#4d70c2">[B]</span> 取消。<br>
+        <p>在左侧 <span style="color:#27c63a">电场</span>、<span style="color:#4d70c2">磁场</span> 区域和下方受力图中点击或拖动，可设置场与临时外力。<span class="help-desktop-only">（鼠标操作）</span><span class="help-mobile-only">（触屏点击或拖动）</span><br>
+            设置场后，点画布旁的 <span class="icon-close">×</span> 可清除。<span class="help-desktop-only">快捷键 <span style="color:#27c63a">[E]</span>、<span style="color:#4d70c2">[B]</span> 亦可取消。</span><br>
             目前仅支持平面内的匀强电场和垂直于平面的匀强磁场。
         </p>
-        <p>[S] 键开启边界，越过边界后粒子会被反弹。由于技术困难，边界与磁场同时开启时，能量可能不守恒。</p>
-        <p>[F] 键切换阻力，包含静摩擦和滑动摩擦。</p>
-        <p class="text-note">也可按住 [F] 键大力刹车，从而快速达到平衡状态。</p>
-        <p>[1-4] 键调节模拟速率。</p>
+        <p><span class="help-mobile-only">点工具栏「边界」</span><span class="help-desktop-only">按 [S] 或点「边界」</span>可开启边界，越过边界后粒子会被反弹。由于技术困难，边界与磁场同时开启时，能量可能不守恒。</p>
+        <p><span class="help-mobile-only">点「阻力」</span><span class="help-desktop-only">按 [F] 或点「阻力」</span>切换阻力（静摩擦与滑动摩擦）。<span class="help-desktop-only">按住 [F] 可大力刹车，更快达到平衡。</span></p>
+        <p>点工具栏「轨迹」可在主画布上显示粒子运动路径；再次点击关闭并清空。</p>
+        <p class="help-desktop-only">按 [1]–[4] 调节模拟速率（与工具栏倍速按钮相同）。</p>
+        <p class="help-mobile-only">用工具栏暂停 / 0.1x / 0.5x / 播放 调节模拟速率。</p>
     </div>
 
     <footer class="site-footer" role="contentinfo">

@@ -53,12 +53,11 @@ function hookExitForAi() {
     }
 }
 
-function listTables() {}
-
 function drawTable() {
     const svgParts = []
     svgParts.push(getCardDefs())
-    svgParts.push('<rect x="100" y="100" width="300" height="300" rx="50" stroke="#333" stroke-width="1.5" fill="transparent"></rect>')
+    if (window.CardTableSurface) svgParts.push(CardTableSurface.squareTable())
+    else svgParts.push('<rect x="100" y="100" width="300" height="300" rx="50" stroke="#333" stroke-width="1.5" fill="transparent"></rect>')
     if (state.cur && state.tt === 1) svgParts.push(renderPassBacks())
     if (state.cur && state.cur.recentTrick) svgParts.push(renderTrickLayer(state.cur.recentTrick, true))
     if (state.cur && state.cur.trick) svgParts.push(renderTrickLayer(state.cur.trick, false))
@@ -265,8 +264,10 @@ function renderButtons() {
     const readySummary = `${state.cur.readyCnt || 0} / ${playerCount}`
     if (state.tt === 0) {
         const offlineNames = listOfflineNames()
-        if (offlineNames.length) {
-            btns.push(`<div class="hearts-alert">${offlineNames.join('、')} 掉线了。<br>可稍等${(state.cur.num || 0) == 4 ? '，或者' : '。'}</div>`)
+        if (!AI_ONLY_MODE && offlineNames.length) {
+            btns.push(
+                `<div class="hearts-alert">${offlineNames.join('、')} 暂离。<br>请稍后${(state.cur.num || 0) == 4 ? '，或' : '。'}</div>`
+            )
         }
         if ((state.cur.num || 0) >= 1) {
             const youReady = state.cur.isReady && state.cur.isReady[you]
@@ -285,7 +286,7 @@ function renderButtons() {
               : `传牌 ${state.selected.size} / 3`
         if (window.UIButtons && UIButtons.build) {
             detail.push(
-                UIButtons.build('primary', passLabel, 'window.heartsSubmitPass && heartsSubmitPass()', {
+                UIButtons.build('primary', passLabel, 'hearts.submitPass', {
                     glyph: alreadyPassed || state.passQueued ? '' : passDir,
                     disabled: !canSubmit
                 })
@@ -301,7 +302,7 @@ function renderButtons() {
         if (you == state.cur.now) {
             if (window.UIButtons && UIButtons.build) {
                 detail.push(
-                    UIButtons.build('primary', '出牌', 'window.heartsPlay && heartsPlay()', {
+                    UIButtons.build('primary', '出牌', 'hearts.play', {
                         disabled: !canUse
                     })
                 )
@@ -429,11 +430,11 @@ function formatName(uid) {
 function buildReadyButton(label, glyph = 'play') {
     const danger = state.cur.wasReady !== undefined && state.cur.wasReady !== -1 ? ' btn-danger' : ''
     const icon = glyph === 'repeat' ? 'repeat' : 'play'
-    const action = AI_ONLY_MODE ? "window.heartsReady && heartsReady()" : "socket && socket.send('ready')"
+    const action = AI_ONLY_MODE ? 'hearts.ready' : "socket && socket.send('ready')"
     if (window.UIButtons && UIButtons.build) {
         return UIButtons.build(`default${danger} btn-ready`, label, action, { glyph: icon })
     }
-    return `<button class="btn btn-default${danger} btn-ready" onclick="${action}">${window.UIButtons ? UIButtons.glyph(icon) : ''}${label}</button>`
+    return `<button type="button" class="btn btn-default${danger} btn-ready" data-action="hearts.ready">${window.UIButtons ? UIButtons.glyph(icon) : ''}${label}</button>`
 }
 
 function listOfflineNames() {
@@ -457,6 +458,7 @@ function getCardDefs() {
             <path id="spade-symbol" d="M12 2C9 7 4 9 4 14c0 2 2 4 4 4 1 0 2 0 3-1 0 0 .32 2-2 5h6c-2-3-2-5-2-5 1 1 2 1 3 1 2 0 4-2 4-4 0-5-5-7-8-12" />
             <path id="diamond-symbol" d="m19 12-7 10-7-10 7-10" />
             <path id="club-symbol" d="M12 2c2.3 0 4.3 2 4.3 4.2a4.45 4.45 0 0 1-2.26 3.8c1-.5 2.46-.5 2.46-.5 2.5 0 4.5 1.8 4.5 4.3S19 18 16.5 18c0 0-1.5 0-3.5-1 0 0-.3 2 2 5H9c2.3-3 2-5 2-5-2 1-3.5 1-3.5 1C5 18 3 16.3 3 13.8s2-4.3 4.5-4.3c0 0 1.46 0 2.46.5-.3-.17-2.17-1.23-2.26-3.8C7.7 4 9.7 2 12 2" />
+            ${window.CardTableSurface ? CardTableSurface.feltGradientDefsSquare() : ''}
         </defs>`
 }
 
@@ -473,8 +475,7 @@ function drawCard(x, y, card, options = {}) {
     if (options.faceDown) classes.push('card-back')
     const attrs = []
     if (options.clickable && !options.faceDown && !options.disabled) {
-        attrs.push(`onclick="heartsSelectCard('${card}')"`)
-        attrs.push(`ondblclick="heartsAutoAct('${card}')"`)
+        attrs.push(`data-hearts-card="${card}"`)
     }
     if (options.selected) attrs.push('data-selected="true"')
     if (options.disabled) attrs.push('data-disabled="true"')
@@ -511,7 +512,8 @@ function renderDecor() {
 }
 
 function renderAiLobby() {
-    $('.list-table').html('<li class="text-muted" style="cursor:default;">AI 对战模式已启用，点击“开始 AI 对战”。</li>')
+    if (typeof window.renderCardGameLobbyList === 'function') window.renderCardGameLobbyList()
+    else $('.list-table').html('<li class="card-game-lobby__list-item">选择「开始对局」，或先打开「规则教程」。</li>')
 }
 
 function startAIBattle() {
@@ -533,7 +535,7 @@ function startAIBattle() {
         heartsBroken: false,
         hands: { 0: [], 1: [], 2: [], 3: [] },
         handCounts: { 0: 0, 1: 0, 2: 0, 3: 0 },
-        name: { 0: sso.realname || '你', 1: 'AI-1', 2: 'AI-2', 3: 'AI-3' },
+        name: CardGameCopy.aiNameMap(3),
         totalScores: { 0: 0, 1: 0, 2: 0, 3: 0 },
         roundScores: { 0: 0, 1: 0, 2: 0, 3: 0 },
         isReady: { 0: 0, 1: 1, 2: 1, 3: 1 },
@@ -553,6 +555,7 @@ function startAIBattle() {
     drawTable()
     renderButtons()
 }
+window.startAIBattle = startAIBattle
 
 window.heartsReady = function () {
     if (!AI_ONLY_MODE) return
