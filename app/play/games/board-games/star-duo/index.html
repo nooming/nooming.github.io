@@ -392,6 +392,22 @@ function buildLines() {
   }
   return res;
 }
+function assertLinesGeometry() {
+  const neigh = buildTriNeigh();
+  for (const pid in lines) {
+    const nb = neigh[pid];
+    for (let d = 0; d < 6; d++) {
+      const chain = lines[pid][d];
+      if (!chain.length) continue;
+      if (nb.indexOf(chain[0]) < 0) {
+        console.error('[星铎棋] 吃子线首格非邻接', pid, 'dir', d, 'cell', chain[0]);
+      }
+    }
+  }
+}
+function canPlaceAt(pid, player) {
+  return board[pid] === 0 && getFlips(pid, player).length > 0;
+}
 function assignIds() {
   const items = Object.keys(id2tri).map(pid => [pid, id2tri[pid][0], id2tri[pid][1]]);
   items.sort((a, b) => a[2] - b[2] || a[1] - b[1]);
@@ -402,6 +418,7 @@ function assignIds() {
 function initGeometry() {
   id2tri = genTri();
   lines = buildLines();
+  assertLinesGeometry();
   [id2disp, disp2id] = assignIds();
   edgeWeight = {};
   for (const pid in id2tri) {
@@ -781,7 +798,7 @@ function bumpSkip(msg, ms) {
   skipUntil = Date.now() + (ms || 900);
   lastStatusHtml = '';
   updateStatus();
-  draw();
+  draw(true);
 }
 function handleTileClick(pid) {
   if (gameOver || currentPlayer === 0) return;
@@ -790,7 +807,7 @@ function handleTileClick(pid) {
     return;
   }
   if (pveMode && currentPlayer === botColor) return;
-  if (!getFlips(pid, currentPlayer).length) {
+  if (!canPlaceAt(pid, currentPlayer)) {
     bumpSkip('此处不可落子', 900);
     return;
   }
@@ -801,9 +818,9 @@ function handleTileClick(pid) {
   }
   afterMove();
 }
-function draw() {
+function draw(skipResolve) {
   const boardBusy = animating || botThinking || botPending || searchMode;
-  if (!gameOver && !boardBusy && currentPlayer !== 0) resolveStuck();
+  if (!skipResolve && !gameOver && !boardBusy && currentPlayer !== 0) resolveStuck();
   if (pendingAnim) {
     const a = pendingAnim;
     pendingAnim = null;
@@ -824,7 +841,7 @@ function draw() {
     const busy = !!(busyUntil[pid] && busyUntil[pid] > now);
     if (!busy) setFaceStates(pid, board[pid]);
     const isLast = settings.showAiHint && (pid === lastBotPid);
-    const isHint = !!(showHints && hintPlayer && board[pid] === 0 && getFlips(pid, hintPlayer).length);
+    const isHint = !!(showHints && hintPlayer && canPlaceAt(pid, hintPlayer));
     if (isHint) hintCount++;
     if (t.last !== isLast) { t.last = isLast; t.root.classList.toggle('lastbot', isLast); }
     if (t.hint !== isHint) { t.hint = isHint; t.root.classList.toggle('hint', isHint); }
@@ -1025,7 +1042,7 @@ function showDifficultyScreen() {
     { key: '体验', cls: 'easy',   desc: '轻松上手 · AI 选择翻子最多的位置' },
     { key: '标准', cls: 'normal', desc: '均衡难度 · AI 考虑边角权重' },
     { key: '磨难', cls: 'hard',   desc: '全力应战 · AI 搜索两步最优' },
-    { key: '危机合约', cls: 'hell',   desc: '极限挑战 · AI 迭代加深搜索最优' }
+    { key: '危机合约', cls: 'hell',   desc: '极限挑战 · 迭代加深 + 深度搜索' }
   ];
   for (const d of diffs) {
     const btn = document.createElement('div');
@@ -1491,6 +1508,28 @@ function hellSort(arr, n) {
     arr[j + 1] = v;
   }
 }
+/** 若某着法一步吃完对方所有棋子，必须优先（不依赖深度搜索是否来得及算到） */
+function hellPickOppWipe(b, player, moves) {
+  const opp = 3 - player;
+  let hadOpp = false;
+  for (let i = 0; i < b.length; i++) {
+    if (b[i] === opp) { hadOpp = true; break; }
+  }
+  if (!hadOpp) return -1;
+  let pick = -1;
+  let bestFlips = -1;
+  for (let m = 0; m < moves.count; m++) {
+    const mv = moves[m];
+    hellApply(b, mv.i, player, mv.flips);
+    let rem = 0;
+    for (let i = 0; i < b.length; i++) if (b[i] === opp) rem++;
+    hellUndo(b, mv.i, player, mv.flips);
+    if (rem !== 0) continue;
+    const fc = mv.flips.length;
+    if (fc > bestFlips) { bestFlips = fc; pick = mv.i; }
+  }
+  return pick;
+}
 function hellOrder(moves, n, player, ply, ttMove, empties) {
   const late = empties <= 14;
   const k = hellKill[ply];
@@ -1509,7 +1548,10 @@ function hellOrder(moves, n, player, ply, ttMove, empties) {
     const ew = edge[sq];
     s += ew * 20000;
     if (ew >= corner) s += 300000;
-    s += mv.flips.length * (late ? 60 : 28) + ew * 120;
+    const fc = mv.flips.length;
+    s += fc * (late ? 60 : 28) + ew * 120;
+    if (fc >= 4) s += fc * fc * 9000;
+    if (fc >= 7) s += 1800000;
     mv.ord = s;
   }
   hellSort(moves, n);
@@ -1543,7 +1585,7 @@ function evalIndexedMobility(b, player, empties, myMoves, oppMoves) {
   return evalIndexed(b, player) + (myMoves.count - oppMoves.count) * mobW;
 }
 function hellEval(b, player, empties, myMoves, oppMoves) {
-  if (empties <= 12) return evalIndexed(b, player);
+  if (empties <= 16) return evalIndexed(b, player);
   return evalIndexedMobility(b, player, empties, myMoves, oppMoves);
 }
 function hellIndexedHardScore(b, player, sqI) {
@@ -1569,12 +1611,19 @@ function hellIndexedHardScore(b, player, sqI) {
   return myScore - (oppBest === -Infinity ? -1000 : oppBest) * 1.2;
 }
 function contractEval(b, player, empties, ply) {
+  if (empties <= 16) return evalIndexed(b, player);
   const moves = genMovesInto(b, player, ply, false);
   const opp = 3 - player;
   const oppMoves = genMovesInto(b, opp, ply + 1, false);
   return evalIndexedMobility(b, player, empties, moves, oppMoves);
 }
 function contractNegamax(b, player, depth, alpha, beta, empties, ply) {
+  if (hellAbort) return 0;
+  hellNodes++;
+  if ((hellNodes & 1023) === 0 && (Date.now() >= hellDeadline || hellNodes > 4000000)) {
+    hellAbort = true;
+    return 0;
+  }
   const opp = 3 - player;
   const moves = genMovesInto(b, player, ply, depth > 0);
   const nMoves = moves.count;
@@ -1621,7 +1670,7 @@ function contractRootPick(b, player, empties, maxDepth, deadline, floorPid) {
   if (!moves.count) return floorI;
   hellOrder(moves, moves.count, player, 0, -1, empties);
   const opp = 3 - player;
-  const plySearch = Math.max(4, Math.min(maxDepth | 0, empties > 32 ? 5 : (empties > 18 ? 6 : 7)));
+  const plySearch = Math.max(5, Math.min(maxDepth | 0, empties > 32 ? 6 : (empties > 18 ? 7 : (empties > 10 ? 8 : 10))));
   let bestI = floorI;
   let bestDeep = -HELL_INF;
   let floorDeep = -HELL_INF;
@@ -1670,7 +1719,6 @@ function contractRootPick(b, player, empties, maxDepth, deadline, floorPid) {
     searchMode = false;
   }
   if (sFinal + 0.01 < floorScore) return floorI;
-  if (bestI !== floorI && bestDeep <= floorDeep) return floorI;
   return bestI;
 }
 function hellNegamax(b, player, depth, alpha, beta, empties, ply) {
@@ -1793,11 +1841,9 @@ function hellBestMove(player) {
     const nRoot = root0.count;
     if (!nRoot) return null;
     if (nRoot === 1) return aiPids[root0[0].i];
-    const onlyI = root0[0].i;
-    searchMode = true;
-    const floorPid = hellMainTwoPly(player);
-    searchMode = false;
-    if (!floorPid) return aiPids[onlyI];
+    const wipeI = hellPickOppWipe(b, player, root0);
+    if (wipeI >= 0) return aiPids[wipeI];
+    let bestI = root0[0].i;
     hellHist[1].fill(0);
     hellHist[2].fill(0);
     for (let i = 0; i < hellKill.length; i++) {
@@ -1806,17 +1852,48 @@ function hellBestMove(player) {
     }
     hellAge++;
     if (hellAge >= 65535) { hellTTAge.fill(0); hellAge = 1; }
-    let budget = 1600;
-    if (empties <= 32) budget = 2200;
-    if (empties <= 22) budget = 3000;
-    if (empties <= 14) budget = 4000;
-    const deadline = Date.now() + budget;
-    hellDeadline = deadline;
+    let budget = 2800;
+    if (empties <= 34) budget = 3800;
+    if (empties <= 24) budget = 5500;
+    if (empties <= 16) budget = 8000;
+    if (empties <= 10) budget = 11000;
+    hellDeadline = Date.now() + budget;
     hellAbort = false;
     hellNodes = 0;
-    let maxDepth = empties > 30 ? 6 : 7;
-    const pickI = contractRootPick(b, player, empties, maxDepth, deadline, floorPid);
-    return aiPids[pickI >= 0 ? pickI : onlyI];
+    const minDepth = empties > 28 ? 4 : 5;
+    let maxDepth = 7;
+    if (empties <= 26) maxDepth = 8;
+    if (empties <= 18) maxDepth = 9;
+    if (empties <= 12) maxDepth = 11;
+    if (empties <= 8) maxDepth = 14;
+    let lastComplete = false;
+    let d = minDepth;
+    while (Date.now() < hellDeadline - 100) {
+      hellAbort = false;
+      hellNodes = 0;
+      const depth = d <= maxDepth ? d : maxDepth;
+      const r = hellRoot(b, player, depth, empties);
+      if (!hellAbort && r.move >= 0) {
+        bestI = r.move;
+        lastComplete = true;
+      }
+      if (hellAbort) break;
+      d++;
+    }
+    if (!lastComplete && nRoot > 1 && Date.now() < hellDeadline - 200) {
+      searchMode = true;
+      const floorPid = hellMainTwoPly(player);
+      searchMode = false;
+      if (floorPid) {
+        hellAbort = false;
+        hellNodes = 0;
+        const pickI = contractRootPick(b, player, empties, maxDepth, hellDeadline, floorPid);
+        if (pickI >= 0) bestI = pickI;
+      }
+    }
+    const wipeLate = hellPickOppWipe(b, player, root0);
+    if (wipeLate >= 0) bestI = wipeLate;
+    return aiPids[bestI];
   } finally {
     restoreBoard(liveSnap);
     searchMode = false;
