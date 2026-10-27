@@ -16,7 +16,7 @@ GitHub Pages 静态站：顶栏 **首页 · 实验 · 工具 · 阅读 · 娱乐
 - **Citywalk**：[app/citywalk/](../app/citywalk/)（说明见 [app/citywalk/README.md](../app/citywalk/README.md)）
 
 ### 首页 · 实践（`#practice`）
-- **停车**：[app/parking-pso/](../app/parking-pso/) — 匈牙利或 PSO（在线优化服务）
+- **停车**：[app/parking-pso/](../app/parking-pso/) — 匈牙利或 PSO（在线优化服务）；源码与 `scripts/deploy.ps1` 同目录
 - **物理探究**：https://physics.noomings.com（外链）
 
 ### 实验（顶栏 · `app/lab/`）

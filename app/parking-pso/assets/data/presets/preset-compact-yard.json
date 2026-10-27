@@ -1,0 +1,86 @@
+{
+  "lot": { "width": 130, "height": 100 },
+  "entrance": [28, 22],
+  "entrances": [[28, 22], [98, 78]],
+  "inner": {
+    "x_min": 28,
+    "x_max": 98,
+    "y_min": 22,
+    "y_max": 78
+  },
+  "road": {
+    "centerline": [
+      [28, 22],
+      [98, 22],
+      [98, 48],
+      [58, 48],
+      [58, 78],
+      [28, 78],
+      [28, 22]
+    ],
+    "width": 5.0,
+    "closed": true
+  },
+  "obstacle": {
+    "x_min": 62,
+    "x_max": 74,
+    "y_min": 52,
+    "y_max": 68
+  },
+  "obstacles": [
+    {
+      "points": [
+        [62, 52],
+        [74, 52],
+        [74, 68],
+        [62, 68]
+      ]
+    }
+  ],
+  "buildings": [
+    [28, 92],
+    [63, 92],
+    [98, 92],
+    [28, 8],
+    [63, 8],
+    [98, 8]
+  ],
+  "slots": [
+    [23.5, 26.0, 0.0],
+    [102.5, 26.0, 0.0],
+    [23.5, 36.0, 0.0],
+    [102.5, 36.0, 0.0],
+    [23.5, 58.0, 0.0],
+    [48.5, 58.0, 0.0],
+    [48.5, 68.0, 0.0],
+    [102.5, 68.0, 0.0]
+  ],
+  "n_veh": 8,
+  "vehicle_destinations": [0, 1, 2, 3, 4, 5, 0, 1],
+  "vehicle_entrances": [0, 0, 0, 1, 1, 1, 0, 1],
+  "entrance_mode": "auto",
+  "slot_types": ["normal", "normal", "normal", "normal", "normal", "normal", "normal", "normal"],
+  "vehicle_requirements": ["normal", "normal", "normal", "normal", "normal", "normal", "normal", "normal"],
+  "soft_constraints": {
+    "type_mismatch_penalty": 0
+  },
+  "pso": {
+    "n_particles": 40,
+    "n_iter": 600,
+    "w": 0.7,
+    "c1": 1.5,
+    "c2": 1.5,
+    "v_max": 0.25
+  },
+  "constraints": {
+    "snap_slots_to_inner_road": true,
+    "snap_entrance_to_inner": true
+  },
+  "display": {
+    "length_unit": "m",
+    "time_unit": "s",
+    "meters_per_unit": 2,
+    "scale_bar_m": 16,
+    "coord_note": "L 形道路 + 较小地块"
+  }
+}

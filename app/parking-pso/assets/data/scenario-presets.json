@@ -1,0 +1,28 @@
+{
+  "presets": [
+    {
+      "id": "default",
+      "label": "默认 · 双入口均衡",
+      "file": "default-scenario.json",
+      "hint": "标准环形闭环道路，双入口；12 车位 / 12 车。"
+    },
+    {
+      "id": "single-gate",
+      "label": "单入口高峰",
+      "file": "presets/preset-single-gate.json",
+      "hint": "西侧开口的 U 形非闭环路，仅一个入口；适合看单口排队。"
+    },
+    {
+      "id": "tight-capacity",
+      "label": "车位紧张",
+      "file": "presets/preset-tight-capacity.json",
+      "hint": "内环收窄、花坛加大的小环路，10 车位 / 10 车。"
+    },
+    {
+      "id": "compact-yard",
+      "label": "紧凑地块",
+      "file": "presets/preset-compact-yard.json",
+      "hint": "L 形道路 + 较小地块，8 车位 / 8 车。"
+    }
+  ]
+}

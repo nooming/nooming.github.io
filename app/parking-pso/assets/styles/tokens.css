@@ -173,6 +173,14 @@ body {
     .section-header p {
         font-size: 0.9rem;
         margin-top: 12px;
+        line-height: 1.45;
+    }
+
+    /* 与 site-shell 移动顶区一致：少占纵向，把空间留给地图 */
+    .parking-pso-panel .hint--header {
+        font-size: 0.8rem;
+        padding: 8px 10px;
+        margin-bottom: 8px;
     }
 
     .app-panel {

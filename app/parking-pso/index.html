@@ -2,34 +2,37 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f1623" />
   <meta name="description" content="停车方案设计器：自动布位、多方案对比、优化分配、到达仿真。" />
   <meta name="keywords" content="停车分配,PSO,粒子群,匈牙利算法,小区规划,在线工具" />
-  <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' fill='%233b82f6'/%3E%3Cpath fill='%23fff' d='M48 18a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm-18 26h36l8 32h-10l-3-13H35l-3 13H22l8-32zm11 11h14l-2-8h-10l-2 8z'/%3E%3C/svg%3E">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' fill='%233b82f6'/%3E%3Cpath fill='%23fff' d='M48 18a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm-18 26h36l8 32h-10l-3-13H35l-3 13H22l8-32zm11 11h14l-2-8h-10l-2 8z'/%3E%3C/svg%3E">
-  <link rel="shortcut icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' fill='%233b82f6'/%3E%3Cpath fill='%23fff' d='M48 18a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm-18 26h36l8 32h-10l-3-13H35l-3 13H22l8-32zm11 11h14l-2-8h-10l-2 8z'/%3E%3C/svg%3E">
+  <link rel="icon" href="/assets/brand/noomings-mark.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
   <title>停车方案设计器</title>
   <script>window.PARKING_API_BASE = window.PARKING_API_BASE || "";</script>
   <link rel="stylesheet" href="assets/styles/tokens.css" />
   <link rel="stylesheet" href="assets/styles/app.css" />
 </head>
-<body class="page-container">
-  <div class="page-header">
-    <div class="header-top">
-      <a href="../../" class="back-btn js-local-nav">返回上一级</a>
-      <a href="../../index.html" class="back-btn js-local-nav">返回主页</a>
+<body class="page-container page-container--app-topbar">
+  <header class="app-topbar" role="banner">
+    <div class="app-topbar__inner">
+      <div class="app-topbar__brand">
+        <a class="app-topbar__home js-local-nav" href="../../" title="返回 noomings 首页" aria-label="返回 noomings 首页">
+          <img class="app-topbar__mark" src="/assets/brand/noomings-mark.svg" width="28" height="28" alt="" decoding="async" />
+        </a>
+        <p class="app-topbar__label">
+          <span class="app-topbar__name">停车方案</span>
+          <span class="app-topbar__product">设计器</span>
+        </p>
+      </div>
+      <p id="api-status" class="app-topbar__status api-status api-status--pending" role="status">
+        <span class="app-topbar__status-dot" aria-hidden="true"></span>
+        <span class="app-topbar__status-label">检查 API…</span>
+      </p>
     </div>
-    <div class="section-header section-header--page">
-      <h1>停车方案设计器</h1>
-      <p>规划布局 · 多方案对比 · 优化分配 · 到达仿真回放。</p>
-    </div>
-  </div>
+  </header>
 
   <div class="app-panel parking-pso-panel">
-    <div class="hint hint--header" title="右键拖动画布平移；滚轮缩放；双击空白适应地块。可拖拽入口、花坛、道路顶点、楼、车位。">
-      右键平移 · 滚轮缩放 · 拖拽编辑场景要素。
-    </div>
-
     <div class="layout">
 
       <!-- ===== Left: map canvas ===== -->
@@ -66,49 +69,22 @@
         <nav class="side-tabs" aria-label="工作台导航">
 
           <button type="button" class="side-tab is-active" data-tab="overview" title="总览">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
-              <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
-            </svg>
+            <span class="side-tab__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="/assets/icons/ui/hub-sprite.svg#i-target"/></svg></span>
             <span>总览</span>
           </button>
 
           <button type="button" class="side-tab" data-tab="scene" title="场景编辑">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-            </svg>
+            <span class="side-tab__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="/assets/icons/ui/hub-sprite.svg#i-map"/></svg></span>
             <span>场景</span>
           </button>
 
           <button type="button" class="side-tab" data-tab="vehicle" title="车辆分配">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v5"/>
-              <circle cx="15.5" cy="17.5" r="2.5"/><circle cx="5.5" cy="17.5" r="2.5"/>
-            </svg>
+            <span class="side-tab__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="/assets/icons/ui/hub-sprite.svg#i-parking"/></svg></span>
             <span>车辆</span>
           </button>
 
-          <button type="button" class="side-tab" data-tab="result" title="优化结果">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
-              <line x1="6" y1="20" x2="6" y2="14"/><polyline points="2 20 22 20"/>
-            </svg>
-            <span>结果</span>
-          </button>
-
-          <button type="button" class="side-tab" data-tab="schemes" title="方案与对比">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M4 6h16M4 10h16M4 14h10M4 18h6"/>
-              <circle cx="17" cy="14" r="2"/>
-            </svg>
-            <span>方案</span>
-          </button>
-
-          <button type="button" class="side-tab" data-tab="simulate" title="到达仿真">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <polygon points="5 3 19 12 5 21 5 3"/>
-            </svg>
+          <button type="button" class="side-tab" data-tab="simulate" title="陆续到达仿真">
+            <span class="side-tab__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="/assets/icons/ui/hub-sprite.svg#i-flask"/></svg></span>
             <span>仿真</span>
           </button>
 
@@ -116,8 +92,9 @@
 
         <!-- Workspace content body -->
         <div class="workspace-body">
-          <p id="api-status" class="workspace-status api-status api-status--pending" role="status">检查 API 连接…</p>
-          <p id="workspace-status" class="workspace-status workspace-status--message" role="status" hidden></p>
+          <div class="workspace-subchrome" role="region" aria-label="操作状态">
+            <p id="workspace-status" class="workspace-status workspace-status--message" role="status" hidden></p>
+          </div>
           <div class="workspace-panels">
 
             <!-- ===== Tab: 总览 ===== -->
@@ -125,110 +102,18 @@
               <div class="panel">
                 <h2>总览</h2>
                 <div id="workflow-first-hint" class="workflow-first-hint" hidden>
-                  <p>按下方步骤完成：画场地 → 自动布位 → 优化 → 保存对比 → 仿真。</p>
+                  <p>画场地 → 布位 → 仿真。</p>
                   <button type="button" id="btn-workflow-dismiss">知道了</button>
                 </div>
                 <ol id="workflow-steps" class="workflow-steps" aria-label="主流程步骤"></ol>
                 <p id="lot-dim-hint" class="panel-note"></p>
               </div>
-              <div class="panel panel--run">
-                <h2>运行优化</h2>
-                <p class="panel-note panel-note--compact">
-                  长度单位 <strong>m</strong>；优化总时间 <strong>s</strong>。点击下方底栏「运行优化」执行。
-                </p>
-                <div class="prop-grid">
-                  <label for="n-veh">车辆数（辆）</label>
-                  <input type="number" id="n-veh" min="1" step="1" value="8" />
-                </div>
-                <div class="prop-grid">
-                  <label for="optimizer-method">优化方式</label>
-                  <select id="optimizer-method">
-                    <option value="exact" selected>匈牙利 · 全局最优</option>
-                    <option value="pso">PSO · 近似收敛</option>
-                  </select>
-                </div>
-                <p id="optimizer-method-hint" class="panel-note panel-note--compact optimizer-method-hint">
-                  车辆数较少时优先匈牙利（全局最优）；PSO 用于观察启发式收敛与调参实验。
-                </p>
-                <div id="pso-lab-panel" class="pso-lab" hidden>
-                  <h3 class="pso-lab__title">PSO 实验室</h3>
-                  <p class="panel-note panel-note--compact">选择预设或微调参数；运行后在「结果」页查看收敛曲线与相对精确解偏差。</p>
-                  <div class="pso-preset-seg" role="group" aria-label="PSO 预设">
-                    <button type="button" class="pso-preset-btn" data-preset="speed">速度优先</button>
-                    <button type="button" class="pso-preset-btn is-active" data-preset="balanced">平衡</button>
-                    <button type="button" class="pso-preset-btn" data-preset="accuracy">精度优先</button>
-                  </div>
-                  <details class="pso-lab-advanced">
-                    <summary>高级参数</summary>
-                    <div class="prop-grid prop-grid--pair">
-                      <div class="prop-field">
-                        <label for="pso-n-particles" title="粒子数量">粒子数</label>
-                        <input type="number" id="pso-n-particles" min="4" step="1" />
-                      </div>
-                      <div class="prop-field">
-                        <label for="pso-n-iter" title="最大迭代次数">迭代上限</label>
-                        <input type="number" id="pso-n-iter" min="20" step="10" />
-                      </div>
-                    </div>
-                    <div class="prop-grid prop-grid--pair">
-                      <div class="prop-field">
-                        <label for="pso-w">惯性 w</label>
-                        <input type="range" id="pso-w" min="0.4" max="0.95" step="0.05" />
-                        <span id="pso-w-val" class="range-val"></span>
-                      </div>
-                      <div class="prop-field">
-                        <label for="pso-vmax">速度上限</label>
-                        <input type="range" id="pso-vmax" min="0.08" max="0.45" step="0.01" />
-                        <span id="pso-vmax-val" class="range-val"></span>
-                      </div>
-                    </div>
-                    <div class="prop-grid prop-grid--pair">
-                      <div class="prop-field">
-                        <label for="pso-c1">认知 c1</label>
-                        <input type="range" id="pso-c1" min="0.5" max="2.5" step="0.1" />
-                        <span id="pso-c1-val" class="range-val"></span>
-                      </div>
-                      <div class="prop-field">
-                        <label for="pso-c2">社会 c2</label>
-                        <input type="range" id="pso-c2" min="0.5" max="2.5" step="0.1" />
-                        <span id="pso-c2-val" class="range-val"></span>
-                      </div>
-                    </div>
-                    <button type="button" id="btn-pso-reset-params" class="toolbar--inline">恢复默认参数</button>
-                  </details>
-                  <div class="prop-grid">
-                    <label for="pso-seed">随机种子</label>
-                    <input type="number" id="pso-seed" step="1" placeholder="留空=随机" />
-                  </div>
-                  <div class="prop-grid">
-                    <label for="benchmark-runs">Benchmark 次数</label>
-                    <input type="number" id="benchmark-runs" min="1" step="1" value="6" />
-                  </div>
-                  <div class="toolbar">
-                    <button type="button" id="btn-run-benchmark">运行 Benchmark</button>
-                    <button type="button" id="btn-recommend-params">参数推荐</button>
-                    <button type="button" id="btn-apply-recommend" hidden>应用推荐配置</button>
-                  </div>
-                  <div id="benchmark-output" class="benchmark-summary" aria-live="polite"></div>
-                  <pre id="recommend-output" class="panel-pre" aria-live="polite"></pre>
-                  <p id="pso-lab-last-stats" class="panel-note panel-note--compact"></p>
-                </div>
-                <div class="run-progress" id="run-progress" hidden aria-hidden="true">
-                  <span id="run-progress-label" class="run-progress-label"></span>
-                </div>
-              </div>
               <details class="panel panel--fold">
-                <summary>场景管理与高级实验</summary>
+                <summary>导入 / 导出 / 重置</summary>
                 <div class="toolbar">
                   <button type="button" id="btn-export-scenario">导出 JSON</button>
                   <button type="button" id="btn-import-scenario">导入 JSON</button>
-                  <button type="button" id="btn-save-snapshot">保存快照</button>
-                  <button type="button" id="btn-load-snapshot">加载快照</button>
-                  <button type="button" id="btn-reset-scenario">重置场景</button>
-                </div>
-                <div class="prop-grid">
-                  <label for="snapshot-select">本地快照</label>
-                  <select id="snapshot-select"></select>
+                  <button type="button" id="btn-reset-scenario">重置为默认场景</button>
                 </div>
                 <input id="scenario-import-input" type="file" accept=".json,application/json" hidden />
               </details>
@@ -236,6 +121,15 @@
 
             <!-- ===== Tab: 场景编辑 ===== -->
             <section id="tab-scene" class="tab-panel" data-tab-panel="scene">
+              <div class="panel">
+                <h2>场景预设</h2>
+                <p class="panel-note panel-note--compact">确认后加载预设。</p>
+                <div class="prop-grid">
+                  <label for="scenario-preset-select">预设</label>
+                  <select id="scenario-preset-select"></select>
+                </div>
+                <p id="scenario-preset-hint" class="panel-note panel-note--compact"></p>
+              </div>
               <div class="panel">
                 <h2>地块与绘制</h2>
                 <div class="prop-grid prop-grid--pair">
@@ -248,7 +142,7 @@
                     <input type="number" id="lot-height" min="40" step="1" />
                   </div>
                 </div>
-                <p id="lot-edit-hint" class="panel-note panel-note--compact">拖动元素不会自动改变地块；缩小后若内容超出边界，请手动调整要素位置。</p>
+                <p id="lot-edit-hint" class="panel-note panel-note--compact">改地块尺寸后请自行调整要素位置。</p>
                 <div class="prop-grid">
                   <label for="road-shape-mode">道路形态</label>
                   <select id="road-shape-mode">
@@ -274,40 +168,8 @@
                 </div>
                 <div class="toolbar">
                   <button type="button" id="btn-auto-slots">沿道路自动布位</button>
-                  <button type="button" id="btn-suggest-plans">生成候选方案</button>
                 </div>
                 <p id="auto-slots-status" class="panel-note"></p>
-                <div id="suggest-plans-list" class="suggest-plans-list"></div>
-              </div>
-              <div class="panel panel--fold-wrap">
-                <h2 class="panel-section__title">底图与图层</h2>
-                <details class="panel-fold-item">
-                  <summary>底图校准</summary>
-                  <p class="panel-note panel-note--compact">上传 PNG/JPEG 作为参考底图（建议 &lt;2MB），用两个世界坐标点完成比例对齐。</p>
-                  <div class="prop-grid">
-                    <label for="underlay-file">底图文件</label>
-                    <input type="file" id="underlay-file" accept="image/*" />
-                  </div>
-                  <div class="prop-grid">
-                    <label for="underlay-opacity">透明度</label>
-                    <input type="range" id="underlay-opacity" min="0.05" max="1" step="0.05" value="0.55" />
-                  </div>
-                  <div class="toolbar">
-                    <button type="button" id="btn-underlay-calibrate">开始校准</button>
-                    <button type="button" id="btn-underlay-confirm">确认校准</button>
-                    <button type="button" id="btn-underlay-clear">清除底图</button>
-                  </div>
-                  <p id="underlay-status" class="panel-note"></p>
-                </details>
-                <details class="panel-fold-item">
-                  <summary>图层显示</summary>
-                  <div class="layer-toggles">
-                    <label><input type="checkbox" id="layer-underlay" checked /> 底图</label>
-                    <label><input type="checkbox" id="layer-road" checked /> 道路</label>
-                    <label><input type="checkbox" id="layer-strip" checked /> 泊位带</label>
-                    <label><input type="checkbox" id="layer-path" checked /> 步行路径</label>
-                  </div>
-                </details>
               </div>
               <details class="panel panel--scroll panel--props">
                 <summary>选中项属性</summary>
@@ -322,12 +184,20 @@
             <section id="tab-vehicle" class="tab-panel tab-panel--fill" data-tab-panel="vehicle">
               <div class="panel panel--scroll vehicle-targets-panel vehicle-targets-panel--solo">
                 <h2>车辆 → 目的楼</h2>
+                <div class="prop-grid">
+                  <label for="n-veh">车辆数（辆）</label>
+                  <input type="number" id="n-veh" min="1" step="1" value="12" />
+                </div>
                 <div class="toolbar vehicle-targets-actions">
                   <button type="button" id="btn-random-dest">随机各车目的楼</button>
                 </div>
-                <p class="panel-note panel-note--vehicle">
-                  楼号在屋面；优化后车位标车号与目的楼。
-                </p>
+                <div class="prop-grid">
+                  <label for="veh-arrival-mode">到达时间含义</label>
+                  <select id="veh-arrival-mode">
+                    <option value="absolute" selected>绝对时刻（秒，从 0 起）</option>
+                    <option value="gap">距上一辆的间隔（秒）</option>
+                  </select>
+                </div>
                 <div class="prop-grid vehicle-targets-mode vehicle-targets-mode--divider">
                   <label for="entrance-mode">入口策略</label>
                   <select id="entrance-mode">
@@ -344,99 +214,82 @@
               </div>
             </section>
 
-            <!-- ===== Tab: 优化结果 ===== -->
-            <section id="tab-result" class="tab-panel" data-tab-panel="result">
-              <div class="panel panel--result">
-                <h2>优化结果</h2>
-                <p id="result-status" class="hint result-status">尚未运行</p>
-                <p class="result-value" id="result-gbest" hidden></p>
-
-                <!-- Metric cards -->
-                <div class="result-metrics">
-                  <div class="result-metric">
-                    <span class="metric-label">行驶时间</span>
-                    <span class="metric-value" id="metric-drive">--</span>
-                    <span class="metric-unit">s</span>
-                  </div>
-                  <div class="result-metric">
-                    <span class="metric-label">步行时间</span>
-                    <span class="metric-value" id="metric-walk">--</span>
-                    <span class="metric-unit">s</span>
-                  </div>
-                  <div class="result-metric result-metric--total">
-                    <span class="metric-label">总优化时间</span>
-                    <span class="metric-value" id="metric-total">--</span>
-                    <span class="metric-unit">s</span>
-                  </div>
-                  <div class="result-metric result-metric--mismatch">
-                    <span class="metric-label">类型违约数</span>
-                    <span class="metric-value" id="metric-mismatch">--</span>
-                    <span class="metric-unit">辆</span>
-                  </div>
-                </div>
-
-                <p id="result-breakdown" class="panel-note"></p>
-                <p id="result-tip" class="result-tip"></p>
-                <p id="chart-meta" class="chart-meta" hidden></p>
-                <div class="chart-toolbar">
-                  <label class="chart-toggle">
-                    <input type="checkbox" id="chart-zoom-convergence" checked />
-                    放大收敛区
-                  </label>
-                  <label class="chart-toggle">
-                    <input type="checkbox" id="chart-show-exact-ref" checked />
-                    显示精确参考线
-                  </label>
-                  <button type="button" id="btn-pso-replay" class="chart-replay-btn" hidden>播放分配收敛</button>
-                </div>
-                <div class="chart-wrap chart-wrap--tall">
-                  <canvas id="chart" width="300" height="200"></canvas>
-                </div>
-                <p id="chart-caption" class="chart-caption"></p>
-              </div>
-            </section>
-
-            <!-- ===== Tab: 方案（库 + 对比） ===== -->
-            <section id="tab-schemes" class="tab-panel tab-panel--fill" data-tab-panel="schemes">
-              <div class="panel panel--scroll panel--schemes-library">
-                <h2>命名方案库</h2>
-                <p class="panel-note panel-note--compact">保存当前场景与优化指标，勾选条目后可在下方对比。</p>
-                <div class="toolbar toolbar--save">
-                  <input type="text" id="plan-save-name" placeholder="方案名称，如 baseline" />
-                  <button type="button" id="btn-save-named-plan">保存到方案库</button>
-                </div>
-                <div id="plan-library-list" class="plan-library-list"></div>
-              </div>
-              <div class="panel panel--compare panel--schemes-compare">
-                <h2>多方案对比</h2>
-                <p class="panel-note panel-note--compact">在方案库中勾选 2–4 个方案后点击下方刷新。</p>
-                <div class="toolbar">
-                  <button type="button" id="btn-refresh-compare">刷新对比</button>
-                  <button type="button" id="btn-export-compare-report">导出 HTML 报告</button>
-                </div>
-                <div id="compare-table" class="compare-table"></div>
-                <div class="chart-wrap">
-                  <canvas id="compare-radar" width="280" height="200" aria-label="雷达图"></canvas>
-                </div>
-              </div>
-            </section>
-
             <!-- ===== Tab: 仿真 ===== -->
             <section id="tab-simulate" class="tab-panel" data-tab-panel="simulate">
-              <div class="panel">
-                <h2>到达仿真</h2>
-                <p id="sim-status" class="panel-note">请先运行优化，再开始仿真。</p>
+              <div class="panel panel--simulate">
+                <h2>运营仿真</h2>
+                <p id="sim-status" class="panel-note panel-note--compact" aria-live="polite"></p>
+                <progress id="sim-job-progress" class="sim-job-progress" max="100" value="0" hidden></progress>
+                <p id="sim-warm-status" class="panel-note panel-note--compact" hidden aria-live="polite"></p>
                 <div class="panel-section">
                   <div class="prop-grid">
-                    <label for="sim-duration-min">到达时段（分钟）</label>
-                    <input type="number" id="sim-duration-min" min="5" step="5" value="20" />
+                    <label for="sim-arrival-mode">到达过程</label>
+                    <select id="sim-arrival-mode">
+                      <option value="uniform">均匀到达</option>
+                      <option value="burst" selected>高峰扎堆</option>
+                      <option value="poisson">随机到达（Poisson）</option>
+                      <option value="normal_gap">随机到达（正态间隔）</option>
+                      <option value="step">逐车调试</option>
+                      <option value="explicit">自定义序列</option>
+                    </select>
                   </div>
-                  <div class="toolbar">
-                    <button type="button" id="btn-run-sim">运行仿真</button>
+                  <div id="sim-batch-options" class="prop-grid">
+                    <label for="sim-duration-min" id="sim-duration-label">到达时段（分钟）</label>
+                    <input type="number" id="sim-duration-min" min="5" step="5" value="20" />
+                    <label for="sim-realistic" class="prop-check-label">入口排队仿真</label>
+                    <input type="checkbox" id="sim-realistic" checked />
+                    <label for="sim-dwell-min" id="sim-dwell-label">停留后释放（分钟）</label>
+                    <input type="number" id="sim-dwell-min" min="0" step="1" value="0" title="0=不模拟离场；&gt;0 时步行结束后占用车位并在停留期满释放" />
+                  </div>
+                  <div id="sim-stochastic-fields" class="prop-grid" hidden>
+                    <label for="sim-arrival-seed">随机种子</label>
+                    <input type="number" id="sim-arrival-seed" step="1" value="42" />
+                    <label for="sim-poisson-lambda" id="sim-poisson-lambda-label">Poisson λ（1/秒）</label>
+                    <input type="number" id="sim-poisson-lambda" min="0.001" step="0.005" value="0.04" />
+                    <label for="sim-normal-mean-gap" id="sim-normal-mean-label">间隔均值（秒）</label>
+                    <input type="number" id="sim-normal-mean-gap" min="1" step="1" value="30" />
+                    <label for="sim-normal-sigma-gap" id="sim-normal-sigma-label">间隔标准差（秒）</label>
+                    <input type="number" id="sim-normal-sigma-gap" min="0" step="1" value="10" />
+                  </div>
+                  <details id="sim-rolling-advanced" class="sim-advanced-details">
+                    <summary>滚动多目标（可选）</summary>
+                    <div id="sim-objective-fields" class="prop-grid">
+                      <label for="sim-weight-entrance">入口均衡权重</label>
+                      <input type="range" id="sim-weight-entrance" min="0" max="100" value="0" />
+                      <label for="sim-weight-fairness">楼间公平权重</label>
+                      <input type="range" id="sim-weight-fairness" min="0" max="100" value="0" />
+                    </div>
+                  </details>
+                  <pre id="sim-sample-arrivals" class="sim-sample-arrivals panel-note" hidden aria-live="polite"></pre>
+                  <div id="sim-vehicle-queue-section" class="panel-section sim-vehicle-queue-section" hidden>
+                    <div id="sim-step-run-mode-wrap" class="prop-grid sim-step-run-mode-wrap" hidden>
+                      <label for="sim-step-run-mode">逐车运行方式</label>
+                      <select id="sim-step-run-mode">
+                        <option value="cumulative" selected>累积重算</option>
+                        <option value="incremental">增量</option>
+                        <option value="isolated">单车预览</option>
+                      </select>
+                    </div>
+                    <p id="sim-step-run-mode-desc" class="panel-note panel-note--compact sim-step-run-mode-desc" hidden></p>
+                    <h3 id="sim-vehicle-queue-title" class="panel-subtitle">逐车：到达 · 楼 · 入口</h3>
+                    <div id="sim-step-nav" class="sim-step-nav" hidden>
+                      <button type="button" id="sim-step-prev">上一辆</button>
+                      <span id="sim-step-indicator" class="sim-step-indicator">车 1 / 1</span>
+                      <button type="button" id="sim-step-next">下一辆</button>
+                    </div>
+                    <div id="sim-vehicle-queue-list" class="sim-vehicle-queue-list vehicle-targets-list"></div>
+                  </div>
+                  <div class="toolbar toolbar--simulate">
+                    <div id="sim-toolbar-batch" class="toolbar__group">
+                      <button type="button" class="primary" id="btn-run-sim">运行仿真</button>
+                      <button type="button" id="btn-run-arrival-compare">一键对照</button>
+                      <button type="button" id="btn-monte-carlo">随机抽样 ×20</button>
+                    </div>
                     <button type="button" id="btn-sim-play">播放/暂停</button>
                   </div>
                 </div>
-                <div class="panel-section">
+                <div class="panel-section panel-section--sim-live">
+                  <p id="sim-live-status" class="sim-live-status" aria-live="polite">尚未运行</p>
                   <p id="sim-time-label" class="sim-time-label">回放时间：0.0 s</p>
                   <input type="range" id="sim-scrub" min="0" max="100" value="0" />
                 </div>
@@ -446,15 +299,36 @@
                   </div>
                   <p id="sim-stats" class="panel-note"></p>
                 </div>
+                <div class="panel-section arrival-compare" id="arrival-compare-section" hidden>
+                  <h3 id="arrival-compare-title" class="panel-subtitle">策略对照</h3>
+                  <div id="arrival-compare-table" class="arrival-compare-table" aria-live="polite"></div>
+                  <button type="button" id="arrival-compare-export" class="arrival-compare-export" hidden>
+                    导出 JSON
+                  </button>
+                </div>
               </div>
             </section>
 
           </div><!-- .workspace-panels -->
 
-          <!-- Run button pinned at bottom -->
-          <div class="run-bar">
-            <span id="run-bar-summary" class="run-bar-summary"></span>
-            <button type="button" class="primary js-run-optimize" id="btn-run-sticky">▶ 运行优化</button>
+          <div id="app-compat-hooks" hidden aria-hidden="true">
+            <select id="optimizer-method"><option value="exact" selected>exact</option></select>
+            <input id="pso-seed" type="number" />
+            <p id="result-status"></p>
+            <p id="result-gbest" hidden></p>
+            <p id="result-breakdown"></p>
+            <p id="result-tip"></p>
+            <span id="metric-drive"></span>
+            <span id="metric-walk"></span>
+            <span id="metric-total"></span>
+            <span id="metric-mismatch"></span>
+            <canvas id="chart" width="1" height="1"></canvas>
+            <p id="chart-caption"></p>
+            <p id="chart-meta" hidden></p>
+            <input type="checkbox" id="chart-zoom-convergence" checked />
+            <input type="checkbox" id="chart-show-exact-ref" checked />
+            <div id="run-progress" hidden><span id="run-progress-label"></span></div>
+            <span id="run-bar-summary"></span>
           </div>
 
         </div><!-- .workspace-body -->

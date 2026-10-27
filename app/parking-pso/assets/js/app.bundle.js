@@ -1,4 +1,4 @@
-/* bundled app from 54 files */
+/* bundled app from 56 files */
 /* --- app\api\api-client.js --- */
 (function () {
   "use strict";
@@ -19,9 +19,16 @@
   async function request(path, options) {
     const base = apiBase();
     const url = (base || "") + path;
+    const opts = options || {};
+    const method = (opts.method || "GET").toUpperCase();
+    const headers = { ...(opts.headers || {}) };
+    if (method !== "GET" && method !== "HEAD" && !headers["Content-Type"]) {
+      headers["Content-Type"] = "application/json";
+    }
     const res = await fetch(url, {
-      headers: { "Content-Type": "application/json", ...(options && options.headers) },
-      ...options,
+      ...opts,
+      method,
+      headers: Object.keys(headers).length ? headers : undefined,
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -89,6 +96,31 @@
       return request(PK_PREFIX + "/simulate", {
         method: "POST",
         body: JSON.stringify({ result, schedule, async: asyncMode !== false }),
+      });
+    },
+    async simulateRolling(scenario, schedule, asyncMode) {
+      return request(PK_PREFIX + "/simulate-rolling", {
+        method: "POST",
+        body: JSON.stringify({ scenario, schedule, async: asyncMode !== false }),
+      });
+    },
+    async precomputeWarm(scenario, asyncMode) {
+      return request(PK_PREFIX + "/precompute-warm", {
+        method: "POST",
+        body: JSON.stringify({ scenario, async: asyncMode !== false }),
+      });
+    },
+    async monteCarloRolling(scenario, schedule, runs, seed, asyncMode) {
+      return request(PK_PREFIX + "/monte-carlo-rolling", {
+        method: "POST",
+        body: JSON.stringify({
+          scenario,
+          schedule,
+          runs: runs ?? 20,
+          seed: seed ?? 42,
+          include_static: true,
+          async: asyncMode !== false,
+        }),
       });
     },
     async getJob(jobId) {
@@ -341,6 +373,156 @@
 
   window.ParkingScenarioSource = {
     getDefaultScenarioSource,
+  };
+})();
+
+/* --- app\scenario\scenario-presets.js --- */
+(function () {
+  "use strict";
+  const P = window.ParkingApp;
+  if (!P) throw new Error("ParkingApp missing: app/scenario/scenario-presets.js");
+
+  const MANIFEST_URL = "assets/data/scenario-presets.json";
+
+  P.scenarioPresets = P.scenarioPresets || [];
+
+  P.loadScenarioPresetsManifest = async function () {
+    if (P.scenarioPresets.length) return P.scenarioPresets;
+    try {
+      const res = await fetch(MANIFEST_URL, { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      P.scenarioPresets = Array.isArray(data.presets) ? data.presets : [];
+    } catch (e) {
+      console.warn("scenario presets manifest failed", e);
+      P.scenarioPresets = [
+        {
+          id: "default",
+          label: "默认 · 双入口均衡",
+          file: "default-scenario.json",
+          hint: "",
+        },
+      ];
+    }
+    return P.scenarioPresets;
+  };
+
+  P.fetchScenarioPresetJson = async function (preset) {
+    const file = preset?.file || "default-scenario.json";
+    const url =
+      file.indexOf("/") >= 0 || file.indexOf("\\") >= 0
+        ? "assets/data/" + file.replace(/^\//, "")
+        : "assets/data/" + file;
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    return res.json();
+  };
+
+  P.applyScenarioFromSource = function (sourceScenario) {
+    if (!P.optimizer?.normalizeScenario) throw new Error("optimizer missing");
+    P.scenario = P.optimizer.normalizeScenario(sourceScenario);
+    P.ensureConstraints();
+    P.ensureScenarioCollections();
+    P.syncMapCanvasSize();
+    P.sanitizeScenarioGeometry();
+    P.fitViewToContent?.(12);
+    P.ensureVehicleDestinationsArray();
+    P.ensureVehicleEntrancesArray();
+    P.rebuildVehicleTargetsUI();
+    P.lastResult = null;
+    P.autoEntrancePreview = null;
+    P.arrivalCompare = null;
+    P.hideArrivalCompareSection?.();
+    P.simState.timeline = null;
+    P._simulationRan = false;
+    P.resetSimStepSession?.();
+    P.schedulePrecomputeWarmup?.();
+    if (P.nVehInput) P.nVehInput.value = P.scenario.n_veh ?? 12;
+    P.setSelection(null);
+    const rs = document.getElementById("result-status");
+    if (rs) rs.textContent = "尚未运行（总时间单位：" + P.uTime() + "）";
+    const rg = document.getElementById("result-gbest");
+    if (rg) rg.style.display = "none";
+    P.drawChart([]);
+    P.updateChartCaption("idle");
+    P.renderBreakdownSummary();
+    P.renderResultTip("");
+    P.roadDraftClosed = P.scenario?.road?.closed !== false;
+    const roadShapeMode = document.getElementById("road-shape-mode");
+    if (roadShapeMode) roadShapeMode.value = P.roadDraftClosed ? "closed" : "open";
+    P.scheduleAutoEntrancePreviewRefresh();
+    P.schedulePersistCurrentState();
+    P.syncLotInputsFromScenario?.();
+    P.updateActionGates?.();
+    P.updateRunBarSummary?.();
+    P.syncPsoLabInputsFromScenario?.();
+    P.clearWorkspaceMessage?.();
+    P.draw();
+    P.updateWorkflowGuide?.();
+  };
+
+  P.applyScenarioPreset = async function (presetId) {
+    await P.loadScenarioPresetsManifest();
+    const preset = P.scenarioPresets.find((p) => p.id === presetId);
+    if (!preset) throw new Error("未知预设");
+    const raw = await P.fetchScenarioPresetJson(preset);
+    P.applyScenarioFromSource(raw);
+    P.activeScenarioPresetId = presetId;
+    const hintEl = document.getElementById("scenario-preset-hint");
+    if (hintEl) hintEl.textContent = preset.hint || "";
+    P.showWorkspaceMessage?.("已加载预设：「" + preset.label + "」", {
+      level: "info",
+      alsoResult: false,
+    });
+  };
+
+  P.confirmAndApplyScenarioPreset = async function (presetId) {
+    const ok = window.confirm("加载预设将覆盖当前未导出的场景编辑，是否继续？");
+    if (!ok) return false;
+    try {
+      await P.applyScenarioPreset(presetId);
+      return true;
+    } catch (e) {
+      console.warn("apply preset failed", e);
+      P.showWorkspaceMessage?.("预设加载失败：" + (e.message || e), {
+        level: "error",
+        alsoResult: false,
+      });
+      return false;
+    }
+  };
+
+  P.initScenarioPresetsUI = async function () {
+    const select = document.getElementById("scenario-preset-select");
+    if (!select) return;
+    const presets = await P.loadScenarioPresetsManifest();
+    select.innerHTML = "";
+    for (const p of presets) {
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = p.label;
+      select.appendChild(opt);
+    }
+    const active = P.activeScenarioPresetId || "default";
+    if (presets.some((p) => p.id === active)) select.value = active;
+    const hintEl = document.getElementById("scenario-preset-hint");
+    const syncHint = () => {
+      const p = presets.find((x) => x.id === select.value);
+      if (hintEl) hintEl.textContent = p?.hint || "";
+    };
+    syncHint();
+    let applying = false;
+    select.addEventListener("change", async () => {
+      syncHint();
+      if (applying) return;
+      applying = true;
+      const prev = P.activeScenarioPresetId || "default";
+      const id = select.value;
+      const ok = await P.confirmAndApplyScenarioPreset(id);
+      if (!ok && presets.some((p) => p.id === prev)) select.value = prev;
+      syncHint();
+      applying = false;
+    });
   };
 })();
 
@@ -1990,8 +2172,8 @@ P.recommendParams = function () {
   if (!P) throw new Error("ParkingApp missing: app/ui/tab-flow.js");
 
 P.normalizeTabKey = function (tabKey) {
-    if (tabKey === "plans" || tabKey === "compare") return "schemes";
-    if (tabKey === "lab") return "overview";
+    if (tabKey === "plans" || tabKey === "compare" || tabKey === "schemes") return "overview";
+    if (tabKey === "lab" || tabKey === "result") return "overview";
     return tabKey || "overview";
   };
 
@@ -2006,28 +2188,19 @@ P.switchTab = function (tabKey) {
         panel.classList.toggle("is-active", panel.dataset.tabPanel === P.activeTab);
       });
     }
-    if (P.activeTab === "result") {
-      requestAnimationFrame(() => {
-        P.syncChartCanvasSize();
-        P.drawChart(P.lastChartSeries, P.lastChartOptimizer);
-      });
-    }
-    if (P.activeTab === "schemes") {
-      if (P.renderScenarioLibrary) P.renderScenarioLibrary();
-      requestAnimationFrame(() => {
-        P.syncCompareRadarSize?.();
-        if (P.renderComparePanel) P.renderComparePanel();
-      });
-    }
     if (P.activeTab === "simulate") {
+      P.syncSimArrivalFields?.();
+      P.renderSimVehicleQueue?.();
+      P.schedulePrecomputeWarmup?.();
       requestAnimationFrame(() => {
         P.syncSimQueueChartSize?.();
         if (P.simState?.timeline) P.drawSimQueueChart?.(P.simState.timeline);
       });
       P.draw();
+    } else {
+      const warm = document.getElementById("sim-warm-status");
+      if (warm) warm.hidden = true;
     }
-    const runBar = document.querySelector(".run-bar");
-    if (runBar) runBar.hidden = P.activeTab === "overview";
     P.updateRunBarSummary?.();
     P.updateActionGates?.();
     P.schedulePersistCurrentState();
@@ -2563,7 +2736,72 @@ P.ensureVehicleDestinationsArray = function () {
       });
     }
     P.ensureVehicleEntrancesArray();
+    P.ensureVehicleArrivalSecArray?.();
   }
+
+P.ensureVehicleArrivalSecArray = function () {
+    if (!P.scenario) return;
+    const n = Math.max(1, parseInt(P.scenario.n_veh, 10) || 1);
+    if (!Array.isArray(P.scenario.vehicle_arrival_sec)) {
+      P.scenario.vehicle_arrival_sec = Array.from({ length: n }, (_, i) => i * 2);
+      return;
+    }
+    while (P.scenario.vehicle_arrival_sec.length < n) {
+      const i = P.scenario.vehicle_arrival_sec.length;
+      const prev = i > 0 ? Number(P.scenario.vehicle_arrival_sec[i - 1]) : 0;
+      P.scenario.vehicle_arrival_sec.push(Number.isFinite(prev) ? prev + 2 : i * 2);
+    }
+    if (P.scenario.vehicle_arrival_sec.length > n) {
+      P.scenario.vehicle_arrival_sec.length = n;
+    }
+  };
+
+P.getVehicleArrivalMode = function () {
+    const el = document.getElementById("veh-arrival-mode");
+    return el?.value === "gap" ? "gap" : "absolute";
+  };
+
+P.resolveVehicleArrivalsSec = function () {
+    P.ensureVehicleArrivalSecArray();
+    const raw = (P.scenario?.vehicle_arrival_sec || []).map((v) =>
+      Math.max(0, Number(v) || 0)
+    );
+    if (P.getVehicleArrivalMode() !== "gap") return raw;
+    const out = [];
+    let t = 0;
+    for (let i = 0; i < raw.length; i++) {
+      if (i === 0) t = raw[0];
+      else t += raw[i];
+      out.push(t);
+    }
+    return out;
+  };
+
+P.fillVehicleArrivalsFromBurst = function (gapSec) {
+    if (!P.scenario) return;
+    const n = Math.max(1, parseInt(P.scenario.n_veh, 10) || 1);
+    const gap = Math.max(0.1, Number(gapSec) || 2);
+    const mode = P.getVehicleArrivalMode();
+    P.scenario.vehicle_arrival_sec = Array.from({ length: n }, (_, i) =>
+      mode === "gap" ? (i === 0 ? 0 : gap) : i * gap
+    );
+    P.rebuildVehicleTargetsUI();
+    P.schedulePersistCurrentState?.();
+  };
+
+P.fillVehicleArrivalsFromUniform = function () {
+    if (!P.scenario) return;
+    const n = Math.max(1, parseInt(P.scenario.n_veh, 10) || 1);
+    const durEl = document.getElementById("sim-duration-min");
+    const duration_s = (durEl ? parseFloat(durEl.value) || 20 : 20) * 60;
+    const step = duration_s / Math.max(1, n);
+    const mode = P.getVehicleArrivalMode();
+    P.scenario.vehicle_arrival_sec = Array.from({ length: n }, (_, i) =>
+      mode === "gap" ? (i === 0 ? 0 : step) : i * step
+    );
+    P.rebuildVehicleTargetsUI();
+    P.schedulePersistCurrentState?.();
+  };
 
 P.adjustVehicleDestinationsAfterBuildingRemoved = function (removedIndex) {
     if (!P.scenario || !Array.isArray(P.scenario.vehicle_destinations)) return;
@@ -2604,7 +2842,11 @@ P.rebuildVehicleTargetsUI = function () {
     if (!el || !P.scenario) return;
     P.ensureVehicleDestinationsArray();
     P.ensureVehicleEntrancesArray();
+    P.ensureVehicleArrivalSecArray();
     const n = Math.max(1, parseInt(P.scenario.n_veh, 10) || 1);
+    const arrivalMode = P.getVehicleArrivalMode();
+    const arrivalLab =
+      arrivalMode === "gap" ? "间隔(s)" : "到达(s)";
     const nb = P.scenario.buildings?.length ?? 0;
     const ne = P.scenario.entrances?.length ?? 1;
     const pageCount = P.ensureVehiclePageInRange(n);
@@ -2717,6 +2959,30 @@ P.rebuildVehicleTargetsUI = function () {
       });
       row.appendChild(rlab);
       row.appendChild(rSel);
+      const alab = document.createElement("label");
+      alab.textContent = arrivalLab;
+      alab.setAttribute("for", "veh-arr-" + i);
+      const aIn = document.createElement("input");
+      aIn.type = "number";
+      aIn.id = "veh-arr-" + i;
+      aIn.min = "0";
+      aIn.step = "0.5";
+      aIn.className = "vehicle-arrival-input";
+      const av = P.scenario.vehicle_arrival_sec[i];
+      aIn.value = String(Number.isFinite(Number(av)) ? Number(av) : i * 2);
+      aIn.title =
+        arrivalMode === "gap"
+          ? i === 0
+            ? "第 1 辆的到达时刻（秒）"
+            : "与上一辆之间的间隔（秒）"
+          : "到达时刻（秒，从仿真 0 起）";
+      aIn.addEventListener("change", () => {
+        const v = parseFloat(aIn.value);
+        P.scenario.vehicle_arrival_sec[i] = Number.isFinite(v) ? Math.max(0, v) : 0;
+        P.schedulePersistCurrentState?.();
+      });
+      row.appendChild(alab);
+      row.appendChild(aIn);
       el.appendChild(row);
     }
     P.updateVehiclePager(n, pageCount);
@@ -3286,7 +3552,7 @@ P.runOptimize = async function () {
         }
         P.renderResultTip(tip);
       }
-      P.switchTab("result");
+      P.switchTab("simulate");
       P.draw();
       P.clearWorkspaceMessage?.();
       P.updateActionGates?.();
@@ -3321,39 +3587,42 @@ P.runOptimize = async function () {
 
   P.apiOnline = false;
 
+  const STATUS_STATES = ["api-status--pending", "api-status--online", "api-status--offline"];
+
+  function applyApiStatusUi(el, text, state) {
+    if (!el) return;
+    const label = el.querySelector(".app-topbar__status-label");
+    if (label) label.textContent = text;
+    else el.textContent = text;
+    el.classList.remove(...STATUS_STATES);
+    el.classList.add("api-status--" + state);
+  }
+
   P.refreshApiStatus = async function () {
     const el = document.getElementById("api-status");
-    if (el) el.textContent = "检查 API 连接…";
+    applyApiStatusUi(el, "检查 API…", "pending");
     if (!P.api?.health) {
       P.apiOnline = false;
-      if (el) {
-        el.textContent = "离线（仅本地优化）";
-        el.className = "api-status api-status--offline";
-      }
+      applyApiStatusUi(el, "离线 · 本地", "offline");
       return false;
     }
     try {
       const res = await P.api.health();
       P.apiOnline = !!(res && res.ok);
-      if (el) {
-        if (P.apiOnline) {
-          el.textContent = "在线（后端 API）";
-          el.className = "api-status api-status--online";
-        } else {
-          el.textContent = "离线（仅本地优化）";
-          el.className = "api-status api-status--offline";
-        }
+      if (P.apiOnline) {
+        applyApiStatusUi(el, "在线", "online");
+      } else {
+        applyApiStatusUi(el, "离线 · 本地", "offline");
       }
       return P.apiOnline;
     } catch (_) {
       P.apiOnline = false;
-      if (el) {
-        const base = P.api.apiBase();
-        el.textContent = base
-          ? "离线（无法连接 " + base + "）"
-          : "离线（静态站未配置 PARKING_API_BASE，见 README）";
-        el.className = "api-status api-status--offline";
-      }
+      const base = P.api.apiBase();
+      applyApiStatusUi(
+        el,
+        base ? "离线 · " + base.replace(/^https?:\/\//, "") : "离线 · 未配置 API",
+        "offline"
+      );
       return false;
     }
   };
@@ -4165,23 +4434,9 @@ P.runOptimize = async function () {
       action: "auto-slots",
     },
     {
-      id: "optimize",
-      title: "运行优化",
-      desc: "计算最优分配与路径",
-      tab: "result",
-      action: "optimize",
-    },
-    {
-      id: "compare",
-      title: "保存与对比",
-      desc: "保存方案并排雷达图",
-      tab: "schemes",
-      action: "schemes",
-    },
-    {
       id: "simulate",
-      title: "到达仿真",
-      desc: "回放车辆到达过程",
+      title: "陆续到达仿真",
+      desc: "滚动分配与回放",
       tab: "simulate",
       action: "simulate",
     },
@@ -4227,9 +4482,6 @@ P.runOptimize = async function () {
         break;
       case "optimize":
         document.querySelector(".js-run-optimize")?.click();
-        break;
-      case "schemes":
-        P.switchTab("schemes");
         break;
       case "simulate":
         P.switchTab("simulate");
@@ -4322,8 +4574,21 @@ P.runOptimize = async function () {
   };
 
   P.canRunSimulation = function () {
-    if (!P.lastResult?.assign?.length) return { ok: false, reason: "需先完成优化" };
+    if (!P.lastResult?.assign?.length) return { ok: false, reason: "需先运行全信息优化（静态回放）" };
     return { ok: true, reason: "" };
+  };
+
+  P.isRollingSimMode = function () {
+    return true;
+  };
+
+  P.canRunRollingSimulation = function () {
+    return P.canRunOptimize?.() || { ok: false, reason: "场景未就绪" };
+  };
+
+  P.simulationRunGate = function () {
+    if (P.isRollingSimMode?.()) return P.canRunRollingSimulation?.() || { ok: false, reason: "" };
+    return P.canRunSimulation?.() || { ok: false, reason: "" };
   };
 
   P.updateActionGates = function () {
@@ -4332,17 +4597,120 @@ P.runOptimize = async function () {
       btn.disabled = !opt.ok;
       btn.title = opt.ok ? "" : opt.reason;
     });
-    const sim = P.canRunSimulation?.() || { ok: false, reason: "需先完成优化" };
+    const sim = P.simulationRunGate?.() || { ok: false, reason: "" };
     const runSim = document.getElementById("btn-run-sim");
     const playSim = document.getElementById("btn-sim-play");
+    const compareBtn = document.getElementById("btn-run-arrival-compare");
     const hasTimeline = !!(P.simState?.timeline?.frames?.length);
+    const simStep = P.getSimArrivalProcessMode?.() === "step";
     if (runSim) {
-      runSim.disabled = !sim.ok;
-      runSim.title = sim.ok ? "" : sim.reason;
+      runSim.disabled = simStep || !sim.ok;
+      runSim.title = simStep ? "逐车调试模式请用「运行此车」" : sim.ok ? "" : sim.reason;
+    }
+    if (compareBtn) {
+      const cmpOk =
+        !simStep &&
+        !!P.apiOnline &&
+        (P.canRunRollingSimulation?.()?.ok || false) &&
+        !!(P.api?.simulateRolling && P.api?.simulate);
+      compareBtn.disabled = !cmpOk;
+      compareBtn.title = simStep
+        ? "逐车调试下不可用"
+        : cmpOk
+          ? "对比滚动与全信息基准"
+          : "需联网且场景就绪";
     }
     if (playSim) {
       playSim.disabled = !hasTimeline;
       playSim.title = hasTimeline ? "" : "需先运行仿真";
+    }
+    P.syncSimToolbarVisibility?.();
+  };
+})();
+
+/* --- app\ui\precompute-warm.js --- */
+(function () {
+  "use strict";
+  const P = window.ParkingApp;
+  if (!P) throw new Error("ParkingApp missing: app/ui/precompute-warm.js");
+
+  P.simStepSession = P.simStepSession || { assign: [] };
+
+  P.resetSimStepSession = function () {
+    P.simStepSession = { assign: [] };
+  };
+
+  P.truncateSimStepSession = function (fromIndex) {
+    const i = Math.max(0, parseInt(fromIndex, 10) || 0);
+    if (!P.simStepSession?.assign?.length) return;
+    P.simStepSession.assign = P.simStepSession.assign.slice(0, i);
+  };
+
+  P.getSimStepRunMode = function () {
+    const v = document.getElementById("sim-step-run-mode")?.value || "cumulative";
+    return v;
+  };
+
+  P._precomputeWarmTimer = null;
+  P._precomputeWarmGen = 0;
+  P._precomputeWarmJobId = null;
+
+  P.syncSimWarmStatus = function (text, hidden) {
+    const el = document.getElementById("sim-warm-status");
+    if (!el) return;
+    if (hidden) {
+      el.hidden = true;
+      el.textContent = "";
+      return;
+    }
+    el.hidden = false;
+    if (text) el.textContent = text;
+  };
+
+  P.schedulePrecomputeWarmup = function () {
+    if (!P.apiOnline || !P.scenario || !P.api?.precomputeWarm) return;
+    clearTimeout(P._precomputeWarmTimer);
+    P._precomputeWarmGen += 1;
+    const gen = P._precomputeWarmGen;
+    P._precomputeWarmTimer = setTimeout(() => P.runPrecomputeWarmup(gen), 900);
+  };
+
+  P.runPrecomputeWarmup = async function (gen) {
+    if (gen !== P._precomputeWarmGen || !P.scenario || !P.api?.precomputeWarm) return;
+    P.syncSimWarmStatus("后台预计算路径中…", false);
+    try {
+      const res = await P.api.precomputeWarm(P.scenario, true);
+      if (gen !== P._precomputeWarmGen) return;
+      if (res.job_id) {
+        P._precomputeWarmJobId = res.job_id;
+        await P.pollPrecomputeWarmJob(res.job_id, gen);
+        return;
+      }
+      if (res.warmed) P.syncSimWarmStatus("路径已预热，首次仿真会更快", false);
+    } catch (e) {
+      if (gen === P._precomputeWarmGen) P.syncSimWarmStatus("", true);
+      console.warn("precompute warm failed", e);
+    }
+  };
+
+  P.pollPrecomputeWarmJob = async function (jobId, gen) {
+    const maxMs = 240000;
+    const t0 = Date.now();
+    let i = 0;
+    while (Date.now() - t0 < maxMs) {
+      if (gen !== P._precomputeWarmGen) return;
+      await new Promise((r) => setTimeout(r, Math.min(800, 400 + i * 10)));
+      i += 1;
+      const res = await P.api.getJob(jobId);
+      const job = res?.job;
+      if (!job) break;
+      if (job.status === "completed") {
+        P.syncSimWarmStatus("路径已预热，首次仿真会更快", false);
+        return;
+      }
+      if (job.status === "failed") throw new Error(job.error || "warm failed");
+      const detail = P.formatSimJobProgressDetail?.(job.progress) || "预热";
+      P.syncSimWarmStatus("后台预计算：" + detail, false);
     }
   };
 })();
@@ -4355,6 +4723,589 @@ P.runOptimize = async function () {
 
   P.simState = P.simState || { playing: false, frameIndex: 0, timeline: null, raf: null };
 
+  P.getSimArrivalProcessMode = function () {
+    const v = document.getElementById("sim-arrival-mode")?.value || "burst";
+    return v;
+  };
+
+  P.syncSimStepRunModeDesc = function () {
+    const desc = document.getElementById("sim-step-run-mode-desc");
+    const wrap = document.getElementById("sim-step-run-mode-wrap");
+    if (!desc || !wrap) return;
+    const step = P.getSimArrivalProcessMode() === "step";
+    if (!step || wrap.hidden) {
+      desc.hidden = true;
+      return;
+    }
+    const mode = P.getSimStepRunMode?.() || "cumulative";
+    const texts = {
+      cumulative: "从车 1 重算到当前车。",
+      incremental: "锁定前缀，只算当前车（需按序跑过）。",
+      isolated: "只算当前车，不占位。",
+    };
+    desc.textContent = texts[mode] || "";
+    desc.hidden = !desc.textContent;
+  };
+
+  P.simUsesVehicleQueue = function () {
+    const m = P.getSimArrivalProcessMode();
+    return m === "step" || m === "explicit";
+  };
+
+  P.buildSimSchedule = function (extra) {
+    const modeEl = document.getElementById("sim-arrival-mode");
+    let mode = modeEl ? modeEl.value : "uniform";
+    const durEl = document.getElementById("sim-duration-min");
+    const duration_min = durEl ? parseFloat(durEl.value) || 20 : 20;
+    const entrance_capacity = 1;
+    const realEl = document.getElementById("sim-realistic");
+    const realistic = realEl ? !!realEl.checked : true;
+    const count = P.lastResult?.assign?.length || P.scenario?.n_veh || 0;
+    const schedule = { mode, duration_min, count, entrance_capacity, realistic };
+    if (mode === "burst") schedule.burst_gap_sec = 2;
+    if (mode === "explicit" || mode === "step") {
+      schedule.mode = "explicit";
+      P.ensureVehicleArrivalSecArray?.();
+      schedule.arrivals_sec =
+        P.getVehicleArrivalMode?.() === "gap"
+          ? P.resolveVehicleArrivalsSec?.() || []
+          : (P.scenario.vehicle_arrival_sec || []).map((v) => Math.max(0, Number(v) || 0));
+    }
+    const dwellMin = parseFloat(document.getElementById("sim-dwell-min")?.value);
+    if (Number.isFinite(dwellMin) && dwellMin > 0) schedule.dwell_min = dwellMin;
+    if (mode === "poisson" || mode === "normal_gap") {
+      const seedRaw = document.getElementById("sim-arrival-seed")?.value;
+      schedule.seed = seedRaw === "" || seedRaw == null ? 42 : parseInt(seedRaw, 10) || 42;
+      if (mode === "poisson") {
+        schedule.lambda = parseFloat(document.getElementById("sim-poisson-lambda")?.value) || 0.04;
+      }
+      if (mode === "normal_gap") {
+        schedule.mean_gap_sec = parseFloat(document.getElementById("sim-normal-mean-gap")?.value) || 30;
+        schedule.sigma_gap_sec = parseFloat(document.getElementById("sim-normal-sigma-gap")?.value) || 10;
+      }
+    }
+    const wEnt = (parseInt(document.getElementById("sim-weight-entrance")?.value, 10) || 0) / 100;
+    const wFair = (parseInt(document.getElementById("sim-weight-fairness")?.value, 10) || 0) / 100;
+    schedule.objective_weights = { entrance_balance: wEnt, fairness_range: wFair };
+    if (P.scenario) {
+      P.scenario.soft_constraints = P.scenario.soft_constraints || {};
+      P.scenario.soft_constraints.objective_weights = { ...schedule.objective_weights };
+    }
+    if (extra && typeof extra === "object") Object.assign(schedule, extra);
+    return schedule;
+  };
+
+  P.syncSimToolbarVisibility = function () {
+    const mode = P.getSimArrivalProcessMode();
+    const step = mode === "step";
+    const stochastic = mode === "poisson" || mode === "normal_gap";
+    const hasTimeline = !!(P.simState?.timeline?.frames?.length);
+    const toolbar = document.querySelector(".toolbar--simulate");
+    const batchBar = document.getElementById("sim-toolbar-batch");
+    if (batchBar) batchBar.hidden = step;
+    if (toolbar) {
+      toolbar.classList.toggle("toolbar--simulate-step", step);
+      toolbar.classList.toggle("toolbar--simulate-has-play", step && hasTimeline);
+    }
+    const mcBtn = document.getElementById("btn-monte-carlo");
+    if (mcBtn) mcBtn.hidden = !stochastic;
+    const playSim = document.getElementById("btn-sim-play");
+    if (playSim) {
+      playSim.hidden = step && !hasTimeline;
+      playSim.disabled = !hasTimeline;
+    }
+  };
+
+  P.renderSimSampleArrivals = function (realized) {
+    const el = document.getElementById("sim-sample-arrivals");
+    if (!el) return;
+    const arr = realized?.arrivals_sec;
+    if (!arr?.length) {
+      el.hidden = true;
+      el.textContent = "";
+      return;
+    }
+    el.hidden = false;
+    const parts = arr.map((t, i) => "车" + (i + 1) + "=" + Number(t).toFixed(1));
+    let txt = "本次采样到达(s)：" + parts.join(" · ");
+    if (realized.seed != null && realized.seed !== "") txt += " · seed=" + realized.seed;
+    el.textContent = txt;
+  };
+
+  P.formatSimJobProgressDetail = function (progress) {
+    if (!progress) return "";
+    const label = progress.label || progress.phase || "";
+    if (progress.pct != null && Number.isFinite(Number(progress.pct))) {
+      const pct = Math.round(Number(progress.pct) * 100);
+      return label ? label + " " + pct + "%" : pct + "%";
+    }
+    return label;
+  };
+
+  P.syncSimJobProgressUi = function (progress) {
+    const bar = document.getElementById("sim-job-progress");
+    if (!bar) return;
+    if (!progress || progress.pct == null) {
+      bar.hidden = true;
+      bar.removeAttribute("value");
+      return;
+    }
+    const pct = Math.max(0, Math.min(100, Math.round(Number(progress.pct) * 100)));
+    bar.hidden = false;
+    bar.value = String(pct);
+  };
+
+  P.formatSimWaitStatus = function (rolling, elapsedSec, detail, progress) {
+    const base = rolling ? "在线滚动仿真计算中" : "仿真计算中";
+    const prog = P.formatSimJobProgressDetail(progress);
+    const detailText = prog || detail || "";
+    const slow =
+      rolling && elapsedSec >= 8 && !prog ? "（预计算中，二次运行更快）" : "";
+    const tail = detailText ? " · " + detailText : "";
+    return base + slow + " · 已等待 " + elapsedSec + " 秒" + tail;
+  };
+
+  P.simJobStatusDetail = function (job, rolling) {
+    if (!job) return rolling ? "运行" : "";
+    if (job.status === "pending") return "排队";
+    return P.formatSimJobProgressDetail(job.progress) || "运行";
+  };
+
+  P.pollSimJobUntilDone = async function (jobId, st, rolling, maxMsOverride) {
+    const maxMs = maxMsOverride ?? (rolling ? 240000 : 120000);
+    const t0 = Date.now();
+    let i = 0;
+    while (Date.now() - t0 < maxMs) {
+      const elapsed = Math.floor((Date.now() - t0) / 1000);
+      await new Promise((r) => setTimeout(r, Math.min(1000, 350 + i * 8)));
+      i += 1;
+      const res = await P.api.getJob(jobId);
+      const job = res?.job;
+      if (!job) break;
+      if (job.status === "completed") {
+        const resolved = P._resolveJobOutcome(job, rolling);
+        if (resolved?.type === "rolling") return { kind: "rolling", out: resolved.out };
+        if (resolved?.timeline) return { kind: "timeline", timeline: resolved.timeline };
+        return { kind: "raw", raw: job.result };
+      }
+      if (job.status === "failed") throw new Error(job.error || "job failed");
+      P.syncSimJobProgressUi?.(job.progress);
+      if (st) {
+        st.textContent = P.formatSimWaitStatus(
+          rolling,
+          elapsed,
+          null,
+          job.progress
+        );
+      }
+    }
+    P.syncSimJobProgressUi?.(null);
+    throw new Error("仿真超时（超过 " + Math.round(maxMs / 1000) + " 秒），请重试");
+  };
+
+  P.syncSimModeHint = function () {
+    const st = document.getElementById("sim-status");
+    if (!st || P.simState?.timeline?.frames?.length) return;
+    if (!st.textContent || st.textContent.indexOf("失败") < 0) st.textContent = "";
+  };
+
+  P.syncSimArrivalFields = function () {
+    const mode = P.getSimArrivalProcessMode();
+    if (P._simArrivalFieldsMode === "step" && mode !== "step") {
+      P.syncSimVehicleRowFromDom?.(P.clampSimStepVehicleIndex?.());
+    }
+    P._simArrivalFieldsMode = mode;
+    const uniform = mode === "uniform";
+    const step = mode === "step";
+    const sequence = mode === "explicit";
+    const label = document.getElementById("sim-duration-label");
+    const input = document.getElementById("sim-duration-min");
+    if (label) label.hidden = !uniform;
+    if (input) {
+      input.hidden = !uniform;
+      input.disabled = !uniform;
+    }
+    const queueSec = document.getElementById("sim-vehicle-queue-section");
+    if (queueSec) queueSec.hidden = !step && !sequence;
+    const queueTitle = document.getElementById("sim-vehicle-queue-title");
+    if (queueTitle) {
+      queueTitle.textContent = step ? "当前车辆 · 到达 · 楼 · 入口" : "逐车：到达 · 楼 · 入口";
+    }
+    const stepNav = document.getElementById("sim-step-nav");
+    if (stepNav) stepNav.hidden = !step;
+    const stepRunMode = document.getElementById("sim-step-run-mode-wrap");
+    if (stepRunMode) stepRunMode.hidden = !step;
+    P.syncSimStepRunModeDesc?.();
+    const batchOpts = document.getElementById("sim-batch-options");
+    if (batchOpts) batchOpts.hidden = step;
+    const advanced = document.getElementById("sim-rolling-advanced");
+    if (advanced) advanced.hidden = step;
+    const stochastic = mode === "poisson" || mode === "normal_gap";
+    const stochBox = document.getElementById("sim-stochastic-fields");
+    if (stochBox) stochBox.hidden = !stochastic;
+    const poLab = document.getElementById("sim-poisson-lambda-label");
+    const poIn = document.getElementById("sim-poisson-lambda");
+    const nmLab = document.getElementById("sim-normal-mean-label");
+    const nmIn = document.getElementById("sim-normal-mean-gap");
+    const nsLab = document.getElementById("sim-normal-sigma-label");
+    const nsIn = document.getElementById("sim-normal-sigma-gap");
+    const poShow = mode === "poisson";
+    const ngShow = mode === "normal_gap";
+    if (poLab) poLab.hidden = !poShow;
+    if (poIn) poIn.hidden = !poShow;
+    if (nmLab) nmLab.hidden = !ngShow;
+    if (nmIn) nmIn.hidden = !ngShow;
+    if (nsLab) nsLab.hidden = !ngShow;
+    if (nsIn) nsIn.hidden = !ngShow;
+    const samplePre = document.getElementById("sim-sample-arrivals");
+    if (samplePre && !stochastic) {
+      samplePre.hidden = true;
+      samplePre.textContent = "";
+    }
+    P.syncSimToolbarVisibility?.();
+    if (step) P.hideArrivalCompareSection?.();
+    if ((step || sequence) && P.scenario) {
+      P.scenario.entrance_mode = "fixed";
+      const em = document.getElementById("entrance-mode");
+      if (em) em.value = "fixed";
+      const vam = document.getElementById("veh-arrival-mode");
+      if (vam) vam.value = "absolute";
+    }
+    P.renderSimVehicleQueue?.();
+    P.updateActionGates?.();
+  };
+
+  P.clampSimStepVehicleIndex = function () {
+    const n = Math.max(1, parseInt(P.scenario?.n_veh, 10) || 1);
+    if (typeof P.simStepVehicleIndex !== "number" || !Number.isFinite(P.simStepVehicleIndex)) {
+      P.simStepVehicleIndex = 0;
+    }
+    P.simStepVehicleIndex = Math.min(Math.max(0, P.simStepVehicleIndex), n - 1);
+    return P.simStepVehicleIndex;
+  };
+
+  P.syncSimStepNavUi = function () {
+    if (P.getSimArrivalProcessMode() !== "step" || !P.scenario) return;
+    const n = Math.max(1, parseInt(P.scenario.n_veh, 10) || 1);
+    const i = P.clampSimStepVehicleIndex();
+    const ind = document.getElementById("sim-step-indicator");
+    if (ind) ind.textContent = "车 " + (i + 1) + " / " + n;
+    const prev = document.getElementById("sim-step-prev");
+    const next = document.getElementById("sim-step-next");
+    if (prev) prev.disabled = i <= 0;
+    if (next) next.disabled = i >= n - 1;
+  };
+
+  P.goSimStepVehicle = function (delta) {
+    if (P.getSimArrivalProcessMode() !== "step" || !P.scenario) return;
+    const cur = P.clampSimStepVehicleIndex();
+    P.syncSimVehicleRowFromDom?.(cur);
+    P.simStepVehicleIndex = cur + (parseInt(delta, 10) || 0);
+    P.clampSimStepVehicleIndex();
+    P.renderSimVehicleQueue?.();
+  };
+
+  P.appendSimVehicleQueueRow = function (list, i, step) {
+    const nb = P.scenario.buildings?.length ?? 0;
+    const ne = Math.max(1, P.scenario.entrances?.length ?? 1);
+    const row = document.createElement("div");
+    row.className =
+      "vehicle-target-row sim-vehicle-queue-row" + (step ? " sim-vehicle-queue-row--step" : "");
+    const head = document.createElement("span");
+    head.className = "sim-vehicle-queue-head";
+    head.textContent = "车 " + (i + 1);
+    row.appendChild(head);
+    const alab = document.createElement("label");
+    alab.textContent = "到达(s)";
+    alab.setAttribute("for", "sim-veh-arr-" + i);
+    const aIn = document.createElement("input");
+    aIn.type = "number";
+    aIn.id = "sim-veh-arr-" + i;
+    aIn.min = "0";
+    aIn.step = "0.5";
+    aIn.value = String(Number(P.scenario.vehicle_arrival_sec[i]) || i * 2);
+      aIn.addEventListener("change", () => {
+        const v = parseFloat(aIn.value);
+        P.scenario.vehicle_arrival_sec[i] = Number.isFinite(v) ? Math.max(0, v) : 0;
+        P.truncateSimStepSession?.(i);
+        P.schedulePersistCurrentState?.();
+      });
+    row.appendChild(alab);
+    row.appendChild(aIn);
+    const dlab = document.createElement("label");
+    dlab.textContent = "目的楼";
+    dlab.setAttribute("for", "sim-veh-dest-" + i);
+    const dSel = document.createElement("select");
+    dSel.id = "sim-veh-dest-" + i;
+    if (nb === 0) {
+      const opt = document.createElement("option");
+      opt.textContent = "（无居民楼）";
+      dSel.appendChild(opt);
+      dSel.disabled = true;
+    } else {
+      for (let b = 0; b < nb; b++) {
+        const opt = document.createElement("option");
+        opt.value = String(b);
+        opt.textContent = "楼 " + (b + 1);
+        dSel.appendChild(opt);
+      }
+      dSel.value = String(P.scenario.vehicle_destinations[i] ?? 0);
+        dSel.addEventListener("change", () => {
+          P.scenario.vehicle_destinations[i] = parseInt(dSel.value, 10) || 0;
+          P.truncateSimStepSession?.(i);
+          P.invalidateOptimizationResult?.();
+          P.schedulePersistCurrentState?.();
+        });
+    }
+    row.appendChild(dlab);
+    row.appendChild(dSel);
+    const elab = document.createElement("label");
+    elab.textContent = "入口";
+    elab.setAttribute("for", "sim-veh-ent-" + i);
+    const eSel = document.createElement("select");
+    eSel.id = "sim-veh-ent-" + i;
+    for (let ei = 0; ei < ne; ei++) {
+      const opt = document.createElement("option");
+      opt.value = String(ei);
+      opt.textContent = P.entranceDisplayName?.(ei) || "入口 " + (ei + 1);
+      eSel.appendChild(opt);
+    }
+    eSel.value = String(P.scenario.vehicle_entrances[i] ?? 0);
+      eSel.addEventListener("change", () => {
+        P.scenario.vehicle_entrances[i] = parseInt(eSel.value, 10) || 0;
+        P.scenario.entrance_mode = "fixed";
+        P.truncateSimStepSession?.(i);
+        P.invalidateOptimizationResult?.();
+        P.schedulePersistCurrentState?.();
+      });
+    row.appendChild(elab);
+    row.appendChild(eSel);
+    if (step) {
+      const runBtn = document.createElement("button");
+      runBtn.type = "button";
+      runBtn.className = "sim-vehicle-run-one primary";
+      runBtn.textContent = "运行此车";
+      runBtn.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        P.syncSimVehicleRowFromDom?.(i);
+        P.runSingleVehicleSimulation(i);
+      });
+      row.appendChild(runBtn);
+    }
+    list.appendChild(row);
+  };
+
+  P.renderSimVehicleQueue = function () {
+    const section = document.getElementById("sim-vehicle-queue-section");
+    const list = document.getElementById("sim-vehicle-queue-list");
+    if (!list || !P.scenario) return;
+    const mode = P.getSimArrivalProcessMode();
+    const step = mode === "step";
+    if (section) section.hidden = !P.simUsesVehicleQueue();
+    if (!P.simUsesVehicleQueue()) return;
+    P.ensureVehicleDestinationsArray?.();
+    P.ensureVehicleEntrancesArray?.();
+    P.ensureVehicleArrivalSecArray?.();
+    const n = Math.max(1, parseInt(P.scenario.n_veh, 10) || 1);
+    list.classList.toggle("sim-vehicle-queue-list--step-single", step);
+    list.innerHTML = "";
+    if (step) {
+      const i = P.clampSimStepVehicleIndex();
+      P.appendSimVehicleQueueRow(list, i, true);
+      P.syncSimStepNavUi?.();
+    } else {
+      for (let i = 0; i < n; i++) P.appendSimVehicleQueueRow(list, i, false);
+    }
+  };
+
+  P.syncSimVehicleRowFromDom = function (i) {
+    if (!P.scenario) return;
+    const aIn = document.getElementById("sim-veh-arr-" + i);
+    const dSel = document.getElementById("sim-veh-dest-" + i);
+    const eSel = document.getElementById("sim-veh-ent-" + i);
+    if (aIn) {
+      const v = parseFloat(aIn.value);
+      P.scenario.vehicle_arrival_sec[i] = Number.isFinite(v) ? Math.max(0, v) : 0;
+    }
+    if (dSel && !dSel.disabled) {
+      P.scenario.vehicle_destinations[i] = parseInt(dSel.value, 10) || 0;
+    }
+    if (eSel) {
+      P.scenario.vehicle_entrances[i] = parseInt(eSel.value, 10) || 0;
+      P.scenario.entrance_mode = "fixed";
+    }
+  };
+
+  /** 逐车调试：从车 1 到第 i 辆（含）累积滚动，先前车辆仍占用车位。 */
+  P.buildStepScenarioThroughIndex = function (vehicleIndex) {
+    const s = P.scenario;
+    const i = Math.max(0, parseInt(vehicleIndex, 10) || 0);
+    const n = Math.min(i + 1, Math.max(1, parseInt(s.n_veh, 10) || 1));
+    const one = JSON.parse(JSON.stringify(s));
+    one.n_veh = n;
+    one.entrance_mode = "fixed";
+    one.vehicle_destinations = (s.vehicle_destinations || []).slice(0, n);
+    one.vehicle_entrances = (s.vehicle_entrances || []).slice(0, n);
+    one.vehicle_requirements = (s.vehicle_requirements || []).slice(0, n);
+    while (one.vehicle_requirements.length < n) one.vehicle_requirements.push("normal");
+    P.ensureVehicleArrivalSecArray?.();
+    const arrivals = (s.vehicle_arrival_sec || []).slice(0, n).map((v, idx) => {
+      const t = Number(v);
+      return Number.isFinite(t) ? Math.max(0, t) : idx * 2;
+    });
+    while (arrivals.length < n) arrivals.push(arrivals.length * 2);
+    one.vehicle_arrival_sec = arrivals;
+    return { scenario: one, arrivals_sec: arrivals, throughIndex: i, vehicleCount: n };
+  };
+
+  P.buildIsolatedStepScenario = function (vehicleIndex) {
+    const s = P.scenario;
+    const i = Math.max(0, parseInt(vehicleIndex, 10) || 0);
+    const one = JSON.parse(JSON.stringify(s));
+    one.n_veh = 1;
+    one.entrance_mode = "fixed";
+    one.vehicle_destinations = [s.vehicle_destinations[i] ?? 0];
+    one.vehicle_entrances = [s.vehicle_entrances[i] ?? 0];
+    one.vehicle_requirements = [(s.vehicle_requirements || [])[i] || "normal"];
+    const arr = Math.max(0, Number(s.vehicle_arrival_sec[i]) || 0);
+    one.vehicle_arrival_sec = [arr];
+    return { scenario: one, arrivals_sec: [arr], throughIndex: i, vehicleCount: 1 };
+  };
+
+  P.runRollingSimulation = async function (scenario, schedule, st, statusPrefix) {
+    if (st && statusPrefix) st.textContent = statusPrefix + P.formatSimWaitStatus(true, 0).replace(/^在线滚动仿真计算中/, "计算中");
+    else if (st) st.textContent = P.formatSimWaitStatus(true, 0);
+    if (!P.api?.simulateRolling) {
+      if (st) st.textContent = "在线滚动需连接后端 API。";
+      return false;
+    }
+    const res = await P.api.simulateRolling(scenario, schedule, true);
+    if (res.timeline && res.success !== false) {
+      P.applyRollingSimOutcome(res, st);
+      return true;
+    }
+    if (res.job_id) {
+      await P.watchSimJob(res.job_id, st, true);
+      return true;
+    }
+    return false;
+  };
+
+  P.runSingleVehicleSimulation = async function (vehicleIndex) {
+    const st = document.getElementById("sim-status");
+    if (P.getSimArrivalProcessMode() !== "step") {
+      if (st) st.textContent = "单车试跑请在「到达过程」中选择「逐车调试」。";
+      return;
+    }
+    const gate = P.canRunRollingSimulation?.();
+    if (gate && !gate.ok) {
+      P.showWorkspaceMessage?.(gate.reason, { level: "warn", alsoResult: false });
+      if (st) st.textContent = gate.reason;
+      return;
+    }
+    const i = parseInt(vehicleIndex, 10);
+    const n = parseInt(P.scenario?.n_veh, 10) || 0;
+    if (!Number.isFinite(i) || i < 0 || i >= n) return;
+    P.syncSimVehicleRowFromDom(i);
+    let runMode = P.getSimStepRunMode?.() || "cumulative";
+    let built;
+    if (runMode === "isolated") {
+      built = P.buildIsolatedStepScenario(i);
+    } else {
+      built = P.buildStepScenarioThroughIndex(i);
+    }
+    const schedule = {
+      mode: "explicit",
+      arrivals_sec: built.arrivals_sec,
+      count: built.vehicleCount,
+      entrance_capacity: 1,
+      realistic: document.getElementById("sim-realistic")?.checked !== false,
+    };
+    if (runMode === "incremental" && i > 0) {
+      const pa = (P.simStepSession?.assign || []).slice(0, i);
+      const ok =
+        pa.length >= i && pa.every((slot, k) => k < i && Number.isFinite(Number(slot)) && Number(slot) >= 0);
+      if (ok) {
+        schedule.prefix_assign = pa;
+      } else if (st) {
+        st.textContent = "增量模式需先按顺序跑完前面车辆；本次改为累积重算。";
+        runMode = "cumulative";
+      }
+    }
+    P._simTimelineSeekEnd = runMode !== "isolated";
+    let statusPrefix = "车 " + (i + 1) + " · ";
+    if (runMode === "isolated") statusPrefix = "车 " + (i + 1) + " 单车预览 · ";
+    else if (runMode === "incremental" && schedule.prefix_assign) {
+      statusPrefix = "车 " + (i + 1) + " 增量 · ";
+    } else if (built.vehicleCount > 1) {
+      statusPrefix = "车 1–" + (i + 1) + " 累积 · ";
+    }
+    try {
+      await P.runRollingSimulation(built.scenario, schedule, st, statusPrefix);
+    } catch (e) {
+      console.warn("single vehicle sim failed", e);
+      if (st) st.textContent = "单车仿真失败：" + (e.message || e);
+    }
+    P.updateActionGates?.();
+  };
+
+  P.countSimFrameStates = function (frame) {
+    const vehicles = frame?.vehicles || [];
+    let arrived = 0;
+    let pending = 0;
+    let queued = 0;
+    let driving = 0;
+    let walking = 0;
+    let done = 0;
+    for (const v of vehicles) {
+      if (v.state === "pending") pending += 1;
+      else {
+        arrived += 1;
+        if (v.state === "queued") queued += 1;
+        else if (v.state === "driving") driving += 1;
+        else if (v.state === "walking") walking += 1;
+        else if (v.state === "parked") done += 1;
+        else if (v.state === "departed") done += 1;
+        else if (v.state === "done") done += 1;
+      }
+    }
+    return {
+      total: vehicles.length,
+      arrived,
+      pending,
+      queued,
+      driving,
+      walking,
+      done,
+    };
+  };
+
+  P.updateSimLiveStatus = function () {
+    const el = document.getElementById("sim-live-status");
+    const frame = P.simState.timeline?.frames?.[P.simState.frameIndex];
+    if (!el) return;
+    if (!frame) {
+      el.textContent = "尚未运行";
+      el.classList.remove("sim-live-status--active");
+      return;
+    }
+    el.classList.add("sim-live-status--active");
+    const c = P.countSimFrameStates(frame);
+    el.textContent =
+      "已到达 " +
+      c.arrived +
+      " / " +
+      c.total +
+      " 辆 · 入口排队 " +
+      (Number(frame.queue) || 0) +
+      " · 驶入 " +
+      c.driving +
+      " · 步行 " +
+      c.walking +
+      " · 已完成 " +
+      c.done;
+  };
+
   P.updateSimTimeLabel = function () {
     const el = document.getElementById("sim-time-label");
     const frame = P.simState.timeline?.frames?.[P.simState.frameIndex];
@@ -4362,11 +5313,18 @@ P.runOptimize = async function () {
     const t = frame?.t;
     el.textContent =
       "回放时间：" + (Number.isFinite(Number(t)) ? Number(t).toFixed(1) : "0.0") + " s";
+    P.updateSimLiveStatus?.();
   };
 
   P.applySimTimeline = function (timeline, st, label) {
     P.simState.timeline = timeline;
-    P.simState.frameIndex = 0;
+    const frames = timeline?.frames;
+    if (P._simTimelineSeekEnd && frames?.length) {
+      P.simState.frameIndex = frames.length - 1;
+      P._simTimelineSeekEnd = false;
+    } else {
+      P.simState.frameIndex = 0;
+    }
     P._simulationRan = true;
     P._syncSimScrubMax();
     P.drawSimQueueChart?.(timeline);
@@ -4378,40 +5336,284 @@ P.runOptimize = async function () {
     P.draw();
   };
 
+  P.applyRollingSimOutcome = function (out, st) {
+    if (out?.result) {
+      P.lastResult = out.result;
+      P.syncResultToScenario?.();
+      P.updateResultsPanel?.();
+    }
+    let label = "在线滚动仿真就绪";
+    if (out?.rolling_total_cost != null && out?.static_reference_value != null) {
+      const gap = out.rolling_total_cost - out.static_reference_value;
+      label +=
+        " · 代价 " +
+        out.rolling_total_cost.toFixed(1) +
+        " / 全信息 " +
+        out.static_reference_value.toFixed(1) +
+        "（+" +
+        gap.toFixed(1) +
+        "）";
+    }
+    P.applySimTimeline(out.timeline, st, label);
+    P.renderSimSampleArrivals?.(out.schedule_realized);
+    P.syncSimJobProgressUi?.(null);
+    if (P.getSimArrivalProcessMode?.() === "step" && out?.result?.assign?.length) {
+      P.simStepSession = P.simStepSession || { assign: [] };
+      P.simStepSession.assign = out.result.assign.slice();
+    }
+  };
+
+  P.fetchSimApiPayload = async function (initialRes, rolling, st) {
+    if (!initialRes) return null;
+    if (initialRes.timeline?.frames || initialRes.frames) {
+      return rolling ? initialRes : { timeline: initialRes.timeline || initialRes };
+    }
+    if (initialRes.job_id && P.api?.getJob) {
+      const done = await P.pollSimJobUntilDone(initialRes.job_id, st, rolling);
+      if (done.kind === "rolling") return done.out;
+      if (done.kind === "timeline") return { timeline: done.timeline };
+      return done.raw;
+    }
+    return initialRes;
+  };
+
+  P.ensureStaticOptimizeResult = async function () {
+    if (P.lastResult?.assign?.length) return P.lastResult;
+    if (!P.api?.optimize) throw new Error("无 optimize API");
+    const methodEl = document.getElementById("optimizer-method");
+    const method = methodEl?.value === "pso" ? "pso" : "exact";
+    const seedEl = document.getElementById("pso-seed");
+    const seed = seedEl?.value ? parseInt(seedEl.value, 10) : undefined;
+    const res = await P.api.optimize(P.scenario, method, seed);
+    if (res?.assign || res?.gbest_value != null) {
+      P.lastResult = res;
+      P.syncResultToScenario?.();
+      P.updateResultsPanel?.();
+      return res;
+    }
+    throw new Error("优化未返回有效结果");
+  };
+
+  P.hideArrivalCompareSection = function () {
+    const section = document.getElementById("arrival-compare-section");
+    const exp = document.getElementById("arrival-compare-export");
+    if (section) section.hidden = true;
+    if (exp) exp.hidden = true;
+    P.lastSimExportPayload = null;
+  };
+
+  P.syncArrivalCompareExport = function (payload, kind) {
+    P.lastSimExportPayload = payload ? { kind: kind || "compare", exported_at: new Date().toISOString(), ...payload } : null;
+    const exp = document.getElementById("arrival-compare-export");
+    if (exp) exp.hidden = !P.lastSimExportPayload;
+  };
+
+  P.exportArrivalCompareJson = function () {
+    if (!P.lastSimExportPayload) return;
+    const blob = new Blob([JSON.stringify(P.lastSimExportPayload, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "parking-sim-" + (P.lastSimExportPayload.kind || "export") + ".json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  P.renderArrivalCompareTable = function (rollingOut, staticTimeline, staticResult) {
+    const host = document.getElementById("arrival-compare-table");
+    const section = document.getElementById("arrival-compare-section");
+    const title = document.getElementById("arrival-compare-title");
+    if (title) title.textContent = "策略对照";
+    if (!host) return;
+    const rs = rollingOut?.timeline?.stats || {};
+    const ss = staticTimeline?.stats || {};
+    const rollCost = rollingOut?.rolling_total_cost;
+    const staticCost =
+      rollingOut?.static_reference_value ??
+      staticResult?.gbest_value ??
+      staticResult?.gbestValue;
+    const fmt = (v, digits) =>
+      v == null || !Number.isFinite(Number(v)) ? "—" : Number(v).toFixed(digits ?? 1);
+    const gap =
+      rollCost != null && staticCost != null ? Number(rollCost) - Number(staticCost) : null;
+    host.innerHTML =
+      '<table class="compare-data arrival-compare-data"><thead><tr>' +
+      "<th>指标</th><th>在线滚动</th><th>全信息基准</th></tr></thead><tbody>" +
+      "<tr><td>总代价 (s)</td><td>" +
+      fmt(rollCost) +
+      "</td><td>" +
+      fmt(staticCost) +
+      "</td></tr>" +
+      "<tr><td>相对全信息 Δ</td><td colspan=\"2\">" +
+      (gap != null ? (gap >= 0 ? "+" : "") + gap.toFixed(1) + " s" : "—") +
+      "</td></tr>" +
+      "<tr><td>峰值排队 (辆)</td><td>" +
+      fmt(rs.peak_queue, 0) +
+      "</td><td>" +
+      fmt(ss.peak_queue, 0) +
+      "</td></tr>" +
+      "<tr><td>平均等入口 (s)</td><td>" +
+      fmt(rs.avg_wait_until_drive) +
+      "</td><td>" +
+      fmt(ss.avg_wait_until_drive) +
+      "</td></tr>" +
+      "<tr><td>P95 总耗时 (s)</td><td>" +
+      fmt(rs.p95_total_time) +
+      "</td><td>" +
+      fmt(ss.p95_total_time) +
+      "</td></tr>";
+    const om = rollingOut?.objective_metrics || {};
+    if (om.fairness_walk_range != null || om.entrance_load_variance != null) {
+      host.innerHTML +=
+        "<tr><td>楼间步行极差 (s)</td><td colspan=\"2\">" +
+        fmt(om.fairness_walk_range) +
+        "</td></tr>" +
+        "<tr><td>入口负载方差</td><td colspan=\"2\">" +
+        fmt(om.entrance_load_variance, 2) +
+        "</td></tr>" +
+        "<tr><td>加权综合代价</td><td colspan=\"2\">" +
+        fmt(rollingOut.composite_cost) +
+        "</td></tr>";
+    }
+    host.innerHTML += "</tbody></table>";
+    if (section) section.hidden = false;
+    P.syncArrivalCompareExport?.(
+      {
+        schedule: P.arrivalCompare?.schedule,
+        rolling: {
+          rolling_total_cost: rollCost,
+          composite_cost: rollingOut?.composite_cost,
+          objective_metrics: rollingOut?.objective_metrics,
+          stats: rs,
+        },
+        static: { gbest_value: staticCost, stats: ss },
+      },
+      "compare"
+    );
+  };
+
+  P.renderMonteCarloSummary = function (out) {
+    const host = document.getElementById("arrival-compare-table");
+    const section = document.getElementById("arrival-compare-section");
+    const title = document.getElementById("arrival-compare-title");
+    if (title) title.textContent = "随机抽样摘要";
+    if (!host || !out) return;
+    const fmt = (v) => (v == null || !Number.isFinite(Number(v)) ? "—" : Number(v).toFixed(1));
+    host.innerHTML =
+      '<table class="compare-data arrival-compare-data"><thead><tr><th>Monte Carlo</th><th>值</th></tr></thead><tbody>' +
+      "<tr><td>完成次数</td><td>" +
+      (out.runs_completed ?? "—") +
+      "/" +
+      (out.runs_requested ?? "—") +
+      "</td></tr>" +
+      "<tr><td>滚动代价均值 (s)</td><td>" +
+      fmt(out.rolling_cost_mean) +
+      "</td></tr>" +
+      "<tr><td>滚动代价 P95 (s)</td><td>" +
+      fmt(out.rolling_cost_p95) +
+      "</td></tr>" +
+      "<tr><td>Δ 全信息均值 (s)</td><td>" +
+      fmt(out.delta_mean) +
+      "</td></tr>" +
+      "<tr><td>Δ 全信息 P95 (s)</td><td>" +
+      fmt(out.delta_p95) +
+      "</td></tr>" +
+      "</tbody></table>";
+    if (section) section.hidden = false;
+    if (out.samples?.[0]?.arrivals_sec) P.renderSimSampleArrivals?.({ arrivals_sec: out.samples[0].arrivals_sec, seed: out.base_seed });
+    P.syncArrivalCompareExport?.({ monte_carlo: out, schedule: P.buildSimSchedule?.() }, "monte_carlo");
+  };
+
+  P.runMonteCarloRolling = async function () {
+    const st = document.getElementById("sim-status");
+    const mode = P.getSimArrivalProcessMode();
+    if (mode !== "poisson" && mode !== "normal_gap") {
+      if (st) st.textContent = "Monte Carlo 仅用于 Poisson / 正态间隔到达。";
+      return;
+    }
+    if (!P.apiOnline || !P.api?.monteCarloRolling) {
+      if (st) st.textContent = "Monte Carlo 需连接后端 API。";
+      return;
+    }
+    const schedule = P.buildSimSchedule();
+    if (st) st.textContent = "随机抽样中…";
+    try {
+      const init = await P.api.monteCarloRolling(P.scenario, schedule, 20, schedule.seed ?? 42, true);
+      let out = init;
+      if (init.job_id) {
+        const done = await P.pollSimJobUntilDone(init.job_id, st, false, 600000);
+        out = done.raw || done;
+      }
+      if (out && out.success !== false) {
+        P.renderMonteCarloSummary(out);
+        if (st) st.textContent = "抽样完成 · 均值 " + (out.rolling_cost_mean?.toFixed?.(1) ?? "—") + " s";
+      } else throw new Error(out?.message || "Monte Carlo 失败");
+    } catch (e) {
+      if (st) st.textContent = "Monte Carlo 失败：" + (e.message || e);
+    }
+  };
+
+  P.runArrivalCompare = async function () {
+    const st = document.getElementById("sim-status");
+    const gate = P.canRunRollingSimulation?.();
+    if (gate && !gate.ok) {
+      P.showWorkspaceMessage?.(gate.reason, { level: "warn", alsoResult: false });
+      if (st) st.textContent = gate.reason;
+      return;
+    }
+    if (!P.apiOnline || !P.api?.simulateRolling || !P.api?.simulate) {
+      P.showWorkspaceMessage?.("对照需连接后端 API", { level: "warn", alsoResult: false });
+      if (st) st.textContent = "对照需连接后端 API";
+      return;
+    }
+    const schedule = P.buildSimSchedule({ include_static_reference: true });
+    if (st) st.textContent = "对照计算中…";
+    try {
+      const rollInit = await P.api.simulateRolling(P.scenario, schedule, true);
+      const rollingOut = await P.fetchSimApiPayload(rollInit, true, st);
+      if (!rollingOut?.timeline?.frames?.length) {
+        throw new Error(rollingOut?.message || "滚动仿真无时间轴");
+      }
+      const staticResult = await P.ensureStaticOptimizeResult();
+      const staticInit = await P.api.simulate(staticResult, schedule, true);
+      const staticPack = await P.fetchSimApiPayload(staticInit, false, st);
+      const staticTimeline = staticPack?.timeline || staticPack;
+      P.arrivalCompare = { schedule, rollingOut, staticTimeline, staticResult };
+      P.renderArrivalCompareTable(rollingOut, staticTimeline, staticResult);
+      P.applyRollingSimOutcome(rollingOut, st);
+      P.syncSimModeHint?.();
+    } catch (e) {
+      console.warn("arrival compare failed", e);
+      if (st) st.textContent = "对照失败：" + (e.message || e);
+      P.showWorkspaceMessage?.("对照失败：" + (e.message || e), { level: "error", alsoResult: false });
+    }
+    P.updateActionGates?.();
+  };
+
   P.runSimulation = async function () {
-    const gate = P.canRunSimulation?.();
+    if (!P.scenario) {
+      const st = document.getElementById("sim-status");
+      if (st) st.textContent = "缺少场景。";
+      return;
+    }
+    if (P.getSimArrivalProcessMode() === "step") {
+      const st = document.getElementById("sim-status");
+      return;
+    }
+    const gate = P.canRunRollingSimulation?.();
     if (gate && !gate.ok) {
       P.showWorkspaceMessage?.(gate.reason, { level: "warn", alsoResult: false });
       const st = document.getElementById("sim-status");
       if (st) st.textContent = gate.reason;
       return;
     }
-    if (!P.lastResult) {
-      const st = document.getElementById("sim-status");
-      if (st) st.textContent = "请先运行优化。";
-      return;
-    }
     const st = document.getElementById("sim-status");
-    const durEl = document.getElementById("sim-duration-min");
-    const duration_min = durEl ? parseFloat(durEl.value) || 20 : 20;
-    const schedule = { mode: "uniform", duration_min, count: P.lastResult.assign?.length || P.scenario?.n_veh };
-    if (st) st.textContent = "仿真计算中…";
+    const schedule = P.buildSimSchedule();
     try {
-      if (P.api?.simulate) {
-        const res = await P.api.simulate(P.lastResult, schedule, true);
-        if (res.timeline) {
-          P.applySimTimeline(res.timeline, st, "仿真就绪（同步）");
-          return;
-        }
-        if (res.job_id) {
-          await P.watchSimJob(res.job_id, st);
-          return;
-        }
-      }
+      await P.runRollingSimulation(P.scenario, schedule, st, "");
     } catch (e) {
       console.warn("api simulate failed", e);
+      if (st) st.textContent = "仿真失败：" + (e.message || e);
     }
-    P.applySimTimeline(P.runSimulationLocal(P.lastResult, schedule), st, "仿真就绪（本地）");
   };
 
   P._syncSimScrubMax = function () {
@@ -4424,56 +5626,103 @@ P.runOptimize = async function () {
     P.updateSimTimeLabel?.();
   };
 
-  P.watchSimJob = async function (jobId, st) {
+  P._resolveJobOutcome = function (job, rolling) {
+    const raw = job?.result;
+    if (!raw) return null;
+    if (rolling && raw.timeline) return { type: "rolling", out: raw };
+    if (raw.frames) return { type: "timeline", timeline: raw };
+    if (raw.timeline?.frames) return { type: "timeline", timeline: raw.timeline };
+    return null;
+  };
+
+  P.watchSimJob = async function (jobId, st, rolling) {
+    const t0 = Date.now();
     try {
       if (P.api?.watchJob) {
         const data = await P.api.watchJob(jobId, (msg) => {
+          P.syncSimJobProgressUi?.(msg.progress);
           if (!st) return;
-          if (msg.status === "running") st.textContent = "仿真计算中（实时）…";
-          else if (msg.status === "pending") st.textContent = "仿真排队中…";
+          const elapsed = Math.floor((Date.now() - t0) / 1000);
+          st.textContent = P.formatSimWaitStatus(rolling, elapsed, null, msg.progress);
         });
         if (data?.result) {
-          P.applySimTimeline(data.result, st, "仿真就绪");
-          return;
+          const resolved = P._resolveJobOutcome({ result: data.result }, rolling);
+          if (resolved?.type === "rolling") {
+            P.applyRollingSimOutcome(resolved.out, st);
+            return;
+          }
+          if (resolved?.timeline) {
+            P.applySimTimeline(resolved.timeline, st, "仿真就绪");
+            return;
+          }
         }
       }
     } catch (e) {
       console.warn("websocket job watch failed, fallback to poll", e);
     }
-    await P.pollSimJob(jobId, st);
-  };
-
-  P.pollSimJob = async function (jobId, st) {
-    for (let i = 0; i < 120; i++) {
-      await new Promise((r) => setTimeout(r, Math.min(800, 300 + i * 5)));
-      const res = await P.api.getJob(jobId);
-      const job = res.job;
-      if (!job) break;
-      if (job.status === "completed" && job.result) {
-        P.applySimTimeline(job.result, st, "仿真就绪");
+    try {
+      const done = await P.pollSimJobUntilDone(jobId, st, rolling);
+      if (done.kind === "rolling") {
+        P.applyRollingSimOutcome(done.out, st);
         return;
       }
-      if (job.status === "failed") {
-        if (st) st.textContent = "仿真失败：" + (job.error || "");
+      if (done.kind === "timeline") {
+        P.applySimTimeline(done.timeline, st, "仿真就绪");
         return;
       }
-      if (st) st.textContent = "仿真进行中…（轮询 " + (i + 1) + "/120）";
+    } catch (e) {
+      if (st) st.textContent = "仿真失败：" + (e.message || e);
     }
-    if (st) st.textContent = "仿真超时，请重试。";
   };
 
   P.runSimulationLocal = function (result, schedule) {
     const breakdown = result.vehicle_breakdown || [];
     const n = breakdown.length;
+    const mode = schedule.mode || "uniform";
     const duration_s = (schedule.duration_min || 20) * 60;
-    const arrivals = [];
-    const step = duration_s / Math.max(1, n);
-    for (let i = 0; i < n; i++) arrivals.push(i * step);
+    let arrivals = [];
+    if (mode === "explicit") {
+      arrivals = (P.resolveVehicleArrivalsSec?.() || []).slice(0, n);
+      while (arrivals.length < n) {
+        const prev = arrivals.length ? arrivals[arrivals.length - 1] : 0;
+        arrivals.push(prev + 2);
+      }
+    } else if (mode === "burst") {
+      const gap = schedule.burst_gap_sec || 2;
+      for (let i = 0; i < n; i++) arrivals.push(i * gap);
+    } else {
+      const step = duration_s / Math.max(1, n);
+      for (let i = 0; i < n; i++) arrivals.push(i * step);
+    }
+    const drive_durations = breakdown.map((bd) => Number(bd.drive_time || 0));
+    const cap = Math.max(1, schedule.entrance_capacity || 1);
+    const realistic = schedule.realistic !== false;
+    let drive_starts = arrivals.slice();
+    if (realistic) {
+      let nEnt = Math.max(1, P.scenario?.entrances?.length || 1);
+      for (const bd of breakdown) {
+        nEnt = Math.max(nEnt, (Number(bd.entrance_index) || 0) + 1);
+      }
+      const freeAt = Array.from({ length: nEnt }, () => 0);
+      const order = arrivals.map((_, i) => i).sort((a, b) => arrivals[a] - arrivals[b] || a - b);
+      drive_starts = arrivals.slice();
+      for (const i of order) {
+        const ei = Math.max(
+          0,
+          Math.min(nEnt - 1, Number(breakdown[i]?.entrance_index) || 0)
+        );
+        const arr = arrivals[i];
+        const start = Math.max(arr, freeAt[ei]);
+        drive_starts[i] = start;
+        freeAt[ei] = start + drive_durations[i];
+      }
+    }
 
     const events = breakdown.map((bd, i) => {
       const arr = arrivals[i] ?? i * 5;
-      const drive_t = Number(bd.drive_time || 0);
+      const drive_t = drive_durations[i];
       const walk_t = Number(bd.walk_time || 0);
+      const ds = drive_starts[i];
       const ei = Number(bd.entrance_index || 0);
       const ent = (P.scenario?.entrances || [[0, 0]])[ei] || [0, 0];
       const si = Number(bd.slot_index ?? 0);
@@ -4486,9 +5735,9 @@ P.runOptimize = async function () {
           : [ent, parkAt];
       return {
         arrival: arr,
-        drive_start: arr,
-        drive_end: arr + drive_t,
-        walk_end: arr + drive_t + walk_t,
+        drive_start: ds,
+        drive_end: ds + drive_t,
+        walk_end: ds + drive_t + walk_t,
         entrance: ent,
         park_at: parkAt,
         drive_path,
@@ -4544,6 +5793,7 @@ P.runOptimize = async function () {
     const p95 = total_times.length
       ? total_times[Math.floor(0.95 * (total_times.length - 1))]
       : 0;
+    const wait_until = events.map((e) => e.drive_start - e.arrival);
 
     return {
       frames,
@@ -4551,8 +5801,11 @@ P.runOptimize = async function () {
       stats: {
         peak_queue: queue_len_peak,
         avg_wait: wait_samples.length ? wait_samples.reduce((a, b) => a + b, 0) / wait_samples.length : 0,
+        avg_wait_until_drive: wait_until.length ? wait_until.reduce((a, b) => a + b, 0) / wait_until.length : 0,
         p95_total_time: p95,
         vehicle_count: n,
+        realistic,
+        entrance_capacity: cap,
       },
     };
   };
@@ -4654,6 +5907,7 @@ P.runOptimize = async function () {
     if (slider) slider.value = String(P.simState.frameIndex);
     P.updateSimTimeLabel?.();
     P.updateSimStats();
+    P.updateSimLiveStatus?.();
     P.draw();
     P.simState.raf = requestAnimationFrame(() => {
       setTimeout(P.simTick, 80);
@@ -4669,12 +5923,19 @@ P.runOptimize = async function () {
       el.textContent = "";
       return;
     }
-    el.textContent =
-      "峰值排队: " +
-      (stats?.peak_queue ?? frame?.queue ?? 0) +
+    let txt = "当前排队: " + (frame?.queue ?? "—") + " 辆";
+    txt +=
+      " · 峰值排队: " +
+      (stats?.peak_queue ?? "—") +
       " · 车辆数: " +
-      (stats?.vehicle_count ?? 0) +
-      (stats?.p95_total_time != null ? " · P95总耗时: " + stats.p95_total_time.toFixed(1) + " s" : "");
+      (stats?.vehicle_count ?? P.countSimFrameStates(frame).total);
+    if (stats?.avg_wait_until_drive != null) {
+      txt += " · 平均等入口: " + stats.avg_wait_until_drive.toFixed(1) + " s";
+    }
+    if (stats?.p95_total_time != null) {
+      txt += " · P95总耗时: " + stats.p95_total_time.toFixed(1) + " s";
+    }
+    el.textContent = txt;
   };
 
   P.drawSimulationOverlay = function (scale) {
@@ -4686,7 +5947,17 @@ P.runOptimize = async function () {
       const p = P.worldToScreen(v.x, v.y);
       P.ctx.beginPath();
       P.ctx.arc(p.sx, p.sy, Math.max(5, scale * 0.28), 0, Math.PI * 2);
-      P.ctx.fillStyle = v.state === "driving" ? "#2563eb" : v.state === "walking" ? "#0d9488" : "#94a3b8";
+      const stCol =
+        v.state === "driving"
+          ? "#2563eb"
+          : v.state === "walking"
+            ? "#0d9488"
+            : v.state === "parked"
+              ? "#64748b"
+              : v.state === "departed"
+                ? "#cbd5e1"
+                : "#94a3b8";
+      P.ctx.fillStyle = stCol;
       P.ctx.fill();
       P.ctx.strokeStyle = "#fff";
       P.ctx.lineWidth = 1.5;
@@ -7446,7 +8717,7 @@ P.finalizeObstacleDraft = function () {
       document.getElementById("result-gbest").style.display = "none";
       P.drawChart([]);
       P.updateChartCaption("idle");
-      P.refreshSnapshotSelect();
+      P.refreshSnapshotSelect?.();
       P.renderBreakdownSummary();
       P.renderResultTip("");
       const legend = document.querySelector(".map-legend");
@@ -7558,14 +8829,7 @@ P.finalizeObstacleDraft = function () {
   document.getElementById("btn-delete").addEventListener("click", P.deleteSelected);
   document.getElementById("btn-random-dest").addEventListener("click", P.randomizeVehicleDestinations);
   document.getElementById("btn-reset-scenario")?.addEventListener("click", P.resetScenario);
-  document.querySelectorAll(".js-run-optimize").forEach((btn) => {
-    btn.addEventListener("click", P.runOptimize);
-  });
   document.getElementById("btn-export-scenario")?.addEventListener("click", P.exportScenarioToFile);
-  document.getElementById("btn-save-snapshot")?.addEventListener("click", P.saveSnapshot);
-  document.getElementById("btn-load-snapshot")?.addEventListener("click", P.loadSnapshot);
-  document.getElementById("btn-run-benchmark")?.addEventListener("click", P.runBenchmark);
-  document.getElementById("btn-recommend-params")?.addEventListener("click", P.recommendParams);
   document.querySelectorAll(".side-tab").forEach((btn) => {
     btn.addEventListener("click", () => P.switchTab(btn.dataset.tab));
   });
@@ -7660,7 +8924,9 @@ P.finalizeObstacleDraft = function () {
     P.vehiclePage = 0;
     P.ensureVehicleDestinationsArray();
     P.ensureVehicleEntrancesArray();
+    P.ensureVehicleArrivalSecArray?.();
     P.rebuildVehicleTargetsUI();
+    P.renderSimVehicleQueue?.();
     P.invalidateOptimizationResult();
     P.scheduleAutoEntrancePreviewRefresh?.();
     P.updateRunBarSummary?.();
@@ -7681,44 +8947,49 @@ P.finalizeObstacleDraft = function () {
     }, 80);
   });
 
-  P.wireLayerControls?.();
-  P.wireUnderlayPanel?.();
   P.wireWorkflowGuide?.();
-  P.wirePsoLabPanel?.();
 
-  document.getElementById("btn-save-named-plan")?.addEventListener("click", () => {
-    const nameEl = document.getElementById("plan-save-name");
-    P.saveNamedPlan?.(nameEl?.value || "");
-    if (nameEl) nameEl.value = "";
-  });
-  document.getElementById("btn-refresh-compare")?.addEventListener("click", () => {
-    P.renderComparePanel?.();
-  });
-  document.getElementById("btn-export-compare-report")?.addEventListener("click", () => {
-    P.exportCompareReport?.();
-  });
   document.getElementById("btn-auto-slots")?.addEventListener("click", () => P.runAutoSlots?.());
-  document.getElementById("btn-suggest-plans")?.addEventListener("click", () => P.runSuggestPlans?.());
+  document.getElementById("sim-arrival-mode")?.addEventListener("change", () => {
+    P.syncSimArrivalFields?.();
+  });
+  document.getElementById("sim-step-prev")?.addEventListener("click", () => P.goSimStepVehicle?.(-1));
+  document.getElementById("sim-step-next")?.addEventListener("click", () => P.goSimStepVehicle?.(1));
+  document.getElementById("sim-step-run-mode")?.addEventListener("change", () => P.syncSimStepRunModeDesc?.());
+  document.getElementById("veh-arrival-mode")?.addEventListener("change", () => {
+    P.rebuildVehicleTargetsUI?.();
+  });
   document.getElementById("btn-run-sim")?.addEventListener("click", () => P.runSimulation?.());
+  document.getElementById("btn-run-arrival-compare")?.addEventListener("click", () =>
+    P.runArrivalCompare?.()
+  );
+  document.getElementById("btn-monte-carlo")?.addEventListener("click", () =>
+    P.runMonteCarloRolling?.()
+  );
+  document.getElementById("arrival-compare-export")?.addEventListener("click", () =>
+    P.exportArrivalCompareJson?.()
+  );
   document.getElementById("btn-sim-play")?.addEventListener("click", () => P.toggleSimPlay?.());
   document.getElementById("sim-scrub")?.addEventListener("input", (e) => {
     P.simState.frameIndex = parseInt(e.target.value, 10) || 0;
     P.updateSimTimeLabel?.();
     P.updateSimStats?.();
+    P.updateSimLiveStatus?.();
     P.draw();
   });
 
   (async function initPlansAndApi() {
     await P.refreshApiStatus?.();
-    await P.loadPlans?.();
-    P.syncUnderlayPanelFromScenario?.();
+    P.schedulePrecomputeWarmup?.();
     P.updateWorkflowGuide?.();
+    await P.initScenarioPresetsUI?.();
   })();
 
   P.bindLotPanel?.();
 
   P.loadDefault();
-  P.syncUnderlayPanelFromScenario?.();
+  P.syncSimModeHint?.();
+  P.syncSimArrivalFields?.();
   P.updateWorkflowGuide?.();
   P.syncDeleteButton?.();
   P.updateRunBarSummary?.();
