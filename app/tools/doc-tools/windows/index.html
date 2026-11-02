@@ -24,14 +24,16 @@
         <div class="doc-note">
             <p><strong>桌面专用</strong>：word2pdf、ppt2pdf、ppt2img、nbopen（拖文件到 exe 或命令行运行）。</p>
             <p>Word / PPT 需 <strong>Office</strong> 或 <strong>WPS</strong>；nbopen 需本地 <strong>Jupyter</strong>。</p>
+            <p>源码在本站 GitHub 仓库 <a href="https://github.com/nooming/nooming.github.io/tree/main/desktop-doc-tools" target="_blank" rel="noopener noreferrer"><code>desktop-doc-tools/</code></a>（不提供预编译 exe，需自行打包）。</p>
         </div>
 
         <details class="doc-details doc-note" open>
             <summary>本地打包</summary>
-            <pre>cd noomings/desktop-doc-tools
+            <p>克隆 <a href="https://github.com/nooming/nooming.github.io" target="_blank" rel="noopener noreferrer">nooming.github.io</a> 后：</p>
+            <pre>cd desktop-doc-tools
 pip install -r requirements.txt
 build_all.bat</pre>
-            <p class="doc-dl-note">产物在 <code>dist\</code>。也可直接 <code>python tools/...</code> 运行，见该目录 README。</p>
+            <p class="doc-dl-note">产物在 <code>dist\</code>。也可直接 <code>python tools/...</code> 运行，见 <a href="https://github.com/nooming/nooming.github.io/blob/main/desktop-doc-tools/README.md" target="_blank" rel="noopener noreferrer">desktop-doc-tools/README.md</a>。</p>
         </details>
     </main>
 

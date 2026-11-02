@@ -1,4 +1,4 @@
-/** 文档转换 · 公共逻辑（与 desktop-doc-tools / 2s 的排序规则对齐） */
+/** 文档转换 · 公共逻辑（与 desktop-doc-tools 的 img2pdf 排序规则对齐） */
 
 const PDFJS_VERSION = "4.10.38";
 const PDFJS_BASE = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/build`;

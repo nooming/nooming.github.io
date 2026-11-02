@@ -75,6 +75,7 @@ GitHub Pages 静态站：顶栏 **首页 · 实验 · 工具 · 阅读 · 娱乐
 │   ├── tools/                           # 工具：doc-tools、编码媒体、ocr、decision 随机、灯牌等
 │   ├── read/                            # 阅读：markdown、站内长文
 │   └── play/                            # 娱乐：games、psychological、gacha-planner
+├── desktop-doc-tools/          # Windows 文档转换 / nbopen 源码（PyInstaller 本地打包）
 ├── sitemap.xml
 └── robots.txt
 ```
@@ -88,7 +89,7 @@ GitHub Pages 静态站：顶栏 **首页 · 实验 · 工具 · 阅读 · 娱乐
 - **全站公共脚本**：通用 Toast、剪贴板、防抖、返回顶部等仅在根 **`assets/js/utils.js`**；手写笔记专用逻辑在 **`app/notes/assets/js/notes-utils.js`**，二者勿混用文件名。
 - **`app/tools/`**：进制、Base64、二维码等工具的页面脚本与样式放在各子目录 **`assets/js/`**、**`assets/css/`**；音频转换、风扇转速等以单页内联或依赖根 **`assets/css/common.css`** / **`assets/js/utils.js`**（由页面写 `../` 链回到站根）为主。
 - **导航壳**：`assets/css/site-shell.css`、`assets/js/site-shell.js` — 顶栏五域、桌面侧栏、移动底栏 + 分组菜单；批量注入见 `scripts/apply_site_shell.py`。**不挂壳**：`app/notes/`、`app/parking-pso/`、`app/citywalk/`（实验/工具/阅读/娱乐域内页挂壳）。
-- **`app/tools/doc-tools/`**：文档转换合集；各子工具独立 **`index.html`**，共享 **`assets/css/doc-tools.css`**、**`assets/js/common.js`**；转换逻辑为 ES module，pdf.js 等从 CDN 动态 import。Office/COM 类能力仅在 **`windows/`** 说明，不提供 exe 下载。
+- **`app/tools/doc-tools/`**：文档转换合集；各子工具独立 **`index.html`**，共享 **`assets/css/doc-tools.css`**、**`assets/js/common.js`**；转换逻辑为 ES module，pdf.js 等从 CDN 动态 import。Office/COM 类能力在 **`windows/`** 说明；Python 源码在根 **`desktop-doc-tools/`**，不提供预编译 exe。
 - **`app/lab/`**、**`app/citywalk/`**、**`app/parking-pso/`**：重交互应用，业务资源在各自 **`assets/`**；通过相对路径引用站根 **`assets/`**。
 - **`app/tools/decision/`**：随机三件套共享 **`assets/`**；抽卡规划在 **`app/play/gacha-planner/`**。
 - **`app/read/markdown/`**：Markdown 阅读；页面脚本与样式在 **`assets/`**，第三方 **`marked`** / **`DOMPurify`** 放在 **`assets/js/vendor/`**，仓库文档清单为 **`catalog.json`**（GitHub Pages 不能列目录）。
