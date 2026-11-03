@@ -6,7 +6,7 @@
 
 - **Citywalk 路线规划**：<https://noomings.com/app/citywalk/>（与 <https://nooming.github.io/app/citywalk/> 同源）
 - **WanderWalk 社区**：<https://noomings.com/app/citywalk/community/>（Walk 经验、找搭子、足迹；规划结果可写入社区）
-- **API**：<https://noomings-backend.zeabur.app/api/citywalk/>（`CORS_ORIGINS` 须允许前端域名）
+- **API（备案期间）**：<https://noomings-backend.zeabur.app/api/citywalk/>（通过后改为 `api.noomings.com`；`CORS_ORIGINS` 须允许 `nooming.github.io` / `noomings.com`）
 
 ## 功能概览
 

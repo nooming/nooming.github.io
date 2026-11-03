@@ -1,6 +1,6 @@
 # 停车方案设计器（parking-pso）
 
-SITP「社区停车动态调度与在线优化决策系统」前端。API：`noomings-backend.zeabur.app` 的 `/api/parking/*`（见 `noomings_backend/README.md`）。
+SITP「社区停车动态调度与在线优化决策系统」前端。备案期间生产 API：`https://noomings-backend.zeabur.app` 的 `/api/parking/*`；备案通过后改为 `https://api.noomings.com`（见 `deploy/tencent/README.md`、`noomings_backend/README.md`）。
 
 **动态到达与在线滚动**：见 [docs/DYNAMIC-PARKING-PLAN.md](docs/DYNAMIC-PARKING-PLAN.md)。
 
