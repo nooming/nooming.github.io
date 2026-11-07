@@ -9,10 +9,11 @@
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
     <link rel="manifest" href="/assets/icons/site.webmanifest">
+    <script src="/assets/js/shell-prefs-boot.js"></script>
     <link rel="stylesheet" href="../../../assets/css/common.css">
-    <link rel="stylesheet" href="/assets/css/site-shell.css">
+<link rel="stylesheet" href="/assets/css/site-shell.css">
     <!-- 本地样式文件 -->
-    <link rel="stylesheet" href="assets/css/base64.css">
+<link rel="stylesheet" href="assets/css/base64.css">
     <title>Base64 · noomings</title>
 </head>
 <body class="page-container">
@@ -33,7 +34,7 @@
         </div>
 
         <div class="btn-group">
-            <button id="encodeBtn" class="convert-btn">编码</button>
+            <button type="button" id="encodeBtn" class="btn-primary convert-btn">编码</button>
             <button id="clearEncodeBtn" class="clear-btn">清空</button>
         </div>
 
@@ -58,7 +59,7 @@
         </div>
 
         <div class="btn-group">
-            <button id="decodeBtn" class="convert-btn">解码</button>
+            <button type="button" id="decodeBtn" class="btn-primary convert-btn">解码</button>
             <button id="clearDecodeBtn" class="clear-btn">清空</button>
         </div>
 
@@ -81,6 +82,7 @@
     <script src="../../../assets/js/utils.js"></script>
     <!-- 本地JS文件 -->
     <script src="assets/js/base64.js"></script>
+    <script src="/assets/js/shell-preferences.js" defer></script>
     <script src="/assets/js/site-shell.js" defer></script>
 </body>
 </html>

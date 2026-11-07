@@ -4,6 +4,7 @@
 
     var SPRITE = "/assets/icons/ui/hub-sprite.svg";
     var HOME = "/";
+    var NAV_COLLAPSE_KEY = "noomings_shell_nav_collapsed";
 
     function normalizePath(pathname) {
         var path = pathname || "/";
@@ -710,6 +711,32 @@
             .join("");
     }
 
+    function buildPrefsBar() {
+        return (
+            '<div class="site-shell-prefs" role="group" aria-label="站点偏好">' +
+            '<button type="button" id="shellSoundToggle" class="site-shell-pref-btn" ' +
+            'aria-keyshortcuts="S" aria-pressed="true" aria-label="声音" title="声音（S）">' +
+            '<svg class="site-shell-pref-icon site-shell-pref-icon--on" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+            '<path class="site-shell-pref-solid" d="M4 9v6h4l5 4V5L8 9H4z"></path>' +
+            '<path d="M16.5 8.5a5 5 0 0 1 0 7"></path>' +
+            '<path d="M19 6a8.5 8.5 0 0 1 0 12"></path>' +
+            "</svg>" +
+            '<svg class="site-shell-pref-icon site-shell-pref-icon--off" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+            '<path class="site-shell-pref-solid" d="M4 9v6h4l5 4V5L8 9H4z"></path>' +
+            '<path d="M17 9l4 6M21 9l-4 6"></path>' +
+            "</svg></button>" +
+            '<button type="button" id="shellThemeToggle" class="site-shell-pref-btn" ' +
+            'aria-keyshortcuts="D" aria-pressed="false" aria-label="深色模式" title="深色模式（D）">' +
+            '<svg class="site-shell-pref-icon site-shell-pref-icon--on" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+            '<circle cx="12" cy="12" r="4"></circle>' +
+            '<path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"></path>' +
+            "</svg>" +
+            '<svg class="site-shell-pref-icon site-shell-pref-icon--off" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+            '<path class="site-shell-pref-solid" d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"></path>' +
+            "</svg></button></div>"
+        );
+    }
+
     function buildTopBar(path) {
         var asideHtml =
             '<a class="site-shell-aside" href="' +
@@ -732,6 +759,7 @@
             '<nav class="site-shell-l1 site-shell-l1--global" aria-label="全站">' +
             buildL1Links(GLOBAL.l1, path, isGlobalL1Active) +
             "</nav>" +
+            buildPrefsBar() +
             menuBtn +
             asideHtml +
             "</div></header>"
@@ -821,6 +849,25 @@
         return [{ title: "", items: domain.l1 || [] }];
     }
 
+    function navChevronSvg(dir) {
+        var d;
+        if (dir === "left") {
+            d = "M8 3L4 6l4 3";
+        } else if (dir === "up") {
+            d = "M3 8l3-4 3 4";
+        } else {
+            d = "M4 3l4 3-4 3";
+        }
+        return (
+            '<svg class="site-shell-nav-chevron" width="12" height="12" viewBox="0 0 12 12" ' +
+            'fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" ' +
+            'stroke-linejoin="round" aria-hidden="true" focusable="false">' +
+            '<path d="' +
+            d +
+            '"/></svg>'
+        );
+    }
+
     function buildSidebar(domain, path) {
         var inner = getSidebarSections(domain)
             .map(function (section) {
@@ -832,10 +879,27 @@
                 return head + buildSideLinks(section.items, path);
             })
             .join("");
+        var edgeToggle =
+            '<button type="button" class="site-shell-nav-icon-btn site-shell-side__edge-toggle" ' +
+            'data-shell-nav="collapse" aria-label="收起本模块导航" aria-expanded="true" ' +
+            'aria-controls="shellSideNav">' +
+            navChevronSvg("left") +
+            "</button>";
         return (
-            '<aside class="site-shell-side" aria-label="本模块导航">' +
+            '<aside class="site-shell-side" id="shellSideNav" aria-label="本模块导航">' +
             inner +
+            edgeToggle +
             "</aside>"
+        );
+    }
+
+    function buildNavReveal() {
+        return (
+            '<button type="button" class="site-shell-nav-icon-btn site-shell-nav-reveal" id="shellNavReveal" ' +
+            'data-shell-nav="expand" aria-label="展开本模块导航" aria-expanded="false" ' +
+            'aria-controls="shellSideNav shellMobModNav">' +
+            navChevronSvg("right") +
+            "</button>"
         );
     }
 
@@ -883,11 +947,19 @@
             })
             .join("");
         if (!chunks) return "";
+        var collapseBtn =
+            '<button type="button" class="site-shell-nav-icon-btn site-shell-mob-mod__collapse" ' +
+            'data-shell-nav="collapse" aria-label="收起本模块导航" aria-expanded="true" ' +
+            'aria-controls="shellMobModNav">' +
+            navChevronSvg("up") +
+            "</button>";
         return (
-            '<nav class="site-shell-mob-mod" aria-label="本模块导航">' +
+            '<nav class="site-shell-mob-mod" id="shellMobModNav" aria-label="本模块导航">' +
             '<div class="site-shell-mob-mod__scroll">' +
             chunks +
-            "</div></nav>"
+            "</div>" +
+            collapseBtn +
+            "</nav>"
         );
     }
 
@@ -1016,6 +1088,67 @@
         );
     }
 
+    function readNavCollapsed() {
+        try {
+            return localStorage.getItem(NAV_COLLAPSE_KEY) === "1";
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function writeNavCollapsed(collapsed) {
+        try {
+            if (collapsed) {
+                localStorage.setItem(NAV_COLLAPSE_KEY, "1");
+            } else {
+                localStorage.removeItem(NAV_COLLAPSE_KEY);
+            }
+        } catch (e) {
+            /* ignore */
+        }
+    }
+
+    function syncNavCollapseAria(collapsed) {
+        document.querySelectorAll('[data-shell-nav="collapse"]').forEach(function (btn) {
+            btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+        });
+        var reveal = document.getElementById("shellNavReveal");
+        if (reveal) {
+            reveal.setAttribute("aria-expanded", collapsed ? "false" : "true");
+        }
+        var side = document.getElementById("shellSideNav");
+        var mob = document.getElementById("shellMobModNav");
+        if (side) {
+            side.setAttribute("aria-hidden", collapsed ? "true" : "false");
+        }
+        if (mob) {
+            mob.setAttribute("aria-hidden", collapsed ? "true" : "false");
+        }
+    }
+
+    function setNavCollapsed(collapsed) {
+        document.body.classList.toggle("shell-nav-collapsed", collapsed);
+        writeNavCollapsed(collapsed);
+        syncNavCollapseAria(collapsed);
+    }
+
+    function wireSidebarNavCollapse(hasNav) {
+        if (!hasNav) return;
+        syncNavCollapseAria(document.body.classList.contains("shell-nav-collapsed"));
+
+        document.querySelectorAll('[data-shell-nav="collapse"]').forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                setNavCollapsed(true);
+            });
+        });
+        var reveal = document.getElementById("shellNavReveal");
+        if (reveal) {
+            reveal.addEventListener("click", function () {
+                setNavCollapsed(false);
+            });
+        }
+    }
+
     function wireDrawer() {
         var backdrop = document.getElementById("shellDrawerBackdrop");
         var drawer = document.getElementById("shellDrawer");
@@ -1086,6 +1219,9 @@
             document.body.classList.add("shell-" + domain.id, "shell-has-sidebar");
             applyContentWidth(domain.contentWidth);
             document.body.classList.add("shell-has-mob-mod");
+            if (readNavCollapsed()) {
+                document.body.classList.add("shell-nav-collapsed");
+            }
 
             var subItems = resolveSub(domain, path);
             if (subItems) {
@@ -1096,6 +1232,7 @@
         var topHtml = buildTopBar(path);
         var sideHtml = domain ? buildSidebar(domain, path) : "";
         var mobModHtml = domain ? buildMobileModuleRail(domain, path) : "";
+        var revealHtml = domain ? buildNavReveal() : "";
         var subHtml = "";
         if (domain) {
             var subItemsNav = resolveSub(domain, path);
@@ -1116,14 +1253,24 @@
 
         var wrap = document.createElement("div");
         wrap.innerHTML =
-            topHtml + sideHtml + mobModHtml + subHtml + bottomHtml + drawerHtml;
+            topHtml +
+            sideHtml +
+            mobModHtml +
+            revealHtml +
+            subHtml +
+            bottomHtml +
+            drawerHtml;
         while (wrap.firstChild) {
             document.body.insertBefore(wrap.firstChild, document.body.firstChild);
         }
 
         wireDrawer();
+        wireSidebarNavCollapse(!!domain);
         watchLightBoardStage();
         scrollMobileModuleActiveIntoView();
+        if (window.noomingsPrefs && typeof window.noomingsPrefs.wireTopBar === "function") {
+            window.noomingsPrefs.wireTopBar();
+        }
     }
 
     if (document.readyState === "loading") {

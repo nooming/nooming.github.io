@@ -1,567 +1,799 @@
-// 使用 xiangqi.js 处理游戏逻辑，自己绘制棋盘
+/*
+ * 对局控制层
+ * ------------------------------------------------------------
+ * 负责：规则引擎（xiangqi.js）状态、玩家输入、AI 调度、棋谱、音效与界面同步。
+ */
+(function () {
+    'use strict';
 
-const canvas = document.getElementById('board');
-const ctx = canvas.getContext('2d');
-const BOARD_WIDTH = 9;
-const BOARD_HEIGHT = 10;
-
-// 计算每个格子的大小（留出边距）
-function calculateCellSize() {
-    // 根据canvas实际尺寸计算，确保格子是正方形
-    const padding = 15; // 边距
-    const availableWidth = canvas.width - padding * 2;
-    const availableHeight = canvas.height - padding * 2;
-    
-    // 使用较小的尺寸确保格子是正方形
-    const cellSize = Math.min(availableWidth / BOARD_WIDTH, availableHeight / BOARD_HEIGHT);
-    
-    return {
-        width: cellSize,
-        height: cellSize,
-        padding: padding
+    const XQ = window.XQ || (window.XQ = {});
+    const STORAGE_KEY = 'xq:prefs';
+    const COLOR_NAME = { r: '红方', b: '黑方' };
+    const REASON_TEXT = {
+        checkmate: '将死',
+        stalemate: '困毙 · 无子可动',
+        draw: '自然限着或三次重复局面'
     };
-}
 
-let cellSize = calculateCellSize();
+    const els = {};
+    let game = null;
+    let view = null;
+    let XiangqiCtor = null;
 
-const PIECE_IMAGES = {};
-const PIECE_KEYS = ['rK', 'rA', 'rB', 'rN', 'rR', 'rC', 'rP', 'bK', 'bA', 'bB', 'bN', 'bR', 'bC', 'bP'];
+    const state = {
+        mode: 'two',
+        difficulty: 'medium',
+        sound: true,
+        selected: null,
+        legal: [],
+        history: [],
+        lastMove: null,
+        check: null,
+        cursor: null,
+        hint: null,
+        gameOver: false,
+        result: null,
+        thinking: false,
+        keyboard: false
+    };
 
-let xiangqi = null;
-let gameOver = false;
-let selectedSquare = null;
-let validMoves = [];
-let boardBackground = null;
-let gameMode = 'two'; // 'two' = 双人, 'ai' = 单人
-let aiDifficulty = 'medium'; // 'easy', 'medium', 'hard'
+    let aiToken = 0;
+    let pointerActive = false;
+    let resizePending = false;
+    let lastAnnouncement = '';
+    let sound = null;
 
-// 加载棋子图片
-function loadPieceImages() {
-    const promises = PIECE_KEYS.map(key => {
-        const img = new Image();
-        img.src = `assets/lib/img/xiangqipieces/wikimedia/${key}.svg`;
-        PIECE_IMAGES[key] = img;
-        return new Promise((resolve, reject) => {
-            img.onload = resolve;
-            img.onerror = reject;
-        });
-    });
-    return Promise.all(promises);
-}
+    // ------------------------------------------------------------ 音效
+    function createSound() {
+        let ctx = null;
+        let noiseBuffer = null;
+        let enabled = true;
+        let unlocked = false; // 浏览器要求先有用户手势才能播放
 
-// 初始化游戏
-function initGame() {
-    xiangqi = new Xiangqi();
-    cellSize = calculateCellSize();
-    
-    // 加载棋盘背景图
-    boardBackground = new Image();
-    boardBackground.onload = () => redraw();
-    boardBackground.src = 'assets/lib/img/xiangqiboards/wikimedia/xiangqiboard.svg';
-    
-    loadPieceImages().then(() => {
-        redraw();
-        updateStatus();
-        updateUndoButton();
-    });
-}
-
-// 绘制棋子
-function drawPieces() {
-    const board = xiangqi.board();
-    
-    for (let row = 0; row < BOARD_HEIGHT; row++) {
-        for (let col = 0; col < BOARD_WIDTH; col++) {
-            const piece = board[row][col];
-            if (piece) {
-                drawPiece(row, col, piece);
+        function ensureContext() {
+            if (ctx) {
+                if (ctx.state === 'suspended') ctx.resume();
+                return ctx;
             }
-        }
-    }
-    
-    // 绘制高亮
-    if (selectedSquare) {
-        drawHighlight(selectedSquare, '#ffeb3b');
-        validMoves.forEach(move => {
-            const targetSquare = typeof move === 'string' ? move.substring(2, 4) : (move.to || move.iccs?.substring(2, 4));
-            if (targetSquare) {
-                drawHighlight(targetSquare, '#4caf50');
+            const AudioCtor = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtor) return null;
+            try {
+                ctx = new AudioCtor();
+            } catch (err) {
+                return null;
             }
-        });
-    }
-}
-
-// 绘制单个棋子
-function drawPiece(row, col, piece) {
-    const x = cellSize.padding + (col + 0.5) * cellSize.width;
-    const y = cellSize.padding + (row + 0.5) * cellSize.height;
-    const size = Math.min(cellSize.width, cellSize.height) * 0.85;
-    
-    const pieceKey = piece.color + piece.type.toUpperCase();
-    const img = PIECE_IMAGES[pieceKey];
-    
-    if (img && img.complete) {
-        ctx.drawImage(img, x - size/2, y - size/2, size, size);
-    } else if (img) {
-        img.onload = () => redraw();
-    }
-}
-
-// 绘制高亮
-function drawHighlight(square, color) {
-    const pos = squareToPosition(square);
-    if (!pos) return;
-    
-    const x = cellSize.padding + (pos.col + 0.5) * cellSize.width;
-    const y = cellSize.padding + (pos.row + 0.5) * cellSize.height;
-    const radius = Math.min(cellSize.width, cellSize.height) * 0.4;
-    
-    ctx.beginPath();
-    ctx.arc(x, y, radius, 0, Math.PI * 2);
-    ctx.fillStyle = color;
-    ctx.globalAlpha = 0.5;
-    ctx.fill();
-    ctx.globalAlpha = 1.0;
-}
-
-// 将坐标转换为格子位置
-function getSquareFromPosition(x, y) {
-    const adjustedX = x - cellSize.padding;
-    const adjustedY = y - cellSize.padding;
-    
-    if (adjustedX < 0 || adjustedY < 0) return null;
-    
-    let col = Math.floor(adjustedX / cellSize.width);
-    col = Math.max(0, Math.min(col, BOARD_WIDTH - 1));
-    
-    let canvasRow = Math.floor(adjustedY / cellSize.height);
-    canvasRow = Math.max(0, Math.min(canvasRow, BOARD_HEIGHT - 1));
-    
-    const colChar = String.fromCharCode(97 + col);
-    const rowNum = 9 - canvasRow;
-    return colChar + rowNum;
-}
-
-// 将格子位置转换为坐标
-function squareToPosition(square) {
-    const col = square.charCodeAt(0) - 97;
-    const canvasRow = 9 - parseInt(square.charAt(1));
-    
-    if (canvasRow >= 0 && canvasRow < BOARD_HEIGHT && col >= 0 && col < BOARD_WIDTH) {
-        return { row: canvasRow, col };
-    }
-    return null;
-}
-
-// 清除选择
-function clearSelection() {
-    selectedSquare = null;
-    validMoves = [];
-}
-
-// 检查是否为当前玩家的棋子
-function isCurrentPlayerPiece(piece, currentTurn) {
-    return piece && piece.color === currentTurn;
-}
-
-// 处理点击
-function handleClick(e) {
-    if (gameOver) return;
-    
-    const currentTurn = xiangqi.turn();
-    // AI模式下，如果是黑方回合，阻止玩家操作
-    if (gameMode === 'ai' && currentTurn === 'b') {
-        return;
-    }
-    
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    
-    const clientX = e.touches?.[0]?.clientX ?? e.clientX;
-    const clientY = e.touches?.[0]?.clientY ?? e.clientY;
-    
-    const x = (clientX - rect.left) * scaleX;
-    const y = (clientY - rect.top) * scaleY;
-    
-    const square = getSquareFromPosition(x, y);
-    if (!square) return;
-    
-    const board = xiangqi.board();
-    const pos = squareToPosition(square);
-    const piece = board[pos.row][pos.col];
-    
-    if (selectedSquare) {
-        if (selectedSquare === square) {
-            clearSelection();
-            redraw();
-            return;
-        }
-        
-        if (isCurrentPlayerPiece(piece, currentTurn)) {
-            selectSquare(square);
-            return;
-        }
-        
-        const move = xiangqi.move({ from: selectedSquare, to: square });
-        if (move === null) {
-            clearSelection();
-            redraw();
-            return;
-        }
-        
-        clearSelection();
-        redraw();
-        updateStatus();
-        updateUndoButton();
-        checkGameOver();
-        
-        // AI模式下，玩家移动后触发AI移动
-        if (gameMode === 'ai' && !gameOver && xiangqi.turn() === 'b') {
-            setTimeout(() => {
-                aiMove();
-            }, 300);
-        }
-    } else {
-        if (isCurrentPlayerPiece(piece, currentTurn)) {
-            selectSquare(square);
-        }
-    }
-}
-
-// 选择格子
-function selectSquare(square) {
-    selectedSquare = square;
-    validMoves = xiangqi.moves({ square: square, verbose: true });
-    redraw();
-}
-
-// 重绘
-function redraw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // 绘制背景
-    ctx.fillStyle = '#deb887';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // 绘制棋盘背景
-    if (boardBackground && boardBackground.complete) {
-        const boardWidth = cellSize.width * BOARD_WIDTH;
-        const boardHeight = cellSize.height * BOARD_HEIGHT;
-        ctx.drawImage(boardBackground, cellSize.padding, cellSize.padding, boardWidth, boardHeight);
-    }
-    
-    drawPieces();
-}
-
-// 更新状态显示
-function updateStatus() {
-    const statusEl = document.getElementById('status');
-    
-    if (gameOver) {
-        return;
-    }
-    
-    const turn = xiangqi.turn();
-    const inCheck = xiangqi.in_check();
-    
-    if (xiangqi.in_checkmate()) {
-        const winner = turn === 'r' ? '黑方' : '红方';
-        statusEl.textContent = `${winner}获胜！`;
-        gameOver = true;
-    } else if (xiangqi.in_draw()) {
-        statusEl.textContent = '和棋！';
-        gameOver = true;
-    } else if (xiangqi.in_stalemate()) {
-        statusEl.textContent = '困毙！';
-        gameOver = true;
-    } else {
-        const player = turn === 'r' ? '红方' : '黑方';
-        const checkText = inCheck ? ' - 将军！' : '';
-        statusEl.textContent = `${player}回合${checkText}`;
-    }
-}
-
-// 检查游戏是否结束
-function checkGameOver() {
-    if (xiangqi.game_over()) {
-        gameOver = true;
-        updateStatus();
-    }
-}
-
-// 悔棋
-function undoMove() {
-    if (gameOver) return;
-    
-    if (gameMode === 'ai') {
-        // AI模式：撤销两步（玩家和AI）
-        if (xiangqi.history().length < 2) return;
-        xiangqi.undo(); // 撤销AI的步
-        xiangqi.undo(); // 撤销玩家的步
-    } else {
-        // 双人模式：撤销一步
-        if (!xiangqi.history().length) return;
-        xiangqi.undo();
-    }
-    
-    clearSelection();
-    gameOver = false;
-    redraw();
-    updateStatus();
-    updateUndoButton();
-}
-
-// 更新悔棋按钮状态
-function updateUndoButton() {
-    const undoBtn = document.getElementById('undoBtn');
-    if (gameMode === 'ai') {
-        // AI模式下需要至少两步才能悔棋（玩家+AI）
-        undoBtn.disabled = xiangqi.history().length < 2 || gameOver;
-    } else {
-        // 双人模式下至少一步
-        undoBtn.disabled = !xiangqi.history().length || gameOver;
-    }
-}
-
-// 重置游戏
-function resetGame() {
-    xiangqi.reset();
-    clearSelection();
-    gameOver = false;
-    redraw();
-    updateStatus();
-    updateUndoButton();
-}
-
-// 棋子价值评估
-const PIECE_VALUES = {
-    'K': 10000, 'A': 20, 'B': 20, 'N': 40, 'R': 90, 'C': 45, 'P': 10
-};
-
-function squareFileOpen(board, col, color) {
-    // 开放线：该列无己方兵阻挡（简化）
-    for (let row = 0; row < BOARD_HEIGHT; row++) {
-        const piece = board[row][col];
-        if (piece && piece.color === color && piece.type.toUpperCase() === 'P') return false;
-    }
-    return true;
-}
-
-function kingExposurePenalty(board, color) {
-    let kingRow = -1, kingCol = -1;
-    let advisors = 0, elephants = 0;
-    for (let row = 0; row < BOARD_HEIGHT; row++) {
-        for (let col = 0; col < BOARD_WIDTH; col++) {
-            const piece = board[row][col];
-            if (!piece || piece.color !== color) continue;
-            const t = piece.type.toUpperCase();
-            if (t === 'K') { kingRow = row; kingCol = col; }
-            if (t === 'A') advisors++;
-            if (t === 'B') elephants++;
-        }
-    }
-    if (kingRow < 0) return 50;
-    let penalty = 0;
-    if (advisors === 0) penalty += 8;
-    if (elephants === 0) penalty += 6;
-    // 帅/将偏出九宫中线
-    if (kingCol !== 4) penalty += 3;
-    // 所在列较空，容易被车炮直瞄
-    let blockers = 0;
-    for (let row = 0; row < BOARD_HEIGHT; row++) {
-        if (row === kingRow) continue;
-        if (board[row][kingCol]) blockers++;
-    }
-    if (blockers <= 1) penalty += 5;
-    return penalty;
-}
-
-// 评估棋盘局面（红方为正）
-function evaluatePosition() {
-    const board = xiangqi.board();
-    let score = 0;
-    
-    for (let row = 0; row < BOARD_HEIGHT; row++) {
-        for (let col = 0; col < BOARD_WIDTH; col++) {
-            const piece = board[row][col];
-            if (!piece) continue;
-            const type = piece.type.toUpperCase();
-            let value = PIECE_VALUES[type] || 0;
-            // 简单位置分
-            if (type === 'R' && squareFileOpen(board, col, piece.color)) value += 6;
-            if (type === 'N' && col >= 2 && col <= 6 && row >= 2 && row <= 7) value += 4;
-            if (type === 'P') {
-                // 兵过河：黑朝下行增大，红朝上行减小
-                if (piece.color === 'b' && row >= 5) value += 8;
-                if (piece.color === 'r' && row <= 4) value += 8;
+            const length = Math.floor(ctx.sampleRate * 0.09);
+            noiseBuffer = ctx.createBuffer(1, length, ctx.sampleRate);
+            const data = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < length; i++) {
+                data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 3.2);
             }
-            score += piece.color === 'r' ? value : -value;
+            return ctx;
         }
-    }
-    score -= kingExposurePenalty(board, 'r');
-    score += kingExposurePenalty(board, 'b');
-    return score;
-}
 
-function isCaptureProtected(move) {
-    if (!move.captured) return false;
-    xiangqi.move(move);
-    const replies = xiangqi.moves({ verbose: true });
-    const recapture = replies.some(m => m.to === move.to && m.captured);
-    xiangqi.undo();
-    return recapture;
-}
-
-function scoreMovePriority(move) {
-    let s = 0;
-    if (move.captured) s += (PIECE_VALUES[(move.captured + '').toUpperCase()] || 20) + 30;
-    if (move.flags === 'c' || move.captured) s += 10;
-    return s;
-}
-
-function selectHardCandidates(moves) {
-    const inCheckNow = xiangqi.in_check();
-    const scored = moves.map(m => {
-        let bonus = scoreMovePriority(m);
-        xiangqi.move(m);
-        if (xiangqi.in_checkmate()) bonus += 100000;
-        else if (xiangqi.in_check()) bonus += 25;
-        if (inCheckNow) bonus += 40; // 逃将优先
-        xiangqi.undo();
-        return { move: m, bonus };
-    });
-    scored.sort((a, b) => b.bonus - a.bonus);
-    const forced = scored.filter(x => x.bonus >= 40 || x.move.captured || x.bonus >= 25);
-    const pool = forced.length >= 6 ? forced : scored;
-    return pool.slice(0, Math.min(12, pool.length)).map(x => x.move);
-}
-
-// AI移动
-function aiMove() {
-    if (gameOver || xiangqi.turn() !== 'b') return;
-    
-    const moves = xiangqi.moves({ verbose: true });
-    if (moves.length === 0) return;
-    
-    let bestMove = null;
-    let bestScore = -Infinity;
-    
-    if (aiDifficulty === 'easy') {
-        // 简单：偏随机，但尽量不吃被保护的子
-        const safeCaptures = moves.filter(m => m.captured && !isCaptureProtected(m));
-        const unsafeCaptures = moves.filter(m => m.captured && isCaptureProtected(m));
-        const quiet = moves.filter(m => !m.captured);
-        if (safeCaptures.length && Math.random() > 0.35) {
-            bestMove = safeCaptures[Math.floor(Math.random() * safeCaptures.length)];
-        } else if (quiet.length) {
-            bestMove = quiet[Math.floor(Math.random() * quiet.length)];
-        } else if (unsafeCaptures.length && Math.random() > 0.7) {
-            bestMove = unsafeCaptures[Math.floor(Math.random() * unsafeCaptures.length)];
-        } else {
-            bestMove = moves[Math.floor(Math.random() * moves.length)];
+        function noise(duration, frequency, volume) {
+            if (!ctx) return;
+            const source = ctx.createBufferSource();
+            source.buffer = noiseBuffer;
+            const filter = ctx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.value = frequency;
+            filter.Q.value = 0.9;
+            const gain = ctx.createGain();
+            const start = ctx.currentTime;
+            gain.gain.setValueAtTime(volume, start);
+            gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+            source.connect(filter);
+            filter.connect(gain);
+            gain.connect(ctx.destination);
+            source.start(start);
+            source.stop(start + duration);
         }
-    } else if (aiDifficulty === 'medium') {
-        for (const move of moves) {
-            xiangqi.move(move);
-            const score = -evaluatePosition();
-            xiangqi.undo();
-            if (score > bestScore) {
-                bestScore = score;
-                bestMove = move;
-            }
+
+        function tone(frequency, duration, volume, delay, type) {
+            if (!ctx) return;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            const start = ctx.currentTime + (delay || 0);
+            osc.type = type || 'sine';
+            osc.frequency.setValueAtTime(frequency, start);
+            gain.gain.setValueAtTime(0.0001, start);
+            gain.gain.exponentialRampToValueAtTime(volume, start + 0.012);
+            gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(start);
+            osc.stop(start + duration + 0.02);
         }
-    } else {
-        // 困难：截断候选 + 1 层对手回应；将军不等于赢，避免为将送子
-        const candidates = selectHardCandidates(moves);
-        for (const move of candidates) {
-            xiangqi.move(move);
-            if (xiangqi.in_checkmate()) {
-                xiangqi.undo();
-                bestMove = move;
-                bestScore = 1e9;
-                break;
-            }
-            const opponentMoves = xiangqi.moves({ verbose: true });
-            let worstScore = Infinity;
-            // 对手也截断，避免爆炸
-            const oppCandidates = opponentMoves
-                .map(m => ({ m, s: scoreMovePriority(m) }))
-                .sort((a, b) => b.s - a.s)
-                .slice(0, Math.min(10, opponentMoves.length));
-            if (!oppCandidates.length) {
-                worstScore = -evaluatePosition() + 500;
-            } else {
-                for (const { m: oppMove } of oppCandidates) {
-                    xiangqi.move(oppMove);
-                    let score = -evaluatePosition();
-                    // 若这步吃掉了我们刚动的子价值过高，视为送子惩罚已体现在子力分
-                    if (xiangqi.in_checkmate()) score = -1e9;
-                    xiangqi.undo();
-                    worstScore = Math.min(worstScore, score);
+
+        return {
+            unlock: function () {
+                unlocked = true;
+                if (enabled) ensureContext();
+            },
+            setEnabled: function (value) {
+                enabled = value;
+                if (value && unlocked) ensureContext();
+            },
+            play: function (kind) {
+                if (!enabled || !unlocked) return;
+                if (!ensureContext()) return;
+                switch (kind) {
+                    case 'move':
+                        noise(0.055, 1500, 0.14);
+                        tone(220, 0.09, 0.09, 0, 'triangle');
+                        break;
+                    case 'capture':
+                        noise(0.1, 900, 0.2);
+                        tone(140, 0.14, 0.14, 0, 'triangle');
+                        break;
+                    case 'check':
+                        tone(880, 0.11, 0.1, 0);
+                        tone(1240, 0.13, 0.09, 0.09);
+                        break;
+                    case 'win':
+                        tone(660, 0.18, 0.1, 0, 'triangle');
+                        tone(880, 0.18, 0.1, 0.12, 'triangle');
+                        tone(1320, 0.26, 0.1, 0.24, 'triangle');
+                        break;
+                    case 'draw':
+                        tone(520, 0.2, 0.09, 0);
+                        tone(392, 0.28, 0.09, 0.14);
+                        break;
+                    case 'undo':
+                        tone(330, 0.08, 0.07, 0, 'triangle');
+                        break;
+                    default:
+                        break;
                 }
             }
-            // 单纯将军给小加分，但远小于子力
-            if (xiangqi.in_check()) worstScore += 8;
-            xiangqi.undo();
-            if (worstScore > bestScore) {
-                bestScore = worstScore;
-                bestMove = move;
+        };
+    }
+
+    // ------------------------------------------------------------ 工具
+    function $(id) {
+        return document.getElementById(id);
+    }
+
+    function colorOfTurn() {
+        return game && game.turn() === 'b' ? 'b' : 'r';
+    }
+
+    function kingSquare(color) {
+        const board = game.board();
+        for (let row = 0; row < 10; row++) {
+            for (let col = 0; col < 9; col++) {
+                const piece = board[row][col];
+                if (piece && piece.type.toLowerCase() === 'k' && piece.color === color) {
+                    return String.fromCharCode(97 + col) + (9 - row);
+                }
             }
         }
-        if (!bestMove) bestMove = candidates[0] || moves[0];
+        return null;
     }
-    
-    if (bestMove) {
-        const move = xiangqi.move(bestMove);
-        if (move) {
-            redraw();
-            updateStatus();
-            updateUndoButton();
-            checkGameOver();
+
+    function loadPrefs() {
+        try {
+            const raw = window.localStorage.getItem(STORAGE_KEY);
+            if (!raw) return;
+            const prefs = JSON.parse(raw);
+            if (prefs.mode === 'ai' || prefs.mode === 'two') state.mode = prefs.mode;
+            if (['easy', 'medium', 'hard'].indexOf(prefs.difficulty) >= 0) state.difficulty = prefs.difficulty;
+            if (typeof prefs.sound === 'boolean') state.sound = prefs.sound;
+        } catch (err) {
+            /* 隐私模式下忽略 */
         }
     }
-}
 
-// 事件监听
-canvas.addEventListener('click', handleClick);
-canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    handleClick(e);
-});
+    function savePrefs() {
+        try {
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                mode: state.mode,
+                difficulty: state.difficulty,
+                sound: state.sound
+            }));
+        } catch (err) {
+            /* 忽略写入失败 */
+        }
+    }
 
-// 模式切换
-document.querySelectorAll('.mode-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        gameMode = btn.dataset.mode;
-        
-        // 显示/隐藏难度选择器
-        const difficultySelector = document.getElementById('difficultySelector');
-        if (gameMode === 'ai') {
-            difficultySelector.classList.add('show');
+    function announce(text) {
+        if (!text || text === lastAnnouncement) return;
+        lastAnnouncement = text;
+        if (els.live) els.live.textContent = text;
+    }
+
+    // ------------------------------------------------------------ 视图同步
+    function syncView() {
+        if (!view) return;
+        view.setState({
+            board: game.board(),
+            selected: state.selected,
+            legal: state.legal,
+            lastMove: state.lastMove,
+            check: state.check,
+            cursor: state.keyboard ? state.cursor : null,
+            hint: state.hint
+        });
+        view.invalidate();
+    }
+
+    function updateStatus() {
+        const turn = colorOfTurn();
+        els.turnDot.dataset.turn = turn;
+
+        if (state.gameOver && state.result) {
+            els.statusText.textContent = state.result.title;
+            els.statusBadge.hidden = !state.result.badge;
+            els.statusBadge.textContent = state.result.badge || '';
         } else {
-            difficultySelector.classList.remove('show');
+            els.statusText.textContent = COLOR_NAME[turn] + '行棋';
+            const inCheck = !!state.check;
+            els.statusBadge.hidden = !inCheck;
+            els.statusBadge.textContent = inCheck ? '将军' : '';
         }
-        
+
+        els.canvas.setAttribute('aria-label',
+            (state.gameOver && state.result
+                ? state.result.title + '。'
+                : COLOR_NAME[turn] + '行棋' + (state.check ? '，将军。' : '。')) +
+            '方向键移动光标，回车选子或落子。');
+    }
+
+    function updateButtons() {
+        els.undoBtn.disabled = state.history.length === 0;
+        els.hintBtn.disabled = state.gameOver || state.thinking;
+        els.resetBtn.disabled = false;
+    }
+
+    function renderHistory() {
+        const list = els.moveList;
+        const wasNearBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 64;
+        const rows = Math.ceil(state.history.length / 2);
+        const fragment = document.createDocumentFragment();
+
+        for (let i = 0; i < rows; i++) {
+            const li = document.createElement('li');
+            li.className = 'move-row';
+            const red = state.history[i * 2];
+            const black = state.history[i * 2 + 1];
+
+            const index = document.createElement('span');
+            index.className = 'idx';
+            index.textContent = (i + 1) + '.';
+            li.appendChild(index);
+
+            const redSpan = document.createElement('span');
+            redSpan.className = 'red';
+            redSpan.textContent = red ? red.notation : '—';
+            li.appendChild(redSpan);
+
+            const blackSpan = document.createElement('span');
+            blackSpan.className = 'black';
+            blackSpan.textContent = black ? black.notation : '—';
+            li.appendChild(blackSpan);
+
+            if (i === rows - 1) li.classList.add('is-current');
+            fragment.appendChild(li);
+        }
+
+        list.textContent = '';
+        list.appendChild(fragment);
+        els.moveEmpty.hidden = state.history.length > 0;
+        els.moveCount.textContent = state.history.length + ' 步';
+
+        if (wasNearBottom) list.scrollTop = list.scrollHeight;
+    }
+
+    function updateAll() {
+        updateStatus();
+        renderHistory();
+        updateButtons();
+        syncView();
+    }
+
+    // ------------------------------------------------------------ 对局状态
+    function evaluateGameState() {
+        const turn = colorOfTurn();
+        if (!game.moves().length) {
+            const winner = turn === 'r' ? 'b' : 'r';
+            const reason = game.in_check() ? 'checkmate' : 'stalemate';
+            return { over: true, winner: winner, reason: reason, draw: false };
+        }
+        if (game.in_threefold_repetition() || game.in_draw()) {
+            return { over: true, draw: true, reason: 'draw' };
+        }
+        return { over: false, check: game.in_check() };
+    }
+
+    function applyResult(gs) {
+        state.gameOver = true;
+        if (gs.draw) {
+            state.result = { title: '和棋', detail: REASON_TEXT.draw, badge: '' };
+        } else {
+            state.result = {
+                title: COLOR_NAME[gs.winner] + '胜',
+                detail: REASON_TEXT[gs.reason] || '',
+                badge: gs.reason === 'checkmate' ? '将死' : gs.reason === 'stalemate' ? '困毙' : ''
+            };
+        }
+        state.check = gs.reason === 'checkmate' ? kingSquare(gs.winner === 'r' ? 'b' : 'r') : state.check;
+    }
+
+    function showResultOverlay() {
+        if (!state.result) return;
+        els.resultKicker.textContent = state.result.badge ? '对局结束 · ' + state.result.badge : '对局结束';
+        els.resultTitle.textContent = state.result.title;
+        els.resultDetail.textContent = state.result.detail || '';
+        els.resultOverlay.hidden = false;
+        els.playAgainBtn.focus({ preventScroll: true });
+    }
+
+    function hideResultOverlay() {
+        if (els.resultOverlay.hidden) return;
+        els.resultOverlay.hidden = true;
+        els.canvas.focus({ preventScroll: true });
+    }
+
+    function clearSelection() {
+        state.selected = null;
+        state.legal = [];
+        syncView();
+    }
+
+    function selectSquare(square) {
+        const piece = game.get(square);
+        if (!piece || piece.color !== game.turn()) {
+            clearSelection();
+            return;
+        }
+        state.selected = square;
+        const moves = game.moves({ square: square, verbose: true });
+        state.legal = moves.map(function (move) {
+            return { to: move.to, capture: !!game.get(move.to) };
+        });
+        syncView();
+        if (state.legal.length) {
+            announce(COLOR_NAME[piece.color] + '选中 ' + square.toUpperCase() + '，共 ' + state.legal.length + ' 种走法');
+        } else {
+            announce('该子无处可走');
+        }
+    }
+
+    function playMove(from, to) {
+        if (!from || !to) return false;
+        const boardBefore = game.board();
+        const fromRow = 9 - Number(from.charAt(1));
+        const fromCol = from.charCodeAt(0) - 97;
+        const toRow = 9 - Number(to.charAt(1));
+        const toCol = to.charCodeAt(0) - 97;
+        const movingPiece = boardBefore[fromRow][fromCol];
+        const capturedPiece = boardBefore[toRow][toCol];
+        if (!movingPiece) return false;
+
+        const move = game.move({ from: from, to: to });
+        if (!move) return false;
+
+        const notation = XQ.Notation.toChinese(boardBefore, move);
+        state.history.push({ notation: notation, color: move.color, iccs: move.iccs });
+        state.selected = null;
+        state.legal = [];
+        state.lastMove = { from: from, to: to };
+        state.hint = null;
+
+        const gs = evaluateGameState();
+        state.check = null;
+        if (gs.over) {
+            applyResult(gs);
+        } else if (gs.check) {
+            state.check = kingSquare(colorOfTurn());
+        }
+
+        updateAll();
+
+        if (sound) {
+            if (state.gameOver) sound.play(gs.draw ? 'draw' : 'win');
+            else if (gs.check) sound.play('check');
+            else if (capturedPiece) sound.play('capture');
+            else sound.play('move');
+        }
+
+        announce(COLOR_NAME[move.color] + ' ' + notation + '。' +
+            (state.gameOver && state.result ? state.result.title : COLOR_NAME[colorOfTurn()] + '行棋' + (state.check ? '，将军' : '')));
+
+        if (view) {
+            view.playMove({
+                from: from,
+                to: to,
+                piece: movingPiece,
+                captured: capturedPiece
+            }, function () {
+                if (state.gameOver) {
+                    showResultOverlay();
+                } else if (state.mode === 'ai' && game.turn() === 'b') {
+                    scheduleAI();
+                }
+            });
+        } else if (state.mode === 'ai' && game.turn() === 'b') {
+            scheduleAI();
+        }
+
+        return true;
+    }
+
+    // ------------------------------------------------------------ AI
+    function cancelAI() {
+        aiToken++;
+        if (state.thinking) {
+            state.thinking = false;
+            els.thinking.hidden = true;
+        }
+    }
+
+    function scheduleAI() {
+        if (!XQ.Engine) return;
+        const token = ++aiToken;
+        state.thinking = true;
+        els.thinking.hidden = false;
+        updateButtons();
+
+        // 两帧之后再开始计算，保证「思考中」先完成绘制
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                if (token !== aiToken) return;
+                let result = null;
+                try {
+                    result = XQ.Engine.chooseMove(game, state.difficulty);
+                } catch (err) {
+                    console.error('AI 计算失败', err);
+                }
+                if (token !== aiToken) return;
+                state.thinking = false;
+                els.thinking.hidden = true;
+                updateButtons();
+                if (!result) return;
+                playMove(result.from, result.to);
+            });
+        });
+    }
+
+    // ------------------------------------------------------------ 玩家操作
+    function handleSquare(square) {
+        if (!square || state.gameOver || state.thinking) return;
+        if (state.mode === 'ai' && game.turn() === 'b') return;
+
+        if (state.selected === square) {
+            clearSelection();
+            return;
+        }
+        if (state.selected) {
+            const legal = state.legal.some(function (move) { return move.to === square; });
+            if (legal) {
+                playMove(state.selected, square);
+                return;
+            }
+            const piece = game.get(square);
+            if (piece && piece.color === game.turn()) {
+                selectSquare(square);
+            } else {
+                clearSelection();
+            }
+            return;
+        }
+        selectSquare(square);
+    }
+
+    function handlePointer(clientX, clientY) {
+        if (!view) return;
+        const square = view.squareAt(clientX, clientY);
+        if (!square) return;
+        state.cursor = square;
+        handleSquare(square);
+    }
+
+    function undo() {
+        if (!state.history.length) return;
+        cancelAI();
+        if (view) view.cancelMove();
+        hideResultOverlay();
+
+        const targetTurn = state.mode === 'ai' ? 'r' : null;
+        let undone = 0;
+        do {
+            const move = game.undo();
+            if (!move) break;
+            state.history.pop();
+            undone++;
+        } while (targetTurn && game.turn() !== targetTurn && state.history.length);
+
+        state.gameOver = false;
+        state.result = null;
+        state.selected = null;
+        state.legal = [];
+        state.hint = null;
+        state.check = game.in_check() ? kingSquare(game.turn()) : null;
+        state.lastMove = state.history.length
+            ? { from: state.history[state.history.length - 1].iccs.substring(0, 2), to: state.history[state.history.length - 1].iccs.substring(2, 4) }
+            : null;
+
+        if (sound && undone) sound.play('undo');
+        updateAll();
+        announce('已悔棋，' + COLOR_NAME[game.turn()] + '行棋');
+    }
+
+    function resetGame() {
+        cancelAI();
+        if (view) view.cancelMove();
+        if (XQ.Engine && XQ.Engine.resetTT) XQ.Engine.resetTT();
+        game.reset();
+        state.selected = null;
+        state.legal = [];
+        state.history = [];
+        state.lastMove = null;
+        state.check = null;
+        state.cursor = null;
+        state.hint = null;
+        state.gameOver = false;
+        state.result = null;
+        hideResultOverlay();
+        updateAll();
+        announce('新局开始，红方先行');
+    }
+
+    function requestHint() {
+        if (!XQ.Engine || state.gameOver || state.thinking) return;
+        if (state.mode === 'ai' && game.turn() === 'b') return;
+        const previous = els.hintBtn.textContent;
+        els.hintBtn.disabled = true;
+        els.hintBtn.textContent = '计算中';
+        requestAnimationFrame(function () {
+            setTimeout(function () {
+                let result = null;
+                try {
+                    result = XQ.Engine.chooseMove(game, state.difficulty === 'easy' ? 'medium' : 'hard');
+                } catch (err) {
+                    console.error('提示计算失败', err);
+                }
+                els.hintBtn.textContent = previous;
+                els.hintBtn.disabled = state.gameOver || state.thinking;
+                if (result) {
+                    state.hint = { from: result.from, to: result.to };
+                    syncView();
+                    announce('提示：' + result.from.toUpperCase() + ' 到 ' + result.to.toUpperCase());
+                }
+            }, 30);
+        });
+    }
+
+    // ------------------------------------------------------------ 界面
+    function setMode(mode) {
+        if (mode === state.mode) return;
+        state.mode = mode;
+        document.querySelectorAll('.seg[data-mode]').forEach(function (btn) {
+            btn.setAttribute('aria-pressed', String(btn.dataset.mode === mode));
+        });
+        els.difficultyGroup.hidden = mode !== 'ai';
+        if (els.aiDifficultyPanel) {
+            els.aiDifficultyPanel.hidden = mode !== 'ai';
+        }
+        savePrefs();
         resetGame();
-        updateUndoButton();
-    });
-});
+    }
 
-// 难度切换
-document.querySelectorAll('.difficulty-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        aiDifficulty = btn.dataset.difficulty;
-    });
-});
+    function setDifficulty(difficulty) {
+        state.difficulty = difficulty;
+        document.querySelectorAll('.seg[data-difficulty]').forEach(function (btn) {
+            btn.setAttribute('aria-pressed', String(btn.dataset.difficulty === difficulty));
+        });
+        savePrefs();
+        // 若是 AI 回合，立即按新难度重算
+        if (!state.gameOver && state.mode === 'ai' && game.turn() === 'b') {
+            cancelAI();
+            scheduleAI();
+        }
+    }
 
-// 初始化
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initGame);
-} else {
-    initGame();
-}
+    function setSound(enabled) {
+        state.sound = enabled;
+        if (els.soundBtn) {
+            els.soundBtn.setAttribute('aria-pressed', String(enabled));
+        }
+        if (sound) sound.setEnabled(enabled);
+        savePrefs();
+    }
+
+    function bindEvents() {
+        els.canvas.addEventListener('pointerdown', function (event) {
+            if (event.pointerType === 'mouse' && event.button !== 0) return;
+            event.preventDefault();
+            state.keyboard = false;
+            pointerActive = true;
+            window.setTimeout(function () { pointerActive = false; }, 0);
+            els.canvas.focus({ preventScroll: true });
+            handlePointer(event.clientX, event.clientY);
+        });
+
+        els.canvas.addEventListener('contextmenu', function (event) {
+            event.preventDefault();
+        });
+
+        els.canvas.addEventListener('keydown', function (event) {
+            const key = event.key;
+            if (key === 'ArrowLeft' || key === 'ArrowRight' || key === 'ArrowUp' || key === 'ArrowDown') {
+                event.preventDefault();
+                moveCursor(key);
+                return;
+            }
+            if (key === 'Enter' || key === ' ') {
+                event.preventDefault();
+                if (state.cursor) handleSquare(state.cursor);
+                return;
+            }
+            if (key === 'Escape') {
+                event.preventDefault();
+                clearSelection();
+            }
+        });
+
+        els.canvas.addEventListener('focus', function () {
+            if (pointerActive) return; // 鼠标/触摸聚焦不显示键盘光标
+            state.keyboard = true;
+            if (!state.cursor) state.cursor = state.selected || 'e0';
+            syncView();
+        });
+
+        els.canvas.addEventListener('blur', function () {
+            if (!state.keyboard) return;
+            state.keyboard = false;
+            syncView();
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.metaKey || event.ctrlKey || event.altKey) return;
+            const tag = (event.target && event.target.tagName) || '';
+            if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+            const key = event.key.toLowerCase();
+            if (key === 'u') {
+                event.preventDefault();
+                undo();
+            } else if (key === 'n') {
+                event.preventDefault();
+                resetGame();
+            }
+        });
+
+        document.querySelectorAll('.seg[data-mode]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                setMode(btn.dataset.mode);
+            });
+        });
+
+        document.querySelectorAll('.seg[data-difficulty]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                setDifficulty(btn.dataset.difficulty);
+            });
+        });
+
+        els.undoBtn.addEventListener('click', undo);
+        els.resetBtn.addEventListener('click', resetGame);
+        els.hintBtn.addEventListener('click', requestHint);
+        if (els.soundBtn) {
+            els.soundBtn.addEventListener('click', function () {
+                setSound(!state.sound);
+                if (state.sound) sound.play('move');
+            });
+        }
+        els.playAgainBtn.addEventListener('click', resetGame);
+        els.reviewBtn.addEventListener('click', undo);
+
+        window.addEventListener('resize', scheduleResize);
+
+        if (typeof ResizeObserver === 'function') {
+            const observer = new ResizeObserver(scheduleResize);
+            observer.observe(els.canvas.parentElement || els.canvas);
+        }
+
+        // 首次交互解锁音频
+        const unlock = function () {
+            if (sound) sound.unlock();
+            document.removeEventListener('pointerdown', unlock);
+            document.removeEventListener('keydown', unlock);
+        };
+        document.addEventListener('pointerdown', unlock);
+        document.addEventListener('keydown', unlock);
+    }
+
+    function scheduleResize() {
+        if (resizePending) return;
+        resizePending = true;
+        requestAnimationFrame(function () {
+            resizePending = false;
+            if (view) view.resize();
+        });
+    }
+
+    function moveCursor(key) {
+        state.keyboard = true;
+        const current = state.cursor || state.selected || 'e0';
+        let col = current.charCodeAt(0) - 97;
+        let row = 9 - Number(current.charAt(1));
+        if (key === 'ArrowLeft') col -= 1;
+        else if (key === 'ArrowRight') col += 1;
+        else if (key === 'ArrowUp') row -= 1;
+        else if (key === 'ArrowDown') row += 1;
+        col = Math.max(0, Math.min(8, col));
+        row = Math.max(0, Math.min(9, row));
+        state.cursor = String.fromCharCode(97 + col) + (9 - row);
+        syncView();
+    }
+
+    // ------------------------------------------------------------ 启动
+    function cacheElements() {
+        els.canvas = $('board');
+        if (!els.canvas) console.error('[象棋] 未找到 #board');
+        els.turnDot = $('turnDot');
+        els.statusText = $('statusText');
+        els.statusBadge = $('statusBadge');
+        els.difficultyGroup = $('difficultyGroup');
+        els.aiDifficultyPanel = $('aiDifficultyPanel');
+        els.thinking = $('thinking');
+        els.resultOverlay = $('resultOverlay');
+        els.resultKicker = $('resultKicker');
+        els.resultTitle = $('resultTitle');
+        els.resultDetail = $('resultDetail');
+        els.playAgainBtn = $('playAgainBtn');
+        els.reviewBtn = $('reviewBtn');
+        els.undoBtn = $('undoBtn');
+        els.hintBtn = $('hintBtn');
+        els.resetBtn = $('resetBtn');
+        els.soundBtn = $('soundBtn');
+        els.moveList = $('moveList');
+        els.moveEmpty = $('moveEmpty');
+        els.moveCount = $('moveCount');
+        els.live = $('live');
+    }
+
+    function boot() {
+        cacheElements();
+        // xiangqi.min.js 用 `const` 声明，属于全局词法绑定而非 window 属性
+        XiangqiCtor = typeof Xiangqi !== 'undefined' ? Xiangqi : window.Xiangqi;
+        if (typeof XiangqiCtor !== 'function' || !XQ.createBoardView || !XQ.Notation) {
+            els.statusText.textContent = '资源加载失败';
+            els.statusBadge.hidden = false;
+            els.statusBadge.textContent = '错误';
+            return;
+        }
+
+        game = new XiangqiCtor();
+        view = XQ.createBoardView(els.canvas);
+        sound = createSound();
+        loadPrefs();
+
+        setSound(state.sound);
+        document.querySelectorAll('.seg[data-mode]').forEach(function (btn) {
+            btn.setAttribute('aria-pressed', String(btn.dataset.mode === state.mode));
+        });
+        document.querySelectorAll('.seg[data-difficulty]').forEach(function (btn) {
+            btn.setAttribute('aria-pressed', String(btn.dataset.difficulty === state.difficulty));
+        });
+        const showAi = state.mode === 'ai';
+        els.difficultyGroup.hidden = !showAi;
+        if (els.aiDifficultyPanel) {
+            els.aiDifficultyPanel.hidden = !showAi;
+        }
+
+        bindEvents();
+        updateAll();
+        view.loadImages();
+        requestAnimationFrame(function () {
+            if (view) view.resize();
+        });
+        announce('新局开始，红方先行');
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', boot);
+    } else {
+        boot();
+    }
+})();

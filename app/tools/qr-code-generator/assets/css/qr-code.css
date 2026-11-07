@@ -64,7 +64,7 @@ textarea {
     width: 100%;
     min-height: 120px;
     padding: 10px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--line-ins);
     border-radius: 0;
     font-family: "Microsoft YaHei", sans-serif;
     font-size: 14px;
@@ -89,7 +89,7 @@ textarea:focus {
 .settings-group {
     margin-bottom: 20px;
     padding: 20px;
-    background-color: #f8f9fa;
+    background-color: var(--color-surface-dim);
     border-radius: 0;
 }
 
@@ -112,14 +112,14 @@ textarea:focus {
 }
 
 .setting-item label {
-    color: #34495e;
+    color: var(--color-ink-soft);
     font-size: 14px;
     white-space: nowrap;
 }
 
 .setting-item select {
     padding: 8px 12px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--line-ins);
     border-radius: 0;
     font-family: "Microsoft YaHei", sans-serif;
     font-size: 14px;
@@ -129,7 +129,7 @@ textarea:focus {
 .setting-item input[type="color"] {
     width: 50px;
     height: 35px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--line-ins);
     border-radius: 0;
     cursor: pointer;
 }
@@ -160,15 +160,6 @@ button.btn-quiet {
 button.btn-quiet:hover {
     background: rgba(0, 0, 0, 0.04);
     border-color: var(--color-ink);
-}
-
-.generate-btn {
-    background: var(--gradient-theme);
-    color: var(--color-theme-ink);
-}
-
-.generate-btn:hover {
-    background: var(--gradient-theme-reverse);
 }
 
 .download-btn {
@@ -202,7 +193,7 @@ button.btn-quiet:hover {
     align-items: center;
     justify-content: center;
     padding: 20px;
-    background-color: #f8f9fa;
+    background-color: var(--color-surface-dim);
     border-radius: 0;
     border: 2px dashed #ddd;
 }
@@ -215,7 +206,7 @@ button.btn-quiet:hover {
 }
 
 .qr-placeholder {
-    color: #95a5a6;
+    color: var(--color-text-tertiary);
     font-size: 14px;
     margin-top: 10px;
 }
@@ -238,7 +229,7 @@ button.btn-quiet:hover {
 .decode-desc {
     margin: 0 0 16px 0;
     font-size: 14px;
-    color: #7f8c8d;
+    color: var(--color-text-secondary);
 }
 
 .decode-upload-row {
@@ -251,20 +242,22 @@ button.btn-quiet:hover {
 
 .decode-label {
     font-size: 14px;
-    color: #34495e;
+    color: var(--color-ink-soft);
 }
 
 #decodeFile {
     flex: 1;
 }
 
-.decode-btn {
-    background: var(--gradient-theme);
-    color: var(--color-theme-ink);
+.decode-copy-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 700;
 }
 
-.decode-btn:hover {
-    background: var(--gradient-theme-reverse);
+.decode-copy-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
 }
 
 .decode-preview-group {
@@ -276,7 +269,7 @@ button.btn-quiet:hover {
 
 .decode-preview-box,
 .decode-result-box {
-    background-color: #f8f9fa;
+    background-color: var(--color-surface-dim);
     border-radius: 0;
     padding: 15px;
     border: 1px solid #eee;
@@ -300,7 +293,7 @@ button.btn-quiet:hover {
 
 .decode-preview-placeholder {
     font-size: 13px;
-    color: #95a5a6;
+    color: var(--color-text-tertiary);
 }
 
 .decode-result-header-row {
@@ -313,24 +306,7 @@ button.btn-quiet:hover {
 
 .decode-result-header {
     font-size: 14px;
-    color: #34495e;
-}
-
-.decode-copy-btn {
-    padding: 6px 12px;
-    font-size: 12px;
-    background: var(--gradient-theme);
-    color: var(--color-theme-ink);
-    border-radius: 0;
-}
-
-.decode-copy-btn:hover:not(:disabled) {
-    background: var(--gradient-theme-reverse);
-}
-
-.decode-copy-btn:disabled {
-    background-color: #bdc3c7;
-    cursor: not-allowed;
+    color: var(--color-ink-soft);
 }
 
 .decode-result-content {

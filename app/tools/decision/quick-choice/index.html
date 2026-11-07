@@ -1,18 +1,21 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
     <meta name="theme-color" content="#FFFA00">
     <title>多选随机 · noomings</title>
-    <meta name="description" content="每行一项，随机保留一项。"><link rel="stylesheet" href="../../../../assets/css/common.css">
+    <meta name="description" content="每行一项，随机保留一项。">
+    <script src="/assets/js/shell-prefs-boot.js"></script>
+    <link rel="stylesheet" href="../../../../assets/css/common.css">
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
     <link rel="manifest" href="/assets/icons/site.webmanifest">
-    <link rel="stylesheet" href="/assets/css/site-shell.css">
+<link rel="stylesheet" href="/assets/css/site-shell.css">
     <link as="style" href="../assets/css/style.min.css" rel="preload">
     <link href="../assets/css/style.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/css/decision-shell.css">
+<link rel="stylesheet" href="../assets/css/decision-shell.css">
+    <link rel="stylesheet" href="../assets/css/decision-dark.css">
     <style>
         /* 快速选择工具样式 */
         .quick-choice-container {
@@ -84,25 +87,12 @@
         }
         .choice-btn {
             padding: 12px 40px;
-            background: var(--gradient-theme);
-            color: var(--color-theme-ink);
-            border: none;
-            border-radius: 0;
             font-size: 1.1rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        .choice-btn:hover {
-            background: var(--gradient-theme-reverse);
-        }
-        .choice-btn:active {
-            transform: scale(0.98);
         }
         .result-section {
             margin-top: 30px;
             padding: 25px;
-            background-color: #f8f9fa;
+            background-color: var(--color-surface-dim);
             border-radius: 0;
             text-align: center;
             min-height: 100px;
@@ -155,7 +145,7 @@
         </div>
 
         <div class="button-section">
-            <button class="choice-btn" id="choice-btn">随机</button>
+            <button type="button" class="btn-primary choice-btn" id="choice-btn">随机</button>
         </div>
 
         <div class="result-section" id="result-section">
@@ -274,6 +264,7 @@
     
     <!-- 公共工具函数 -->
     <script src="../../../../assets/js/utils.js" defer></script>
+    <script src="/assets/js/shell-preferences.js" defer></script>
     <script src="/assets/js/site-shell.js" defer></script>
 </body>
 </html>

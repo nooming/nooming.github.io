@@ -63,6 +63,63 @@
         0 1px 0 rgba(255, 255, 255, 0.92) inset,
         0 24px 56px rgba(0, 0, 0, 0.11),
         0 8px 22px rgba(0, 0, 0, 0.06);
+    --color-heading: #0a0a0a;
+    --color-text-secondary: #5a6c7d;
+    --color-text-tertiary: #888888;
+    --color-border-subtle: rgba(0, 0, 0, 0.07);
+    --color-border-strong: rgba(0, 0, 0, 0.14);
+    --color-icon-muted: rgba(0, 0, 0, 0.78);
+}
+
+html[data-theme="dark"] {
+    color-scheme: dark;
+
+    --color-theme: #fffa00;
+    --color-theme-secondary: #e9e6d6;
+    --line-ins: rgba(255, 255, 255, 0.14);
+    --color-theme-deep: #c9bc00;
+    --color-theme-hover: #e6e000;
+    --color-theme-ink: #0d0d0b;
+    --color-theme-text-end: #f4f2e4;
+    --color-feature-title: #f4f2e4;
+    --color-body: rgba(244, 242, 228, 0.82);
+    --color-canvas: #0f0f0d;
+    --color-card: #1a1a17;
+    --bg-grid-color: rgba(255, 255, 255, 0.04);
+    --color-ink: #f4f2e4;
+    --color-ink-soft: #d9d6c9;
+    --color-ink-muted: rgba(244, 242, 228, 0.55);
+    --color-surface-dim: #22221e;
+    --color-theme-wash: #2a2818;
+    --color-label-bg: #fffa00;
+    --color-label-fg: #0d0d0b;
+    --btn-emphasis-bg: #2a2818;
+    --btn-emphasis-fg: #f4f2e4;
+    --btn-emphasis-border: #c9bc00;
+    --btn-emphasis-bg-hover: #3a3618;
+    --btn-cta-bg: var(--color-theme);
+    --btn-cta-fg: var(--color-theme-ink);
+    --btn-cta-bg-hover: var(--color-theme-hover);
+    --gradient-theme: var(--color-theme);
+    --gradient-theme-reverse: var(--color-theme-hover);
+    --shadow-theme: 0 4px 12px rgba(0, 0, 0, 0.45);
+    --gradient-theme-title: #f4f2e4;
+    --line-hard: rgba(255, 255, 255, 0.22);
+    --color-heading: #f4f2e4;
+    --color-text-secondary: rgba(244, 242, 228, 0.72);
+    --color-text-tertiary: rgba(244, 242, 228, 0.5);
+    --color-border-subtle: rgba(255, 255, 255, 0.1);
+    --color-border-strong: rgba(255, 255, 255, 0.18);
+    --color-icon-muted: rgba(244, 242, 228, 0.78);
+    --color-ink-muted: rgba(244, 242, 228, 0.62);
+    --shadow-card-float:
+        0 1px 0 rgba(255, 255, 255, 0.04) inset,
+        0 18px 46px rgba(0, 0, 0, 0.45),
+        0 6px 16px rgba(0, 0, 0, 0.35);
+    --shadow-card-float-hover:
+        0 1px 0 rgba(255, 255, 255, 0.06) inset,
+        0 24px 56px rgba(0, 0, 0, 0.55),
+        0 8px 22px rgba(0, 0, 0, 0.4);
 }
 
 /* 全局重置 */
@@ -85,6 +142,45 @@ body {
     color: var(--color-body);
     line-height: 1.6;
     overflow-x: hidden;
+}
+
+input,
+textarea,
+select,
+option {
+    font-family: inherit;
+    font-size: inherit;
+    color: var(--color-ink);
+    background-color: var(--color-card);
+    border: 1px solid var(--line-ins);
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--color-ink-muted);
+    opacity: 1;
+}
+
+label {
+    color: var(--color-ink);
+}
+
+code,
+pre,
+kbd {
+    font-family: var(--font-mono), ui-monospace, Consolas, monospace;
+}
+
+html[data-theme="dark"] code:not(pre code) {
+    background: var(--color-surface-dim);
+    color: var(--color-ink);
+    padding: 0.12em 0.35em;
+}
+
+html[data-theme="dark"] pre {
+    background: var(--color-surface-dim);
+    color: var(--color-ink);
+    border: 1px solid var(--line-ins);
 }
 
 /* 正文下方的灰色补充说明（紧接上一段，不重叠） */
@@ -124,6 +220,44 @@ p + small.text-note {
     color: var(--btn-emphasis-fg);
     border-color: var(--btn-emphasis-border);
     outline: none;
+}
+
+/* 可点击主按钮：默认洗黄强调，悬停纯黄（参考 app/play/gacha-planner .gp-primary） */
+.btn-primary {
+    display: inline-block;
+    margin: 0;
+    padding: 11px 14px;
+    border: 1px solid var(--btn-emphasis-border);
+    background: var(--btn-emphasis-bg);
+    color: var(--btn-emphasis-fg);
+    border-radius: 0;
+    font-weight: 800;
+    font-size: 0.95rem;
+    font-family: inherit;
+    line-height: 1.4;
+    text-decoration: none !important;
+    cursor: pointer;
+    box-shadow: none;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background: var(--btn-cta-bg);
+    color: var(--btn-cta-fg);
+    border-color: var(--btn-emphasis-border);
+    outline: none;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-primary:active {
+    transform: none;
+}
+
+.btn-primary:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
 }
 
 /* 抽卡规划页技术标签（墨底黄字仅保留给小徽标，不作长按钮条） */
@@ -181,7 +315,7 @@ p + small.text-note {
 }
 
 .btn-quiet:hover {
-    background: rgba(0, 0, 0, 0.04);
+    background: var(--color-surface-dim);
     border-color: var(--color-ink);
     color: var(--color-ink) !important;
     transform: none;
@@ -218,7 +352,7 @@ footer.site-footer {
     margin-left: auto;
     margin-right: auto;
     padding: 16px 8px 8px;
-    color: #888888;
+    color: var(--color-text-tertiary);
     font-size: 0.9rem;
     line-height: 1.65;
     font-weight: 400;
@@ -315,7 +449,7 @@ footer.site-footer p {
 /* 通用功能卡片样式（与首页 tips-card 同级的浮岛阴影） */
 .feature-card,
 .tips-card {
-    border: 1px solid rgba(0, 0, 0, 0.07);
+    border: 1px solid var(--color-border-subtle);
     padding: 22px;
     transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
     background: var(--color-card);
@@ -345,7 +479,7 @@ footer.site-footer p {
 .feature-card:hover,
 .tips-card:hover {
     transform: translateY(-1px);
-    border-color: rgba(0, 0, 0, 0.14);
+    border-color: var(--color-border-strong);
     box-shadow: var(--shadow-card-float-hover);
 }
 
@@ -360,7 +494,7 @@ footer.site-footer p {
 .feature-card p,
 .tips-card p {
     font-size: 0.95rem;
-    color: #5a6c7d;
+    color: var(--color-text-secondary);
     line-height: 1.6;
     margin-bottom: 6px;
 }
@@ -562,7 +696,7 @@ body.page-container {
 .section-header h2 {
     font-size: 1.7rem;
     font-weight: 700;
-    color: #000000;
+    color: var(--color-heading);
     margin: 0 0 0 0;
     padding: 0 0 12px 0;
     position: relative;
@@ -586,7 +720,7 @@ body.page-container {
 }
 
 .section-header p {
-    color: #666666;
+    color: var(--color-text-tertiary);
     font-size: 0.95rem;
     font-weight: 400;
     line-height: 1.65;
@@ -597,7 +731,7 @@ body.page-container {
 .section-header p a,
 .home-hub-link {
     margin-left: 0.35em;
-    color: #000000;
+    color: var(--color-ink);
     font-weight: 700;
     text-decoration: none;
     white-space: nowrap;
@@ -668,7 +802,7 @@ body.page-container {
 .page-container .app-panel {
     background: var(--color-card);
     padding: 25px;
-    border: 1px solid rgba(0, 0, 0, 0.07);
+    border: 1px solid var(--color-border-subtle);
     box-shadow: var(--shadow-card-float);
     margin-top: 0;
 }
@@ -737,14 +871,14 @@ body.page-container {
 
 /* 实验与工具总览等页面的导语 */
 .hub-intro {
-    color: #5a6c7d;
+    color: var(--color-text-secondary);
     line-height: 1.65;
     margin: 0 0 1.5rem 0;
 }
 
 /* 专题与实践列表页导语 */
 .articles-lead {
-    color: #5a6c7d;
+    color: var(--color-text-secondary);
     line-height: 1.65;
     margin: 0 auto 1.5rem;
     text-align: center;
@@ -759,7 +893,7 @@ body.page-container {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    color: rgba(0, 0, 0, 0.78);
+    color: var(--color-icon-muted);
     line-height: 0;
 }
 

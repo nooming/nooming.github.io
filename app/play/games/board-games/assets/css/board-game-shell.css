@@ -1,0 +1,110 @@
+/* 棋类站内壳：token 桥接 + 主区栅格居中（gomoku / go / chess） */
+
+.gomoku-root .skip-link,
+.go-root .skip-link,
+.chess-root .skip-link {
+    position: absolute;
+    left: 50%;
+    top: -100px;
+    transform: translateX(-50%);
+    z-index: 30;
+    padding: 10px 18px;
+    background: var(--color-theme);
+    color: var(--color-theme-ink);
+    border: 2px solid var(--color-ink);
+    font-weight: 700;
+    text-decoration: none;
+    transition: top 0.15s ease;
+}
+
+.gomoku-root .skip-link:focus,
+.go-root .skip-link:focus,
+.chess-root .skip-link:focus {
+    top: calc(var(--shell-top-pad, 56px) + 8px);
+}
+
+body.page-container.gomoku-root,
+body.page-container.go-root,
+body.page-container.chess-root {
+    padding-top: var(--shell-top-pad, 0px);
+    color: var(--color-body);
+}
+
+body.page-container.gomoku-root,
+body.page-container.go-root,
+body.page-container.chess-root {
+    --surface: var(--color-card);
+    --surface-2: var(--color-surface-dim);
+    --surface-3: var(--color-surface-dim);
+    --text: var(--color-ink);
+    --text-muted: var(--color-text-secondary);
+    --text-faint: var(--color-text-tertiary);
+    --border: var(--color-ink);
+    --border-soft: var(--line-ins);
+    --focus: var(--color-ink);
+    --shadow-hard: var(--shadow-card-float);
+    --shadow-soft: var(--shadow-tool);
+}
+
+html[data-theme="dark"] body.page-container.gomoku-root,
+html[data-theme="dark"] body.page-container.go-root,
+html[data-theme="dark"] body.page-container.chess-root {
+    --border: var(--line-ins);
+    --border-soft: var(--line-ins);
+    --focus: var(--color-theme);
+    --shadow-hard: var(--shadow-card-float);
+}
+
+body.page-container.gomoku-root .page-header,
+body.page-container.go-root .page-header,
+body.page-container.chess-root .page-header {
+    margin-bottom: 15px;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+body.page-container.gomoku-root .game-layout,
+body.page-container.go-root .game-layout,
+body.page-container.chess-root .game-layout {
+    display: grid;
+    width: 100%;
+    align-items: start;
+    justify-content: center;
+    gap: 26px;
+    grid-template-columns: minmax(0, 560px) minmax(320px, 400px);
+}
+
+@media (max-width: 980px) {
+    body.page-container.gomoku-root .game-layout,
+    body.page-container.go-root .game-layout,
+    body.page-container.chess-root .game-layout {
+        grid-template-columns: minmax(0, 600px);
+        gap: 20px;
+    }
+}
+
+body.page-container.gomoku-root .action-grid .btn-primary,
+body.page-container.go-root .action-grid .btn-primary,
+body.page-container.chess-root .action-grid .btn-primary {
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 767.98px) {
+    body.page-container.gomoku-root,
+    body.page-container.go-root,
+    body.page-container.chess-root {
+        padding: 15px 12px;
+        padding-top: var(--shell-top-pad, 56px);
+    }
+}
+
+@media (max-width: 560px) {
+    body.page-container.gomoku-root,
+    body.page-container.go-root,
+    body.page-container.chess-root {
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-bottom: 15px;
+        padding-top: var(--shell-top-pad, 56px);
+    }
+}

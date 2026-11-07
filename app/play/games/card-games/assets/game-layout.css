@@ -23,7 +23,7 @@ body.card-game-page.page-container {
 .card-game-lobby__panel {
     padding: 22px 24px 20px;
     background: var(--color-card);
-    border: 1px solid rgba(0, 0, 0, 0.07);
+    border: 1px solid var(--color-border-subtle);
     box-shadow: var(--shadow-card-float);
     box-sizing: border-box;
 }
@@ -67,7 +67,7 @@ body.card-game-page.page-container {
     padding: 20px 24px;
     box-sizing: border-box;
     background: var(--color-card);
-    border: 1px solid rgba(0, 0, 0, 0.07);
+    border: 1px solid var(--color-border-subtle);
     box-shadow: var(--shadow-card-float);
     color: var(--color-body);
 }
@@ -98,7 +98,70 @@ body.card-game-page.page-container {
 
 @keyframes card-game-blink {
     0% { fill: var(--color-ink, #333); }
-    100% { fill: #ddd; }
+    100% { fill: var(--color-ink-soft, #ddd); }
+}
+
+/* 牌面 / 桌周标注（随全站 data-theme 变） */
+.card-game-page {
+    --card-face-fill: #ffffff;
+    --card-face-stroke: #333333;
+    --card-back-fill: #dddddd;
+    --card-table-ink: #333333;
+    --card-table-ink-muted: #dddddd;
+    --card-table-ink-ghost: #bbbbbb;
+    --card-table-cash-muted: #999999;
+}
+
+html[data-theme="dark"] .card-game-page {
+    --card-face-fill: #2c2c28;
+    --card-face-stroke: #8a8a82;
+    --card-back-fill: #3a3a36;
+    --card-table-ink: #e8e6dc;
+    --card-table-ink-muted: #7a7a72;
+    --card-table-ink-ghost: #9a9a92;
+    --card-table-cash-muted: #b0aea4;
+}
+
+.card-game-page .card-face {
+    fill: var(--card-face-fill);
+    stroke: var(--card-face-stroke);
+}
+
+.card-game-page .card-back {
+    fill: var(--card-back-fill);
+    stroke: var(--card-face-stroke);
+}
+
+/* 花色 <use> 承接主题色（黑桃/梅花随暗色变浅，红桃/方块保留自带 fill） */
+.card-game-page .card-suit-ink {
+    fill: var(--card-table-ink);
+}
+
+.card-game-page .texas-svg .table-ink,
+.card-game-page .decor .table-ink {
+    fill: var(--card-table-ink);
+}
+
+.card-game-page .texas-svg .table-ink-muted,
+.card-game-page .decor .table-ink-muted {
+    fill: var(--card-table-ink-muted);
+}
+
+.card-game-page .texas-svg .table-ink-ghost,
+.card-game-page .decor .table-ink-ghost {
+    fill: var(--card-table-ink-ghost);
+}
+
+.card-game-page .texas-svg .table-cash-muted {
+    fill: var(--card-table-cash-muted);
+}
+
+.card-game-page .texas-svg .person-unready {
+    fill: var(--card-table-ink);
+}
+
+.card-game-page .texas-svg .person-ready {
+    fill: #e74c3c;
 }
 
 .card-game-page .blink {
@@ -121,7 +184,7 @@ body.card-game-page .chat {
 }
 
 .grey {
-    color: #999;
+    color: var(--color-text-tertiary);
 }
 
 .nopadding {
@@ -424,7 +487,7 @@ body.card-game-page .chat {
     }
 
     .card-game-page .card-game-dock {
-        color: #555;
+        color: var(--color-text-secondary);
         line-height: 1.6;
     }
 

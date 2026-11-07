@@ -6,16 +6,22 @@ const AI_ONLY_MODE = true
             var cur = { num: 0, plist: [], cards: {} }, tt = 0
             // 0 没开始 1 Pre-Flop 2 Flop 3 Turn 4 River
             // spade diamond club heard
+            function tableInkClass(active) {
+                return active ? 'table-ink' : 'table-ink-muted'
+            }
             function drawCard(x, y, card, rot = 0, flipped = 0) {
                 let col = card[0], num = card[1]
                 if (num == 'X') num = '10'
                 let colMap = { 'C': 'club', 'D': 'diamond', 'H': 'heart', 'S': 'spade' }
-                let colColMap = { 'C': '#333', 'D': 'red', 'H': 'red', 'S': '#333' }
+                let suitInk = col === 'D' || col === 'H' ? 'fill="red"' : 'class="table-ink"'
                 let str = ''
-                if (flipped && cur.isIngame[cur.you]) str = `<rect x="${x - 10}" y="${y - 25}" transform="rotate(${rot},250,250)" width="35" height="50" rx="5" fill="#ddd" stroke="#333" stroke-width="1.5"></rect>`
-                else str = `<rect x="${x - 10}" y="${y - 25}" transform="rotate(${rot},250,250)" width="35" height="50" rx="5" fill="white" stroke="#333" stroke-width="1.5" ${flipped ? 'opacity="0.5"' : ''}></rect>
-                    <use x="${x - 4}" y="${y - 8}" transform="rotate(${rot},250,250)" href="#${colMap[col]}" ${flipped ? 'opacity="0.5"' : ''}/>
-                    <text x="${x - 7}" y="${y - 8}" transform="rotate(${rot},250,250)" font-size="16" fill="${colColMap[col]}" ${flipped ? 'opacity="0.5"' : ''}>${num}</text>`
+                if (flipped && cur.isIngame && cur.isIngame[cur.you]) {
+                    str = `<rect class="card-back" x="${x - 10}" y="${y - 25}" transform="rotate(${rot},250,250)" width="35" height="50" rx="5" stroke-width="1.5"></rect>`
+                } else {
+                    str = `<rect class="card-face" x="${x - 10}" y="${y - 25}" transform="rotate(${rot},250,250)" width="35" height="50" rx="5" stroke-width="1.5" ${flipped ? 'opacity="0.5"' : ''}></rect>
+                    <use x="${x - 4}" y="${y - 8}" class="card-suit-ink" transform="rotate(${rot},250,250)" href="#${colMap[col]}" ${flipped ? 'opacity="0.5"' : ''}/>
+                    <text x="${x - 7}" y="${y - 8}" transform="rotate(${rot},250,250)" font-size="16" ${suitInk} ${flipped ? 'opacity="0.5"' : ''}>${num}</text>`
+                }
                 return str
             }
             function prec(num) {
@@ -52,18 +58,22 @@ const AI_ONLY_MODE = true
                             str += drawCard(262.5, 470, k[1])
                         }
                         if (cur.wasReady == plist[i]) str += `<text class="person-ready" x="250" y="440" transform="rotate(${360 * gi / num},250,250)" text-anchor="middle">${cur.name[plist[i]]}</text>`
-                        str += `<text ${cur.wasReady == plist[i] ? 'class="person-unready" style="display:none"' : ''} x="250" y="440" transform="rotate(${360 * gi / num},250,250)" text-anchor="middle">${cur.name[plist[i]]}</text>`
+                        str += `<text ${cur.wasReady == plist[i] ? 'class="person-unready" style="display:none"' : 'class="person-unready table-ink"'} x="250" y="440" transform="rotate(${360 * gi / num},250,250)" text-anchor="middle">${cur.name[plist[i]]}</text>`
                         if (cur.st < 5) str += `<circle cx="${cur.name[plist[i]].length * 8 + 258}" cy="434" r="5" ${plist[i] == cur.now ? 'class="blink"' : 'fill="transparent"'} transform="rotate(${360 * gi / num},250,250)"></circle>`
                         else str += `<circle cx="${cur.name[plist[i]].length * 8 + 258}" cy="434" r="5" fill="${cur.isReady[plist[i]] ? '#333' : '#ddd'}" transform="rotate(${360 * gi / num},250,250)"></circle>`
-                        str += `<text x="250" y="420" transform="rotate(${360 * gi / num},250,250)" text-anchor="middle" fill="${cur.cash[plist[i]] ? '#999' : 'red'}">◉${prec(cur.cash[plist[i]])}</text>`
+                        str += `<text class="${cur.cash[plist[i]] ? 'table-cash-muted' : ''}" x="250" y="420" transform="rotate(${360 * gi / num},250,250)" text-anchor="middle" ${cur.cash[plist[i]] ? '' : 'fill="red"'}>◉${prec(cur.cash[plist[i]])}</text>`
                         if (cur.in[plist[i]]) {
-                            if (tt == 5) str += `<text x="260" y="370" transform="rotate(${360 * gi / num},250,250) rotate(90,260,370)" text-anchor="middle" fill="#${cur.winner[plist[i]] ? '333' : 'ddd'}">◉${prec(cur.winner[plist[i]] ? cur.won[plist[i]] : cur.in[plist[i]])}</text>`
-                            else str += `<text class="in-${plist[i]}" x="260" y="370" transform="rotate(${360 * gi / num},250,250) rotate(90,260,370)" text-anchor="middle" fill="${cur.givenup[plist[i]] ? 'red' : `#${plist[i] == cur.now ? '333' : 'ddd'}`}">◉${prec(cur.in[plist[i]])}</text>`
+                            if (tt == 5) str += `<text class="${tableInkClass(!!cur.winner[plist[i]])}" x="260" y="370" transform="rotate(${360 * gi / num},250,250) rotate(90,260,370)" text-anchor="middle">◉${prec(cur.winner[plist[i]] ? cur.won[plist[i]] : cur.in[plist[i]])}</text>`
+                            else {
+                                let inkCls = cur.givenup[plist[i]] ? `in-${plist[i]}` : `in-${plist[i]} ${tableInkClass(plist[i] == cur.now)}`
+                                str += `<text class="${inkCls}" x="260" y="370" transform="rotate(${360 * gi / num},250,250) rotate(90,260,370)" text-anchor="middle" ${cur.givenup[plist[i]] ? 'fill="red"' : ''}>◉${prec(cur.in[plist[i]])}</text>`
+                            }
                         } else {
-                            str += `<text class="in-${plist[i]}" x="260" y="370" transform="rotate(${360 * gi / num},250,250) rotate(90,260,370)" text-anchor="middle" fill="${cur.givenup[plist[i]] ? 'red' : `#${plist[i] == cur.now ? '333' : 'ddd'}`}"></text>`
+                            let inkCls = cur.givenup[plist[i]] ? `in-${plist[i]}` : `in-${plist[i]} ${tableInkClass(plist[i] == cur.now)}`
+                            str += `<text class="${inkCls}" x="260" y="370" transform="rotate(${360 * gi / num},250,250) rotate(90,260,370)" text-anchor="middle" ${cur.givenup[plist[i]] ? 'fill="red"' : ''}></text>`
                         }
                         if (tt == 5) {
-                            str += `<text x="230" y="370" transform="rotate(${360 * gi / num},250,250) rotate(90,230,370)" text-anchor="middle" fill="#${cur.winner[plist[i]] ? '333' : 'ddd'}">${['高牌', '一对', '两对', '三条', '顺子', '同花', '葫芦', '四条', '同花顺', '皇家同花顺', ''][cur.type[plist[i]][0]]}</text>`
+                            str += `<text class="${tableInkClass(!!cur.winner[plist[i]])}" x="230" y="370" transform="rotate(${360 * gi / num},250,250) rotate(90,230,370)" text-anchor="middle">${['高牌', '一对', '两对', '三条', '顺子', '同花', '葫芦', '四条', '同花顺', '皇家同花顺', ''][cur.type[plist[i]][0]]}</text>`
                             if (cur.winner[plist[i]]) str += `<line x1="250" y1="395" x2="250" y2="345" stroke="#333" stroke-width="1.5" transform="rotate(${360 * gi / num},250,250)" marker-start="url(#arrow)"/>`
                             else str += `<line x1="250" y1="399" x2="250" y2="340" stroke="#ddd" stroke-width="1.5" transform="rotate(${360 * gi / num},250,250)" marker-end="url(#arrow-grey)"/>`
                         } else {
@@ -82,7 +92,7 @@ const AI_ONLY_MODE = true
                         str += drawCard(262.5, 470, 'C7', 360 * i / num, 1)
                         str += drawCard(222.5, 470, 'CK', 360 * i / num, 1)
                         if (cur.wasReady == plist[i]) str += `<text class="person-ready" x="250" y="440" transform="rotate(${360 * gi / num},250,250)" text-anchor="middle" font-weight="bold">${cur.name[plist[i]]}</text>`
-                        str += `<text ${cur.wasReady == plist[i] ? 'class="person-unready" style="display:none"' : ''} x="250" y="440" fill="${cur.isOffline[plist[i]] ? '#bbb' : '#333'}" transform="rotate(${360 * gi / num},250,250)" text-anchor="middle">${cur.name[plist[i]]}</text>`
+                        str += `<text ${cur.wasReady == plist[i] ? 'class="person-unready" style="display:none"' : `class="person-unready ${cur.isOffline[plist[i]] ? 'table-ink-ghost' : 'table-ink'}"`} x="250" y="440" transform="rotate(${360 * gi / num},250,250)" text-anchor="middle">${cur.name[plist[i]]}</text>`
                         str += `<circle cx="${cur.name[plist[i]].length * 8 + 258}" cy="434" r="5" fill="${cur.isReady[plist[i]] ? '#333' : '#ddd'}" transform="rotate(${360 * gi / num},250,250)"></circle>`
                     }
                 }
@@ -92,16 +102,16 @@ const AI_ONLY_MODE = true
                 let str = '', isIngame = cur.isIngame, num = cur.plist.length
                 if (tt) {
                     for (let i in isIngame) {
-                        if (!isIngame[i]) str += `<text x="250" y="440" transform="rotate(${360 * i * 1.3 / num},250,250)" text-anchor="middle" fill="#bbb">${cur.name[i]}</text>`
+                        if (!isIngame[i]) str += `<text class="table-ink-ghost" x="250" y="440" transform="rotate(${360 * i * 1.3 / num},250,250)" text-anchor="middle">${cur.name[i]}</text>`
                     }
                 }
                 return str
             }
             function getTexasCardSymbolDefs() {
                 return `<path id="heart" fill="red" d="m12 21.35l-1.45-1.32C5.4 15.36 2 12.27 2 8.5C2 5.41 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.08C13.09 3.81 14.76 3 16.5 3C19.58 3 22 5.41 22 8.5c0 3.77-3.4 6.86-8.55 11.53z"/>
-                <path id="spade" fill="#333" d="M12 2C9 7 4 9 4 14c0 2 2 4 4 4c1 0 2 0 3-1c0 0 .32 2-2 5h6c-2-3-2-5-2-5c1 1 2 1 3 1c2 0 4-2 4-4c0-5-5-7-8-12"/>
+                <path id="spade" d="M12 2C9 7 4 9 4 14c0 2 2 4 4 4c1 0 2 0 3-1c0 0 .32 2-2 5h6c-2-3-2-5-2-5c1 1 2 1 3 1c2 0 4-2 4-4c0-5-5-7-8-12"/>
                 <path id="diamond" fill="red" d="m19 12l-7 10l-7-10l7-10"/>
-                <path id="club" fill="#333" d="M12 2c2.3 0 4.3 2 4.3 4.2a4.45 4.45 0 0 1-2.26 3.8c1-.5 2.46-.5 2.46-.5c2.5 0 4.5 1.8 4.5 4.3S19 18 16.5 18c0 0-1.5 0-3.5-1c0 0-.3 2 2 5H9c2.3-3 2-5 2-5c-2 1-3.5 1-3.5 1C5 18 3 16.3 3 13.8s2-4.3 4.5-4.3c0 0 1.46 0 2.46.5c-.3-.17-2.17-1.23-2.26-3.8C7.7 4 9.7 2 12 2"/>`
+                <path id="club" d="M12 2c2.3 0 4.3 2 4.3 4.2a4.45 4.45 0 0 1-2.26 3.8c1-.5 2.46-.5 2.46-.5c2.5 0 4.5 1.8 4.5 4.3S19 18 16.5 18c0 0-1.5 0-3.5-1c0 0-.3 2 2 5H9c2.3-3 2-5 2-5c-2 1-3.5 1-3.5 1C5 18 3 16.3 3 13.8s2-4.3 4.5-4.3c0 0 1.46 0 2.46.5c-.3-.17-2.17-1.23-2.26-3.8C7.7 4 9.7 2 12 2"/>`
             }
             function drawTable(add = '') {
                 let str = `<defs>
@@ -177,23 +187,23 @@ const AI_ONLY_MODE = true
                     cur.plist.forEach(function (pid) {
                         $(`.line-${pid}-red,.line-${pid}-blue`).hide()
                         $(`.line-${pid}`).show()
-                        var fill = pid == cur.now ? '#333' : '#ddd'
-                        if (cur.in && cur.in[pid]) $(`.in-${pid}`).attr('fill', fill).text(`◉${prec(cur.in[pid])}`)
+                        var cls = tableInkClass(pid == cur.now)
+                        if (cur.in && cur.in[pid]) $(`.in-${pid}`).removeClass('table-ink table-ink-muted').addClass(cls).removeAttr('fill').text(`◉${prec(cur.in[pid])}`)
                     })
                     return
                 }
                 if (k[0] == 'up') {
                     $(`.line-${id},.line-${id}-red`).hide()
                     $(`.line-${id}-blue`).show()
-                    $(`.in-${id}`).attr('fill', '#337ab7').text(`◉${prec(k[1])}`)
+                    $(`.in-${id}`).removeClass('table-ink table-ink-muted').attr('fill', '#337ab7').text(`◉${prec(k[1])}`)
                 } else if (k[0] == 'nope') {
                     $(`.line-${id},.line-${id}-blue`).hide()
                     $(`.line-${id}-red`).show()
-                    $(`.in-${id}`).attr('fill', '#d9534f').text(cur.in[id] ? `◉${prec(cur.in[id])}` : '')
+                    $(`.in-${id}`).removeClass('table-ink table-ink-muted').attr('fill', '#d9534f').text(cur.in[id] ? `◉${prec(cur.in[id])}` : '')
                 } else if (k[0] == 'follow') {
                     $(`.line-${id}-red,.line-${id}-blue`).hide()
                     $(`.line-${id}`).show()
-                    $(`.in-${id}`).attr('fill', '#333').text(`◉${prec(k[1])}`)
+                    $(`.in-${id}`).removeClass('table-ink-muted').addClass('table-ink').removeAttr('fill').text(`◉${prec(k[1])}`)
                 }
             }
             function drawTexasAll() {

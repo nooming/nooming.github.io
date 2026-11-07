@@ -2,7 +2,7 @@
 
 .option:hover {
     border-color: var(--color-theme-deep);
-    background: #fffde7;
+    background: var(--color-theme-wash);
     transform: translateX(5px);
 }
 
@@ -17,15 +17,6 @@
     background: var(--gradient-theme-h);
     transition: width 0.3s ease;
     width: 0%;
-}
-
-.btn-primary {
-    background: var(--btn-cta-bg);
-    color: var(--btn-cta-fg);
-}
-
-.btn-primary:hover {
-    background: var(--btn-cta-bg-hover);
 }
 
 .result-type {

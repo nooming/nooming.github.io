@@ -12,12 +12,14 @@
     <meta property="og:title" content="像素涌流 · noomings">
     <meta property="og:description" content="双图像素排序重排与动画过渡，本地导出 PNG。">
     <meta property="og:url" content="https://noomings.com/app/lab/pixelflow/">
-    <title>像素涌流 · noomings</title><link rel="stylesheet" href="../../../assets/css/common.css">
+    <title>像素涌流 · noomings</title>
+    <script src="/assets/js/shell-prefs-boot.js"></script>
+    <link rel="stylesheet" href="../../../assets/css/common.css">
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
     <link rel="manifest" href="/assets/icons/site.webmanifest">
-    <link rel="stylesheet" href="/assets/css/site-shell.css">
-    <link rel="stylesheet" href="assets/css/pixelflow.css">
+<link rel="stylesheet" href="/assets/css/site-shell.css">
+<link rel="stylesheet" href="assets/css/pixelflow.css">
 </head>
 <body class="page-container pixelflow-page">
     <div class="page-header">
@@ -59,7 +61,7 @@
                 <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
                 <div class="status" id="status">请先上传两张图片</div>
                 <div class="controls-action-row">
-                    <button type="button" class="btn btn-transform" id="btnTransform" disabled>⟳ 开始变换</button>
+                    <button type="button" class="btn-primary btn btn-transform" id="btnTransform" disabled>⟳ 开始变换</button>
                     <button type="button" class="btn btn-reset" id="btnReset" disabled>↺ 重置</button>
                     <button type="button" class="btn btn-download" id="btnDownload" disabled>⬇ 下载图片</button>
                 </div>
@@ -116,6 +118,7 @@
     <button class="back-to-top" id="backToTop" aria-label="返回顶部">↑</button>
     <script src="../../../assets/js/utils.js" defer></script>
     <script src="assets/js/pixelflow.js" defer></script>
+    <script src="/assets/js/shell-preferences.js" defer></script>
     <script src="/assets/js/site-shell.js" defer></script>
 </body>
 </html>

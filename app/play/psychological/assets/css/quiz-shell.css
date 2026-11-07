@@ -6,7 +6,7 @@
 
 .test-intro {
     text-align: center;
-    color: #7f8c8d;
+    color: var(--color-text-secondary);
     margin-bottom: 30px;
     font-size: 1rem;
 }
@@ -72,7 +72,7 @@
 
 .progress-text {
     text-align: center;
-    color: #7f8c8d;
+    color: var(--color-text-secondary);
     margin-bottom: 20px;
     font-size: 0.9rem;
 }
@@ -129,11 +129,11 @@
 }
 
 .result-description {
-    color: #7f8c8d;
+    color: var(--color-text-secondary);
     line-height: 1.8;
     margin-bottom: 20px;
     text-align: left;
-    background: #f8f9fa;
+    background: var(--color-surface-dim);
     padding: 20px;
     border-radius: 0;
 }
@@ -156,7 +156,7 @@
 }
 
 .result-disclaimer {
-    color: #95a5a6;
+    color: var(--color-text-tertiary);
     font-size: 0.9rem;
     margin: 0 0 16px;
     line-height: 1.5;
@@ -197,7 +197,7 @@
 
 .dim-tie-tag {
     font-size: 0.75rem;
-    color: #7f8c8d;
+    color: var(--color-text-secondary);
     border: 1px solid #d5dbdb;
     padding: 1px 6px;
 }
@@ -219,7 +219,7 @@
 
 .result-ties {
     margin-top: 14px;
-    color: #7f8c8d;
+    color: var(--color-text-secondary);
     font-size: 0.9rem;
     line-height: 1.6;
     text-align: left;

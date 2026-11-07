@@ -10,10 +10,11 @@
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
     <link rel="manifest" href="/assets/icons/site.webmanifest">
+    <script src="/assets/js/shell-prefs-boot.js"></script>
     <link rel="stylesheet" href="../../../assets/css/common.css">
-    <link rel="stylesheet" href="/assets/css/site-shell.css">
+<link rel="stylesheet" href="/assets/css/site-shell.css">
     <!-- 页面样式 -->
-    <link rel="stylesheet" href="assets/css/gacha-planner.css">
+<link rel="stylesheet" href="assets/css/gacha-planner.css">
 </head>
 <body class="page-container gacha-planner-page">
     <div class="page-header">
@@ -68,7 +69,7 @@
                 <input id="combo-char-n" type="number" step="1" min="0" value="600">
                 <label for="combo-wuku-init">现有武库配额</label>
                 <input id="combo-wuku-init" type="number" step="1" min="0" value="0">
-                <button type="button" class="gp-primary" id="combo-calc">开始计算 5+6 概率</button>
+                <button type="button" class="btn-primary gp-primary" id="combo-calc">开始计算 5+6 概率</button>
                 <div class="gp-stats" id="combo-out" aria-live="polite"></div>
             </section>
 
@@ -84,7 +85,7 @@
                         <p class="gp-note">使用上方「角色池通用设置」。</p>
                         <label for="up-n">总抽数（单抽计 1）</label>
                         <input id="up-n" type="number" step="1" min="0" value="80">
-                        <button type="button" class="gp-primary" id="up-calc-summary">开始计算六星与当期个数</button>
+                        <button type="button" class="btn-primary gp-primary" id="up-calc-summary">开始计算六星与当期个数</button>
                         <div class="gp-stats" id="up-out-summary" aria-live="polite"></div>
                     </section>
 
@@ -98,7 +99,7 @@
                         <input id="up-up-k" type="number" step="1" min="1" value="1">
                         <label for="up-up-n">总抽数 n</label>
                         <input id="up-up-n" type="number" step="1" min="0" value="120">
-                        <button type="button" class="gp-primary" id="up-up-calc">开始计算概率</button>
+                        <button type="button" class="btn-primary gp-primary" id="up-up-calc">开始计算概率</button>
                         <div class="gp-stats" id="up-up-out" aria-live="polite"></div>
                     </section>
                 </div>
@@ -113,7 +114,7 @@
                         </div>
                         <label for="wp-t">申领次数 T（总武器件数 = 10T）</label>
                         <input id="wp-t" type="number" step="1" min="0" value="10">
-                        <button type="button" class="gp-primary" id="wp-calc">开始计算六星武器与当期个数</button>
+                        <button type="button" class="btn-primary gp-primary" id="wp-calc">开始计算六星武器与当期个数</button>
                         <div class="gp-stats" id="wp-out" aria-live="polite"></div>
                     </section>
 
@@ -127,7 +128,7 @@
                         <input id="wp-up-k" type="number" step="1" min="1" value="1">
                         <label for="wp-up-t-prob">申领次数 T</label>
                         <input id="wp-up-t-prob" type="number" step="1" min="0" value="10">
-                        <button type="button" class="gp-primary" id="wp-up-calc-prob">开始计算概率</button>
+                        <button type="button" class="btn-primary gp-primary" id="wp-up-calc-prob">开始计算概率</button>
                         <div class="gp-stats" id="wp-up-prob-out" aria-live="polite"></div>
                     </section>
                 </div>
@@ -141,6 +142,7 @@
 
     <script src="../../../assets/js/utils.js" defer></script>
     <script src="assets/js/gacha-planner.js" defer></script>
+    <script src="/assets/js/shell-preferences.js" defer></script>
     <script src="/assets/js/site-shell.js" defer></script>
 </body>
 </html>

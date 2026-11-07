@@ -74,7 +74,7 @@
 
 .pixelflow-page .upload-zone .placeholder {
     text-align: center;
-    color: #5a6c7d;
+    color: var(--color-text-secondary);
     pointer-events: none;
 }
 
@@ -105,7 +105,7 @@
 
 .pixelflow-page .upload-panel .info {
     font-size: 0.7rem;
-    color: #5a6c7d;
+    color: var(--color-text-secondary);
     text-align: center;
 }
 
@@ -156,7 +156,7 @@
     text-wrap: balance;
     font-size: 0.9rem;
     line-height: 1.55;
-    color: #5a6c7d;
+    color: var(--color-text-secondary);
 }
 
 .pixelflow-page canvas#mainCanvas {
@@ -172,7 +172,7 @@
 .pixelflow-page .status {
     text-align: center;
     font-size: 0.82rem;
-    color: #5a6c7d;
+    color: var(--color-text-secondary);
     min-height: 20px;
     transition: color 0.2s;
 }
@@ -270,7 +270,7 @@
 
 .pixelflow-page .control-group .range-value {
     font-size: 0.75rem;
-    color: #5a6c7d;
+    color: var(--color-text-secondary);
 }
 
 .pixelflow-page .range-number {
@@ -322,16 +322,8 @@
 }
 
 .pixelflow-page .btn-transform {
-    background: var(--gradient-theme);
-    color: var(--color-theme-ink) !important;
     font-size: 1rem;
     padding: 12px 32px;
-    box-shadow: var(--shadow-theme);
-}
-
-.pixelflow-page .btn-transform:hover:not(:disabled) {
-    background: var(--gradient-theme-reverse);
-    box-shadow: var(--shadow-theme-hover);
 }
 
 .pixelflow-page .btn-reset {
@@ -347,7 +339,7 @@
 
 .pixelflow-page .btn-toggle {
     background: var(--color-card);
-    color: #5a6c7d;
+    color: var(--color-text-secondary);
     border: 1px solid var(--line-hard);
     padding: 7px 14px;
     font-size: 0.8rem;

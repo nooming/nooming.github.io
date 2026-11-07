@@ -1,5 +1,14 @@
 # 更新日志
 
+## 未发布
+
+1. **主题与偏好层**：新增 `assets/js/shell-prefs-boot.js`（阻塞式，首帧前定 `html[data-theme]`）与 `assets/js/shell-preferences.js`（`window.noomingsPrefs`）；壳页顶栏统一主题 / 声音开关与 `S`、`D` 快捷键，键为 `noomings_theme`、`noomings_sound`，并从 `gomoku.standalone.v1` 迁移一次。`meta[name="theme-color"]` 随主题变化。
+2. **视觉契约**：[shell-visual-contract.md](./shell-visual-contract.md)（站内壳页视觉契约，`.cursor/rules/` 同源规则）；全站可点击主按钮统一为 `common.css` 的 `.btn-primary`（抽卡式洗黄底 / 悬停纯黄），次要按钮走 `.btn-quiet`。
+3. **棋类重构**：五子棋 / 围棋 / 象棋拆出 `engine.js`、`board.js`、`notation.js`、`ai-worker.js`，共用 `board-games/assets/css/board-game-chrome.css`、`board-game-shell.css`、`board-game-ui.css`；星铎棋脚本外置为 `star-duo.js`。修复人机模式下撤销 / 重做后回合交回 AI 时棋盘卡死。
+4. **暗色修复**：卡牌牌面与花色随 `data-theme` 变（`--card-face-fill`、`--card-table-ink`）；决策工具补齐硬币面板与快速选择结果区的暗色底；二级导航条底色改用 `--color-card`。
+5. **细节**：`fan-rpm` 三个按钮恢复同宽同高；工具首页 14 张卡片补图标（`hub-sprite.svg` 新增 `i-image`、`i-slides`、`i-download`）；删除无引用的 `go/assets/css/game.css`、`chess/assets/css/chess-shell.css`。
+6. **仓库卫生**：新增 `.gitattributes`（统一 `eol=lf`，`.bat` / `.cmd` 保留 CRLF）与 `.gitignore`（日志、`build/`、`dist/`）；`server.log` 移出版本控制。
+
 ## v2.4
 
 顶栏与 `app/` 目录对齐；首页枢纽与阅读域重组；全站注入导航壳（`site-shell`）。旧路径不保留跳转。

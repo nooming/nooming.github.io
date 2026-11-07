@@ -9,10 +9,11 @@
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
     <link rel="manifest" href="/assets/icons/site.webmanifest">
+    <script src="/assets/js/shell-prefs-boot.js"></script>
     <link rel="stylesheet" href="../../../assets/css/common.css">
-    <link rel="stylesheet" href="/assets/css/site-shell.css">
+<link rel="stylesheet" href="/assets/css/site-shell.css">
     <!-- 本地样式文件 -->
-    <link rel="stylesheet" href="assets/css/qr-code.css">
+<link rel="stylesheet" href="assets/css/qr-code.css">
     <title>二维码 · noomings</title>
 </head>
 <body class="page-container">
@@ -60,7 +61,7 @@
 
             <!-- 功能按钮 -->
             <div class="btn-group">
-                <button id="generateBtn" class="generate-btn">生成二维码</button>
+                <button id="generateBtn" type="button" class="btn-primary generate-btn">生成二维码</button>
                 <button id="clearBtn" class="btn-quiet clear-btn">清空</button>
             </div>
 
@@ -84,7 +85,7 @@
             <div class="decode-upload-row">
                 <label for="decodeFile" class="decode-label">选择二维码图片：</label>
                 <input type="file" id="decodeFile" accept="image/*">
-                <button id="decodeBtn" class="decode-btn">开始识别</button>
+                <button type="button" id="decodeBtn" class="btn-primary decode-btn">开始识别</button>
                 <button id="decodeClearBtn" class="btn-quiet decode-clear-btn">清空</button>
             </div>
             <p id="decodeErrorTip" class="error-tip">请选择要识别的二维码图片！</p>
@@ -97,7 +98,7 @@
                 <div class="decode-result-box">
                     <div class="decode-result-header-row">
                         <div class="decode-result-header">识别结果：</div>
-                        <button id="decodeCopyBtn" class="decode-copy-btn" disabled>复制结果</button>
+                        <button type="button" id="decodeCopyBtn" class="btn-primary decode-copy-btn" disabled>复制结果</button>
                     </div>
                     <pre id="decodeResult" class="decode-result-content">——</pre>
                 </div>
@@ -113,6 +114,7 @@
     <script src="../../../assets/js/utils.js" defer></script>
     <!-- 本地JS文件（加版本号，避免浏览器缓存旧代码） -->
     <script src="assets/js/qr-code.js?v=2" defer></script>
+    <script src="/assets/js/shell-preferences.js" defer></script>
     <script src="/assets/js/site-shell.js" defer></script>
 </body>
 </html>

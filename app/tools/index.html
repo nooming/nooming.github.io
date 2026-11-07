@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -17,8 +17,9 @@
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
     <link rel="manifest" href="/assets/icons/site.webmanifest">
+    <script src="/assets/js/shell-prefs-boot.js"></script>
     <link rel="stylesheet" href="../../assets/css/common.css">
-    <link rel="stylesheet" href="/assets/css/site-shell.css">
+<link rel="stylesheet" href="/assets/css/site-shell.css">
 </head>
 <body class="page-container">
     <!-- 页面头部 -->
@@ -39,17 +40,29 @@
                     <p>每页 PNG，ZIP 下载。</p>
                 </a>
                 <a class="feature-card" href="doc-tools/images-to-pdf/">
-                    <h3 class="feature-title">图片 → PDF</h3>
+                    <div class="card-icon-title">
+                        <span class="card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="../../assets/icons/ui/hub-sprite.svg#i-image"/></svg></span>
+                        <h3 class="feature-title">图片 → PDF</h3>
+                    </div>
                     <p>按文件名数字排序合并。</p>
                 </a>
                 <a class="feature-card" href="doc-tools/pdf-to-ppt/">
-                    <h3 class="feature-title">PDF → PPT</h3>
+                    <div class="card-icon-title">
+                        <span class="card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="../../assets/icons/ui/hub-sprite.svg#i-slides"/></svg></span>
+                        <h3 class="feature-title">PDF → PPT</h3>
+                    </div>
                 </a>
                 <a class="feature-card" href="doc-tools/ipynb-read/">
-                    <h3 class="feature-title">读 ipynb</h3>
+                    <div class="card-icon-title">
+                        <span class="card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="../../assets/icons/ui/hub-sprite.svg#i-pencil"/></svg></span>
+                        <h3 class="feature-title">读 ipynb</h3>
+                    </div>
                 </a>
                 <a class="feature-card feature-card--muted" href="doc-tools/windows/">
-                    <h3 class="feature-title">Windows 桌面版</h3>
+                    <div class="card-icon-title">
+                        <span class="card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="../../assets/icons/ui/hub-sprite.svg#i-download"/></svg></span>
+                        <h3 class="feature-title">Windows 桌面版</h3>
+                    </div>
                 </a>
 
                 <a class="feature-card" href="qr-code-generator/">
@@ -101,13 +114,22 @@
                 </a>
 
                 <a class="feature-card" href="decision/quick-choice/">
-                    <h3 class="feature-title">多选随机</h3>
+                    <div class="card-icon-title">
+                        <span class="card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="../../assets/icons/ui/hub-sprite.svg#i-target"/></svg></span>
+                        <h3 class="feature-title">多选随机</h3>
+                    </div>
                 </a>
                 <a class="feature-card" href="decision/wheel/">
-                    <h3 class="feature-title">转盘</h3>
+                    <div class="card-icon-title">
+                        <span class="card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="../../assets/icons/ui/hub-sprite.svg#i-wheel"/></svg></span>
+                        <h3 class="feature-title">转盘</h3>
+                    </div>
                 </a>
                 <a class="feature-card" href="decision/coin-flip/">
-                    <h3 class="feature-title">抛硬币</h3>
+                    <div class="card-icon-title">
+                        <span class="card-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" focusable="false"><use href="../../assets/icons/ui/hub-sprite.svg#i-coin"/></svg></span>
+                        <h3 class="feature-title">抛硬币</h3>
+                    </div>
                 </a>
 
             </div>
@@ -117,6 +139,7 @@
     <footer class="site-footer" role="contentinfo">
         <p>© 2026 noomings · 非商用</p>
     </footer>
+    <script src="/assets/js/shell-preferences.js" defer></script>
 
     <script src="/assets/js/site-shell.js" defer></script>
 </body>

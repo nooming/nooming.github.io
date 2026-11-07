@@ -29,7 +29,7 @@
 
 .card-game-page .btn:hover,
 .card-game-page .btn:focus {
-    background: rgba(0, 0, 0, 0.04);
+    background: color-mix(in srgb, var(--color-ink) 6%, transparent);
     color: var(--color-ink, #0a0a0a);
     border-color: var(--color-ink, #0a0a0a);
     outline: none;
@@ -118,7 +118,7 @@
 }
 
 .card-game-page .text-muted {
-    color: #999;
+    color: var(--color-text-tertiary);
 }
 
 .card-game-page .list-unstyled {

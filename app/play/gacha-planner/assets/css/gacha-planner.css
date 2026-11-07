@@ -174,29 +174,11 @@ details.gp-rules[open] {
     margin: 0;
 }
 
-/* 主计算 CTA：与全站一致，默认浅黄强调、悬停黄底 */
+/* 主计算 CTA：外观见 common .btn-primary；此处仅布局 */
 .gp-primary {
     margin-top: 14px;
     width: 100%;
-    padding: 11px 14px;
-    border: 1px solid var(--btn-emphasis-border);
-    background: var(--btn-emphasis-bg);
-    color: var(--btn-emphasis-fg);
-    font-weight: 800;
     font-size: 0.82rem;
-    cursor: pointer;
-    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-}
-
-.gp-primary:hover {
-    background: var(--btn-cta-bg);
-    color: var(--btn-cta-fg);
-    border-color: var(--btn-emphasis-border);
-    transform: none;
-}
-
-.gp-primary:active {
-    transform: none;
 }
 
 /* 结果区：终端读数 */
@@ -229,9 +211,12 @@ details.gp-rules[open] {
 
 /* 覆盖 JS 内联灰色说明字，保证黑底可读 */
 .gp-stats [style*="color:#666"],
-.gp-stats [style*="color: #666"],
-.gp-stats [style*="color:#666666"],
-.gp-stats [style*="color: #666666"] {
+.gp-stats [style*="color:#666666"] {
+    color: var(--color-text-tertiary) !important;
+}
+
+html[data-theme="dark"] .gp-stats [style*="color:#666"],
+html[data-theme="dark"] .gp-stats [style*="color:#666666"] {
     color: rgba(255, 255, 255, 0.48) !important;
 }
 

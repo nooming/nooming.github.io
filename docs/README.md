@@ -4,7 +4,7 @@
 
 ## 项目简介
 
-GitHub Pages 静态站：顶栏 **首页 · 实验 · 工具 · 阅读 · 娱乐**。首页 **独立入口**（导航 · 笔记 · Citywalk）+ **实践**（停车、物理外链）。用户可见文案见 [copy-style.md](./copy-style.md)。
+GitHub Pages 静态站：顶栏 **首页 · 实验 · 工具 · 阅读 · 娱乐**。首页 **独立入口**（导航 · 笔记 · Citywalk）+ **实践**（停车、物理外链）。用户可见文案见 [copy-style.md](./copy-style.md)；壳页配色与主按钮见 [shell-visual-contract.md](./shell-visual-contract.md)。
 
 ## 功能特性
 
@@ -39,7 +39,9 @@ GitHub Pages 静态站：顶栏 **首页 · 实验 · 工具 · 阅读 · 娱乐
 - JavaScript (ES6+)
 - Web Audio API
 - LameJS (MP3编码)
-- 中国象棋引擎库（xiangqi，`xiangqi.min.js`，位于 `app/play/games/board-games/chess/assets/lib/`）
+- 中国象棋：`xiangqi.min.js` 规则库 + 站内 `engine.js`（Alpha-Beta）· 路径 `app/play/games/board-games/chess/`
+- 五子棋 / 围棋：`engine.js` / `go-engine.js` + Web Worker（五子棋 `ai-worker.js`）· 路径 `app/play/games/board-games/gomoku/`、`go/`
+- 星铎棋：单脚本 `star-duo.js`（几何 + 四档 AI）· 路径 `app/play/games/board-games/star-duo/`
 - Perfect Freehand (手写笔记绘图库)
 - marked + DOMPurify（Markdown 阅读；库文件在 `app/read/markdown/assets/js/vendor/`）
 - PaddleOCR / `@ocr-web/core`（图片识字默认引擎；PP-OCRv5 ONNX，单线程 WASM；模型与 onnxruntime-web 从 jsDelivr 加载并缓存）

@@ -1,4 +1,5 @@
-/* 沉浸对局/编辑器：dark color-scheme；菜单屏由 star-duo-noomings.css 保持 light */
+/* 沉浸对局/编辑器：dark color-scheme；菜单屏由 star-duo-noomings.css 保持 light
+ * 说明：通用 box-sizing/margin/padding 复位已在 standalone.css 中完成，此处不再重复。 */
   body.page-container.star-duo-root.xd-immersive {
     color-scheme: only dark;
     forced-color-adjust: none;
@@ -10,7 +11,6 @@
     -webkit-forced-color-adjust: none;
   }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
   body.page-container.star-duo-root.xd-immersive {
     height: 100%;
     font-family: 'Segoe UI', 'Microsoft YaHei', Arial, sans-serif;
@@ -34,25 +34,9 @@
   .screen { display: none; }
   .screen.active { display: block; max-height: 100vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
   @supports (height: 100dvh) { .screen.active { max-height: 100dvh; } }
-  #screen-select.active, #screen-first.active, #screen-difficulty.active {
-    display: flex; flex-direction: column; justify-content: center;
-    align-items: center; position: fixed; inset: 0;
-  }
-  .menu-topbar {
-    position: absolute; top: calc(14px + env(safe-area-inset-top));
-    left: calc(14px + env(safe-area-inset-left));
-    display: flex; gap: 10px; z-index: 5;
-  }
-  .title {
-    font-size: 56px; letter-spacing: 16px; font-weight: 400; padding-left: 16px;
-    background: linear-gradient(180deg, #fff5da 0%, #e0c489 45%, #a1752f 100%);
-    -webkit-background-clip: text; background-clip: text;
-    -webkit-text-fill-color: transparent; color: #e8cf9a;
-    filter: drop-shadow(0 6px 26px rgba(190,150,70,.45));
-  }
-  .subtitle { font-size: 13px; letter-spacing: 7px; color: #b3a586; margin: 10px 0 36px; }
-  .menu-btns { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; padding: 10px; }
-  .btn {
+  /* 站壳菜单由 board-game-chrome + star-duo-noomings 呈现；以下 brass 按钮仅用于弹窗 */
+  .overlay .btn,
+  .overlay button.btn {
     cursor: pointer; letter-spacing: 2px; border-radius: 6px; padding: 14px 30px;
     font: 16px/1 'Segoe UI', 'Microsoft YaHei', sans-serif; color: #f6ecd6;
     background: linear-gradient(170deg, #5f4c2e, #2b2114);
@@ -60,13 +44,13 @@
     box-shadow: 0 6px 18px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,235,190,.22);
     transition: background .15s, transform .05s;
   }
-  .btn:hover { background: linear-gradient(170deg, #7c6438, #3b2c19); }
-  .btn:active { transform: translateY(1px); }
-  .btn.small { font-size: 13px; padding: 8px 16px; }
-  .btn.green { background: linear-gradient(170deg, #3f6f4d, #1b3322); border-color: rgba(150,220,170,.45); }
-  .btn.green:hover { background: linear-gradient(170deg, #528b60, #22402a); }
-  .btn.light { background: linear-gradient(170deg, #4c4438, #221d17); border-color: rgba(200,180,150,.38); color: #e6dcc8; }
-  .btn.light:hover { background: linear-gradient(170deg, #5f5546, #2c261e); }
+  .overlay .btn:hover { background: linear-gradient(170deg, #7c6438, #3b2c19); }
+  .overlay .btn:active { transform: translateY(1px); }
+  .overlay .btn.small { font-size: 13px; padding: 8px 16px; }
+  .overlay .btn.green { background: linear-gradient(170deg, #3f6f4d, #1b3322); border-color: rgba(150,220,170,.45); }
+  .overlay .btn.green:hover { background: linear-gradient(170deg, #528b60, #22402a); }
+  .overlay .btn.light { background: linear-gradient(170deg, #4c4438, #221d17); border-color: rgba(200,180,150,.38); color: #e6dcc8; }
+  .overlay .btn.light:hover { background: linear-gradient(170deg, #5f5546, #2c261e); }
   .color-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin: 16px 0; }
   .color-btn {
     cursor: pointer; font-size: 17px; letter-spacing: 2px; padding: 14px 30px;
@@ -127,8 +111,8 @@
   .gameboard .tinner {
     position: absolute; inset: 0; transform-style: preserve-3d;
     transition: transform .42s cubic-bezier(.42,.02,.3,1);
-    will-change: transform;
   }
+  .gameboard .tinner.flip, .gameboard .tinner.drop { will-change: transform; }
   .gameboard .tinner.flip { transform: rotateY(180deg); }
   .gameboard .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
   .gameboard .fb { transform: rotateY(180deg); }
@@ -182,16 +166,10 @@
   }
   .gameboard .tinner.drop { animation: dropIn .34s cubic-bezier(.3,1.4,.5,1); }
   .boardwrap, #board { contain: layout style; }
-  body {
-    background:
-      var(--rock),
-      radial-gradient(120% 90% at 50% 45%, rgba(0,0,0,0) 34%, rgba(0,0,0,.72) 100%),
-      radial-gradient(60% 55% at 16% 18%, #3c342c 0%, rgba(60,52,44,0) 62%),
-      radial-gradient(55% 50% at 86% 78%, #342d26 0%, rgba(52,45,38,0) 62%),
-      linear-gradient(150deg, #262019, #16120e 55%, #0b0908);
-    background-size: 480px 480px, auto, auto, auto, auto;
-    background-blend-mode: overlay, normal, normal, normal, normal;
-  }
+  /* 说明：此处原有一段全局 `body { background: ... }`（石材噪点叠加）。
+     它的特异度低于 noomings 的 body.page-container.star-duo-root 与
+     body.page-container.star-duo-root.xd-immersive，实际从未生效，
+     只会让样式表多出一段无效覆盖，故移除；沉浸底色仍由上方 .xd-immersive 规则提供。 */
   .closebtn {
     position: absolute; left: calc(22px + env(safe-area-inset-left));
     top: calc(20px + env(safe-area-inset-top));
@@ -388,6 +366,7 @@
   .diff-btn.hell   { background: linear-gradient(170deg, #6a1430, #24060f 58%, #120308); color: #ffd5df; border-color: rgba(255,90,120,.55); }
   .diff-btn:hover { filter: brightness(1.15); }
   #screen-difficulty.active { overflow-y: auto; justify-content: safe center; }
+  .diff-btn.is-active,
   .diff-btn.selected {
     box-shadow: 0 0 0 2px rgba(255,238,200,.85), 0 0 20px rgba(255,238,200,.5);
     transform: translateY(-2px);
@@ -499,4 +478,74 @@
       padding: 11px 8px; margin-bottom: 8px; border-radius: 6px;
       font-size: 13px;
     }
+  }
+
+  /* ==========================================================
+     无障碍与交互打磨层
+     ========================================================== */
+  .sr-only {
+    position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%);
+    white-space: nowrap; border: 0;
+  }
+
+  /* 原生按钮化的选项（.color-btn / .diff-btn）对齐 div 版本的观感 */
+  button.color-btn, button.diff-btn {
+    font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; font-weight: 400;
+    color: inherit; text-align: center; background-color: transparent;
+    -webkit-appearance: none; appearance: none;
+  }
+  button.diff-btn { display: block; }
+  button.color-btn { display: inline-block; }
+  button.preset-item {
+    display: block; width: 100%; font-family: inherit; font-size: 13px;
+    font-weight: 400; -webkit-appearance: none; appearance: none;
+  }
+  button.preset-item-label {
+    background: none; border: 0; padding: 0; margin: 0; color: inherit;
+    font: inherit; letter-spacing: inherit; text-align: inherit; cursor: pointer;
+    flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  /* 键盘焦点可见 */
+  .btn:focus-visible, .tbtn:focus-visible, .ed-btn:focus-visible,
+  .color-btn:focus-visible, .diff-btn:focus-visible, .closebtn:focus-visible,
+  .preset-item:focus-visible, .preset-item-delete:focus-visible,
+  .modal input:focus-visible {
+    outline: 2px solid #9ec6ff; outline-offset: 3px;
+  }
+  .gameboard .tile:focus-visible {
+    outline: 2px solid #9ec6ff; outline-offset: -2px; z-index: 6;
+  }
+  .gameboard .tile:focus-visible .fa {
+    filter: drop-shadow(0 0 8px rgba(140,190,255,.95)) !important;
+  }
+
+  /* 预设保存/删除的即时反馈 */
+  .preset-item.is-flash {
+    animation: presetFlash .9s ease-out;
+    border-color: rgba(255,238,200,.95);
+  }
+  @keyframes presetFlash {
+    0% { box-shadow: 0 0 0 0 rgba(255,238,200,.75); }
+    100% { box-shadow: 0 0 0 12px rgba(255,238,200,0); }
+  }
+  .hint.is-error { color: #ff9b86; }
+
+  .noscript-note {
+    position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 200;
+    max-width: min(88vw, 420px); padding: 22px 26px; border-radius: 10px;
+    font: 15px/1.7 'Segoe UI', 'Microsoft YaHei', sans-serif; color: #ffeec6;
+    text-align: center; background: linear-gradient(170deg, #3b3326, #1c1710);
+    border: 1px solid rgba(224,196,137,.38); box-shadow: 0 20px 60px rgba(0,0,0,.6);
+  }
+
+  /* 减少动态效果：关闭翻转过渡与脉冲，保留即时状态切换 */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .001ms !important; animation-iteration-count: 1 !important;
+      transition-duration: .001ms !important; scroll-behavior: auto !important;
+    }
+    .gameboard .tinner { transition: none !important; will-change: auto !important; }
+    .gameboard .tile.hint .halo, .gameboard .tile.lastbot .halo { animation: none !important; }
   }

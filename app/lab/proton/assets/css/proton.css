@@ -73,7 +73,7 @@ body.proton-page.page-container {
 .proton-page .dragger .icon-arrow-down {
     transform: translate(-8.6px, -5px);
     transform-origin: 0 -4px;
-    color: #333;
+    color: var(--color-ink-soft);
 }
 
 .bodypad {
@@ -94,7 +94,7 @@ body.proton-page.page-container {
 }
 
 .grey {
-    color: #999;
+    color: var(--color-text-tertiary);
     font-weight: normal !important;
 }
 

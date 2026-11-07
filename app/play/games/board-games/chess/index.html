@@ -4,66 +4,116 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#FFFA00">
-    <meta name="description" content="中国象棋：双人或本地 AI。">
+    <meta name="description" content="中国象棋：双人对弈与人机对战，悔棋、提示、中文棋谱与本地 AI。">
     <meta name="keywords" content="中国象棋,象棋,在线游戏,双人对战">
     <meta name="author" content="nooming">
-    <title>中国象棋 · noomings</title><!-- 公共样式 -->
+    <title>中国象棋 · noomings</title>
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
     <link rel="manifest" href="/assets/icons/site.webmanifest">
+    <script src="/assets/js/shell-prefs-boot.js"></script>
     <link rel="stylesheet" href="../../../../../assets/css/common.css">
     <link rel="stylesheet" href="/assets/css/site-shell.css">
-    
-    <!-- 游戏样式 -->
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/board-game-chrome.css">
+    <link rel="stylesheet" href="../assets/css/board-game-ui.css">
+    <link rel="stylesheet" href="assets/css/chess-board.css">
+    <link rel="stylesheet" href="../assets/css/board-game-shell.css">
 </head>
-<body class="page-container">
-    <!-- 页面头部 -->
-    <div class="page-header">
+<body class="page-container chess-root">
+    <a class="skip-link" href="#main">跳到棋盘</a>
+
+    <header class="page-header">
         <div class="section-header section-header--page">
             <h1>中国象棋</h1>
-            <p>双人或 AI；悔棋与规则提示。</p>
+            <p>双人或 AI · 悔棋、提示与中文棋谱</p>
         </div>
-    </div>
+    </header>
 
-    <div class="game-container">
-        <div class="game-info">
-            <div class="game-controls">
-                <div class="mode-selector">
-                    <button class="mode-btn active" data-mode="two">双人对战</button>
-                    <button class="mode-btn" data-mode="ai">单人模式</button>
-                </div>
-                <div>
-                    <button class="undo-btn" id="undoBtn" onclick="undoMove()" disabled>悔棋</button>
-                    <button class="reset-btn" onclick="resetGame()">新局</button>
+    <main id="main" class="game-layout">
+        <section class="board-panel" aria-labelledby="statusText">
+            <div class="status-row">
+                <span class="turn-dot" id="turnDot" data-turn="r" aria-hidden="true"></span>
+                <div class="status-text">
+                    <h2 class="status" id="statusText" role="status" aria-live="polite">红方先行</h2>
+                    <span class="badge" id="statusBadge" hidden></span>
                 </div>
             </div>
-            <div class="difficulty-selector" id="difficultySelector">
-                <div class="difficulty-label">难度</div>
-                <div class="difficulty-buttons">
-                    <button class="difficulty-btn active" data-difficulty="easy">简单</button>
-                    <button class="difficulty-btn" data-difficulty="medium">中等</button>
-                    <button class="difficulty-btn" data-difficulty="hard">困难</button>
+
+            <div class="board-frame board-wrap" id="boardFrame">
+                <canvas id="board" width="540" height="600" tabindex="0" role="application"
+                    aria-label="中国象棋棋盘。方向键移动光标，回车选子或落子，U 悔棋，N 新局。"></canvas>
+                <div class="thinking" id="thinking" hidden>
+                    <span class="spinner" aria-hidden="true"></span><span>AI 思考中</span>
+                </div>
+                <div class="result-overlay" id="resultOverlay" hidden>
+                    <div class="result-card" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+                        <p class="result-kicker" id="resultKicker">对局结束</p>
+                        <h2 id="resultTitle">红方胜</h2>
+                        <p class="result-detail" id="resultDetail"></p>
+                        <div class="result-actions">
+                            <button type="button" class="btn btn-primary" id="playAgainBtn">再来一局</button>
+                            <button type="button" class="btn" id="reviewBtn">撤销最后一步</button>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="status" id="status">红方先行</div>
-        </div>
 
-        <div class="board-container">
-            <canvas id="board" width="450" height="500"></canvas>
-        </div>
-    </div>
+            <p class="board-help">
+                键盘：<kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> 移动，<kbd>Enter</kbd> 选子 / 落子，<kbd>U</kbd> 悔棋，<kbd>N</kbd> 新局，<kbd>Esc</kbd> 取消。
+            </p>
+        </section>
+
+        <aside class="sidebar" aria-label="对局设置">
+            <section class="panel" aria-labelledby="modeLabel">
+                <h3 class="panel__title" id="modeLabel">对战模式</h3>
+                <div class="segmented" role="group" aria-labelledby="modeLabel">
+                    <button type="button" class="seg" data-mode="two" aria-pressed="true">双人对战</button>
+                    <button type="button" class="seg" data-mode="ai" aria-pressed="false">人机对战</button>
+                </div>
+            </section>
+
+            <section class="panel" id="aiDifficultyPanel" aria-labelledby="difficultyLabel" hidden>
+                <h3 class="panel__title" id="difficultyLabel">AI 难度</h3>
+                <div class="segmented segmented--sm" id="difficultyGroup" role="group" aria-labelledby="difficultyLabel">
+                    <button type="button" class="seg" data-difficulty="easy" aria-pressed="false">简单</button>
+                    <button type="button" class="seg" data-difficulty="medium" aria-pressed="true">中等</button>
+                    <button type="button" class="seg" data-difficulty="hard" aria-pressed="false">困难</button>
+                </div>
+            </section>
+
+            <section class="panel" aria-labelledby="actionLabel">
+                <h3 class="panel__title" id="actionLabel">操作</h3>
+                <div class="action-grid" role="group" aria-label="操作">
+                    <button type="button" class="btn" id="undoBtn" disabled>悔棋 <kbd>U</kbd></button>
+                    <button type="button" class="btn" id="hintBtn">提示</button>
+                    <button type="button" class="btn btn-primary" id="resetBtn">新局 <kbd>N</kbd></button>
+                </div>
+            </section>
+
+            <section class="panel" aria-labelledby="historyTitle">
+                <div class="panel__head">
+                    <h3 class="panel__title" id="historyTitle">棋谱</h3>
+                    <span class="badge" id="moveCount">0 步</span>
+                </div>
+                <ol class="move-list move-list--chess" id="moveList"></ol>
+                <p class="move-empty" id="moveEmpty">尚未落子</p>
+            </section>
+        </aside>
+    </main>
 
     <footer class="site-footer" role="contentinfo">
         <p>© 2026 noomings · 非商用</p>
     </footer>
 
-    <!-- xiangqi.js 游戏逻辑库 -->
-    <script src="assets/lib/xiangqi.min.js"></script>
-    <!-- 游戏逻辑 -->
-    <script src="assets/js/game.js"></script>
+    <div id="live" class="sr-only" role="status" aria-live="assertive"></div>
+
+    <script defer src="assets/lib/xiangqi.min.js"></script>
+    <script defer src="assets/js/notation.js"></script>
+    <script defer src="assets/js/engine.js"></script>
+    <script defer src="assets/js/board.js"></script>
+    <script defer src="assets/js/game.js"></script>
     <script src="../../../../../assets/js/utils.js" defer></script>
+    <script src="/assets/js/shell-preferences.js" defer></script>
     <script src="/assets/js/site-shell.js" defer></script>
 </body>
 </html>
-

@@ -54,7 +54,7 @@ textarea {
     width: 100%;
     min-height: 120px;
     padding: 10px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--line-ins);
     border-radius: 0;
     font-family: "Microsoft YaHei", "Consolas", monospace;
     font-size: 14px;
@@ -92,22 +92,13 @@ button {
     transition: background-color 0.2s;
 }
 
-.convert-btn {
-    background: var(--gradient-theme);
-    color: var(--color-theme-ink);
-}
-
-.convert-btn:hover {
-    background: var(--gradient-theme-reverse);
-}
-
 .clear-btn {
-    background-color: #95a5a6;
+    background-color: var(--color-text-tertiary);
     color: white;
 }
 
 .clear-btn:hover {
-    background-color: #7f8c8d;
+    background-color: var(--color-text-secondary);
 }
 
 /* 结果区域样式 */
@@ -126,7 +117,7 @@ button {
 }
 
 .result-item span:first-child {
-    color: #34495e;
+    color: var(--color-ink-soft);
     font-size: 14px;
     min-width: 120px;
 }
@@ -151,8 +142,8 @@ button {
 /* 复制按钮样式 */
 .copy-btn {
     padding: 5px 10px;
-    background-color: #f0f0f0;
-    color: #666;
+    background-color: var(--color-surface-dim);
+    color: var(--color-text-tertiary);
     font-size: 12px;
     white-space: nowrap;
 }

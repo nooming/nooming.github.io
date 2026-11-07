@@ -5,12 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#FFFA00">
     <meta name="description" content="PDF 逐页位图写入 PPTX · 浏览器端处理 · 文件不发送至服务器。">
-    <title>PDF 转 PPT · noomings</title><link rel="stylesheet" href="../../../../assets/css/common.css">
+    <title>PDF 转 PPT · noomings</title>
+    <script src="/assets/js/shell-prefs-boot.js"></script>
+    <link rel="stylesheet" href="../../../../assets/css/common.css">
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
     <link rel="manifest" href="/assets/icons/site.webmanifest">
-    <link rel="stylesheet" href="/assets/css/site-shell.css">
-    <link rel="stylesheet" href="/app/tools/doc-tools/assets/css/doc-tools.css">
+<link rel="stylesheet" href="/assets/css/site-shell.css">
+<link rel="stylesheet" href="/app/tools/doc-tools/assets/css/doc-tools.css">
 </head>
 <body class="page-container">
     <div class="page-header">
@@ -23,7 +25,7 @@
     <main class="app-panel doc-panel">
         <p class="doc-hint">对应桌面工具 <strong>pdf2ppt</strong>。幻灯片尺寸按 PDF 首页比例设定。</p>
         <div class="doc-upload">
-            <label for="pdf-file" class="doc-upload-btn">选择 PDF</label>
+            <label for="pdf-file" class="btn-primary doc-upload-btn">选择 PDF</label>
             <input type="file" id="pdf-file" accept=".pdf,application/pdf">
             <p id="file-name" class="doc-file-name">未选择文件</p>
         </div>
@@ -36,7 +38,7 @@
             </label>
         </div>
         <div class="doc-actions">
-            <button type="button" class="doc-primary-btn" id="convert-btn" disabled>转换并下载 PPTX</button>
+            <button type="button" class="btn-primary doc-primary-btn" id="convert-btn" disabled>转换并下载 PPTX</button>
             <p id="status" class="doc-status" aria-live="polite">请选择 PDF</p>
         </div>
         <div class="doc-progress" hidden id="progress-wrap"><span id="progress-bar"></span></div>
@@ -47,6 +49,7 @@
     </footer>
     <script src="../../../../assets/js/utils.js"></script>
     <script type="module" src="assets/js/pdf-to-ppt.js"></script>
+    <script src="/assets/js/shell-preferences.js" defer></script>
     <script src="/assets/js/site-shell.js" defer></script>
 </body>
 </html>

@@ -94,13 +94,13 @@ header.hub-hero .hub-hero__word {
 
 .intro {
     font-size: 1.05rem;
-    color: #5a6c7d;
+    color: var(--color-text-secondary);
     margin: 0;
     line-height: 1.6;
 }
 
 .github-link {
-    color: rgba(0, 0, 0, 0.88);
+    color: var(--color-ink);
     text-decoration: none;
     font-weight: 600;
     transition: all 0.3s ease;
@@ -110,7 +110,7 @@ header.hub-hero .hub-hero__word {
 
 .github-link:hover {
     color: var(--color-theme-secondary);
-    background-color: #fffde7;
+    background-color: var(--color-theme-wash);
 }
 
 .section--tight {
@@ -172,7 +172,7 @@ header.hub-hero .hub-hero__word {
     min-height: 48px;
     padding: 8px 12px;
     background: var(--color-card);
-    border: 1px solid rgba(0, 0, 0, 0.07);
+    border: 1px solid var(--color-border-subtle);
     box-shadow: var(--shadow-card-float);
     text-decoration: none !important;
     color: var(--color-theme-ink);
@@ -202,7 +202,7 @@ header.hub-hero .hub-hero__word {
 
 .top-entry:hover {
     transform: translateY(-1px);
-    border-color: rgba(0, 0, 0, 0.14);
+    border-color: var(--color-border-strong);
     box-shadow: var(--shadow-card-float-hover);
 }
 
@@ -360,7 +360,7 @@ header.hub-hero .hub-hero__word {
     line-height: 1.4;
     color: var(--color-theme-ink);
     background: var(--color-theme);
-    border: 1px solid rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--color-border-subtle);
 }
 
 .hub-home a.feature-card:focus-visible,

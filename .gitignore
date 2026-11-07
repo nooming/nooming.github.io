@@ -1,0 +1,21 @@
+# 运行时日志
+server.log
+*.log
+
+# 系统 / 编辑器
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# PyInstaller 产物
+desktop-doc-tools/build/
+desktop-doc-tools/dist/
+*.exe

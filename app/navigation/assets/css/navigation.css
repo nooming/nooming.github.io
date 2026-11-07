@@ -44,7 +44,7 @@
 /* 网站卡片 */
 .site-card {
     background: var(--color-card);
-    border: 1px solid rgba(0, 0, 0, 0.07);
+    border: 1px solid var(--color-border-subtle);
     border-radius: 0;
     padding: 18px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -73,7 +73,7 @@
 .site-card:hover {
     transform: translateY(-5px);
     box-shadow: var(--shadow-card-float-hover);
-    border-color: rgba(0, 0, 0, 0.1);
+    border-color: var(--line-ins);
 }
 
 .site-card:hover::before {
@@ -93,7 +93,7 @@
     margin-right: 12px;
     flex-shrink: 0;
     object-fit: contain;
-    background: #f5f5f5;
+    background: var(--color-surface-dim);
     padding: 2px;
     transition: transform 0.3s ease;
 }
@@ -146,7 +146,7 @@
 
 .nav-search-empty {
     margin: 14px 0 0;
-    color: #7f8c8d;
+    color: var(--color-text-secondary);
     font-size: 0.95rem;
 }
 
@@ -164,7 +164,7 @@
 
 .site-desc {
     font-size: 0.75rem;
-    color: #7f8c8d;
+    color: var(--color-text-secondary);
     margin: 6px 0 4px 0;
     line-height: 1.4;
     display: -webkit-box;
@@ -177,7 +177,7 @@
 
 .site-url {
     font-size: 0.8rem;
-    color: #95a5a6;
+    color: var(--color-text-tertiary);
     margin: 0;
     overflow: hidden;
     text-overflow: ellipsis;
