@@ -30,20 +30,23 @@
 |------|------|--------|-------------|
 | **可点击主按钮** | `.btn-primary` | `--btn-emphasis-*`（洗黄底 + 墨字 + 细边） | `--btn-cta-*`（纯主题黄 + `--color-theme-ink`） |
 | 工具条成组 | `.btn-emphasis` | 同上 | `--btn-emphasis-bg-hover` |
-| 枢纽强 CTA（带 →） | `.tool-btn` | 纯黄 `--btn-cta-*` | 保持现有 |
+| 文件 / 工具入口（带 →） | `.tool-btn` | 淡黄底 + 黄边 | 纯主题黄 |
+| 返回顶部 | `.back-to-top` | 淡黄底 + 黄边 | 纯主题黄 |
+| 顶栏偏好开关 | `.site-shell-pref-btn` | 白底 / 按下淡黄底 + 黄边 | 纯主题黄 |
 | 返回首页 | `.back-btn` | 墨底亮字 | **不属于**黄按钮族 |
 | 小徽标 | `.hub-label` | 墨底黄字 | 禁止拉长当主按钮 |
 
-默认态定义见 `assets/css/common.css` 中 `.btn-primary`，与抽卡页 `.gp-primary` 行为一致。
+默认态定义见 `assets/css/common.css` 中 `.btn-primary`，与抽卡页 `.gp-primary` 行为一致。**静止态不出现整块纯黄**。
 
-## 3. 选中 / 开关态（可用纯黄）
+## 3. 选中 / 开关态（淡黄底 + 黄描边）
 
-非「未按下的主按钮」，而是 **已选中** 时，允许：
+非「未按下的主按钮」，而是 **已选中** 时：
 
-- `background: var(--gradient-theme)`
-- `color: var(--color-theme-ink)`
+- `background: --color-theme-wash`
+- 2px `--color-theme-deep` 边框或 `box-shadow: inset 0 0 0 2px`
+- 文字用 `--color-ink`；不再整块填充纯黄
 
-典型选择器：`.is-active`、`[aria-pressed="true"]`、`:has(input:checked)`（OCR 语言、Markdown 目录/工具栏等）。
+典型选择器：`.is-active`、`[aria-pressed="true"]`、`:has(input:checked)`（OCR 语言、Markdown 目录/工具栏、棋类分段、问卷选项等）。
 
 ## 4. 颜色与主题
 
@@ -59,7 +62,7 @@
 ## 6. 工程约束
 
 - 禁止内联 `style="color:#…"` 定主色
-- 第三方 `*.min.css` **只叠加** 覆盖层（如 `decision-dark.css`），不改 min 源文件
+- 第三方 `*.min.css` **只叠加** 覆盖层，不改 min 源文件
 
 ## 7. 例外表白名单
 
@@ -68,7 +71,6 @@
 | `app/notes/`、`app/citywalk/`、`app/parking-pso/` | 独立产品壳，本契约不作为强制标准 |
 | 棋类/牌桌对局区、星铎 `star-duo.css` 全屏 | 沉浸配色保留 |
 | 灯牌 `#stage` | 举牌舞台 |
-| 决策工具 `style.min.css` / `coin.min` 等 | 叠加 `decision-dark.css` |
 | 语义色按钮 | 如下载成功绿钮等，可保留色相 |
 
 ## 8. 相关文档

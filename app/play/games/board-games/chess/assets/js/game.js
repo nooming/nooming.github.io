@@ -29,16 +29,13 @@
         history: [],
         lastMove: null,
         check: null,
-        cursor: null,
         hint: null,
         gameOver: false,
         result: null,
-        thinking: false,
-        keyboard: false
+        thinking: false
     };
 
     let aiToken = 0;
-    let pointerActive = false;
     let resizePending = false;
     let lastAnnouncement = '';
     let sound = null;
@@ -212,7 +209,6 @@
             legal: state.legal,
             lastMove: state.lastMove,
             check: state.check,
-            cursor: state.keyboard ? state.cursor : null,
             hint: state.hint
         });
         view.invalidate();
@@ -487,7 +483,6 @@
         if (!view) return;
         const square = view.squareAt(clientX, clientY);
         if (!square) return;
-        state.cursor = square;
         handleSquare(square);
     }
 
@@ -531,7 +526,6 @@
         state.history = [];
         state.lastMove = null;
         state.check = null;
-        state.cursor = null;
         state.hint = null;
         state.gameOver = false;
         state.result = null;
@@ -606,60 +600,11 @@
         els.canvas.addEventListener('pointerdown', function (event) {
             if (event.pointerType === 'mouse' && event.button !== 0) return;
             event.preventDefault();
-            state.keyboard = false;
-            pointerActive = true;
-            window.setTimeout(function () { pointerActive = false; }, 0);
-            els.canvas.focus({ preventScroll: true });
             handlePointer(event.clientX, event.clientY);
         });
 
         els.canvas.addEventListener('contextmenu', function (event) {
             event.preventDefault();
-        });
-
-        els.canvas.addEventListener('keydown', function (event) {
-            const key = event.key;
-            if (key === 'ArrowLeft' || key === 'ArrowRight' || key === 'ArrowUp' || key === 'ArrowDown') {
-                event.preventDefault();
-                moveCursor(key);
-                return;
-            }
-            if (key === 'Enter' || key === ' ') {
-                event.preventDefault();
-                if (state.cursor) handleSquare(state.cursor);
-                return;
-            }
-            if (key === 'Escape') {
-                event.preventDefault();
-                clearSelection();
-            }
-        });
-
-        els.canvas.addEventListener('focus', function () {
-            if (pointerActive) return; // 鼠标/触摸聚焦不显示键盘光标
-            state.keyboard = true;
-            if (!state.cursor) state.cursor = state.selected || 'e0';
-            syncView();
-        });
-
-        els.canvas.addEventListener('blur', function () {
-            if (!state.keyboard) return;
-            state.keyboard = false;
-            syncView();
-        });
-
-        document.addEventListener('keydown', function (event) {
-            if (event.metaKey || event.ctrlKey || event.altKey) return;
-            const tag = (event.target && event.target.tagName) || '';
-            if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-            const key = event.key.toLowerCase();
-            if (key === 'u') {
-                event.preventDefault();
-                undo();
-            } else if (key === 'n') {
-                event.preventDefault();
-                resetGame();
-            }
         });
 
         document.querySelectorAll('.seg[data-mode]').forEach(function (btn) {
@@ -710,21 +655,6 @@
             resizePending = false;
             if (view) view.resize();
         });
-    }
-
-    function moveCursor(key) {
-        state.keyboard = true;
-        const current = state.cursor || state.selected || 'e0';
-        let col = current.charCodeAt(0) - 97;
-        let row = 9 - Number(current.charAt(1));
-        if (key === 'ArrowLeft') col -= 1;
-        else if (key === 'ArrowRight') col += 1;
-        else if (key === 'ArrowUp') row -= 1;
-        else if (key === 'ArrowDown') row += 1;
-        col = Math.max(0, Math.min(8, col));
-        row = Math.max(0, Math.min(9, row));
-        state.cursor = String.fromCharCode(97 + col) + (9 - row);
-        syncView();
     }
 
     // ------------------------------------------------------------ 启动

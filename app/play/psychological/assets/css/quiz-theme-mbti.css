@@ -1,29 +1,12 @@
 /* ========== MBTI 测试 · 主题覆盖 ========== */
-
-.option:hover {
-    border-color: var(--color-theme-deep);
-    background: var(--color-theme-wash);
-    transform: translateX(5px);
-}
-
-.option.selected {
-    border-color: var(--color-theme-deep);
-    background: var(--gradient-theme);
-    color: var(--color-theme-ink);
-}
-
-.progress-fill {
-    height: 100%;
-    background: var(--gradient-theme-h);
-    transition: width 0.3s ease;
-    width: 0%;
-}
+/* 选中态、进度条颜色沿用 quiz-shell 的站点黄，这里只放大类型字母。 */
 
 .result-type {
     font-size: 3rem;
-    font-weight: bold;
+    font-weight: 700;
     color: var(--color-theme-text-end);
-    margin: 20px 0;
+    margin: 18px 0;
+    letter-spacing: 0.06em;
 }
 
 @media (max-width: 767.98px) {

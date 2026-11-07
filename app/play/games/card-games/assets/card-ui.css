@@ -49,18 +49,18 @@
 }
 
 .card-game-page .btn-primary {
-    background: var(--btn-cta-bg, var(--btn-emphasis-bg, #fffce0));
-    color: var(--btn-cta-fg, var(--btn-emphasis-fg, #0a0a0a));
-    border: 2px solid var(--color-theme-secondary, #0a0a0a);
+    background: var(--btn-emphasis-bg, #fffce0);
+    color: var(--btn-emphasis-fg, #0a0a0a);
+    border: 2px solid var(--btn-emphasis-border, #d4c800);
     font-weight: 500;
-    box-shadow: var(--shadow-theme, none);
+    box-shadow: none;
 }
 
 .card-game-page .btn-primary:hover,
 .card-game-page .btn-primary:focus {
-    background: var(--btn-cta-bg-hover, var(--btn-emphasis-bg-hover, #ebe300));
-    color: var(--btn-cta-fg, var(--btn-emphasis-fg, #0a0a0a));
-    border-color: var(--color-theme-secondary, #0a0a0a);
+    background: var(--btn-cta-bg, #fffa00);
+    color: var(--btn-cta-fg, #0a0a0a);
+    border-color: var(--btn-emphasis-border, #d4c800);
 }
 
 .card-game-page .btn-primary:disabled,

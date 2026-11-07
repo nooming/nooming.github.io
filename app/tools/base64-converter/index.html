@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -28,9 +28,9 @@
     <div class="converter">
         <!-- 编码区域 -->
         <div class="input-group">
-            <label>文本编码（输入文本，转换为 Base64）</label>
-            <textarea id="encodeInput" placeholder="请输入要编码的文本，例如：Hello World"></textarea>
-            <p id="encodeErrorTip" class="error-tip">编码失败，请检查输入！</p>
+            <label>文本 → Base64</label>
+            <textarea id="encodeInput" placeholder="文本，例如：Hello World"></textarea>
+            <p id="encodeErrorTip" class="error-tip">无法编码，请检查输入。</p>
         </div>
 
         <div class="btn-group">
@@ -40,7 +40,7 @@
 
         <div class="result-group">
             <div class="result-item">
-                <span>Base64 编码结果：</span>
+                <span>Base64：</span>
                 <div class="result-content">
                     <span id="encodeResult">——</span>
                     <button class="copy-btn" data-target="encodeResult">复制</button>
@@ -53,9 +53,9 @@
 
         <!-- 解码区域 -->
         <div class="input-group">
-            <label>Base64 解码（输入 Base64 字符串，转换为文本）</label>
-            <textarea id="decodeInput" placeholder="请输入要解码的 Base64 字符串，例如：SGVsbG8gV29ybGQ="></textarea>
-            <p id="decodeErrorTip" class="error-tip">解码失败，请检查输入格式！</p>
+            <label>Base64 → 文本</label>
+            <textarea id="decodeInput" placeholder="Base64，例如：SGVsbG8gV29ybGQ="></textarea>
+            <p id="decodeErrorTip" class="error-tip">无法解码，请检查格式。</p>
         </div>
 
         <div class="btn-group">

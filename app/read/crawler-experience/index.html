@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="用 Network、Console 等查看与抓取网页资源；八步说明与限制。">
+    <meta name="description" content="用 Network、Console 查看与抓取网页资源 · 八步说明与限制。">
     <meta name="keywords" content="浏览器开发者工具,Network面板,资源爬取,前端调试,网页分析">
     <meta name="author" content="nooming">
 
@@ -30,8 +30,13 @@
                 <p>Network、Console 与请求细节。</p>
             </div>
         </div>
-        
-        <div class="article-body">
+
+        <p class="article-meta" id="article-meta"></p>
+
+        <div class="article-layout">
+            <nav class="article-toc" id="article-toc" aria-label="文章目录" hidden></nav>
+
+            <div class="article-body">
             <h3>如何分析并获取资源</h3>
             <p>开发者工具用于调试与查看加载顺序。下面按步骤操作：</p>
 
@@ -174,7 +179,15 @@ document.querySelector('.content').innerText
                     <li>某些网站使用<strong>视频流分片</strong>（如m3u8），需要下载所有分片并合并</li>
                 </ul>
             </div>
+            </div>
         </div>
+
+        <nav class="article-pager" aria-label="文章导航">
+            <a class="article-pager__link article-pager__link--next" href="../cat-catch-tutorial/">
+                <span>下一篇</span>
+                <strong>猫抓扩展使用笔记</strong>
+            </a>
+        </nav>
     </div>
 
     <footer class="site-footer" role="contentinfo">
@@ -185,6 +198,7 @@ document.querySelector('.content').innerText
     <button class="back-to-top" id="backToTop" aria-label="返回顶部">↑</button>
 
     <script src="../../../assets/js/utils.js" defer></script>
+    <script src="../../../assets/js/article.js" defer></script>
     <script src="/assets/js/shell-preferences.js" defer></script>
     <script src="/assets/js/site-shell.js" defer></script>
 </body>

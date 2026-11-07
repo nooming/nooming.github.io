@@ -413,10 +413,6 @@ function buildTiles() {
       handleTileClick(el.dataset.pid);
     });
   }
-  if (!wrap.__keyBound) {
-    wrap.__keyBound = true;
-    wrap.addEventListener('keydown', boardKeyDown);
-  }
 }
 function setRoving(pid) {
   if (!pid || boardFocusPid === pid) return;
@@ -448,37 +444,6 @@ function focusTile(pid) {
   if (!t) return;
   setRoving(pid);
   try { t.root.focus({ preventScroll: true }); } catch (e) { t.root.focus(); }
-}
-const BOARD_KEYS = {
-  ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1],
-  a: [-1, 0], d: [1, 0], w: [0, -1], s: [0, 1]
-};
-function boardKeyDown(e) {
-  if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
-  const wrap = e.currentTarget;
-  let el = e.target;
-  while (el && el !== wrap && !(el.classList && el.classList.contains('tile'))) el = el.parentElement;
-  if (!el || el === wrap) return;
-  const pid = el.dataset.pid;
-  const dir = BOARD_KEYS[e.key];
-  if (dir) {
-    e.preventDefault();
-    setRoving(pid);
-    const nb = boardStep(pid, dir[0], dir[1]);
-    if (nb) focusTile(nb);
-    return;
-  }
-  if (e.key === 'Home' || e.key === 'End') {
-    e.preventDefault();
-    const kids = wrap.children;
-    if (!kids.length) return;
-    focusTile((e.key === 'Home' ? kids[0] : kids[kids.length - 1]).dataset.pid);
-    return;
-  }
-  if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
-    e.preventDefault();
-    handleTileClick(pid);
-  }
 }
 function ringDistances(pid) {
   const dist = {};
@@ -1131,7 +1096,7 @@ function settleGame() {
   gameOver = true;
   timerStop();
   const w = checkWinner();
-  overText = (w === 1) ? '黑方获胜！' : (w === 2) ? '白方获胜！' : '平局！';
+  overText = (w === 1) ? '黑方获胜' : (w === 2) ? '白方获胜' : '平局';
   skipNote = '';
   history[w === 1 ? 0 : w === 2 ? 1 : 2]++;
   persistHistory();
@@ -1141,7 +1106,7 @@ function settleTimeout(loser) {
   if (gameOver) return;
   gameOver = true;
   timerStop();
-  overText = (loser === 1) ? '黑方超时，白方获胜！' : '白方超时，黑方获胜！';
+  overText = (loser === 1) ? '黑方超时，白方获胜' : '白方超时，黑方获胜';
   skipNote = '';
   history[loser === 1 ? 1 : 0]++;
   persistHistory();
@@ -1913,7 +1878,7 @@ function timerPulse() {
 }
 function updateTimerBtn() {
   const b = document.getElementById('timer-btn');
-  if (b) setText(b, timerLimit ? ('计时:' + timerLimit + '秒') : '计时:关');
+  if (b) setText(b, timerLimit ? ('计时 · ' + timerLimit + ' 秒') : '计时 · 关');
 }
 function setTimerLimit(n) {
   const v = Math.round(Number(n) || 0);
@@ -2231,37 +2196,6 @@ function buildEditorTiles(container) {
       renderEditor();
       refreshPresetHighlight();
     });
-    container.addEventListener('keydown', editorKeyDown);
-  }
-}
-function editorKeyDown(e) {
-  if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
-  const wrap = e.currentTarget;
-  let el = e.target;
-  while (el && el !== wrap && !(el.classList && el.classList.contains('tile'))) el = el.parentElement;
-  if (!el || el === wrap) return;
-  const pid = el.dataset.pid;
-  const dir = BOARD_KEYS[e.key];
-  if (dir) {
-    e.preventDefault();
-    const nb = boardStep(pid, dir[0], dir[1]);
-    let target = null;
-    if (nb) {
-      const kids = wrap.children;
-      for (let i = 0; i < kids.length; i++) if (kids[i].dataset.pid === nb) { target = kids[i]; break; }
-    }
-    if (target) {
-      el.tabIndex = -1;
-      target.tabIndex = 0;
-      try { target.focus({ preventScroll: true }); } catch (err) { target.focus(); }
-    }
-    return;
-  }
-  if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
-    e.preventDefault();
-    editorBoard[pid] = editorMode;
-    renderEditor();
-    refreshPresetHighlight();
   }
 }
 function renderEditor() {

@@ -89,6 +89,7 @@
             text +
             (glyph2 ? ' ' + glyphSpan(glyph2).trim() : '') +
             '</button>'
+        )
     }
 
     window.UIButtons = {

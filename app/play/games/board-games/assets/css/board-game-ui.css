@@ -119,23 +119,6 @@ canvas#board:focus-visible {
     color: var(--text-muted);
 }
 
-kbd {
-    display: inline-block;
-    min-width: 1.5em;
-    padding: 1px 5px;
-    margin: 0 1px;
-    font-family: var(--mono);
-    font-size: 0.72rem;
-    font-weight: 700;
-    line-height: 1.4;
-    text-align: center;
-    color: var(--text);
-    background: var(--surface-3);
-    border: 1px solid var(--border-soft);
-    border-bottom-width: 2px;
-    border-radius: var(--radius);
-}
-
 /* --------------------------------------------------------------------------
    Sidebar
    -------------------------------------------------------------------------- */
@@ -144,14 +127,6 @@ kbd {
     display: grid;
     gap: 14px;
     align-content: start;
-}
-
-.btn kbd {
-    font-size: 0.62rem;
-    padding: 0 3px;
-    background: transparent;
-    border-color: currentColor;
-    opacity: 0.65;
 }
 
 /* Move list */
@@ -356,12 +331,6 @@ kbd {
     .gomoku-root #toast.toast {
         bottom: max(16px, env(safe-area-inset-bottom, 0px) + 10px);
         width: calc(100% - 32px);
-    }
-}
-
-@media (hover: none) {
-    .btn kbd {
-        display: none;
     }
 }
 

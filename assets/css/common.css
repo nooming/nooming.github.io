@@ -43,11 +43,13 @@
     --color-label-bg: #0a0a0a;
     --color-label-fg: #FFFA00;
     --color-label-fg-alt: #ffffff;
-    /* 成组/工具栏主操作：浅黄底墨字（避免墨底亮字长条） */
+    /* 成组/工具栏主操作：浅黄底黄边墨字，悬停纯黄 */
     --btn-emphasis-bg: var(--color-theme-wash);
     --btn-emphasis-fg: var(--color-ink);
     --btn-emphasis-border: var(--color-theme-deep);
     --btn-emphasis-bg-hover: var(--color-theme-hover);
+    /* 选中态：浅黄底 + 黄描边 */
+    --selected-fill: var(--color-theme-wash);
     /* 独立主 CTA：黄底墨字（与 .tool-btn、页头返回一致） */
     --btn-cta-bg: var(--gradient-theme);
     --btn-cta-fg: var(--color-theme-ink);
@@ -97,6 +99,7 @@ html[data-theme="dark"] {
     --btn-emphasis-fg: #f4f2e4;
     --btn-emphasis-border: #c9bc00;
     --btn-emphasis-bg-hover: #3a3618;
+    --selected-fill: var(--color-theme-wash);
     --btn-cta-bg: var(--color-theme);
     --btn-cta-fg: var(--color-theme-ink);
     --btn-cta-bg-hover: var(--color-theme-hover);
@@ -166,8 +169,7 @@ label {
 }
 
 code,
-pre,
-kbd {
+pre {
     font-family: var(--font-mono), ui-monospace, Consolas, monospace;
 }
 
@@ -520,11 +522,12 @@ a.feature-card:focus-visible {
     font-size: 0.95rem;
     text-decoration: none !important;
     margin-top: 14px;
-    color: var(--btn-cta-fg) !important;
+    color: var(--btn-emphasis-fg) !important;
     font-weight: 600;
-    background: var(--btn-cta-bg);
+    background: var(--btn-emphasis-bg);
+    border: 1px solid var(--btn-emphasis-border);
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    box-shadow: none;
     position: relative;
     overflow: hidden;
 }
@@ -539,7 +542,9 @@ a.feature-card:focus-visible {
 }
 
 .tool-btn:hover {
-    background: var(--btn-cta-bg-hover);
+    background: var(--btn-cta-bg);
+    color: var(--btn-cta-fg) !important;
+    border-color: var(--btn-emphasis-border);
     transform: translateY(-2px);
     box-shadow: var(--shadow-tool);
 }
@@ -616,27 +621,35 @@ body.page-container {
 
 /* 增强版返回按钮样式（支持渐变背景） */
 .back-btn.gradient {
-    background: var(--gradient-theme);
-    color: var(--color-theme-ink) !important;
-    box-shadow: var(--shadow-theme);
+    background: var(--btn-emphasis-bg);
+    color: var(--btn-emphasis-fg) !important;
+    border: 1px solid var(--btn-emphasis-border);
+    box-shadow: none;
     margin-bottom: 0 !important;
 }
 
 .back-btn.gradient:hover {
-    background: var(--gradient-theme-reverse);
+    background: var(--btn-cta-bg);
+    color: var(--btn-cta-fg) !important;
     transform: translateY(-2px);
     box-shadow: var(--shadow-theme-hover);
 }
 
 /* 通用渐变返回按钮样式（用于工具页面） */
 .page-header .back-btn {
-    background: var(--gradient-theme);
-    color: var(--color-theme-ink) !important;
-    box-shadow: var(--shadow-theme);
+    background: var(--btn-emphasis-bg);
+    color: var(--btn-emphasis-fg) !important;
+    border: 1px solid var(--btn-emphasis-border);
+    box-shadow: none;
     flex-shrink: 0;
     font-size: 0.95rem;
     padding: 9px 18px;
     margin-bottom: 0 !important;
+}
+
+.page-header .back-btn:hover {
+    background: var(--btn-cta-bg);
+    color: var(--btn-cta-fg) !important;
 }
 
 .page-header .back-btn:hover {
@@ -817,15 +830,15 @@ body.page-container {
     right: 70px;
     width: 50px;
     height: 50px;
-    background: var(--gradient-theme);
-    color: var(--color-theme-ink);
-    border: none;
+    background: var(--btn-emphasis-bg);
+    color: var(--btn-emphasis-fg);
+    border: 1px solid var(--btn-emphasis-border);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 24px;
-    box-shadow: 0 4px 20px rgba(212, 200, 0, 0.4);
+    box-shadow: 0 4px 20px rgba(212, 200, 0, 0.25);
     transition: all 0.3s ease;
     z-index: 9999;
     opacity: 0;
@@ -842,7 +855,8 @@ body.page-container {
 }
 
 .back-to-top:hover {
-    background: var(--gradient-theme-reverse);
+    background: var(--btn-cta-bg);
+    color: var(--btn-cta-fg);
     transform: translateY(-5px);
     box-shadow: var(--shadow-theme-strong);
 }

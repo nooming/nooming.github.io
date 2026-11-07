@@ -146,7 +146,8 @@ button.btn-quiet:hover {
 }
 
 .copy-btn:hover {
-    background-color: #e0e0e0;
+    background-color: var(--color-theme-wash);
+    color: var(--color-ink);
 }
 
 /* 响应式适配（手机端） */

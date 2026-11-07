@@ -543,13 +543,6 @@ dropEl.addEventListener('click', function (event) {
     fileEl.click();
 });
 
-dropEl.addEventListener('keydown', function (event) {
-    if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        fileEl.click();
-    }
-});
-
 ['dragenter', 'dragover'].forEach(function (type) {
     dropEl.addEventListener(type, function (event) {
         event.preventDefault();

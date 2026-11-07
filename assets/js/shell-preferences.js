@@ -143,14 +143,6 @@
         return setSound(!getSound());
     }
 
-    function isTypingTarget(target) {
-        if (!target) return false;
-        var tag = target.tagName;
-        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true;
-        if (target.isContentEditable) return true;
-        return false;
-    }
-
     function wireTopBar() {
         var soundBtn = document.getElementById("shellSoundToggle");
         var themeBtn = document.getElementById("shellThemeToggle");
@@ -168,21 +160,6 @@
         syncUi();
     }
 
-    function wireShortcuts() {
-        document.addEventListener("keydown", function (event) {
-            if (event.metaKey || event.ctrlKey || event.altKey) return;
-            if (isTypingTarget(event.target)) return;
-            var key = event.key;
-            if (key === "S" || key === "s") {
-                event.preventDefault();
-                toggleSound();
-            } else if (key === "D" || key === "d") {
-                event.preventDefault();
-                toggleTheme();
-            }
-        });
-    }
-
     window.noomingsPrefs = {
         getTheme: getTheme,
         setTheme: setTheme,
@@ -194,10 +171,4 @@
         syncUi: syncUi,
         wireTopBar: wireTopBar,
     };
-
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", wireShortcuts);
-    } else {
-        wireShortcuts();
-    }
 })();

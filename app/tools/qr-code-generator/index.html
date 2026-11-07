@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#FFFA00">
-    <meta name="description" content="生成与识别二维码；可调尺寸与颜色。">
+    <meta name="description" content="生成与识别二维码 · 尺寸、颜色可调。">
     <meta name="keywords" content="二维码,QR码,二维码生成,在线工具,QR Code Generator"><!-- 公共样式 -->
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
@@ -21,7 +21,7 @@
     <div class="page-header">
         <div class="section-header section-header--page">
             <h1>二维码</h1>
-            <p>文本或网址生成；支持识别图片。</p>
+            <p>文本或网址生成 · 支持识别图片。</p>
         </div>
     </div>
 
@@ -31,8 +31,8 @@
             <!-- 输入区域 -->
             <div class="input-group">
                 <label>输入要生成二维码的内容</label>
-                <textarea id="qrInput" placeholder="请输入文本、网址、联系方式等内容，例如：https://github.com/nooming"></textarea>
-                <p id="errorTip" class="error-tip">请输入内容！</p>
+                <textarea id="qrInput" placeholder="文本、网址或联系方式，例如：https://github.com/nooming"></textarea>
+                <p id="errorTip" class="error-tip">请输入内容。</p>
             </div>
 
             <!-- 设置区域 -->
@@ -88,7 +88,7 @@
                 <button type="button" id="decodeBtn" class="btn-primary decode-btn">开始识别</button>
                 <button id="decodeClearBtn" class="btn-quiet decode-clear-btn">清空</button>
             </div>
-            <p id="decodeErrorTip" class="error-tip">请选择要识别的二维码图片！</p>
+            <p id="decodeErrorTip" class="error-tip">请选择二维码图片。</p>
 
             <div class="decode-preview-group">
                 <div class="decode-preview-box">

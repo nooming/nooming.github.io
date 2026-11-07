@@ -158,7 +158,7 @@ button.btn-quiet {
 }
 
 button.btn-quiet:hover {
-    background: rgba(0, 0, 0, 0.04);
+    background: var(--color-surface-dim);
     border-color: var(--color-ink);
 }
 

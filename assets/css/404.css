@@ -1,0 +1,80 @@
+/* ========== 404 ========== */
+
+body {
+    max-width: none;
+    margin: 0;
+    padding: 25px 20px;
+    background-color: var(--color-canvas);
+    background-image: var(--bg-canvas-grid);
+    background-size: var(--bg-grid-size) var(--bg-grid-size);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.error-container {
+    text-align: center;
+    background: var(--color-card);
+    border: 1px solid var(--line-hard);
+    box-shadow: none;
+    padding: 60px 40px;
+    max-width: 600px;
+}
+
+.error-code {
+    font-size: 8rem;
+    font-weight: 800;
+    color: var(--gradient-theme-title);
+    margin-bottom: 20px;
+    line-height: 1;
+}
+
+.error-title {
+    font-size: 2rem;
+    color: var(--gradient-theme-title);
+    margin-bottom: 15px;
+    font-weight: 700;
+}
+
+.error-message {
+    font-size: 1.1rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 40px;
+    line-height: 1.6;
+}
+
+.error-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 767.98px) {
+    .error-container {
+        padding: 40px 25px;
+    }
+
+    .error-code {
+        font-size: 5rem;
+    }
+
+    .error-title {
+        font-size: 1.5rem;
+    }
+
+    .error-message {
+        font-size: 1rem;
+    }
+
+    .error-actions {
+        flex-direction: column;
+    }
+
+    .error-actions .back-btn {
+        width: 100%;
+        text-align: center;
+        margin-bottom: 0;
+    }
+}

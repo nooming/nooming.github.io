@@ -175,7 +175,7 @@ header.hub-hero .hub-hero__word {
     border: 1px solid var(--color-border-subtle);
     box-shadow: var(--shadow-card-float);
     text-decoration: none !important;
-    color: var(--color-theme-ink);
+    color: var(--color-ink);
     font-weight: 700;
     font-size: 0.95rem;
     line-height: 1.2;
@@ -366,7 +366,7 @@ header.hub-hero .hub-hero__word {
 .hub-home a.feature-card:focus-visible,
 .hub-home .top-entry:focus-visible,
 .hub-home .github-link:focus-visible {
-    outline: 2px solid var(--color-theme-ink);
+    outline: 2px solid var(--color-ink);
     outline-offset: 3px;
 }
 

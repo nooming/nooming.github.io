@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -43,11 +43,11 @@
             <p class="hint" id="hint" role="status" aria-live="polite"></p>
 
             <div class="board-frame" id="boardFrame">
-                <canvas id="board" width="560" height="560" tabindex="0" role="application"
-                    aria-label="围棋棋盘。点击交叉点落子；键盘方向键移动光标，回车落子，Esc 取消光标。"
+                <canvas id="board" width="560" height="560" role="application"
+                    aria-label="围棋棋盘。点击交叉点落子。"
                     aria-describedby="boardNote"></canvas>
             </div>
-            <p class="board-help board-note" id="boardNote">点击交叉点落子 · 方向键移动、回车落子</p>
+            <p class="board-help board-note" id="boardNote">点击交叉点落子</p>
         </section>
 
         <aside class="sidebar" aria-label="对局设置">
@@ -112,12 +112,12 @@
             <section class="panel" aria-labelledby="actionLabel">
                 <h3 class="panel__title" id="actionLabel">操作</h3>
                 <div class="action-grid" role="group" aria-label="对局操作">
-                    <button type="button" class="btn" id="undoBtn" disabled aria-keyshortcuts="U">悔棋 <kbd>U</kbd></button>
-                    <button type="button" class="btn" id="passBtn" aria-keyshortcuts="P">弃权 <kbd>P</kbd></button>
+                    <button type="button" class="btn" id="undoBtn" disabled>悔棋</button>
+                    <button type="button" class="btn" id="passBtn">弃权</button>
                     <button type="button" class="btn btn--danger" id="resignBtn">认输</button>
-                    <button type="button" class="btn" id="whereBtn" disabled aria-keyshortcuts="H">下哪了 <kbd>H</kbd></button>
+                    <button type="button" class="btn" id="whereBtn" disabled>下哪了</button>
                     <button type="button" class="btn" id="exportBtn" disabled>导出棋谱</button>
-                    <button type="button" class="btn btn-primary" id="newBtn" aria-keyshortcuts="N">新局 <kbd>N</kbd></button>
+                    <button type="button" class="btn btn-primary" id="newBtn">新局</button>
                 </div>
             </section>
         </aside>

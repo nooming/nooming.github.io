@@ -1,31 +1,34 @@
 /* ========== 动物塑测试 · 主题覆盖 ========== */
+/* 红色是动物塑的识别色；选项选中态保留主题红，暗色下改用深一档保证对比度。 */
 
-.option:hover {
-    border-color: #e74c3c;
-    background: #fef0f0;
-    transform: translateX(5px);
+:root {
+    --quiz-accent: #e74c3c;
+    --quiz-accent-deep: #c0392b;
+    --quiz-accent-wash: #fef0f0;
 }
 
-.option.selected {
-    border-color: #e74c3c;
-    background: #e74c3c;
-    color: white;
+html[data-theme="dark"] {
+    --quiz-accent: #ff7a6b;
+    --quiz-accent-deep: #c0392b;
+    --quiz-accent-wash: rgba(231, 76, 60, 0.16);
+}
+
+.option:hover {
+    border-color: var(--quiz-accent);
+    background: var(--quiz-accent-wash);
+}
+
+.option.selected,
+.option[aria-pressed="true"] {
+    border-color: var(--quiz-accent-deep);
+    background: var(--quiz-accent-wash);
+    color: var(--color-ink);
+    box-shadow: inset 0 0 0 2px var(--quiz-accent-deep);
+    font-weight: 600;
 }
 
 .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #e74c3c, #c0392b);
-    transition: width 0.3s ease;
-    width: 0%;
-}
-
-.btn-primary {
-    background: #e74c3c;
-    color: white;
-}
-
-.btn-primary:hover {
-    background: #c0392b;
+    background: linear-gradient(90deg, var(--quiz-accent), var(--quiz-accent-deep));
 }
 
 .result-animal {
@@ -44,8 +47,8 @@
 
 .result-type {
     font-size: 2rem;
-    font-weight: bold;
-    color: #e74c3c;
+    font-weight: 700;
+    color: var(--quiz-accent);
     margin: 20px 0;
 }
 
@@ -67,7 +70,7 @@
 .result-traits li {
     padding: 8px 0;
     color: var(--color-text-secondary);
-    border-bottom: 1px solid #ecf0f1;
+    border-bottom: 1px solid var(--line-ins);
 }
 
 .result-traits li:last-child {
@@ -75,7 +78,7 @@
 }
 
 .dim-fill-left {
-    background: linear-gradient(90deg, #e74c3c, #c0392b);
+    background: linear-gradient(90deg, var(--quiz-accent), var(--quiz-accent-deep));
 }
 
 @media (max-width: 767.98px) {

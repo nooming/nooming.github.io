@@ -15,9 +15,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // ========== 绑定事件 ==========
     convertBtn.addEventListener('click', convertNumber);
     clearBtn.addEventListener('click', clearInputAndResult);
-    inputNumber.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') convertNumber();
-    });
     
     // 实时转换功能（防抖处理，输入后500ms自动转换）
     const debouncedConvert = debounce(convertNumber, 500);

@@ -149,13 +149,14 @@ button {
 }
 
 .copy-btn:hover {
-    background-color: #e0e0e0;
+    background-color: var(--color-theme-wash);
+    color: var(--color-ink);
 }
 
 /* 分隔线样式 */
 .divider {
     height: 1px;
-    background-color: #eee;
+    background-color: var(--line-ins);
     margin: 30px 0;
 }
 

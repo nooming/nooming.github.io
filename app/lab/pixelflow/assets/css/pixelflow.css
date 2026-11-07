@@ -36,7 +36,7 @@
     margin: 0;
     font-size: 0.9rem;
     font-weight: 700;
-    color: var(--color-theme-ink);
+    color: var(--color-ink);
     letter-spacing: 0;
     align-self: stretch;
     text-align: left;
@@ -178,7 +178,7 @@
 }
 
 .pixelflow-page .status.ready {
-    color: var(--color-theme-ink);
+    color: var(--color-ink);
     font-weight: 600;
 }
 
@@ -229,7 +229,7 @@
 .pixelflow-page .control-group label {
     font-size: 0.72rem;
     font-weight: 700;
-    color: var(--color-theme-ink);
+    color: var(--color-ink);
     letter-spacing: 0.02em;
 }
 
@@ -302,6 +302,10 @@
     min-height: 10px;
 }
 
+html[data-theme="dark"] .pixelflow-page .res-warn {
+    color: #fbbf24;
+}
+
 .pixelflow-page .btn {
     padding: 10px 24px;
     border: none;
@@ -326,6 +330,10 @@
     padding: 12px 32px;
 }
 
+.pixelflow-page .btn-primary {
+    border: 1px solid var(--btn-emphasis-border);
+}
+
 .pixelflow-page .btn-reset {
     background: var(--color-card);
     color: var(--color-ink) !important;
@@ -333,7 +341,7 @@
 }
 
 .pixelflow-page .btn-reset:hover:not(:disabled) {
-    background: rgba(0, 0, 0, 0.04);
+    background: var(--color-surface-dim);
     border-color: var(--color-ink);
 }
 
@@ -354,7 +362,7 @@
 
 .pixelflow-page .btn-toggle.active {
     background: var(--color-theme-wash);
-    color: var(--color-theme-ink);
+    color: var(--color-ink);
     border-color: var(--color-ink);
     font-weight: 600;
 }
@@ -382,7 +390,7 @@
 }
 
 .pixelflow-page .btn-download:hover:not(:disabled) {
-    background: rgba(0, 0, 0, 0.04);
+    background: var(--color-surface-dim);
     border-color: var(--color-ink);
 }
 

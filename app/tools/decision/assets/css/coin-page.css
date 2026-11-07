@@ -1,0 +1,223 @@
+/* ========== 抛硬币 · 页面样式 ========== */
+
+.coin-page .coin-main {
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.coin-panel {
+    padding: clamp(20px, 4vw, 34px) clamp(16px, 4vw, 30px);
+}
+
+.coin-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 0 4px;
+    perspective: 900px;
+}
+
+.coin {
+    position: relative;
+    width: 190px;
+    height: 190px;
+    transform-style: preserve-3d;
+    transition: transform 1.15s cubic-bezier(0.18, 0.72, 0.24, 1);
+    will-change: transform;
+}
+
+.coin.is-settled {
+    transition-duration: 1.15s;
+}
+
+.coin-face {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 50% !important;
+    border: 6px solid var(--line-hard);
+    backface-visibility: hidden;
+    font-size: 64px;
+    font-weight: 800;
+    line-height: 1;
+    box-shadow:
+        inset 0 0 0 4px rgba(255, 255, 255, 0.35),
+        0 12px 26px rgba(0, 0, 0, 0.18);
+}
+
+.coin-face::after {
+    content: "";
+    position: absolute;
+    inset: 18px;
+    border-radius: 50% !important;
+    border: 1px dashed rgba(0, 0, 0, 0.22);
+    pointer-events: none;
+}
+
+.coin-face--heads {
+    background: radial-gradient(circle at 30% 24%, #fff6c9 0%, #f4cf3a 48%, #d9a900 100%);
+    color: #2b2200;
+}
+
+.coin-face--tails {
+    background: radial-gradient(circle at 30% 24%, #fbfbf8 0%, #dcdcd6 48%, #b3b3ac 100%);
+    color: #1f1f1c;
+    transform: rotateY(180deg);
+}
+
+.coin-status {
+    margin: 0;
+    min-height: 1.6em;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--color-ink);
+    text-align: center;
+}
+
+.coin-status.is-heads {
+    color: #8a6a00;
+}
+
+.coin-status.is-tails {
+    color: var(--color-text-secondary);
+}
+
+html[data-theme="dark"] .coin-status.is-heads {
+    color: #ffd94a;
+}
+
+.coin-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin: 18px 0 22px;
+}
+
+.coin-actions .btn-primary {
+    padding: 12px 30px;
+    font-size: 1.02rem;
+}
+
+.coin-actions .btn-quiet {
+    padding: 11px 18px;
+}
+
+.coin-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0 0 8px;
+}
+
+.coin-stats > div {
+    padding: 12px 10px;
+    text-align: center;
+    background: var(--color-surface-dim);
+    border: 1px solid var(--line-ins);
+}
+
+.coin-stats dt {
+    margin-bottom: 4px;
+    font-size: 0.78rem;
+    color: var(--color-text-tertiary);
+}
+
+.coin-stats dd {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--color-ink);
+    font-variant-numeric: tabular-nums;
+}
+
+.coin-prob {
+    margin: 0 0 20px;
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--color-text-tertiary);
+    font-variant-numeric: tabular-nums;
+}
+
+.coin-history {
+    border-top: 1px solid var(--line-ins);
+    padding-top: 16px;
+}
+
+.coin-history__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.coin-history__head h2 {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--color-heading);
+}
+
+.coin-history__head .btn-quiet {
+    padding: 5px 11px;
+    font-size: 0.78rem;
+}
+
+.coin-history__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.coin-chip {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50% !important;
+    border: 1px solid var(--line-hard);
+    font-size: 0.82rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #2b2200;
+    background: radial-gradient(circle at 30% 25%, #fff3b0, #f0c62a);
+}
+
+.coin-chip--tails {
+    color: #1f1f1c;
+    background: radial-gradient(circle at 30% 25%, #fafaf7, #d6d6cf);
+}
+
+.coin-history__empty {
+    margin: 0;
+    font-size: 0.84rem;
+    color: var(--color-text-tertiary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .coin {
+        transition-duration: 0.01ms !important;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .coin {
+        width: 150px;
+        height: 150px;
+    }
+
+    .coin-face {
+        font-size: 50px;
+        border-width: 5px;
+    }
+
+    .coin-actions .btn-primary,
+    .coin-actions .btn-quiet {
+        flex: 1 1 100%;
+    }
+}

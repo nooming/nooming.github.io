@@ -1,4 +1,4 @@
-﻿const routeGrid=document.getElementById('routeGrid');
+const routeGrid=document.getElementById('routeGrid');
 const spotList=document.getElementById('spotList');
 const spotPath=document.getElementById('spotPath');
 const feedGrid=document.getElementById('feedGrid');
@@ -1715,7 +1715,7 @@ function showWalkRewardModal(routeId,earned,previousPoints,newPoints){
   document.getElementById('walkRewardLevel').textContent=`${current.level.icon} ${current.level.title}`;
   const leveledUp=current.index>previous.index;
   document.getElementById('walkRewardMessage').textContent=leveledUp
-    ?`恭喜升级！从「${previous.level.title}」晋升为「${current.level.title}」。积分已计入你的 WanderWalk 记录。`
+    ?`升级：从「${previous.level.title}」到「${current.level.title}」。积分已计入你的 WanderWalk 记录。`
     :'积分已计入你的 WanderWalk 记录。下次出发，继续解锁新的漫游称号。';
   showModal('walkRewardModal');
 }

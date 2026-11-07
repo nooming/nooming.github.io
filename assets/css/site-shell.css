@@ -230,12 +230,14 @@ header.site-shell-top::before {
 }
 
 .site-shell-pref-btn[aria-pressed="true"] {
-    background: var(--color-theme, #fffa00);
-    color: var(--color-theme-ink, #0a0a0a);
+    background: var(--selected-fill, var(--color-card));
+    color: var(--color-ink, #0a0a0a);
+    border-color: var(--color-theme-deep, #d4c800);
 }
 
 .site-shell-pref-btn[aria-pressed="true"]:hover {
-    background: var(--color-theme-hover, #ebe300);
+    background: var(--color-theme, #fffa00);
+    color: var(--color-theme-ink, #0a0a0a);
 }
 
 .site-shell-pref-icon {

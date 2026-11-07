@@ -896,58 +896,6 @@
             }
         });
 
-        el.canvas.addEventListener('focus', function () {
-            if (state.cursor < 0) {
-                var n = game.size;
-                state.cursor = game.lastMove >= 0
-                    ? game.lastMove
-                    : Math.floor(n / 2) * n + Math.floor(n / 2);
-                draw();
-            }
-        });
-
-        el.canvas.addEventListener('blur', function () {
-            state.cursor = -1;
-            draw();
-        });
-
-        el.canvas.addEventListener('keydown', function (event) {
-            var n = game.size;
-            if (state.cursor < 0) {
-                state.cursor = game.lastMove >= 0
-                    ? game.lastMove
-                    : Math.floor(n / 2) * n + Math.floor(n / 2);
-            }
-
-            var row = Math.floor(state.cursor / n);
-            var col = state.cursor % n;
-            var handled = true;
-
-            switch (event.key) {
-                case 'ArrowUp': row = Math.max(0, row - 1); break;
-                case 'ArrowDown': row = Math.min(n - 1, row + 1); break;
-                case 'ArrowLeft': col = Math.max(0, col - 1); break;
-                case 'ArrowRight': col = Math.min(n - 1, col + 1); break;
-                case 'Enter':
-                case ' ':
-                    activatePoint(state.cursor);
-                    event.preventDefault();
-                    draw();
-                    return;
-                case 'Escape':
-                    state.cursor = -1;
-                    draw();
-                    return;
-                default:
-                    handled = false;
-            }
-
-            if (!handled) return;
-            event.preventDefault();
-            state.cursor = row * n + col;
-            draw();
-        });
-
         bindSegmented(el.modeGroup, 'mode', setMode);
         bindSegmented(el.sizeGroup, 'size', setSize);
         bindSegmented(el.colorGroup, 'color', setHumanColor);
@@ -970,36 +918,6 @@
             closeDialog();
             state.resultShown = false;
             newGame();
-        });
-
-        document.addEventListener('keydown', function (event) {
-            if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return;
-            var target = event.target;
-            if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' ||
-                target.isContentEditable)) {
-                return;
-            }
-
-            switch (event.key.toLowerCase()) {
-                case 'u':
-                    event.preventDefault();
-                    undoMove();
-                    break;
-                case 'p':
-                    event.preventDefault();
-                    passTurn();
-                    break;
-                case 'n':
-                    event.preventDefault();
-                    newGame();
-                    break;
-                case 'h':
-                    event.preventDefault();
-                    showLastMove();
-                    break;
-                default:
-                    break;
-            }
         });
 
         if (typeof ResizeObserver === 'function') {

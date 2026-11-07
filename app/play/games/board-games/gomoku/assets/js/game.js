@@ -590,9 +590,9 @@
         let main;
         let sub;
         if (eng.winner) {
-            main = playerName(eng.winner) + '获胜！';
+            main = playerName(eng.winner) + '获胜';
         } else if (eng.draw) {
-            main = '平局！';
+            main = '平局';
         } else if (state.thinking) {
             main = 'AI 思考中…';
         } else if (!eng.history.length) {
@@ -776,7 +776,7 @@
         if (result.win) {
             audio.win();
             state.flashUntil = performance.now() + 1100;
-            toast(playerName(result.player) + '五连获胜！', 3200);
+            toast(playerName(result.player) + '五连获胜', 3200);
             announce(playerName(result.player) + '获胜');
         } else if (result.draw) {
             audio.draw();
@@ -1085,85 +1085,6 @@
         if (state.hover === -1) return;
         state.hover = -1;
         scheduleDraw();
-    });
-
-    canvas.addEventListener('keydown', function (event) {
-        const key = event.key;
-        let row = Math.floor(state.cursor / SIZE);
-        let col = state.cursor % SIZE;
-
-        if (key === 'Enter' || key === ' ' || key === 'Spacebar') {
-            event.preventDefault();
-            humanPlace(state.cursor);
-            return;
-        }
-        if (key === 'Escape') {
-            state.cursorActive = false;
-            scheduleDraw();
-            return;
-        }
-        if (key === 'Home') {
-            row = 7;
-            col = 7;
-        } else if (key === 'ArrowUp') {
-            row = Math.max(0, row - 1);
-        } else if (key === 'ArrowDown') {
-            row = Math.min(SIZE - 1, row + 1);
-        } else if (key === 'ArrowLeft') {
-            col = Math.max(0, col - 1);
-        } else if (key === 'ArrowRight') {
-            col = Math.min(SIZE - 1, col + 1);
-        } else {
-            return;
-        }
-        event.preventDefault();
-        state.cursor = row * SIZE + col;
-        state.cursorActive = true;
-        announce('第 ' + (row + 1) + ' 行，' + String.fromCharCode(65 + col) + ' 列');
-        scheduleDraw();
-    });
-
-    document.addEventListener('keydown', function (event) {
-        if (event.metaKey || event.ctrlKey) {
-            const key = event.key.toLowerCase();
-            if (key === 'z') {
-                event.preventDefault();
-                if (event.shiftKey) redo();
-                else undo();
-            } else if (key === 'y') {
-                event.preventDefault();
-                redo();
-            }
-            return;
-        }
-        if (event.altKey) return;
-        const target = event.target;
-        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
-            return;
-        }
-        const key = event.key.toLowerCase();
-        if (key === 'u') {
-            event.preventDefault();
-            undo();
-        } else if (key === 'y') {
-            event.preventDefault();
-            redo();
-        } else if (key === 'n') {
-            event.preventDefault();
-            resetGame();
-        } else if (key === 'h') {
-            event.preventDefault();
-            hint();
-        } else if (key === 'l') {
-            event.preventDefault();
-            showLast();
-        } else if (key === 's') {
-            event.preventDefault();
-            toggleSound();
-        } else if (key === 'd') {
-            event.preventDefault();
-            toggleTheme();
-        }
     });
 
     /* ------------------------------------------------------------------ *

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -10,7 +10,7 @@
     <!-- Open Graph / 社交分享 -->
     <meta property="og:type" content="article">
     <meta property="og:title" content="猫抓扩展使用笔记">
-    <meta property="og:description" content="安装到下载；按步骤操作。">
+    <meta property="og:description" content="从安装到下载 · 按步骤操作。">
     <script src="/assets/js/shell-prefs-boot.js"></script>
     <link rel="stylesheet" href="../../../assets/css/common.css">
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
@@ -31,7 +31,12 @@
             </div>
         </div>
 
-        <div class="article-body">
+        <p class="article-meta" id="article-meta"></p>
+
+        <div class="article-layout">
+            <nav class="article-toc" id="article-toc" aria-label="文章目录" hidden></nav>
+
+            <div class="article-body">
             <p>猫抓（Cat Catch）扩展：按「安装 → 界面 → 抓取 → 下载」写一遍流程。</p>
 
             <div class="article-tip">
@@ -191,7 +196,15 @@
             <div class="article-tip">
                 <strong>结语：</strong>熟悉一次完整流程之后，后面再遇到类似的视频/音频网页，你会发现：基本都是「打开网页 → 播放 → 打开猫抓 → 选中资源 → 下载」这几步的组合，只是细节上略有差异而已。
             </div>
+            </div>
         </div>
+
+        <nav class="article-pager" aria-label="文章导航">
+            <a class="article-pager__link" href="../crawler-experience/">
+                <span>上一篇</span>
+                <strong>浏览器开发者工具实战</strong>
+            </a>
+        </nav>
     </div>
 
     <footer class="site-footer" role="contentinfo">
@@ -203,6 +216,7 @@
 
     <!-- 公共工具函数 -->
     <script src="../../../assets/js/utils.js" defer></script>
+    <script src="../../../assets/js/article.js" defer></script>
     <script src="/assets/js/shell-preferences.js" defer></script>
     
     <script src="/assets/js/site-shell.js" defer></script>

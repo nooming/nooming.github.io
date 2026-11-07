@@ -43,6 +43,8 @@ GitHub Pages 静态站：顶栏 **首页 · 实验 · 工具 · 阅读 · 娱乐
 - 五子棋 / 围棋：`engine.js` / `go-engine.js` + Web Worker（五子棋 `ai-worker.js`）· 路径 `app/play/games/board-games/gomoku/`、`go/`
 - 星铎棋：单脚本 `star-duo.js`（几何 + 四档 AI）· 路径 `app/play/games/board-games/star-duo/`
 - Perfect Freehand (手写笔记绘图库)
+- 心理测试：`app/play/psychological/assets/js/quiz-engine.js`（MBTI / 动物塑共用题目渲染、进度与结果面板）
+- 阅读长文：`assets/js/article.js`（目录、滚动高亮、阅读进度、代码块复制）
 - marked + DOMPurify（Markdown 阅读；库文件在 `app/read/markdown/assets/js/vendor/`）
 - PaddleOCR / `@ocr-web/core`（图片识字默认引擎；PP-OCRv5 ONNX，单线程 WASM；模型与 onnxruntime-web 从 jsDelivr 加载并缓存）
 - Tesseract.js（图片识字轻量备选；按需从 CDN 加载 worker/core，语言模型从 tessdata 下载并缓存在浏览器）
@@ -93,7 +95,7 @@ GitHub Pages 静态站：顶栏 **首页 · 实验 · 工具 · 阅读 · 娱乐
 - **导航壳**：`assets/css/site-shell.css`、`assets/js/site-shell.js` — 顶栏五域、桌面侧栏、移动底栏 + 分组菜单；批量注入见 `scripts/apply_site_shell.py`。**不挂壳**：`app/notes/`、`app/parking-pso/`、`app/citywalk/`（实验/工具/阅读/娱乐域内页挂壳）。
 - **`app/tools/doc-tools/`**：文档转换合集；各子工具独立 **`index.html`**，共享 **`assets/css/doc-tools.css`**、**`assets/js/common.js`**；转换逻辑为 ES module，pdf.js 等从 CDN 动态 import。Office/COM 类能力在 **`windows/`** 说明；Python 源码在根 **`desktop-doc-tools/`**，不提供预编译 exe。
 - **`app/lab/`**、**`app/citywalk/`**、**`app/parking-pso/`**：重交互应用，业务资源在各自 **`assets/`**；通过相对路径引用站根 **`assets/`**。
-- **`app/tools/decision/`**：随机三件套共享 **`assets/`**；抽卡规划在 **`app/play/gacha-planner/`**。
+- **`app/tools/decision/`**：随机三件套共用 `assets/`；转盘 / 硬币为原生 Canvas 与 CSS 3D 实现（无第三方 min 依赖）；抽卡规划在 **`app/play/gacha-planner/`**。
 - **`app/read/markdown/`**：Markdown 阅读；页面脚本与样式在 **`assets/`**，第三方 **`marked`** / **`DOMPurify`** 放在 **`assets/js/vendor/`**，仓库文档清单为 **`catalog.json`**（GitHub Pages 不能列目录）。
 - **`app/read/*/`**（长文）：共用 **`assets/css/article.css`**；新增长文放同目录 `index.html`，并在 **`site-shell.js`** 阅读侧栏与移动菜单登记。
 - **`app/tools/ocr/`**：图片识字；页面脚本与样式在 **`assets/`**。默认引擎为 vendored `@ocr-web/core`（PP-OCRv5），ONNX Runtime WASM 与模型从 jsDelivr 加载（`numThreads: 1`，不依赖 COOP/COEP）；轻量引擎为 Tesseract.js（按需 CDN，`langPath` 指向 tessdata `4.0.0_fast`）。不把大模型打进仓库。

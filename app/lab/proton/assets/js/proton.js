@@ -45,14 +45,10 @@ function hideEl(sel) {
         el.style.display = 'none'
     })
 }
-function clickEl(sel) {
-    const el = qs(sel)
-    if (el) el.click()
-}
-
 function toggleFriction(btn) {
     btn.classList.toggle('btn-primary')
     const on = btn.classList.contains('btn-primary')
+    btn.setAttribute('aria-pressed', String(on))
     if (on) showEl('.dragger')
     else hideEl('.dragger')
     isfr = on
@@ -60,6 +56,7 @@ function toggleFriction(btn) {
 
 function toggleBound(btn) {
     btn.classList.toggle('btn-primary')
+    btn.setAttribute('aria-pressed', String(btn.classList.contains('btn-primary')))
     bound = !bound
     setMiddle()
     drawBound()
@@ -68,8 +65,12 @@ function toggleBound(btn) {
 
 function setSpeed(btn, speed) {
     btn.classList.add('btn-primary')
+    btn.setAttribute('aria-pressed', 'true')
     Array.prototype.forEach.call(btn.parentNode.children, function (sib) {
-        if (sib !== btn) sib.classList.remove('btn-primary')
+        if (sib !== btn) {
+            sib.classList.remove('btn-primary')
+            sib.setAttribute('aria-pressed', 'false')
+        }
     })
     t = speed
 }
@@ -84,6 +85,7 @@ function resetTrailRecording() {
 function toggleTrail(btn) {
     btn.classList.toggle('btn-primary')
     showTrail = btn.classList.contains('btn-primary')
+    btn.setAttribute('aria-pressed', String(showTrail))
     if (showTrail) resetTrailRecording()
     else {
         trailPoints = []
@@ -145,11 +147,6 @@ function drawTrail() {
         lastSy = sy
     }
     svg.innerHTML = '<path fill="none" stroke="#c9302c" stroke-width="2.5" stroke-opacity="0.9" stroke-linecap="round" stroke-linejoin="round" d="' + d + '"/>'
-}
-
-function applyProtonInputMode() {
-    const touchLike = window.matchMedia('(hover: none) and (pointer: coarse)').matches
-    document.body.classList.toggle('proton-touch', touchLike)
 }
 
 function loop() {
@@ -483,56 +480,35 @@ function loop() {
                 }
                 setHtml('.m-svg', str)
             }
-            let fst = 0
             function initProton() {
-                applyProtonInputMode()
-                window.matchMedia('(hover: none) and (pointer: coarse)').addEventListener('change', applyProtonInputMode)
+                // 工具栏与设置区：统一在这里绑定，页面不再写内联事件
+                const bind = (sel, type, handler) => {
+                    const el = qs(sel)
+                    if (el) el.addEventListener(type, handler)
+                }
+                bind('.spf', 'click', function () { toggleFriction(this) })
+                bind('.sps', 'click', function () { toggleBound(this) })
+                bind('.strail', 'click', function () { toggleTrail(this) })
+                ;[['.sp1', 0], ['.sp2', 0.1], ['.sp3', 0.5], ['.sp4', 1]].forEach(function (item) {
+                    const btn = qs(item[0])
+                    if (btn) {
+                        btn.addEventListener('click', function () { setSpeed(btn, item[1]) })
+                    }
+                })
+                bind('.rmE', 'click', function () { setE(0, 1) })
+                bind('.rmB', 'click', function () { setB(0, 1) })
+                bind('.f-div', 'mousemove', function (e) { setforce(e) })
+                bind('.f-div', 'mouseleave', function () { setforce(0, 1) })
+                bind('.E-div', 'mousemove', function (e) { setE(e) })
+                bind('.E-div', 'mouseleave', function () { setE(0, 0, 1) })
+                bind('.E-div', 'click', function (e) { setE(e, 1) })
+                bind('.B-div', 'mousemove', function (e) { setB(e) })
+                bind('.B-div', 'mouseleave', function () { setB(0, 0, 1) })
+                bind('.B-div', 'click', function (e) { setB(e, 1) })
+
                 hideEl('.rmE')
                 hideEl('.rmB')
                 setInterval(loop, 10)
-                document.body.addEventListener("keydown", function (event) {
-                    let g = event.key
-                    if (g == 1) clickEl('.sp1')
-                    if (g == 2) clickEl('.sp2')
-                    if (g == 3) clickEl('.sp3')
-                    if (g == 4) clickEl('.sp4')
-                    if (g == 'f') {
-                        const spf = qs('.spf')
-                        if (fst) {
-                            isfr = 10
-                            if (spf) {
-                                spf.textContent = '刹车'
-                                spf.classList.add('btn-danger')
-                                spf.classList.remove('btn-primary')
-                            }
-                            showEl('.dragger')
-                        } else if (spf) {
-                            spf.textContent = '阻力'
-                        }
-                        fst = 1
-                    }
-                    if (g == 's') clickEl('.sps')
-                    if (g == 'e') clickEl('.rmE')
-                    if (g == 'b') clickEl('.rmB')
-                });
-                document.body.addEventListener("keyup", function (event) {
-                    let g = event.key
-                    if (g == 'f') {
-                        const spf = qs('.spf')
-                        if (!spf) return
-                        if (spf.classList.contains('btn-danger')) {
-                            spf.textContent = '阻力'
-                            spf.classList.remove('btn-danger')
-                            spf.classList.add('btn-primary')
-                            isfr = 1
-                        } else {
-                            spf.textContent = '阻力'
-                            spf.classList.remove('btn-danger')
-                            spf.click()
-                        }
-                        fst = 0
-                    }
-                });
             }
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', initProton)

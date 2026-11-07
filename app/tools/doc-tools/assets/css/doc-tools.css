@@ -186,17 +186,21 @@
 .doc-status {
     margin: 0;
     font-size: 0.95rem;
-    color: var(--color-muted, #7f8c8d);
+    color: var(--color-text-secondary, #7f8c8d);
 }
 
 .doc-status--error {
     color: #c0392b;
 }
 
+html[data-theme="dark"] .doc-status--error {
+    color: #ff7a6b;
+}
+
 .doc-progress {
     margin-top: 0.75rem;
     height: 6px;
-    background: #ecf0f1;
+    background: var(--color-surface-dim);
     overflow: hidden;
 }
 

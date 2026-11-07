@@ -41,18 +41,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Enter 键触发
-    encodeInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && e.ctrlKey) {
-            encodeText();
-        }
-    });
-    decodeInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && e.ctrlKey) {
-            decodeText();
-        }
-    });
-    
     // 绑定所有复制按钮的事件
     copyBtns.forEach(btn => {
         btn.addEventListener('click', function() {

@@ -182,11 +182,6 @@ body.proton-page.page-container {
     flex-shrink: 0;
 }
 
-.proton-page .kbd-hint--spacer {
-    visibility: hidden;
-    user-select: none;
-}
-
 .proton-toolbar__cell--gap {
     margin-left: 10px;
 }
@@ -233,13 +228,6 @@ body.proton-page.page-container {
 
 .rm-b {
     margin-top: 420px;
-}
-
-.rm-e .key-hint,
-.rm-b .key-hint {
-    position: absolute;
-    left: -30px;
-    top: 3px;
 }
 
 .label-force {
@@ -426,35 +414,29 @@ body.proton-page.page-container {
     margin-bottom: 0.85em;
 }
 
-.help-block .help-mobile-only {
-    display: none;
+/* 说明文字里的电场 / 磁场配色（与画布一致） */
+.help-block .help-e {
+    color: #27c63a;
+    font-weight: 600;
 }
 
-.proton-page .kbd-hint {
-    font-size: 12px;
-    color: var(--color-ink-muted);
+.help-block .help-b {
+    color: #4d70c2;
+    font-weight: 600;
 }
 
-body.proton-touch .kbd-hint,
-body.proton-touch .key-hint,
-body.proton-touch .help-block .help-desktop-only {
-    display: none !important;
+html[data-theme="dark"] .help-block .help-e {
+    color: #4ade80;
 }
 
-body.proton-touch .help-block .help-mobile-only {
-    display: inline;
+html[data-theme="dark"] .help-block .help-b {
+    color: #7b9cff;
 }
 
-@media (max-width: 767.98px) {
-    body.proton-page .kbd-hint,
-    body.proton-page .key-hint,
-    body.proton-page .help-block .help-desktop-only {
-        display: none !important;
-    }
-
-    body.proton-page .help-block .help-mobile-only {
-        display: inline;
-    }
+/* 工具栏按钮的键盘焦点 */
+.proton-page .proton-toolbar .btn:focus-visible {
+    outline: 2px solid var(--color-theme-deep);
+    outline-offset: 2px;
 }
 
 /* 窄屏：视口宽 = 缩放后宽度，裁剪内层，避免整页横向拖动 */

@@ -1,0 +1,355 @@
+/* ========== 风扇转速 · 页面样式 ========== */
+
+.fan-rpm-shell {
+    box-sizing: border-box;
+    max-width: 520px;
+    margin: 0 auto;
+    padding: max(4px, env(safe-area-inset-top)) 0 max(8px, env(safe-area-inset-bottom)) 0;
+    color: var(--color-body);
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.fan-rpm-shell * {
+    box-sizing: border-box;
+}
+
+.fan-rpm-shell .sub {
+    font-size: 0.85rem;
+    color: var(--color-text-tertiary);
+    line-height: 1.45;
+    margin: 0 0 16px;
+}
+
+.fan-rpm-shell .sub strong {
+    color: var(--gradient-theme-title);
+}
+
+/* --- 摄像头画面 --- */
+
+.fan-rpm-shell .stage {
+    position: relative;
+    background: #000000;
+    border-radius: 0;
+    border: 1px solid var(--line-ins);
+    box-shadow: var(--shadow-ins);
+}
+
+.fan-rpm-shell .stage-viewport {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: 0;
+    background: #000000;
+}
+
+.fan-rpm-shell .stage-caption {
+    margin: 10px 4px 0;
+    padding-bottom: 2px;
+    text-align: center;
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--color-text-secondary);
+    word-break: break-word;
+}
+
+.fan-rpm-shell video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.fan-rpm-shell canvas {
+    display: none;
+}
+
+.fan-rpm-shell .ref-tap-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: none;
+    cursor: crosshair;
+    touch-action: none;
+}
+
+.fan-rpm-shell .ref-tap-layer.active {
+    display: block;
+}
+
+.fan-rpm-shell .ref-marker {
+    position: absolute;
+    z-index: 3;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    width: 22px;
+    height: 22px;
+    margin-left: 0;
+    margin-top: 0;
+}
+
+.fan-rpm-shell .ref-marker::before,
+.fan-rpm-shell .ref-marker::after {
+    content: "";
+    position: absolute;
+    background: #ff4444;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.6);
+}
+
+.fan-rpm-shell .ref-marker::before {
+    left: 50%;
+    top: 0;
+    width: 2px;
+    height: 100%;
+    transform: translateX(-50%);
+}
+
+.fan-rpm-shell .ref-marker::after {
+    top: 50%;
+    left: 0;
+    height: 2px;
+    width: 100%;
+    transform: translateY(-50%);
+}
+
+.fan-rpm-shell .ref-patch-ring {
+    position: absolute;
+    border: 2px solid rgba(255, 250, 0, 0.9);
+    border-radius: 0;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4) inset;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+}
+
+/* --- 控制面板 --- */
+
+.fan-rpm-shell .panel {
+    margin-top: 18px;
+    padding: 16px;
+    background: var(--color-card);
+    border-radius: 0;
+    border: 1px solid var(--line-ins);
+}
+
+.fan-rpm-shell .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.fan-rpm-shell .row:last-child {
+    margin-bottom: 0;
+}
+
+.fan-rpm-shell label {
+    font-size: 0.9rem;
+    color: var(--gradient-theme-title);
+    font-weight: 500;
+}
+
+.fan-rpm-shell input[type="range"] {
+    flex: 1;
+    accent-color: var(--color-theme-deep);
+}
+
+.fan-rpm-shell .value {
+    min-width: 2.5rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: var(--color-theme-secondary);
+}
+
+.fan-rpm-shell .readout {
+    text-align: center;
+    padding: 20px 12px;
+    background: var(--color-theme-wash);
+    border-radius: 0;
+    margin-bottom: 14px;
+    border: 1px solid var(--line-ins);
+}
+
+.fan-rpm-shell .readout .rpm-num {
+    font-size: 2.4rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    color: var(--gradient-theme-title);
+    font-variant-numeric: tabular-nums;
+}
+
+.fan-rpm-shell .readout .unit {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--color-text-tertiary);
+    margin-left: 4px;
+}
+
+.fan-rpm-shell .readout .meta {
+    margin-top: 8px;
+    font-size: 0.8rem;
+    color: var(--color-text-tertiary);
+    line-height: 1.45;
+}
+
+.fan-rpm-shell .readout .meta-secondary {
+    margin-top: 4px;
+    font-size: 0.72rem;
+    color: var(--color-text-tertiary);
+}
+
+.fan-rpm-shell .btn,
+.fan-rpm-shell .btn-primary {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 14px 18px;
+    font-size: 1rem;
+}
+
+.fan-rpm-shell .btn-primary:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.fan-rpm-shell .btn.secondary {
+    border: 1px solid var(--line-hard);
+    background: var(--color-card);
+    color: var(--color-ink);
+    box-shadow: none;
+}
+
+.fan-rpm-shell .btn.secondary:hover:not(:disabled) {
+    background: var(--color-surface-dim);
+    border-color: var(--color-ink);
+    transform: none;
+}
+
+.fan-rpm-shell .btn.secondary:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.fan-rpm-shell .hint {
+    font-size: 0.78rem;
+    color: var(--color-text-tertiary);
+    line-height: 1.7;
+    margin-top: 12px;
+}
+
+.fan-rpm-shell .err {
+    color: var(--color-theme-text-end);
+    background: rgba(231, 76, 60, 0.12);
+    border-left: 3px solid #c0392b;
+    padding: 8px 10px;
+    font-size: 0.85rem;
+    margin-top: 8px;
+    line-height: 1.6;
+}
+
+.fan-rpm-shell .status {
+    font-size: 0.8rem;
+    color: var(--color-text-tertiary);
+    margin-top: 8px;
+    line-height: 1.6;
+}
+
+/* --- 读数记录 --- */
+
+.fan-rpm-shell .panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.fan-rpm-shell .panel-head h2 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--gradient-theme-title);
+}
+
+.fan-rpm-shell .badge {
+    padding: 2px 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--color-label-fg);
+    background: var(--color-label-bg);
+    font-variant-numeric: tabular-nums;
+}
+
+.fan-rpm-shell .reading-list {
+    list-style: none;
+    margin: 0 0 10px;
+    padding: 0;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.fan-rpm-shell .reading-list li {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--line-ins);
+    font-size: 0.82rem;
+    color: var(--color-text-secondary);
+}
+
+.fan-rpm-shell .reading-list li:last-child {
+    border-bottom: none;
+}
+
+.fan-rpm-shell .reading-list time {
+    color: var(--color-text-tertiary);
+    font-variant-numeric: tabular-nums;
+    flex: none;
+}
+
+.fan-rpm-shell .reading-list strong {
+    color: var(--color-ink);
+    font-variant-numeric: tabular-nums;
+}
+
+.fan-rpm-shell .reading-list .reading-conf {
+    color: var(--color-text-tertiary);
+    font-size: 0.75rem;
+    flex: none;
+}
+
+.fan-rpm-shell .history-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.fan-rpm-shell .history-actions .btn {
+    flex: 1 1 0;
+    width: auto;
+    margin: 0;
+    padding: 10px 12px;
+    font-size: 0.85rem;
+}
+
+.fan-rpm-shell .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fan-rpm-shell * {
+        transition: none !important;
+        animation: none !important;
+    }
+}

@@ -68,13 +68,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Enter 键触发（Ctrl+Enter）
-    qrInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && e.ctrlKey) {
-            generateQRCode();
-        }
-    });
-
     // ========== 核心函数：生成二维码 ==========
     function generateQRCode() {
         const text = qrInput.value.trim();

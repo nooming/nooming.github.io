@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -40,16 +40,13 @@
             </div>
 
             <div class="board-frame" id="boardFrame">
-                <canvas id="board" width="600" height="600" tabindex="0" role="application"
-                        aria-label="五子棋棋盘，方向键移动光标，回车或空格落子" aria-describedby="boardHelp">
+                <canvas id="board" width="600" height="600" role="application"
+                        aria-label="五子棋棋盘" aria-describedby="boardHelp">
                     你的浏览器不支持 canvas，请更换浏览器。
                 </canvas>
             </div>
 
-            <p class="board-help" id="boardHelp">
-                点击交叉点落子。键盘：<kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> 移动，<kbd>Enter</kbd> 落子，
-                <kbd>U</kbd> 撤销，<kbd>H</kbd> 提示，<kbd>N</kbd> 新局。
-            </p>
+            <p class="board-help" id="boardHelp">点击交叉点落子。</p>
             <p class="sr-only" id="cursorAnnounce" aria-live="polite"></p>
         </section>
 
@@ -90,11 +87,11 @@
             <section class="panel" aria-labelledby="actionLabel">
                 <h3 class="panel__title" id="actionLabel">操作</h3>
                 <div class="action-grid">
-                    <button type="button" class="btn" id="undoBtn" aria-keyshortcuts="U" disabled>撤销 <kbd>U</kbd></button>
-                    <button type="button" class="btn" id="redoBtn" aria-keyshortcuts="Y" disabled>重做 <kbd>Y</kbd></button>
-                    <button type="button" class="btn" id="hintBtn" aria-keyshortcuts="H">提示 <kbd>H</kbd></button>
-                    <button type="button" class="btn" id="lastBtn" aria-keyshortcuts="L">下哪了 <kbd>L</kbd></button>
-                    <button type="button" class="btn btn-primary" id="newBtn" aria-keyshortcuts="N">新开一局 <kbd>N</kbd></button>
+                    <button type="button" class="btn" id="undoBtn" disabled>撤销</button>
+                    <button type="button" class="btn" id="redoBtn" disabled>重做</button>
+                    <button type="button" class="btn" id="hintBtn">提示</button>
+                    <button type="button" class="btn" id="lastBtn">下哪了</button>
+                    <button type="button" class="btn btn-primary" id="newBtn">新局</button>
                 </div>
             </section>
 

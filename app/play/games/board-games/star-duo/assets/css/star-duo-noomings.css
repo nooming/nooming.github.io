@@ -201,10 +201,10 @@ body.star-duo-root .xd-menu-screen.active {
 }
 
 .star-duo-root .xd-diff-list .diff-btn.is-active {
-  background: var(--btn-cta-bg);
-  color: var(--btn-cta-fg);
-  border: 2px solid var(--color-theme-secondary);
-  box-shadow: var(--shadow-theme);
+  background: var(--selected-fill);
+  color: var(--color-ink);
+  border: 2px solid var(--color-theme-deep);
+  box-shadow: none;
   transform: none;
 }
 
@@ -246,9 +246,17 @@ body.star-duo-root .xd-menu-screen.active {
 
 .star-duo-root .overlay .btn.green,
 .star-duo-root .overlay .btn:not(.light):not(.small) {
+  background: var(--btn-emphasis-bg);
+  color: var(--btn-emphasis-fg);
+  border-color: var(--btn-emphasis-border);
+  box-shadow: none;
+}
+
+.star-duo-root .overlay .btn.green:hover:not(:disabled),
+.star-duo-root .overlay .btn:not(.light):not(.small):hover:not(:disabled) {
   background: var(--brand);
   color: var(--brand-ink);
-  border-color: var(--border);
+  box-shadow: none;
 }
 
 .star-duo-root .overlay .color-btn {
@@ -340,10 +348,10 @@ body.star-duo-root .xd-menu-screen.active {
 }
 
 .star-duo-root .editor-toolbar .ed-btn.active {
-  background: var(--btn-cta-bg);
-  border: 2px solid var(--color-theme-secondary);
+  background: var(--selected-fill);
+  border: 2px solid var(--color-theme-deep);
   color: var(--color-ink);
-  box-shadow: var(--shadow-theme);
+  box-shadow: none;
 }
 
 .star-duo-root .editor-toolbar .ed-btn.green {

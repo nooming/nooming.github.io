@@ -1,0 +1,217 @@
+/* ========== 多选随机 · 页面样式 ========== */
+
+.quick-choice-page .qc-panel {
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+.qc-field {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 700;
+    color: var(--color-ink);
+}
+
+.qc-textarea {
+    width: 100%;
+    min-height: 190px;
+    padding: 14px 16px;
+    font: inherit;
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--color-ink);
+    background: var(--color-card);
+    border: 1px solid var(--line-hard);
+    border-radius: 0;
+    resize: vertical;
+}
+
+.qc-textarea:focus {
+    outline: 2px solid var(--color-theme-deep);
+    outline-offset: 1px;
+}
+
+.qc-hint {
+    margin: 8px 0 18px;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: var(--color-text-tertiary);
+}
+
+.qc-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 22px;
+}
+
+.qc-chip {
+    padding: 7px 14px;
+    font: inherit;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: var(--color-ink);
+    background: var(--color-card);
+    border: 1px solid var(--line-hard);
+    border-radius: 0;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.qc-chip:hover {
+    background: var(--color-theme-wash);
+    border-color: var(--color-theme-deep);
+}
+
+.qc-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 22px;
+}
+
+.qc-actions .btn-primary {
+    padding: 13px 34px;
+    font-size: 1.05rem;
+}
+
+.qc-result {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+    padding: 20px 16px;
+    margin-bottom: 22px;
+    text-align: center;
+    background: var(--color-surface-dim);
+    border: 1px solid var(--line-ins);
+}
+
+.qc-result__label {
+    margin: 0 0 8px;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    color: var(--color-text-tertiary);
+}
+
+.qc-result__value {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 800;
+    line-height: 1.4;
+    color: var(--color-ink);
+    overflow-wrap: anywhere;
+}
+
+.qc-result__value.is-empty {
+    color: var(--color-text-tertiary);
+    font-weight: 500;
+}
+
+.qc-result.is-pop .qc-result__value {
+    animation: qc-pop 0.32s ease-out;
+}
+
+@keyframes qc-pop {
+    0% {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.qc-result__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.qc-result__actions .btn-quiet[hidden] {
+    display: none;
+}
+
+.qc-history {
+    border-top: 1px solid var(--line-ins);
+    padding-top: 18px;
+}
+
+.qc-history__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.qc-history__head h2 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--color-heading);
+}
+
+.qc-history__head .btn-quiet {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+}
+
+.qc-history__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.qc-history__list li {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--line-ins);
+    font-size: 0.88rem;
+}
+
+.qc-history__list li:last-child {
+    border-bottom: none;
+}
+
+.qc-history__list strong {
+    color: var(--color-ink);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.qc-history__list time {
+    flex: none;
+    color: var(--color-text-tertiary);
+    font-size: 0.76rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.qc-history__empty {
+    margin: 6px 0 0;
+    font-size: 0.85rem;
+    color: var(--color-text-tertiary);
+}
+
+@media (max-width: 767.98px) {
+    .qc-actions .btn-primary {
+        flex: 1 1 100%;
+    }
+
+    .qc-result__value {
+        font-size: 1.35rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .qc-result.is-pop .qc-result__value {
+        animation: none;
+    }
+}

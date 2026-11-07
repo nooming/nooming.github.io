@@ -302,7 +302,7 @@
         btnTransform.textContent = '⟳ 开始变换';
         btnTransform.disabled = false;
         btnReset.disabled = false;
-        statusEl.textContent = '变换完成！';
+        statusEl.textContent = '变换完成。';
         statusEl.className = 'status ready';
       }
     }

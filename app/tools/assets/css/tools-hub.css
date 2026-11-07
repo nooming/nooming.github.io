@@ -1,0 +1,82 @@
+/* ========== 工具目录 · 分组与搜索 ========== */
+
+.tools-hub {
+    max-width: 980px;
+    margin: 0 auto;
+}
+
+.tools-search {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+    margin-bottom: 28px;
+    padding: 16px 18px;
+    background: var(--color-card);
+    border: 1px solid var(--line-ins);
+    box-shadow: var(--shadow-card-float);
+}
+
+.tools-search__label {
+    font-weight: 700;
+    color: var(--color-ink);
+    font-size: 0.9rem;
+}
+
+.tools-search__input {
+    flex: 1 1 220px;
+    min-width: 0;
+    padding: 9px 12px;
+    font: inherit;
+    font-size: 0.95rem;
+    color: var(--color-ink);
+    background: var(--color-canvas);
+    border: 1px solid var(--line-hard);
+    border-radius: 0;
+}
+
+.tools-search__input:focus {
+    outline: 2px solid var(--color-theme-deep);
+    outline-offset: 1px;
+}
+
+.tools-search__meta {
+    margin: 0;
+    color: var(--color-text-tertiary);
+    font-size: 0.82rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.tools-search__empty {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+}
+
+.tools-group-title {
+    margin: 34px 0 14px;
+    padding-left: 10px;
+    border-left: 4px solid var(--color-theme);
+    color: var(--color-heading);
+    font-size: 1.12rem;
+    line-height: 1.4;
+}
+
+.tools-group-title:first-of-type {
+    margin-top: 0;
+}
+
+.tools-group-title[hidden],
+.features[hidden] {
+    display: none !important;
+}
+
+@media (max-width: 767.98px) {
+    .tools-search {
+        padding: 14px;
+    }
+
+    .tools-search__meta {
+        flex-basis: 100%;
+    }
+}

@@ -169,16 +169,16 @@
             {
                 title: "工具",
                 links: [
-                    { label: "文档 · PDF→图", href: "/app/tools/doc-tools/pdf-to-images/" },
-                    { label: "图→PDF", href: "/app/tools/doc-tools/images-to-pdf/" },
+                    { label: "PDF → 图", href: "/app/tools/doc-tools/pdf-to-images/" },
+                    { label: "图 → PDF", href: "/app/tools/doc-tools/images-to-pdf/" },
                     { label: "图片识字", href: "/app/tools/ocr/" },
                     { label: "多选随机", href: "/app/tools/decision/quick-choice/" },
                     { label: "转盘", href: "/app/tools/decision/wheel/" },
                     { label: "抛硬币", href: "/app/tools/decision/coin-flip/" },
                     { label: "二维码", href: "/app/tools/qr-code-generator/" },
-                    { label: "进制换算", href: "/app/tools/base-converter/" },
+                    { label: "进制", href: "/app/tools/base-converter/" },
                     { label: "Base64", href: "/app/tools/base64-converter/" },
-                    { label: "音频转换", href: "/app/tools/audio-converter/" },
+                    { label: "音频转码", href: "/app/tools/audio-converter/" },
                     { label: "灯牌", href: "/app/tools/light-board/" },
                 ],
             },
@@ -237,13 +237,13 @@
             l2: [
                 {
                     id: "pdf2img",
-                    label: "PDF→图",
+                    label: "PDF → 图",
                     href: "/app/tools/doc-tools/pdf-to-images/",
                     match: /\/pdf-to-images/,
                 },
                 {
                     id: "img2pdf",
-                    label: "图→PDF",
+                    label: "图 → PDF",
                     href: "/app/tools/doc-tools/images-to-pdf/",
                     match: /\/images-to-pdf/,
                 },
@@ -297,13 +297,13 @@
             mobileDoc: [
                 {
                     id: "pdf2img",
-                    label: "PDF→图",
+                    label: "PDF → 图",
                     icon: "i-doc",
                     href: "/app/tools/doc-tools/pdf-to-images/",
                 },
                 {
                     id: "img2pdf",
-                    label: "图→PDF",
+                    label: "图 → PDF",
                     icon: "i-doc",
                     href: "/app/tools/doc-tools/images-to-pdf/",
                 },
@@ -715,7 +715,7 @@
         return (
             '<div class="site-shell-prefs" role="group" aria-label="站点偏好">' +
             '<button type="button" id="shellSoundToggle" class="site-shell-pref-btn" ' +
-            'aria-keyshortcuts="S" aria-pressed="true" aria-label="声音" title="声音（S）">' +
+            'aria-pressed="true" aria-label="声音" title="声音">' +
             '<svg class="site-shell-pref-icon site-shell-pref-icon--on" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
             '<path class="site-shell-pref-solid" d="M4 9v6h4l5 4V5L8 9H4z"></path>' +
             '<path d="M16.5 8.5a5 5 0 0 1 0 7"></path>' +
@@ -726,7 +726,7 @@
             '<path d="M17 9l4 6M21 9l-4 6"></path>' +
             "</svg></button>" +
             '<button type="button" id="shellThemeToggle" class="site-shell-pref-btn" ' +
-            'aria-keyshortcuts="D" aria-pressed="false" aria-label="深色模式" title="深色模式（D）">' +
+            'aria-pressed="false" aria-label="深色模式" title="深色模式">' +
             '<svg class="site-shell-pref-icon site-shell-pref-icon--on" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
             '<circle cx="12" cy="12" r="4"></circle>' +
             '<path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"></path>' +

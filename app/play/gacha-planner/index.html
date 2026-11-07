@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#FFFA00">
-    <meta name="description" content="终末地抽卡规划：按概率与保底进行模拟，估算六星与当期获取表现。">
+    <meta name="description" content="终末地抽卡：按公开概率与保底模拟，估算六星与当期获取分布。">
     <meta name="keywords" content="终末地,抽卡,概率,保底,蒙特卡洛,规划工具">
     <title>终末地抽卡规划 · noomings</title><!-- 公共样式 -->
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
@@ -21,7 +21,7 @@
         <div class="section-header section-header--page">
             <h1>终末地抽卡规划</h1>
             <p>
-                基于公开规则的模拟估算工具：用于评估六星 / 当期的期望、中位数与概率表现。结果仅供规划参考，请以游戏内当期公示为准。
+                按公开概率与保底模拟抽卡，估算六星与当期的获取分布。结果仅供参考，以游戏内公示为准。
             </p>
         </div>
     </div>
@@ -50,12 +50,12 @@
                     <h2>角色池通用设置</h2>
                 </div>
                 <p class="gp-note">以下设置将同时用于角色池计算与 5+6 目标横幅。</p>
-                <label for="shared-pity-six-remain">6星保底剩余抽数（可选）</label>
+                <label for="shared-pity-six-remain">6★ 保底剩余（可选）</label>
                 <input id="shared-pity-six-remain" type="number" step="1" min="1" max="80" value="80">
-                <label for="shared-pity-five-remain">5星及以上保底剩余抽数（可选）</label>
+                <label for="shared-pity-five-remain">5★ 及以上保底剩余（可选）</label>
                 <input id="shared-pity-five-remain" type="number" step="1" min="1" max="10" value="10">
                 <label class="gp-checkbox"><input id="shared-use-baozhang" type="checkbox"> 使用保障配额换抽（25 配额 = 1 抽）</label>
-                <label for="shared-init-baozhang">初始保障配额（可选）</label>
+                <label for="shared-init-baozhang">初始保障配额</label>
                 <input id="shared-init-baozhang" type="number" step="1" min="0" value="0">
             </section>
 
@@ -65,11 +65,11 @@
                     <h2>5+6 目标规划（当期角色 + 当期武器）</h2>
                 </div>
                 <p class="gp-note">目标：至少 6 个当期 UP 角色，且至少 6 把当期 UP 武器。5+6 为社区俗称，实际按 6 个角色 + 6 把武器计算。输入角色总抽数与现有武库配额后自动估算联合概率。</p>
-                <label for="combo-char-n">角色总抽数（单抽）</label>
+                <label for="combo-char-n">角色总抽数</label>
                 <input id="combo-char-n" type="number" step="1" min="0" value="600">
                 <label for="combo-wuku-init">现有武库配额</label>
                 <input id="combo-wuku-init" type="number" step="1" min="0" value="0">
-                <button type="button" class="btn-primary gp-primary" id="combo-calc">开始计算 5+6 概率</button>
+                <button type="button" class="btn-primary gp-primary" id="combo-calc">计算 5+6 概率</button>
                 <div class="gp-stats" id="combo-out" aria-live="polite"></div>
             </section>
 
@@ -85,7 +85,7 @@
                         <p class="gp-note">使用上方「角色池通用设置」。</p>
                         <label for="up-n">总抽数（单抽计 1）</label>
                         <input id="up-n" type="number" step="1" min="0" value="80">
-                        <button type="button" class="btn-primary gp-primary" id="up-calc-summary">开始计算六星与当期个数</button>
+                        <button type="button" class="btn-primary gp-primary" id="up-calc-summary">计算六星与当期</button>
                         <div class="gp-stats" id="up-out-summary" aria-live="polite"></div>
                     </section>
 
@@ -99,7 +99,7 @@
                         <input id="up-up-k" type="number" step="1" min="1" value="1">
                         <label for="up-up-n">总抽数 n</label>
                         <input id="up-up-n" type="number" step="1" min="0" value="120">
-                        <button type="button" class="btn-primary gp-primary" id="up-up-calc">开始计算概率</button>
+                        <button type="button" class="btn-primary gp-primary" id="up-up-calc">计算概率</button>
                         <div class="gp-stats" id="up-up-out" aria-live="polite"></div>
                     </section>
                 </div>
@@ -112,9 +112,9 @@
                             <span class="gp-tag">计算</span>
                             <h2>给定申领次数</h2>
                         </div>
-                        <label for="wp-t">申领次数 T（总武器件数 = 10T）</label>
+                        <label for="wp-t">申领次数 T · 每次 10 件</label>
                         <input id="wp-t" type="number" step="1" min="0" value="10">
-                        <button type="button" class="btn-primary gp-primary" id="wp-calc">开始计算六星武器与当期个数</button>
+                        <button type="button" class="btn-primary gp-primary" id="wp-calc">计算武器与当期</button>
                         <div class="gp-stats" id="wp-out" aria-live="polite"></div>
                     </section>
 
@@ -128,7 +128,7 @@
                         <input id="wp-up-k" type="number" step="1" min="1" value="1">
                         <label for="wp-up-t-prob">申领次数 T</label>
                         <input id="wp-up-t-prob" type="number" step="1" min="0" value="10">
-                        <button type="button" class="btn-primary gp-primary" id="wp-up-calc-prob">开始计算概率</button>
+                        <button type="button" class="btn-primary gp-primary" id="wp-up-calc-prob">计算概率</button>
                         <div class="gp-stats" id="wp-up-prob-out" aria-live="polite"></div>
                     </section>
                 </div>

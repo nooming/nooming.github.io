@@ -249,7 +249,7 @@ async function convertAudio() {
     var convertBtn = document.getElementById('convert-btn');
 
     if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-        setResultHtml('<p style="color: #e74c3c;">请先选择音频文件！</p>');
+        setResultHtml('<p style="color: #e74c3c;">请先选择音频文件。</p>');
         return;
     }
 
@@ -286,7 +286,7 @@ async function convertAudio() {
         AUDIO_CONVERTER_OBJECT_URL = URL.createObjectURL(blob);
 
         setResultHtml(
-            '<p style="color: #27ae60;">转换成功！</p>' +
+            '<p style="color: #27ae60;">转换完成。</p>' +
             '<a href="' + AUDIO_CONVERTER_OBJECT_URL + '" download="' + fileName +
             '" style="display: inline-block; padding: 10px 20px; background-color: #27ae60; color: white; border-radius: 0; text-decoration: none; margin-top: 10px;">下载 ' +
             formatName + ' 文件</a>'
