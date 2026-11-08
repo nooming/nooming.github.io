@@ -950,6 +950,10 @@
          * @param {SoundBuffer} soundBuffer
          */
         playSound: function (soundBuffer) {
+            if (window.noomingsPrefs && typeof window.noomingsPrefs.getSound === 'function' &&
+                !window.noomingsPrefs.getSound()) {
+                return;
+            }
             if (soundBuffer) {
                 var sourceNode = this.audioContext.createBufferSource();
                 sourceNode.buffer = soundBuffer;

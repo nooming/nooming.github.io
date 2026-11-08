@@ -270,6 +270,7 @@
         var list = visibleEntries(parseEntries());
         if (list.length < 2) {
             if (typeof showToast === 'function') showToast('至少写两项再转。', 'error');
+            if (window.SoundFX) window.SoundFX.play('error');
             textarea.focus();
             return;
         }
@@ -291,11 +292,20 @@
         var start = rotation;
         var duration = REDUCED ? 180 : 3200;
         var startedAt = performance.now();
+        var lastTickAt = 0;
+        var lastSegment = -1;
+        if (window.SoundFX) window.SoundFX.play('click');
 
         function frame(now) {
             var progress = Math.min(1, (now - startedAt) / duration);
             var eased = 1 - Math.pow(1 - progress, 3);
             rotation = start + (target - start) * eased;
+            var segment = Math.floor((((rotation % 360) + 360) % 360) / segDeg);
+            if (segment !== lastSegment && now - lastTickAt > 70 && window.SoundFX) {
+                window.SoundFX.play('tick');
+                lastSegment = segment;
+                lastTickAt = now;
+            }
             draw();
 
             if (progress < 1) {
@@ -313,6 +323,7 @@
 
             setResult(list[winner]);
             addHistory(list[winner]);
+            if (window.SoundFX) window.SoundFX.play('reveal');
 
             if (typeof showToast === 'function') {
                 showToast('抽中：' + list[winner], 'success');

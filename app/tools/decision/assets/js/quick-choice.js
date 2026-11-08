@@ -115,6 +115,7 @@
             resultBox.classList.remove('is-pop');
             void resultBox.offsetWidth;
             resultBox.classList.add('is-pop');
+            if (window.SoundFX) window.SoundFX.play('reveal');
         }
     }
 
@@ -132,6 +133,7 @@
             if (typeof showToast === 'function') {
                 showToast('至少写一项再抽。', 'error');
             }
+            if (window.SoundFX) window.SoundFX.play('error');
             input.focus();
             return;
         }
@@ -146,6 +148,7 @@
         if (typeof copyToClipboard === 'function') {
             copyToClipboard(currentResult, '结果已复制');
         }
+        if (window.SoundFX) window.SoundFX.play('click');
     }
 
     function clearHistory() {

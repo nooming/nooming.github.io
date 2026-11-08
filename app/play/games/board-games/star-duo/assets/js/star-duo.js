@@ -302,6 +302,10 @@ function makeMove(pid, player) {
   f.forEach(fid => { board[fid] = player; });
   boardVer++;
   if (!searchMode) pendingAnim = { pid: pid, player: player, flips: f };
+  if (!searchMode && window.SoundFX) {
+    window.SoundFX.play(f.length > 1 ? 'capture' : 'stone');
+    window.setTimeout(function () { window.SoundFX && window.SoundFX.play('flip'); }, 110);
+  }
   return true;
 }
 function checkWinner() {
@@ -1100,6 +1104,7 @@ function settleGame() {
   skipNote = '';
   history[w === 1 ? 0 : w === 2 ? 1 : 2]++;
   persistHistory();
+  if (window.SoundFX) window.SoundFX.play(w === 0 ? 'draw' : 'win');
   draw();
 }
 function settleTimeout(loser) {
@@ -1110,6 +1115,7 @@ function settleTimeout(loser) {
   skipNote = '';
   history[loser === 1 ? 1 : 0]++;
   persistHistory();
+  if (window.SoundFX) window.SoundFX.play('lose');
   draw();
 }
 function hasMoves(who) {

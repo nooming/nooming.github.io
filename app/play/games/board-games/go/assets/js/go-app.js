@@ -513,6 +513,11 @@
             if (!state.resultShown) {
                 fillResult();
                 state.resultShown = true;
+                if (window.SoundFX && game.result) {
+                    var won = game.result.winner !== 0 &&
+                        (state.mode === 'two' || game.result.winner === state.humanColor);
+                    window.SoundFX.play(game.result.winner === 0 ? 'draw' : (won ? 'win' : 'lose'));
+                }
                 openDialog();
             }
         } else if (state.resultShown) {
@@ -647,7 +652,9 @@
 
             if (!result || result.pass) {
                 game.pass();
+                if (window.SoundFX) window.SoundFX.play('pass');
             } else {
+                var beforeCapture = game.captures[game.toPlay] || 0;
                 var played = game.playIndex(result.index);
                 if (!played.ok) {
                     // 极少数全局同形再现：排除该点后重算一次，仍不合法则弃权
@@ -660,6 +667,10 @@
                     }
                     if (retry && !retry.pass) played = game.playIndex(retry.index);
                     if (!played.ok) game.pass();
+                }
+                if (played && played.ok && window.SoundFX) {
+                    var gained = (game.captures[played.color] || 0) - beforeCapture;
+                    window.SoundFX.play(gained > 0 ? 'capture' : 'stone');
                 }
             }
             refresh();
@@ -714,7 +725,10 @@
         closeDialog();
         clearHint();
         refresh();
-        if (game.history.length !== before) toast('已悔棋', 1600);
+        if (game.history.length !== before) {
+            toast('已悔棋', 1600);
+            if (window.SoundFX) window.SoundFX.play('undo');
+        }
     }
 
     function passTurn() {
@@ -727,6 +741,7 @@
         }
         state.highlightUntil = 0;
         clearHint();
+        if (window.SoundFX) window.SoundFX.play('pass');
         refresh();
         toast('已停一手', 1500);
     }
@@ -748,6 +763,7 @@
             clearTimeout(state.resignTimer);
             state.resignTimer = setTimeout(disarmResign, 3200);
             toast('再点一次确认认输', 1800);
+            if (window.SoundFX) window.SoundFX.play('click');
             return;
         }
 
@@ -820,6 +836,9 @@
         state.highlightUntil = 0;
         state.resultShown = false;
         clearHint();
+        if (window.SoundFX) {
+            window.SoundFX.play(Array.isArray(result.captured) && result.captured.length ? 'capture' : 'stone');
+        }
         refresh();
     }
 

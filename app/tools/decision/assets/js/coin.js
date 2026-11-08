@@ -112,6 +112,7 @@
         flipping = true;
         flipBtn.disabled = true;
         setStatus('抛出中…', '');
+        if (window.SoundFX) window.SoundFX.play('flip');
 
         var face = randomFace();
         var faceDeg = face === 'tails' ? 180 : 0;
@@ -135,6 +136,7 @@
             copyBtn.disabled = false;
             flipBtn.disabled = false;
             flipping = false;
+            if (window.SoundFX) window.SoundFX.play('coin');
         }, REDUCED ? 80 : 1200);
     }
 
@@ -144,6 +146,7 @@
         if (typeof copyToClipboard === 'function') {
             copyToClipboard(text, '结果已复制');
         }
+        if (window.SoundFX) window.SoundFX.play('click');
     }
 
     function reset() {
@@ -162,6 +165,7 @@
         flipping = false;
 
         coin.style.transform = 'rotateY(0deg)';
+        if (window.SoundFX) window.SoundFX.play('click');
         if (typeof showToast === 'function') showToast('已清空统计', 'info');
     }
 

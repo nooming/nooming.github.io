@@ -1164,11 +1164,22 @@
         if (isSiteShell) syncThemeFromDocument();
         const restored = restore();
         if (isSiteShell) syncThemeFromDocument();
+        try {
+            if (localStorage.getItem('noomings_sound') === '0') state.sound = false;
+        } catch (e) { /* ignore */ }
         applyTheme();
         if (soundToggle) {
             soundToggle.setAttribute('aria-pressed', String(state.sound));
             soundToggle.setAttribute('aria-label', state.sound ? '关闭声音' : '开启声音');
         }
+        document.documentElement.addEventListener('noomings:prefs', function (event) {
+            if (!event || !event.detail || typeof event.detail.sound !== 'boolean') return;
+            state.sound = event.detail.sound;
+            if (soundToggle) {
+                soundToggle.setAttribute('aria-pressed', String(state.sound));
+                soundToggle.setAttribute('aria-label', state.sound ? '关闭声音' : '开启声音');
+            }
+        });
         updateUI();
         resizeCanvas();
         scheduleDraw();

@@ -722,8 +722,17 @@
         view = XQ.createBoardView(els.canvas);
         sound = createSound();
         loadPrefs();
+        try {
+            if (localStorage.getItem('noomings_sound') === '0') state.sound = false;
+        } catch (e) { /* ignore */ }
 
         setSound(state.sound);
+        document.documentElement.addEventListener('noomings:prefs', function (event) {
+            if (event && event.detail && typeof event.detail.sound === 'boolean') {
+                state.sound = event.detail.sound;
+                setSound(state.sound);
+            }
+        });
         document.querySelectorAll('.seg[data-mode]').forEach(function (btn) {
             btn.setAttribute('aria-pressed', String(btn.dataset.mode === state.mode));
         });
