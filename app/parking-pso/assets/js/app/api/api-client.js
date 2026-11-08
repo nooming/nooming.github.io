@@ -127,6 +127,15 @@
     watchJob(jobId, onMessage) {
       return new Promise((resolve, reject) => {
         let ws;
+        let settled = false;
+        let timer = null;
+        const finish = (fn, value) => {
+          if (settled) return;
+          settled = true;
+          if (timer) clearTimeout(timer);
+          try { ws && ws.close(); } catch (_) { /* ignore */ }
+          fn(value);
+        };
         try {
           ws = new WebSocket(
             wsUrlFor(PK_PREFIX + "/jobs/" + encodeURIComponent(jobId) + "/stream")
@@ -135,6 +144,7 @@
           reject(e);
           return;
         }
+        timer = setTimeout(() => finish(reject, new Error("websocket timeout")), 180000);
         ws.onmessage = (ev) => {
           let data = {};
           try {
@@ -144,20 +154,15 @@
           }
           if (onMessage) onMessage(data);
           if (data.status === "completed") {
-            ws.close();
-            resolve(data);
+            finish(resolve, data);
           } else if (data.status === "failed" || data.status === "missing") {
-            ws.close();
-            reject(new Error(data.error || data.status || "job failed"));
+            finish(reject, new Error(data.error || data.status || "job failed"));
           }
         };
-        ws.onerror = () => {
-          try {
-            ws.close();
-          } catch (_) {
-            /* ignore */
-          }
-          reject(new Error("websocket error"));
+        ws.onerror = () => finish(reject, new Error("websocket error"));
+        ws.onclose = () => {
+          // 服务端正常关闭 / 断线时，让调用方有机会回退到轮询
+          finish(reject, new Error("websocket closed"));
         };
       });
     },

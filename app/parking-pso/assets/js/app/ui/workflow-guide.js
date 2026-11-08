@@ -19,6 +19,13 @@
       action: "auto-slots",
     },
     {
+      id: "optimize",
+      title: "运行优化",
+      desc: "分配车 → 楼，得到总时间",
+      tab: "overview",
+      action: "optimize",
+    },
+    {
       id: "simulate",
       title: "陆续到达仿真",
       desc: "滚动分配与回放",
@@ -132,6 +139,21 @@
       banner.hidden = false;
     }
     P.updateActionGates?.();
+    P.renderDiagnosis?.();
+    P.updateOverviewStats?.();
+  };
+
+  P.updateOverviewStats = function () {
+    const s = P.scenario;
+    if (!s) return;
+    const set = (id, value) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = String(value);
+    };
+    set("ov-stat-veh", s.n_veh ?? 0);
+    set("ov-stat-slots", Array.isArray(s.slots) ? s.slots.length : 0);
+    set("ov-stat-entrances", Array.isArray(s.entrances) ? s.entrances.length : 0);
+    set("ov-stat-buildings", Array.isArray(s.buildings) ? s.buildings.length : 0);
   };
 
   P.wireWorkflowGuide = function () {

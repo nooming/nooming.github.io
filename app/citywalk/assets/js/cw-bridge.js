@@ -9,12 +9,19 @@
     function readLabel(elId, fallback) {
         const el = document.getElementById(elId);
         const t = el && el.textContent ? String(el.textContent).trim() : '';
-        if (!t || t === '点击地图选择') return fallback || '';
+        if (!t || t === '点击地图选择' || t === '在地图上选择' || t === '探索模式无需终点') {
+            return fallback || '';
+        }
         return t;
     }
 
     function buildRouteTitle(data, startLabel, endLabel) {
         const pois = Array.isArray(data.pois) ? data.pois : [];
+        if (data.mode === 'loop') {
+            if (startLabel) return `${startLabel} 出发 · 环线`;
+            if (pois.length) return `${pois[0].name || '起点'} 出发 · 环线`;
+            return '环线探索';
+        }
         if (startLabel && endLabel && startLabel !== endLabel) {
             return `${startLabel} → ${endLabel}`;
         }
@@ -22,7 +29,7 @@
             return `${pois[0].name || '起点'} → ${pois[pois.length - 1].name || '终点'}`;
         }
         if (pois.length === 1) return pois[0].name || 'Citywalk 路线';
-        return data.mode === 'loop' ? '环线探索' : 'Citywalk 路线';
+        return 'Citywalk 路线';
     }
 
     function buildRoutePayloadFromCW() {

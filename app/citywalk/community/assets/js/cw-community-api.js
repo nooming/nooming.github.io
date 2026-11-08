@@ -2,12 +2,12 @@
  * 社区 UGC API（动态 / 找搭子）
  */
 (function (global) {
-    const PLACEHOLDER_POST_IMAGE = 'assets/images/covers/feed-route.jpg';
+    const PLACEHOLDER_POST_IMAGE = 'assets/images/covers/feed-route.webp';
 
     function apiBase() {
         if (global.CitywalkAuth && CitywalkAuth.CW_API) return CitywalkAuth.CW_API;
         const h = global.location && global.location.hostname;
-        return (h === 'localhost' || h === '127.0.0.1')
+        return (h === 'localhost' || h === '127.0.0.1' || h === '[::1]' || h === '::1')
             ? 'http://localhost:5000/api/citywalk'
             : 'https://noomings-backend.zeabur.app/api/citywalk';
     }

@@ -103,12 +103,25 @@ function switchPanelTab(name, options) {
 }
 
 function initPanelTabs() {
-    document.querySelectorAll('.panel-tabs .panel-tab').forEach((btn) => {
+    const tabs = Array.from(document.querySelectorAll('.panel-tabs .panel-tab'));
+    tabs.forEach((btn, index) => {
         btn.addEventListener('click', () => {
             const tab = btn.dataset.tab;
             if (!tab) return;
             if (tab === 'result' && !CW.resultTabAvailable) return;
             switchPanelTab(tab);
+        });
+        btn.addEventListener('keydown', (e) => {
+            if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+            e.preventDefault();
+            const step = e.key === 'ArrowRight' ? 1 : -1;
+            for (let i = 1; i <= tabs.length; i += 1) {
+                const next = tabs[(index + step * i + tabs.length * 2) % tabs.length];
+                if (!next || next.disabled || next.hidden) continue;
+                next.focus();
+                next.click();
+                break;
+            }
         });
     });
     setResultTabAvailable(false);

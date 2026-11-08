@@ -219,11 +219,17 @@ function removePinnedSeed(index) {
 // ---------- ① 景点增强：出路线后懒加载图片+描述 ----------
 function enrichPoiList(pois) {
     if (!Array.isArray(pois) || pois.length === 0) return;
+    if (!CW.poiEnrichCache) CW.poiEnrichCache = new Map();
     const items = document.querySelectorAll('#poiList .poi-item');
     pois.slice(0, 6).forEach((poi, i) => {
         const item = items[i];
         if (!item || !poi || !Array.isArray(poi.location) || poi.location.length !== 2) return;
-        fetch(`${CW_API}/poi/enrich`, {
+        const cacheKey = [poi.name, CW.currentCity, poi.location[0], poi.location[1]].join('|');
+        if (CW.poiEnrichCache.has(cacheKey)) {
+            renderPoiEnrichment(item, CW.poiEnrichCache.get(cacheKey));
+            return;
+        }
+        cwFetch(`${CW_API}/poi/enrich`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify({
@@ -233,9 +239,14 @@ function enrichPoiList(pois) {
                 lng: poi.location[0],
                 lat: poi.location[1],
             }),
-        })
+        }, 15000)
             .then(r => r.json())
-            .then(data => { if (data && data.success) renderPoiEnrichment(item, data); })
+            .then(data => {
+                if (data && data.success) {
+                    CW.poiEnrichCache.set(cacheKey, data);
+                    renderPoiEnrichment(item, data);
+                }
+            })
             .catch(() => { /* 增强失败静默降级，不影响主流程 */ });
     });
 }
@@ -567,16 +578,23 @@ function renderRecentRoutes() {
             const date = new Date(rec.ts);
             const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
             const isLoop = rec.mode === 'loop';
+            const safeCity = cwEscapeHtml(String(rec.city || ''));
+            const safeStart = cwEscapeHtml(shortPlaceName(rec.startName, 18));
+            const safeEnd = cwEscapeHtml(shortPlaceName(rec.endName, 12));
+            const safeId = cwEscapeHtml(String(rec.id || ''));
+            const safePoi = cwEscapeHtml(String(rec.poiType || '无偏好'));
+            const safeDistance = cwEscapeHtml(String(Number(rec.distanceKm) || 0));
+            const safeCount = cwEscapeHtml(String(Number(rec.poiCount) || 0));
             const title = isLoop
-                ? `${rec.city} · 探索 · ${shortPlaceName(rec.startName, 18)}`
-                : `${rec.city} · ${shortPlaceName(rec.startName, 12)} → ${shortPlaceName(rec.endName, 12)}`;
+                ? `${safeCity} · 探索 · ${safeStart}`
+                : `${safeCity} · ${safeStart} → ${safeEnd}`;
             item.innerHTML = `
-                <button type="button" class="recent-route-fav" data-id="${rec.id}" title="收藏" aria-label="收藏">${rec.fav ? '⭐' : '☆'}</button>
-                <div class="recent-route-main" data-id="${rec.id}" role="button" tabindex="0">
+                <button type="button" class="recent-route-fav" data-id="${safeId}" title="收藏" aria-label="收藏">${rec.fav ? '⭐' : '☆'}</button>
+                <div class="recent-route-main" data-id="${safeId}" role="button" tabindex="0">
                     <div class="recent-route-title">${title}</div>
-                    <div class="recent-route-sub">${rec.poiType || '无偏好'} · ${rec.visitPace === 'relaxed' ? '慢慢逛' : '密集打卡'} · ${rec.distanceKm}km · ${rec.poiCount}点 · ${dateStr}</div>
+                    <div class="recent-route-sub">${safePoi} · ${rec.visitPace === 'relaxed' ? '慢慢逛' : '密集打卡'} · ${safeDistance}km · ${safeCount}点 · ${dateStr}</div>
                 </div>
-                <button type="button" class="recent-route-del" data-id="${rec.id}" title="删除" aria-label="删除">✕</button>`;
+                <button type="button" class="recent-route-del" data-id="${safeId}" title="删除" aria-label="删除">✕</button>`;
             mainList.appendChild(item);
         });
     }

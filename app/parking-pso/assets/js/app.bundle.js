@@ -1,4 +1,4 @@
-/* bundled app from 56 files */
+/* bundled app from 58 files */
 /* --- app\api\api-client.js --- */
 (function () {
   "use strict";
@@ -129,6 +129,15 @@
     watchJob(jobId, onMessage) {
       return new Promise((resolve, reject) => {
         let ws;
+        let settled = false;
+        let timer = null;
+        const finish = (fn, value) => {
+          if (settled) return;
+          settled = true;
+          if (timer) clearTimeout(timer);
+          try { ws && ws.close(); } catch (_) { /* ignore */ }
+          fn(value);
+        };
         try {
           ws = new WebSocket(
             wsUrlFor(PK_PREFIX + "/jobs/" + encodeURIComponent(jobId) + "/stream")
@@ -137,6 +146,7 @@
           reject(e);
           return;
         }
+        timer = setTimeout(() => finish(reject, new Error("websocket timeout")), 180000);
         ws.onmessage = (ev) => {
           let data = {};
           try {
@@ -146,23 +156,334 @@
           }
           if (onMessage) onMessage(data);
           if (data.status === "completed") {
-            ws.close();
-            resolve(data);
+            finish(resolve, data);
           } else if (data.status === "failed" || data.status === "missing") {
-            ws.close();
-            reject(new Error(data.error || data.status || "job failed"));
+            finish(reject, new Error(data.error || data.status || "job failed"));
           }
         };
-        ws.onerror = () => {
-          try {
-            ws.close();
-          } catch (_) {
-            /* ignore */
-          }
-          reject(new Error("websocket error"));
+        ws.onerror = () => finish(reject, new Error("websocket error"));
+        ws.onclose = () => {
+          // 服务端正常关闭 / 断线时，让调用方有机会回退到轮询
+          finish(reject, new Error("websocket closed"));
         };
       });
     },
+  };
+})();
+
+/* --- app\scenario\default-source.js --- */
+(function () {
+  "use strict";
+
+  async function getDefaultScenarioSource(fallbackScenarioFactory) {
+    try {
+      const res = await fetch("assets/data/default-scenario.json", { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return await res.json();
+    } catch (error) {
+      console.warn("default scenario fetch failed, fallback in use", error);
+      return typeof fallbackScenarioFactory === "function" ? fallbackScenarioFactory() : null;
+    }
+  }
+
+  window.ParkingScenarioSource = {
+    getDefaultScenarioSource,
+  };
+})();
+
+/* --- app\storage\state-storage.js --- */
+(function () {
+  "use strict";
+
+  function createStateStorage(config) {
+    const storageKey = String(config.storageKey || "");
+    const debounceMs = Math.max(0, Number(config.debounceMs) || 0);
+    const onPersist = typeof config.onPersist === "function" ? config.onPersist : null;
+    let timer = null;
+
+    function readState() {
+      try {
+        const raw = localStorage.getItem(storageKey);
+        const parsed = raw ? JSON.parse(raw) : null;
+        return parsed && typeof parsed === "object" ? parsed : null;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function persistNow(payload) {
+      if (!payload) return;
+      let ok = false;
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(payload));
+        ok = true;
+      } catch (e) {
+        console.warn("状态保存失败:", e?.message || e);
+      }
+      if (onPersist) {
+        try { onPersist(ok); } catch (_) { /* ignore */ }
+      }
+    }
+
+    function schedule(payloadFactory) {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        timer = null;
+        const payload = typeof payloadFactory === "function" ? payloadFactory() : null;
+        persistNow(payload);
+      }, debounceMs);
+    }
+
+    function clear() {
+      clearTimeout(timer);
+      timer = null;
+      try {
+        localStorage.removeItem(storageKey);
+      } catch (_) {
+        // ignore storage clear errors
+      }
+    }
+
+    return {
+      readState,
+      persistNow,
+      schedule,
+      clear,
+    };
+  }
+
+  function createSnapshotStorage(storageKey, maxItems) {
+    const key = String(storageKey || "");
+    const cap = Math.max(1, Number(maxItems) || 20);
+
+    function readItems() {
+      try {
+        const raw = localStorage.getItem(key);
+        const arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr : [];
+      } catch (_) {
+        return [];
+      }
+    }
+
+    function writeItems(items) {
+      const safe = Array.isArray(items) ? items.slice(0, cap) : [];
+      try {
+        localStorage.setItem(key, JSON.stringify(safe));
+        return { ok: true, count: safe.length };
+      } catch (error) {
+        return {
+          ok: false,
+          count: safe.length,
+          error: error instanceof Error ? error.message : String(error || "unknown storage error"),
+        };
+      }
+    }
+
+    return {
+      readItems,
+      writeItems,
+    };
+  }
+
+  window.ParkingAppStorage = {
+    createStateStorage,
+    createSnapshotStorage,
+  };
+})();
+
+/* --- app\analysis\optimizer-analysis.js --- */
+(function () {
+  "use strict";
+
+  const MAX_BENCHMARK_RUNS = 50;
+
+  function normalizeRuns(rawRuns) {
+    const parsed = Number.parseInt(rawRuns, 10);
+    const safeRuns = Number.isFinite(parsed) ? parsed : 6;
+    return Math.max(1, Math.min(MAX_BENCHMARK_RUNS, safeRuns));
+  }
+
+  function benchmarkText(stats, timeUnit) {
+    if (!stats) return "";
+    return (
+      "Benchmark（" +
+      stats.runs +
+      " 次）\n" +
+      "Exact 平均: " +
+      stats.exactAvg.toFixed(2) +
+      " " +
+      timeUnit +
+      "\nPSO 平均: " +
+      stats.psoAvg.toFixed(2) +
+      " " +
+      timeUnit +
+      "\n平均偏差: " +
+      stats.gapPct.toFixed(2) +
+      "%\nPSO 平均耗时: " +
+      stats.psoMs.toFixed(1) +
+      " ms"
+    );
+  }
+
+  function renderBenchmarkSummary(el, stats, timeUnit) {
+    if (!el || !stats) return;
+    if (el.tagName === "PRE") {
+      el.textContent = benchmarkText(stats, timeUnit);
+      return;
+    }
+    el.innerHTML =
+      '<table class="benchmark-table"><tbody>' +
+      "<tr><th scope=\"row\">次数</th><td>" +
+      stats.runs +
+      "</td></tr>" +
+      "<tr><th scope=\"row\">Exact 平均</th><td>" +
+      stats.exactAvg.toFixed(2) +
+      " " +
+      timeUnit +
+      "</td></tr>" +
+      "<tr><th scope=\"row\">PSO 平均</th><td>" +
+      stats.psoAvg.toFixed(2) +
+      " " +
+      timeUnit +
+      "</td></tr>" +
+      "<tr><th scope=\"row\">平均偏差</th><td class=\"benchmark-gap\">" +
+      stats.gapPct.toFixed(2) +
+      "%</td></tr>" +
+      "<tr><th scope=\"row\">PSO 耗时</th><td>" +
+      stats.psoMs.toFixed(1) +
+      " ms</td></tr>" +
+      "</tbody></table>";
+  }
+
+  function runBenchmark(deps) {
+    const {
+      scenario,
+      optimizer,
+      normalizeOptimizeResult,
+      runs,
+      baseSeed,
+      outputEl,
+      timeUnit,
+    } = deps;
+    if (!scenario || !optimizer) return null;
+    const exactVals = [];
+    const psoVals = [];
+    const psoMs = [];
+    const safeRuns = normalizeRuns(runs);
+    for (let i = 0; i < safeRuns; i++) {
+      const base = JSON.parse(JSON.stringify(scenario));
+      const exact = normalizeOptimizeResult(optimizer.runOptimize(base, { method: "exact" }), "exact", scenario);
+      const t0 = performance.now();
+      const pso = normalizeOptimizeResult(
+        optimizer.runOptimize(base, { method: "pso", seed: baseSeed + i }),
+        "pso",
+        scenario
+      );
+      const t1 = performance.now();
+      if (Number.isFinite(exact.gbest_value) && Number.isFinite(pso.gbest_value)) {
+        exactVals.push(exact.gbest_value);
+        psoVals.push(pso.gbest_value);
+        psoMs.push(t1 - t0);
+      }
+    }
+    if (!exactVals.length) return null;
+    const avg = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
+    const stats = {
+      runs: exactVals.length,
+      exactAvg: avg(exactVals),
+      psoAvg: avg(psoVals),
+      gapPct: ((avg(psoVals) - avg(exactVals)) / Math.max(1e-6, avg(exactVals))) * 100,
+      psoMs: avg(psoMs),
+    };
+    if (outputEl) renderBenchmarkSummary(outputEl, stats, timeUnit);
+    return stats;
+  }
+
+  function recommendParams(deps) {
+    const {
+      scenario,
+      optimizer,
+      normalizeOptimizeResult,
+      seed,
+      outputEl,
+      timeUnit,
+    } = deps;
+    if (!scenario || !optimizer) return null;
+    const exact = normalizeOptimizeResult(
+      optimizer.runOptimize(JSON.parse(JSON.stringify(scenario)), { method: "exact" }),
+      "exact",
+      scenario
+    );
+    if (!Number.isFinite(exact.gbest_value)) return null;
+    const candidates = [
+      { label: "速度优先", n_particles: 18, n_iter: 180 },
+      { label: "平衡", n_particles: 30, n_iter: 320 },
+      { label: "精度优先", n_particles: 45, n_iter: 650 },
+    ];
+    const rows = candidates.map((cfg, idx) => {
+      const base = JSON.parse(JSON.stringify(scenario));
+      base.pso = {
+        ...base.pso,
+        n_particles: cfg.n_particles,
+        n_iter: cfg.n_iter,
+      };
+      const t0 = performance.now();
+      const res = normalizeOptimizeResult(
+        optimizer.runOptimize(base, { method: "pso", seed: seed + idx }),
+        "pso",
+        scenario
+      );
+      const dt = performance.now() - t0;
+      const gap = ((res.gbest_value - exact.gbest_value) / Math.max(1e-6, exact.gbest_value)) * 100;
+      return { ...cfg, val: res.gbest_value, gap, ms: dt };
+    });
+    const best = rows.slice().sort((a, b) => a.gap - b.gap || a.ms - b.ms)[0];
+    if (outputEl) {
+      outputEl.textContent = rows
+        .map(
+          (r) =>
+            r.label +
+            ": " +
+            r.val.toFixed(2) +
+            " " +
+            timeUnit +
+            "，偏差 " +
+            r.gap.toFixed(2) +
+            "%，耗时 " +
+            r.ms.toFixed(1) +
+            " ms"
+        )
+        .join("\n") + "\n建议：默认使用「" + best.label + "」配置。";
+    }
+    return { rows, best };
+  }
+
+  window.ParkingAnalysis = {
+    MAX_BENCHMARK_RUNS,
+    normalizeRuns,
+    benchmarkText,
+    renderBenchmarkSummary,
+    runBenchmark,
+    recommendParams,
+  };
+})();
+
+/* --- app\ui\tab-utils.js --- */
+(function () {
+  "use strict";
+
+  function applyTabState(tabKey) {
+    document.querySelectorAll(".side-tab").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.tab === tabKey);
+    });
+    document.querySelectorAll(".tab-panel").forEach((panel) => {
+      panel.classList.toggle("is-active", panel.dataset.tabPanel === tabKey);
+    });
+  }
+
+  window.ParkingTabUtils = {
+    applyTabState,
   };
 })();
 
@@ -256,6 +577,7 @@
     lastResult: null,
     SNAPSHOT_STORAGE_KEY: "parking-pso-snapshots-v1",
     CURRENT_STATE_STORAGE_KEY: "parking-pso-current-state-v1",
+    STATE_SCHEMA_VERSION: 2,
     currentStateStore: null,
     snapshotStore: null,
     MAX_BENCHMARK_RUNS: 50,
@@ -304,12 +626,21 @@
     ? P.storageFactory.createStateStorage({
         storageKey: P.CURRENT_STATE_STORAGE_KEY,
         debounceMs: 450,
+        onPersist: (ok) => P.markAutosaved?.(ok),
       })
     : null;
   P.snapshotStore = P.storageFactory?.createSnapshotStorage
     ? P.storageFactory.createSnapshotStorage(P.SNAPSHOT_STORAGE_KEY, 20)
     : null;
   P.MAX_BENCHMARK_RUNS = P.analysisTools?.MAX_BENCHMARK_RUNS || 50;
+
+  P.escapeHtml = function (value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  };
 
   P._closestPointOnSegment = function (px, py, x1, y1, x2, y2) {
     if (P.geometry?.closestPointOnSegment) {
@@ -354,26 +685,6 @@
 
   window.ParkingAppState = P;
   window.ParkingApp = P;
-})();
-
-/* --- app\scenario\default-source.js --- */
-(function () {
-  "use strict";
-
-  async function getDefaultScenarioSource(fallbackScenarioFactory) {
-    try {
-      const res = await fetch("assets/data/default-scenario.json", { cache: "no-store" });
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      return await res.json();
-    } catch (error) {
-      console.warn("default scenario fetch failed, fallback in use", error);
-      return typeof fallbackScenarioFactory === "function" ? fallbackScenarioFactory() : null;
-    }
-  }
-
-  window.ParkingScenarioSource = {
-    getDefaultScenarioSource,
-  };
 })();
 
 /* --- app\scenario\scenario-presets.js --- */
@@ -1598,101 +1909,6 @@ P.sanitizeScenarioGeometry = function () {
   }
 })();
 
-/* --- app\storage\state-storage.js --- */
-(function () {
-  "use strict";
-
-  function createStateStorage(config) {
-    const storageKey = String(config.storageKey || "");
-    const debounceMs = Math.max(0, Number(config.debounceMs) || 0);
-    let timer = null;
-
-    function readState() {
-      try {
-        const raw = localStorage.getItem(storageKey);
-        const parsed = raw ? JSON.parse(raw) : null;
-        return parsed && typeof parsed === "object" ? parsed : null;
-      } catch (_) {
-        return null;
-      }
-    }
-
-    function persistNow(payload) {
-      if (!payload) return;
-      try {
-        localStorage.setItem(storageKey, JSON.stringify(payload));
-      } catch (e) {
-        console.warn("状态保存失败:", e?.message || e);
-      }
-    }
-
-    function schedule(payloadFactory) {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        timer = null;
-        const payload = typeof payloadFactory === "function" ? payloadFactory() : null;
-        persistNow(payload);
-      }, debounceMs);
-    }
-
-    function clear() {
-      clearTimeout(timer);
-      timer = null;
-      try {
-        localStorage.removeItem(storageKey);
-      } catch (_) {
-        // ignore storage clear errors
-      }
-    }
-
-    return {
-      readState,
-      persistNow,
-      schedule,
-      clear,
-    };
-  }
-
-  function createSnapshotStorage(storageKey, maxItems) {
-    const key = String(storageKey || "");
-    const cap = Math.max(1, Number(maxItems) || 20);
-
-    function readItems() {
-      try {
-        const raw = localStorage.getItem(key);
-        const arr = raw ? JSON.parse(raw) : [];
-        return Array.isArray(arr) ? arr : [];
-      } catch (_) {
-        return [];
-      }
-    }
-
-    function writeItems(items) {
-      const safe = Array.isArray(items) ? items.slice(0, cap) : [];
-      try {
-        localStorage.setItem(key, JSON.stringify(safe));
-        return { ok: true, count: safe.length };
-      } catch (error) {
-        return {
-          ok: false,
-          count: safe.length,
-          error: error instanceof Error ? error.message : String(error || "unknown storage error"),
-        };
-      }
-    }
-
-    return {
-      readItems,
-      writeItems,
-    };
-  }
-
-  window.ParkingAppStorage = {
-    createStateStorage,
-    createSnapshotStorage,
-  };
-})();
-
 /* --- app\storage\scenario-io.js --- */
 (function () {
   "use strict";
@@ -1700,12 +1916,29 @@ P.sanitizeScenarioGeometry = function () {
   if (!P) throw new Error("ParkingApp missing: app/storage/scenario-io.js");
 
 P.readCurrentState = function () {
-    return P.currentStateStore?.readState ? P.currentStateStore.readState() : null;
+    const state = P.currentStateStore?.readState ? P.currentStateStore.readState() : null;
+    if (state && !state.schemaVersion) state.schemaVersion = 1;
+    return state;
+  }
+
+P.markAutosaved = function (ok) {
+    const el = document.getElementById("autosave-status");
+    if (!el) return;
+    if (!ok) {
+      el.textContent = "自动保存失败，请导出备份";
+      el.dataset.state = "error";
+      return;
+    }
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    el.textContent = "已自动保存 " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+    el.dataset.state = "saved";
   }
 
 P.persistCurrentStateNow = function () {
     if (!P.scenario || !P.optimizer || typeof P.optimizer.normalizeScenario !== "function") return;
     const payload = {
+      schemaVersion: P.STATE_SCHEMA_VERSION || 2,
       scenario: P.scenario,
       activeTab: P.activeTab,
       vehiclePage: P.vehiclePage,
@@ -1717,6 +1950,7 @@ P.persistCurrentStateNow = function () {
 
 P.schedulePersistCurrentState = function () {
     P.currentStateStore?.schedule?.(() => ({
+      schemaVersion: P.STATE_SCHEMA_VERSION || 2,
       scenario: P.scenario,
       activeTab: P.activeTab,
       vehiclePage: P.vehiclePage,
@@ -1903,201 +2137,6 @@ P.recommendParams = function () {
   }
 })();
 
-/* --- app\analysis\optimizer-analysis.js --- */
-(function () {
-  "use strict";
-
-  const MAX_BENCHMARK_RUNS = 50;
-
-  function normalizeRuns(rawRuns) {
-    const parsed = Number.parseInt(rawRuns, 10);
-    const safeRuns = Number.isFinite(parsed) ? parsed : 6;
-    return Math.max(1, Math.min(MAX_BENCHMARK_RUNS, safeRuns));
-  }
-
-  function benchmarkText(stats, timeUnit) {
-    if (!stats) return "";
-    return (
-      "Benchmark（" +
-      stats.runs +
-      " 次）\n" +
-      "Exact 平均: " +
-      stats.exactAvg.toFixed(2) +
-      " " +
-      timeUnit +
-      "\nPSO 平均: " +
-      stats.psoAvg.toFixed(2) +
-      " " +
-      timeUnit +
-      "\n平均偏差: " +
-      stats.gapPct.toFixed(2) +
-      "%\nPSO 平均耗时: " +
-      stats.psoMs.toFixed(1) +
-      " ms"
-    );
-  }
-
-  function renderBenchmarkSummary(el, stats, timeUnit) {
-    if (!el || !stats) return;
-    if (el.tagName === "PRE") {
-      el.textContent = benchmarkText(stats, timeUnit);
-      return;
-    }
-    el.innerHTML =
-      '<table class="benchmark-table"><tbody>' +
-      "<tr><th scope=\"row\">次数</th><td>" +
-      stats.runs +
-      "</td></tr>" +
-      "<tr><th scope=\"row\">Exact 平均</th><td>" +
-      stats.exactAvg.toFixed(2) +
-      " " +
-      timeUnit +
-      "</td></tr>" +
-      "<tr><th scope=\"row\">PSO 平均</th><td>" +
-      stats.psoAvg.toFixed(2) +
-      " " +
-      timeUnit +
-      "</td></tr>" +
-      "<tr><th scope=\"row\">平均偏差</th><td class=\"benchmark-gap\">" +
-      stats.gapPct.toFixed(2) +
-      "%</td></tr>" +
-      "<tr><th scope=\"row\">PSO 耗时</th><td>" +
-      stats.psoMs.toFixed(1) +
-      " ms</td></tr>" +
-      "</tbody></table>";
-  }
-
-  function runBenchmark(deps) {
-    const {
-      scenario,
-      optimizer,
-      normalizeOptimizeResult,
-      runs,
-      baseSeed,
-      outputEl,
-      timeUnit,
-    } = deps;
-    if (!scenario || !optimizer) return null;
-    const exactVals = [];
-    const psoVals = [];
-    const psoMs = [];
-    const safeRuns = normalizeRuns(runs);
-    for (let i = 0; i < safeRuns; i++) {
-      const base = JSON.parse(JSON.stringify(scenario));
-      const exact = normalizeOptimizeResult(optimizer.runOptimize(base, { method: "exact" }), "exact", scenario);
-      const t0 = performance.now();
-      const pso = normalizeOptimizeResult(
-        optimizer.runOptimize(base, { method: "pso", seed: baseSeed + i }),
-        "pso",
-        scenario
-      );
-      const t1 = performance.now();
-      if (Number.isFinite(exact.gbest_value) && Number.isFinite(pso.gbest_value)) {
-        exactVals.push(exact.gbest_value);
-        psoVals.push(pso.gbest_value);
-        psoMs.push(t1 - t0);
-      }
-    }
-    if (!exactVals.length) return null;
-    const avg = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
-    const stats = {
-      runs: exactVals.length,
-      exactAvg: avg(exactVals),
-      psoAvg: avg(psoVals),
-      gapPct: ((avg(psoVals) - avg(exactVals)) / Math.max(1e-6, avg(exactVals))) * 100,
-      psoMs: avg(psoMs),
-    };
-    if (outputEl) renderBenchmarkSummary(outputEl, stats, timeUnit);
-    return stats;
-  }
-
-  function recommendParams(deps) {
-    const {
-      scenario,
-      optimizer,
-      normalizeOptimizeResult,
-      seed,
-      outputEl,
-      timeUnit,
-    } = deps;
-    if (!scenario || !optimizer) return null;
-    const exact = normalizeOptimizeResult(
-      optimizer.runOptimize(JSON.parse(JSON.stringify(scenario)), { method: "exact" }),
-      "exact",
-      scenario
-    );
-    if (!Number.isFinite(exact.gbest_value)) return null;
-    const candidates = [
-      { label: "速度优先", n_particles: 18, n_iter: 180 },
-      { label: "平衡", n_particles: 30, n_iter: 320 },
-      { label: "精度优先", n_particles: 45, n_iter: 650 },
-    ];
-    const rows = candidates.map((cfg, idx) => {
-      const base = JSON.parse(JSON.stringify(scenario));
-      base.pso = {
-        ...base.pso,
-        n_particles: cfg.n_particles,
-        n_iter: cfg.n_iter,
-      };
-      const t0 = performance.now();
-      const res = normalizeOptimizeResult(
-        optimizer.runOptimize(base, { method: "pso", seed: seed + idx }),
-        "pso",
-        scenario
-      );
-      const dt = performance.now() - t0;
-      const gap = ((res.gbest_value - exact.gbest_value) / Math.max(1e-6, exact.gbest_value)) * 100;
-      return { ...cfg, val: res.gbest_value, gap, ms: dt };
-    });
-    const best = rows.slice().sort((a, b) => a.gap - b.gap || a.ms - b.ms)[0];
-    if (outputEl) {
-      outputEl.textContent = rows
-        .map(
-          (r) =>
-            r.label +
-            ": " +
-            r.val.toFixed(2) +
-            " " +
-            timeUnit +
-            "，偏差 " +
-            r.gap.toFixed(2) +
-            "%，耗时 " +
-            r.ms.toFixed(1) +
-            " ms"
-        )
-        .join("\n") + "\n建议：默认使用「" + best.label + "」配置。";
-    }
-    return { rows, best };
-  }
-
-  window.ParkingAnalysis = {
-    MAX_BENCHMARK_RUNS,
-    normalizeRuns,
-    benchmarkText,
-    renderBenchmarkSummary,
-    runBenchmark,
-    recommendParams,
-  };
-})();
-
-/* --- app\ui\tab-utils.js --- */
-(function () {
-  "use strict";
-
-  function applyTabState(tabKey) {
-    document.querySelectorAll(".side-tab").forEach((btn) => {
-      btn.classList.toggle("is-active", btn.dataset.tab === tabKey);
-    });
-    document.querySelectorAll(".tab-panel").forEach((panel) => {
-      panel.classList.toggle("is-active", panel.dataset.tabPanel === tabKey);
-    });
-  }
-
-  window.ParkingTabUtils = {
-    applyTabState,
-  };
-})();
-
 /* --- app\ui\workspace-status.js --- */
 (function () {
   "use strict";
@@ -2197,6 +2236,9 @@ P.switchTab = function (tabKey) {
         if (P.simState?.timeline) P.drawSimQueueChart?.(P.simState.timeline);
       });
       P.draw();
+    } else if (P.activeTab === "vehicle") {
+      // 自动入口预览很重（exact 优化），进入车辆页再算，避免首屏 1s 长任务
+      if (!P.lastResult && !P.autoEntrancePreview) P.scheduleAutoEntrancePreviewRefresh?.();
     } else {
       const warm = document.getElementById("sim-warm-status");
       if (warm) warm.hidden = true;
@@ -2545,6 +2587,11 @@ P.invalidateOptimizationResult = function () {
 
   P.renderPropsBuilding = function () {
     const [x, y] = P.scenario.buildings[P.selection.index];
+    const afterGeometryEdit = () => {
+      P.invalidateOptimizationResult();
+      P.commitSceneGeometry();
+      P.draw();
+    };
     P.propsAddNum("楼中心 X (" + P.uLen() + ")", "p-bx", x, () => {
       const v = P.clampBuildingCenter(
         parseFloat(document.getElementById("p-bx").value) || 0,
@@ -2553,7 +2600,7 @@ P.invalidateOptimizationResult = function () {
       if (P.canPlaceBuilding(v.wx, v.wy, P.selection.index)) {
         P.scenario.buildings[P.selection.index][0] = v.wx;
       }
-      P.draw();
+      afterGeometryEdit();
     });
     P.propsAddNum("楼中心 Y (" + P.uLen() + ")", "p-by", y, () => {
       const v = P.clampBuildingCenter(
@@ -2563,7 +2610,7 @@ P.invalidateOptimizationResult = function () {
       if (P.canPlaceBuilding(v.wx, v.wy, P.selection.index)) {
         P.scenario.buildings[P.selection.index][1] = v.wy;
       }
-      P.draw();
+      afterGeometryEdit();
     });
   };
 })();
@@ -2584,6 +2631,8 @@ P.invalidateOptimizationResult = function () {
       P.scenario.slots[idx][0] = parseFloat(document.getElementById("p-sx").value) || 0;
       P.scenario.slots[idx][1] = parseFloat(document.getElementById("p-sy").value) || 0;
       if (!P.applySnapToSlot(idx)) return;
+      P.invalidateOptimizationResult();
+      P.commitSceneGeometry();
       P.renderProps();
       P.draw();
     };
@@ -2592,6 +2641,8 @@ P.invalidateOptimizationResult = function () {
     P.propsAddNum("车位角度 (deg)", "p-st", (P.normalizeAngle(pose.theta) * 180) / Math.PI, () => {
       const deg = parseFloat(document.getElementById("p-st").value) || 0;
       P.scenario.slots[idx][2] = P.normalizeAngle((deg * Math.PI) / 180);
+      P.invalidateOptimizationResult();
+      P.commitSceneGeometry();
       P.draw();
     });
     P.ensureConstraints();
@@ -2615,6 +2666,7 @@ P.invalidateOptimizationResult = function () {
     sel.addEventListener("change", () => {
       P.scenario.slot_types[idx] = sel.value;
       P.invalidateOptimizationResult();
+      P.commitSceneGeometry();
       P.draw();
     });
     wrap.appendChild(lab);
@@ -2855,6 +2907,14 @@ P.rebuildVehicleTargetsUI = function () {
     const modeEl = document.getElementById("entrance-mode");
     if (modeEl) modeEl.value = P.scenario.entrance_mode || "auto";
     el.innerHTML = "";
+    const head = document.createElement("div");
+    head.className = "vehicle-target-head";
+    head.setAttribute("aria-hidden", "true");
+    head.innerHTML =
+      "<span>车号</span><span>目的楼</span><span>入口</span><span>需求</span><span>" +
+      arrivalLab +
+      "</span>";
+    el.appendChild(head);
     for (let i = start; i < end; i++) {
       const row = document.createElement("div");
       row.className = "vehicle-target-row";
@@ -2877,6 +2937,7 @@ P.rebuildVehicleTargetsUI = function () {
       }
       const sel = document.createElement("select");
       sel.id = "veh-dest-" + i;
+      sel.setAttribute("aria-label", "车 " + (i + 1) + " 目的楼");
       if (nb === 0) {
         const opt = document.createElement("option");
         opt.value = "0";
@@ -2905,6 +2966,7 @@ P.rebuildVehicleTargetsUI = function () {
       elab.setAttribute("for", "veh-ent-" + i);
       const eSel = document.createElement("select");
       eSel.id = "veh-ent-" + i;
+      eSel.setAttribute("aria-label", "车 " + (i + 1) + " 入口");
       for (let ei = 0; ei < ne; ei++) {
         const opt = document.createElement("option");
         opt.value = String(ei);
@@ -2945,6 +3007,7 @@ P.rebuildVehicleTargetsUI = function () {
       rlab.setAttribute("for", "veh-req-" + i);
       const rSel = document.createElement("select");
       rSel.id = "veh-req-" + i;
+      rSel.setAttribute("aria-label", "车 " + (i + 1) + " 需求");
       ["normal", "accessible", "ev", "visitor"].forEach((t) => {
         const opt = document.createElement("option");
         opt.value = t;
@@ -2968,6 +3031,7 @@ P.rebuildVehicleTargetsUI = function () {
       aIn.min = "0";
       aIn.step = "0.5";
       aIn.className = "vehicle-arrival-input";
+      aIn.setAttribute("aria-label", "车 " + (i + 1) + " " + arrivalLab);
       const av = P.scenario.vehicle_arrival_sec[i];
       aIn.value = String(Number.isFinite(Number(av)) ? Number(av) : i * 2);
       aIn.title =
@@ -3588,14 +3652,44 @@ P.runOptimize = async function () {
   P.apiOnline = false;
 
   const STATUS_STATES = ["api-status--pending", "api-status--online", "api-status--offline"];
+  const MOBILE_QUERY = "(max-width: 600px)";
+  let lastText = "检查 API…";
+  let lastState = "pending";
+
+  function isMobile() {
+    return typeof window.matchMedia === "function" && window.matchMedia(MOBILE_QUERY).matches;
+  }
+
+  function compactText(text) {
+    if (!text) return text;
+    if (text.indexOf("检查") === 0) return "检查中";
+    if (text.indexOf("离线") === 0) return "离线";
+    if (text === "在线") return "在线";
+    return text;
+  }
 
   function applyApiStatusUi(el, text, state) {
     if (!el) return;
+    lastText = text;
+    lastState = state;
     const label = el.querySelector(".app-topbar__status-label");
-    if (label) label.textContent = text;
-    else el.textContent = text;
+    const shown = isMobile() ? compactText(text) : text;
+    if (label) label.textContent = shown;
+    else el.textContent = shown;
+    el.title = text;
     el.classList.remove(...STATUS_STATES);
     el.classList.add("api-status--" + state);
+  }
+
+  function repaintApiStatus() {
+    const el = document.getElementById("api-status");
+    if (el) applyApiStatusUi(el, lastText, lastState);
+  }
+
+  if (typeof window.matchMedia === "function") {
+    const mq = window.matchMedia(MOBILE_QUERY);
+    if (typeof mq.addEventListener === "function") mq.addEventListener("change", repaintApiStatus);
+    else if (typeof mq.addListener === "function") mq.addListener(repaintApiStatus);
   }
 
   P.refreshApiStatus = async function () {
@@ -3819,7 +3913,7 @@ P.runOptimize = async function () {
       const m = plan.metrics || {};
       card.innerHTML =
         "<strong>" +
-        plan.name +
+        P.escapeHtml(plan.name) +
         "</strong>" +
         '<div class="plan-card-metrics">' +
         (m.gbest_value != null ? "总时间 " + m.gbest_value.toFixed(1) + " s · " : "") +
@@ -3842,6 +3936,7 @@ P.runOptimize = async function () {
       cmpChk.className = "plan-compare-chk";
       cmpChk.dataset.planId = plan.id;
       cmpChk.title = "加入对比";
+      cmpChk.setAttribute("aria-label", "将 " + plan.name + " 加入对比");
       cmpChk.addEventListener("change", () => P.renderComparePanel?.());
       actions.appendChild(loadBtn);
       actions.appendChild(delBtn);
@@ -3927,7 +4022,7 @@ P.runOptimize = async function () {
 
     plans = plans.slice(0, 4);
     let html = '<table class="compare-data"><thead><tr><th>指标</th>';
-    for (const p of plans) html += "<th>" + p.name + "</th>";
+    for (const p of plans) html += "<th>" + P.escapeHtml(p.name) + "</th>";
     html += "</tr></thead><tbody>";
     for (const mk of METRIC_KEYS) {
       html += "<tr><td>" + mk.label + "</td>";
@@ -4251,7 +4346,7 @@ P.runOptimize = async function () {
       console.warn("suggest plans failed", e);
     }
     list.innerHTML =
-      '<p class="panel-note">后端不可用。请启动 <code>noomings_backend</code>（<code>python app.py</code>）并配置 <code>PARKING_API_BASE</code> 后重试。</p>';
+      '<p class="panel-note">在线服务暂不可用 · 当前使用本地缓存，云端方案与保存暂不可用。</p>';
   };
 })();
 
@@ -4434,6 +4529,13 @@ P.runOptimize = async function () {
       action: "auto-slots",
     },
     {
+      id: "optimize",
+      title: "运行优化",
+      desc: "分配车 → 楼，得到总时间",
+      tab: "overview",
+      action: "optimize",
+    },
+    {
       id: "simulate",
       title: "陆续到达仿真",
       desc: "滚动分配与回放",
@@ -4547,6 +4649,21 @@ P.runOptimize = async function () {
       banner.hidden = false;
     }
     P.updateActionGates?.();
+    P.renderDiagnosis?.();
+    P.updateOverviewStats?.();
+  };
+
+  P.updateOverviewStats = function () {
+    const s = P.scenario;
+    if (!s) return;
+    const set = (id, value) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = String(value);
+    };
+    set("ov-stat-veh", s.n_veh ?? 0);
+    set("ov-stat-slots", Array.isArray(s.slots) ? s.slots.length : 0);
+    set("ov-stat-entrances", Array.isArray(s.entrances) ? s.entrances.length : 0);
+    set("ov-stat-buildings", Array.isArray(s.buildings) ? s.buildings.length : 0);
   };
 
   P.wireWorkflowGuide = function () {
@@ -4625,6 +4742,181 @@ P.runOptimize = async function () {
       playSim.title = hasTimeline ? "" : "需先运行仿真";
     }
     P.syncSimToolbarVisibility?.();
+  };
+})();
+
+/* --- app\ui\diagnosis.js --- */
+(function () {
+  "use strict";
+  const P = window.ParkingApp;
+  if (!P) throw new Error("ParkingApp missing: app/ui/diagnosis.js");
+
+  function issue(text, level, action, actionLabel) {
+    return { text, level, action, actionLabel };
+  }
+
+  P.renderDiagnosis = function () {
+    const list = document.getElementById("diagnosis-list");
+    const scoreEl = document.getElementById("diagnosis-score");
+    if (!list) return;
+    const s = P.scenario;
+    if (!s) {
+      list.innerHTML = "";
+      if (scoreEl) scoreEl.textContent = "—";
+      return;
+    }
+    const slots = s.slots?.length || 0;
+    const entrances = s.entrances?.length || 0;
+    const buildings = s.buildings?.length || 0;
+    const roadPts = s.road?.centerline?.length || 0;
+    const nVeh = Math.max(1, parseInt(s.n_veh, 10) || 1);
+    const issues = [];
+    let score = 0;
+
+    if (roadPts >= 2) score += 20;
+    else issues.push(issue("还没有完整道路，先画一条道路。", "high", "scene", "去画道路"));
+    if (entrances >= 1) score += 20;
+    else issues.push(issue("没有入口，车辆无法进场。", "high", "entrance", "加入口"));
+    if (buildings >= 1) score += 20;
+    else issues.push(issue("还没有居民楼，无法分配目的地。", "high", "building", "加居民楼"));
+    if (slots >= nVeh) score += 20;
+    else {
+      const miss = nVeh - slots;
+      score += Math.round(20 * Math.min(1, slots / nVeh));
+      issues.push(issue(`车位 ${slots} / 车辆 ${nVeh}，还差 ${miss} 个。`, "high", "slots", "自动补位"));
+    }
+    const hasResult = !!(P.lastResult && (P.lastResult.assign?.length || P.lastResult.gbest_value != null));
+    if (hasResult) score += 20;
+    else issues.push(issue("还没有运行优化，先算出车 → 楼分配。", "medium", "optimize", "运行优化"));
+
+    if (slots > nVeh * 2 && slots - nVeh >= 6) {
+      issues.push(issue(`车位比车辆多 ${slots - nVeh} 个，可能造成空间冗余。`, "info", "slots", "调整布位"));
+    }
+    if (entrances > 4) {
+      issues.push(issue(`入口 ${entrances} 个，仿真时车流会被分散；可对照单入口方案。`, "info", null, ""));
+    }
+    if (hasResult && P.lastResult?.vehicle_breakdown?.length) {
+      const bd = P.lastResult.vehicle_breakdown;
+      const avg = bd.reduce((sum, item) => sum + (Number(item.total_time) || 0), 0) / Math.max(1, bd.length);
+      if (avg > 900) {
+        issues.push(issue(`优化后平均总时长约 ${Math.round(avg)} s，可调整入口或车位位置再算。`, "info", "result", "查看结果"));
+      }
+    }
+
+    list.innerHTML = "";
+    if (!issues.length) {
+      const li = document.createElement("li");
+      li.className = "diagnosis-item diagnosis-item--ok";
+      li.textContent = hasResult ? "场景完整，优化结果已生成。" : "场景完整，可以直接运行优化。";
+      list.appendChild(li);
+    }
+    issues.forEach((item) => {
+      const li = document.createElement("li");
+      li.className = "diagnosis-item diagnosis-item--" + item.level;
+      const text = document.createElement("span");
+      text.textContent = item.text;
+      li.appendChild(text);
+      if (item.action) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = item.actionLabel || "处理";
+        btn.addEventListener("click", () => runAction(item.action));
+        li.appendChild(btn);
+      }
+      list.appendChild(li);
+    });
+
+    if (scoreEl) {
+      scoreEl.textContent = score + " / 100";
+      scoreEl.className = "diagnosis-score " + (score >= 80 ? "is-good" : score >= 50 ? "is-warn" : "is-bad");
+    }
+  };
+
+  function runAction(action) {
+    if (action === "scene" || action === "entrance" || action === "building") {
+      P.switchTab?.("scene");
+      const id = action === "entrance"
+        ? "btn-add-entrance"
+        : action === "building"
+          ? "btn-add-building"
+          : "btn-add-road";
+      const btn = document.getElementById(id);
+      if (btn) {
+        btn.scrollIntoView({ block: "center", behavior: "smooth" });
+        btn.focus({ preventScroll: true });
+      }
+      return;
+    }
+    if (action === "slots") {
+      P.switchTab?.("scene");
+      const count = document.getElementById("auto-slot-count");
+      const n = Math.max(1, parseInt(P.scenario?.n_veh, 10) || 1);
+      if (count) count.value = String(n);
+      const btn = document.getElementById("btn-auto-slots");
+      if (btn) {
+        btn.scrollIntoView({ block: "center", behavior: "smooth" });
+        btn.focus({ preventScroll: true });
+      }
+      return;
+    }
+    if (action === "optimize") {
+      P.switchTab?.("overview");
+      document.querySelector(".js-run-optimize")?.click();
+      return;
+    }
+    if (action === "result") {
+      P.switchTab?.("simulate");
+    }
+  }
+
+  P.copyPlanSummary = async function () {
+    const s = P.scenario;
+    if (!s) return;
+    const r = P.lastResult;
+    const bd = Array.isArray(r?.vehicle_breakdown) ? r.vehicle_breakdown : [];
+    const sum = (key) => bd.reduce((n, item) => n + (Number(item?.[key]) || 0), 0);
+    const lines = [
+      "停车方案摘要",
+      `地块：${Math.round(P.lotW?.() ?? s.lot?.width ?? 0)} × ${Math.round(P.lotH?.() ?? s.lot?.height ?? 0)} m`,
+      `车辆：${s.n_veh ?? 0} · 车位：${s.slots?.length || 0} · 入口：${s.entrances?.length || 0} · 居民楼：${s.buildings?.length || 0}`,
+    ];
+    if (r) {
+      lines.push(`优化：${r.optimizer || "exact"} · 总时间：${Number(r.gbest_value ?? 0).toFixed(1)} s`);
+      if (bd.length) {
+        lines.push(`行车：${sum("drive_time").toFixed(1)} s · 步行：${sum("walk_time").toFixed(1)} s · 平均：${(sum("total_time") / bd.length).toFixed(1)} s`);
+      }
+    } else {
+      lines.push("优化：尚未运行");
+    }
+    lines.push(`时间：${new Date().toLocaleString()}`);
+    const text = lines.join("\n");
+    let copied = false;
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        copied = true;
+      }
+    } catch (_) { /* fallback below */ }
+    if (!copied) {
+      try {
+        const area = document.createElement("textarea");
+        area.value = text;
+        area.setAttribute("readonly", "");
+        area.style.position = "fixed";
+        area.style.opacity = "0";
+        document.body.appendChild(area);
+        area.select();
+        copied = document.execCommand("copy");
+        area.remove();
+      } catch (_) {
+        copied = false;
+      }
+    }
+    if (copied) {
+      P.showWorkspaceMessage?.("方案摘要已复制，可直接粘贴到消息或文档。", { level: "info" });
+    } else {
+      P.showWorkspaceMessage?.("当前浏览器不允许自动复制，请用「导出 JSON」备份。", { level: "warn" });
+    }
   };
 })();
 
@@ -4889,6 +5181,7 @@ P.runOptimize = async function () {
         return { kind: "raw", raw: job.result };
       }
       if (job.status === "failed") throw new Error(job.error || "job failed");
+      if (job.status === "missing") throw new Error("仿真任务不存在或已过期，请重新运行");
       P.syncSimJobProgressUi?.(job.progress);
       if (st) {
         st.textContent = P.formatSimWaitStatus(
@@ -5378,7 +5671,8 @@ P.runOptimize = async function () {
   };
 
   P.ensureStaticOptimizeResult = async function () {
-    if (P.lastResult?.assign?.length) return P.lastResult;
+    const isExact = String(P.lastResult?.optimizer || "").toLowerCase() === "exact";
+    if (P.lastResult?.assign?.length && isExact) return P.lastResult;
     if (!P.api?.optimize) throw new Error("无 optimize API");
     const methodEl = document.getElementById("optimizer-method");
     const method = methodEl?.value === "pso" ? "pso" : "exact";
@@ -5608,6 +5902,32 @@ P.runOptimize = async function () {
     }
     const st = document.getElementById("sim-status");
     const schedule = P.buildSimSchedule();
+    if (!P.apiOnline) {
+      // 离线时不让「运行仿真」变成一次必然失败的请求：先本地 exact 优化，再给本地时间轴
+      if (!P.lastResult) {
+        if (!P.optimizer?.runOptimize) {
+          if (st) st.textContent = "本地优化模块未加载，无法离线仿真。";
+          return;
+        }
+        if (st) st.textContent = "正在本地计算优化…";
+        await new Promise((resolve) => setTimeout(resolve, 30));
+        try {
+          const base = JSON.parse(JSON.stringify(P.scenario));
+          const raw = P.optimizer.runOptimize(base, { method: "exact" });
+          P.lastResult = P.normalizeOptimizeResult(raw, "exact", P.scenario);
+        } catch (e) {
+          if (st) st.textContent = "本地优化失败：" + (e.message || e);
+          return;
+        }
+      }
+      try {
+        const timeline = P.runSimulationLocal(P.lastResult, schedule);
+        P.applySimTimeline(timeline, st, "仿真就绪 · 本地估算");
+      } catch (e) {
+        if (st) st.textContent = "本地仿真失败：" + (e.message || e);
+      }
+      return;
+    }
     try {
       await P.runRollingSimulation(P.scenario, schedule, st, "");
     } catch (e) {
@@ -6288,7 +6608,7 @@ P.fitViewToLot = function () {
   }
 
 P.fitViewToContent = function (padding = 8) {
-    const b = P.computeSceneBounds(padding);
+    const b = P.computeContentBounds(padding);
     if (!Number.isFinite(b.xMin)) {
       P.fitViewToLot();
       return;
@@ -7645,6 +7965,133 @@ P.draw = function () {
   }
 })();
 
+/* --- app\history\undo.js --- */
+(function () {
+  "use strict";
+  const P = window.ParkingApp;
+  if (!P) throw new Error("ParkingApp missing: app/history/undo.js");
+
+  const MAX_UNDO = 40;
+  P.undoStack = [];
+  P.redoStack = [];
+  P._undoLast = null;
+  P._undoBusy = false;
+
+  function updateButtons() {
+    const undo = document.getElementById("btn-undo");
+    const redo = document.getElementById("btn-redo");
+    if (undo) undo.disabled = P.undoStack.length === 0;
+    if (redo) redo.disabled = P.redoStack.length === 0;
+  }
+
+  P.updateUndoButtons = updateButtons;
+
+  P.resetUndoHistory = function () {
+    P.undoStack = [];
+    P.redoStack = [];
+    P._undoLast = P.scenario ? JSON.stringify(P.scenario) : null;
+    updateButtons();
+  };
+
+  P.captureUndoState = function () {
+    if (P._undoBusy || !P.scenario) return;
+    let json;
+    try {
+      json = JSON.stringify(P.scenario);
+    } catch (_) {
+      return;
+    }
+    if (P._undoLast === null) {
+      P._undoLast = json;
+      return;
+    }
+    if (json === P._undoLast) return;
+    P.undoStack.push(P._undoLast);
+    if (P.undoStack.length > MAX_UNDO) P.undoStack.shift();
+    P.redoStack = [];
+    P._undoLast = json;
+    updateButtons();
+  };
+
+  function applySnapshot(json, done) {
+    let snapshot;
+    try {
+      snapshot = JSON.parse(json);
+    } catch (_) {
+      return false;
+    }
+    P._undoBusy = true;
+    try {
+      P.scenario = P.optimizer.normalizeScenario(snapshot);
+      P.ensureConstraints?.();
+      P.ensureScenarioCollections?.();
+      P.sanitizeScenarioGeometry?.();
+      P.ensureVehicleDestinationsArray?.();
+      P.ensureVehicleEntrancesArray?.();
+      P.ensureScenarioCollections?.();
+      P.lastResult = null;
+      P.autoEntrancePreview = null;
+      P.setSelection?.(null);
+      P.rebuildVehicleTargetsUI?.();
+      P.syncLotInputsFromScenario?.();
+      P.updateWorkflowGuide?.();
+      P.updateActionGates?.();
+      P.draw?.();
+      P._undoLast = JSON.stringify(P.scenario);
+      if (done) done();
+    } finally {
+      P._undoBusy = false;
+    }
+    P.schedulePersistCurrentState?.();
+    updateButtons();
+    return true;
+  }
+
+  P.undo = function () {
+    if (!P.undoStack.length || !P.scenario) return false;
+    const current = JSON.stringify(P.scenario);
+    const previous = P.undoStack.pop();
+    P.redoStack.push(current);
+    return applySnapshot(previous);
+  };
+
+  P.redo = function () {
+    if (!P.redoStack.length || !P.scenario) return false;
+    const current = JSON.stringify(P.scenario);
+    const next = P.redoStack.pop();
+    P.undoStack.push(current);
+    return applySnapshot(next);
+  };
+
+  // commitSceneGeometry 是大多数编辑落盘的统一出口；先执行原逻辑，再记录
+  if (typeof P.commitSceneGeometry === "function") {
+    const commit = P.commitSceneGeometry;
+    P.commitSceneGeometry = function () {
+      const result = commit.apply(this, arguments);
+      P.captureUndoState();
+      return result;
+    };
+  }
+
+  // 少数入口直接 persist；同样补一次快照，避免漏记
+  if (typeof P.schedulePersistCurrentState === "function") {
+    const schedule = P.schedulePersistCurrentState;
+    P.schedulePersistCurrentState = function () {
+      P.captureUndoState();
+      return schedule.apply(this, arguments);
+    };
+  }
+  if (typeof P.persistCurrentStateNow === "function") {
+    const persist = P.persistCurrentStateNow;
+    P.persistCurrentStateNow = function () {
+      P.captureUndoState();
+      return persist.apply(this, arguments);
+    };
+  }
+
+  P.resetUndoHistory();
+})();
+
 /* --- app\canvas\chart.js --- */
 (function () {
   "use strict";
@@ -8499,6 +8946,7 @@ P.finalizeObstacleDraft = function () {
 
   P.pointerDown = function (ev) {
     if (!P.scenario) return;
+    if (P.touchPinching) return;
     P.ensureScenarioCollections();
 
     const isPan = ev.button === 2;
@@ -8520,6 +8968,20 @@ P.finalizeObstacleDraft = function () {
     if (P.handleUnderlayCalibrationClick?.(wx, wy)) return;
 
     if (P.handlePendingAddPointerDown(wx, wy, ev)) return;
+
+    // 触屏：从空白处拖拽平移地图；点在对象上仍进入拖拽 / 选择
+    if (ev.pointerType === "touch" && !P.pendingAdd && !P.pickAt(wx, wy)) {
+      ev.preventDefault();
+      const { sx, sy } = P.eventToScreen(ev);
+      P.panDrag = {
+        startSx: sx,
+        startSy: sy,
+        origPanX: P.viewPanX ?? 0,
+        origPanY: P.viewPanY ?? 0,
+      };
+      P.mapCanvas.classList.add("is-panning");
+      return;
+    }
 
     const nearVertex = P.pickAnyObstacleVertex(wx, wy, 16);
     if (nearVertex) {
@@ -8635,11 +9097,22 @@ P.finalizeObstacleDraft = function () {
       P.rebuildVehicleTargetsUI();
       P.setSelection(null);
     } else if (P.selection.kind === "slot") {
-      P.scenario.slots.splice(P.selection.index, 1);
+      const si = P.selection.index;
+      P.scenario.slots.splice(si, 1);
+      if (Array.isArray(P.scenario.slot_types)) P.scenario.slot_types.splice(si, 1);
       P.setSelection(null);
     } else if (P.selection.kind === "entrance") {
       if (P.scenario.entrances.length <= 1) return;
-      P.scenario.entrances.splice(P.selection.index ?? 0, 1);
+      const ei = P.selection.index ?? 0;
+      P.scenario.entrances.splice(ei, 1);
+      if (Array.isArray(P.scenario.vehicle_entrances)) {
+        const maxIndex = Math.max(0, P.scenario.entrances.length - 1);
+        P.scenario.vehicle_entrances = P.scenario.vehicle_entrances.map((v) => {
+          const n = Number(v) || 0;
+          if (n === ei) return 0;
+          return Math.max(0, Math.min(maxIndex, n > ei ? n - 1 : n));
+        });
+      }
       P.ensureScenarioCollections();
       P.ensureVehicleEntrancesArray();
       P.rebuildVehicleTargetsUI();
@@ -8667,6 +9140,7 @@ P.finalizeObstacleDraft = function () {
   };
 
   P.loadDefault = async function (options = {}) {
+    let cached = null;
     try {
       if (!P.optimizer || typeof P.optimizer.normalizeScenario !== "function") {
         throw new Error("optimizer module missing");
@@ -8675,7 +9149,7 @@ P.finalizeObstacleDraft = function () {
       let sourceScenario = null;
       let restored = false;
       if (!forceDefault) {
-        const cached = P.readCurrentState();
+        cached = P.readCurrentState();
         if (cached && cached.scenario) {
           sourceScenario = cached.scenario;
           restored = true;
@@ -8702,7 +9176,8 @@ P.finalizeObstacleDraft = function () {
       P.ensureScenarioCollections();
       P.syncMapCanvasSize();
       if (!restored || !cached?.viewState) {
-        P.fitViewToLot();
+        if (window.innerWidth <= 900) P.fitViewToLot();
+        else P.fitViewToContent(8);
       }
       P.sanitizeScenarioGeometry();
       P.ensureVehicleDestinationsArray();
@@ -8724,25 +9199,31 @@ P.finalizeObstacleDraft = function () {
       const legendBtn = document.getElementById("btn-legend-toggle");
       const roadShapeMode = document.getElementById("road-shape-mode");
       if (legend) legend.classList.add("is-compact");
-      if (legendBtn) legendBtn.textContent = "展开完整图例";
+      if (legendBtn) legendBtn.textContent = window.innerWidth <= 900 ? "展开图例" : "展开完整图例";
       P.roadDraftClosed = P.scenario?.road?.closed !== false;
       if (roadShapeMode) roadShapeMode.value = P.roadDraftClosed ? "closed" : "open";
       P.switchTab(restored ? P.activeTab : "overview");
-      P.scheduleAutoEntrancePreviewRefresh();
       P.schedulePersistCurrentState();
       P.syncLotInputsFromScenario?.();
       P.updateActionGates?.();
       P.updateRunBarSummary?.();
+      P.renderDiagnosis?.();
       P.syncPsoLabInputsFromScenario?.();
       P.togglePsoLabVisibility?.();
+      P.resetUndoHistory?.();
       P.clearWorkspaceMessage?.();
       P.draw();
     } catch (e) {
+      console.error(e);
+      if (cached && !options._retried) {
+        // 本地缓存损坏时不把用户锁在错误页：清掉缓存，用内置默认场景重试一次
+        P.clearPersistedCurrentState?.();
+        return P.loadDefault({ forceDefault: true, _retried: true });
+      }
       P.showWorkspaceMessage?.(
-        "默认场景加载失败，请检查 assets/data/default-scenario.json 或 optimizer 模块是否可访问。",
+        "默认场景加载失败。请刷新页面，或用「导入 / 导出 / 重置」恢复默认场景。",
         { level: "error" }
       );
-      console.error(e);
     }
   };
 
@@ -8818,8 +9299,48 @@ P.finalizeObstacleDraft = function () {
   });
   P.mapCanvas.addEventListener("contextmenu", (e) => e.preventDefault());
 
+  // 双指捏合缩放（pointer 事件之外单独处理，避免和单指平移/拖拽打架）
+  (function bindPinchZoom() {
+    const canvas = P.mapCanvas;
+    let pinch = null;
+    const distance = (a, b) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY) || 1;
+    canvas.addEventListener("touchstart", (e) => {
+      if (!e.touches || e.touches.length !== 2) return;
+      e.preventDefault();
+      P.touchPinching = true;
+      P.panDrag = null;
+      P.drag = null;
+      canvas.classList.remove("is-panning");
+      pinch = { dist: distance(e.touches[0], e.touches[1]) };
+    }, { passive: false });
+    canvas.addEventListener("touchmove", (e) => {
+      if (!pinch || !e.touches || e.touches.length !== 2) return;
+      e.preventDefault();
+      const d = distance(e.touches[0], e.touches[1]);
+      const factor = d / pinch.dist;
+      if (factor > 1.01 || factor < 0.99) {
+        const rect = canvas.getBoundingClientRect();
+        const cx = ((e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left);
+        const cy = ((e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top);
+        P.zoomAtScreen(cx, cy, factor);
+        pinch.dist = d;
+      }
+    }, { passive: false });
+    const endPinch = (e) => {
+      if (!e.touches || e.touches.length < 2) {
+        pinch = null;
+        P.touchPinching = false;
+      }
+    };
+    canvas.addEventListener("touchend", endPinch, { passive: true });
+    canvas.addEventListener("touchcancel", endPinch, { passive: true });
+  })();
+
   document.getElementById("btn-fit-lot-view")?.addEventListener("click", () => P.fitViewToLot?.());
   document.getElementById("btn-fit-content-view")?.addEventListener("click", () => P.fitViewToContent?.());
+  const zoomCenter = (factor) => P.zoomAtScreen?.(P.mapCssW / 2, P.mapCssH / 2, factor);
+  document.getElementById("btn-zoom-in")?.addEventListener("click", () => zoomCenter(1.18));
+  document.getElementById("btn-zoom-out")?.addEventListener("click", () => zoomCenter(1 / 1.18));
 
   P.wireAddModeToggle("btn-add-building", "building");
   P.wireAddModeToggle("btn-add-slot", "slot");
@@ -8827,6 +9348,13 @@ P.finalizeObstacleDraft = function () {
   P.wireAddModeToggle("btn-add-obstacle", "obstacle");
   P.wireAddModeToggle("btn-add-road", "road");
   document.getElementById("btn-delete").addEventListener("click", P.deleteSelected);
+  document.querySelectorAll(".js-run-optimize").forEach((btn) => {
+    btn.addEventListener("click", () => P.runOptimize?.());
+  });
+  document.getElementById("btn-undo")?.addEventListener("click", () => P.undo?.());
+  document.getElementById("btn-redo")?.addEventListener("click", () => P.redo?.());
+  document.getElementById("btn-copy-summary")?.addEventListener("click", () => P.copyPlanSummary?.());
+  document.getElementById("api-status")?.addEventListener("click", () => P.refreshApiStatus?.());
   document.getElementById("btn-random-dest").addEventListener("click", P.randomizeVehicleDestinations);
   document.getElementById("btn-reset-scenario")?.addEventListener("click", P.resetScenario);
   document.getElementById("btn-export-scenario")?.addEventListener("click", P.exportScenarioToFile);
@@ -8845,7 +9373,10 @@ P.finalizeObstacleDraft = function () {
     const legend = document.querySelector(".map-legend");
     if (!legend) return;
     const compact = legend.classList.toggle("is-compact");
-    e.target.textContent = compact ? "展开完整图例" : "收起扩展图例";
+    const narrow = window.innerWidth <= 900;
+    e.target.textContent = compact
+      ? (narrow ? "展开图例" : "展开完整图例")
+      : (narrow ? "收起图例" : "收起扩展图例");
   });
   document.getElementById("btn-add-entrance")?.addEventListener("click", () => P.switchTab("scene"));
   document.getElementById("btn-add-obstacle")?.addEventListener("click", () => P.switchTab("scene"));
@@ -8910,11 +9441,31 @@ P.finalizeObstacleDraft = function () {
       return;
     }
     if (e.key === "Delete" || e.key === "Backspace") {
-      if (document.activeElement?.tagName === "INPUT") return;
+      const ae = document.activeElement;
+      if (ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA" || ae.tagName === "SELECT" || ae.isContentEditable)) {
+        return;
+      }
       P.deleteSelected();
     }
   });
   window.addEventListener("beforeunload", () => P.persistCurrentStateNow());
+
+  // 成熟产品兜底：脚本异常/未处理 Promise 至少给一次可见提示，而不是只打 console
+  let fatalNotified = false;
+  function notifyFatal(error) {
+    if (fatalNotified) return;
+    fatalNotified = true;
+    window.__ppFatal = error;
+    console.error("parking-pso fatal:", error);
+    P.showWorkspaceMessage?.(
+      "页面遇到问题。当前场景可能仍可导出：先「导出 JSON」，再刷新重试。",
+      { level: "error" }
+    );
+  }
+  window.addEventListener("error", (event) => {
+    if (event && event.error) notifyFatal(event.error);
+  });
+  window.addEventListener("unhandledrejection", (event) => notifyFatal(event && event.reason));
 
   P.nVehInput?.addEventListener("change", () => {
     if (!P.scenario) return;
@@ -8948,6 +9499,23 @@ P.finalizeObstacleDraft = function () {
   });
 
   P.wireWorkflowGuide?.();
+  document.getElementById("btn-save-plan")?.addEventListener("click", async () => {
+    const nameInput = document.getElementById("plan-name");
+    await P.saveNamedPlan?.(nameInput ? nameInput.value : "");
+    if (nameInput) nameInput.value = "";
+    P.renderScenarioLibrary?.();
+    const firstCheck = document.querySelector(".plan-compare-chk");
+    if (firstCheck) {
+      firstCheck.checked = true;
+      firstCheck.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    P.renderComparePanel?.();
+  });
+  document.getElementById("btn-load-plans")?.addEventListener("click", () => P.loadPlans?.());
+  document.getElementById("btn-export-compare")?.addEventListener("click", () => P.exportCompareReport?.());
+  P.loadNamedPlans?.();
+  P.renderScenarioLibrary?.();
+  P.renderComparePanel?.();
 
   document.getElementById("btn-auto-slots")?.addEventListener("click", () => P.runAutoSlots?.());
   document.getElementById("sim-arrival-mode")?.addEventListener("change", () => {

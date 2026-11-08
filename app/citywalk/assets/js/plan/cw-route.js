@@ -41,12 +41,13 @@ function openResultChatOnPlan() {
 function expandControlPanelForResult() {
     const mobileSheet = window.matchMedia('(max-width: 768px) and (min-height: 501px)').matches;
     if (mobileSheet && typeof setSheetDetent === 'function') {
-        setSheetDetent('full');
+        // 先半屏，让用户同时看到路线和地图；需要看详情再上滑全屏
+        setSheetDetent('half');
         return;
     }
     const controlPanel = document.querySelector('.control-panel');
     if (controlPanel && window.matchMedia('(max-width: 768px)').matches) {
-        controlPanel.classList.add('expanded', 'sheet-full');
+        controlPanel.classList.add('expanded');
     }
 }
 
@@ -111,6 +112,8 @@ function presentRouteToUser(data) {
     CW.skippedPoiKeys = {};
     CW.walkProgressIndex = -1;
     renderPoiList(pois);
+    renderItinerary(pois, data);
+    renderRouteCompare();
     if (typeof updateNextStopButton === 'function') updateNextStopButton();
 
     const routeEndHint = document.getElementById('routeEndHint');
@@ -165,6 +168,213 @@ function presentRouteToUser(data) {
         resultHeader.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
 }
+
+function renderItinerary(pois, data) {
+    const panel = document.getElementById('itineraryPanel');
+    const list = document.getElementById('itineraryList');
+    if (!panel || !list) return;
+    if (!Array.isArray(pois) || !pois.length) {
+        panel.hidden = true;
+        list.innerHTML = '';
+        return;
+    }
+    const dateInput = document.getElementById('routeStartDate');
+    const timeInput = document.getElementById('routeStartTime');
+    if (dateInput && !dateInput.value) {
+        const now = new Date();
+        const pad = (n) => String(n).padStart(2, '0');
+        dateInput.value = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    }
+    const itinerary = buildItinerary(pois, data);
+    list.innerHTML = '';
+    itinerary.items.forEach((item, index) => {
+        const li = document.createElement('li');
+        li.className = 'itinerary-item';
+        li.innerHTML =
+            '<span class="itinerary-time">' + cwEscapeHtml(item.timeText) + '</span>' +
+            '<span class="itinerary-main"><strong>' + (index + 1) + '. ' + cwEscapeHtml(item.name) + '</strong>' +
+            '<span class="itinerary-meta">' + cwEscapeHtml(item.type || '停靠') +
+            ' · 停留 ' + item.stay + ' 分钟</span></span>';
+        list.appendChild(li);
+    });
+    const total = document.createElement('li');
+    total.className = 'itinerary-total';
+    total.textContent = '预计 ' + itinerary.totalMin + ' 分钟 · 结束约 ' + itinerary.endText;
+    list.appendChild(total);
+    panel.hidden = false;
+}
+
+function buildItinerary(pois, data) {
+    const dateInput = document.getElementById('routeStartDate');
+    const timeInput = document.getElementById('routeStartTime');
+    const date = (dateInput && dateInput.value) || new Date().toISOString().slice(0, 10);
+    const time = (timeInput && timeInput.value) || '09:30';
+    let start = new Date(date + 'T' + time + ':00');
+    if (Number.isNaN(start.getTime())) start = new Date();
+    const walkTotal = Math.max(0, Number(data && data.duration) || 0);
+    const leg = walkTotal / Math.max(1, pois.length);
+    let cursor = new Date(start.getTime());
+    const items = [];
+    pois.forEach((poi) => {
+        cursor = new Date(cursor.getTime() + leg * 60000);
+        const stay = Math.max(1, Number(poi.stay_time) || 5);
+        items.push({
+            time: new Date(cursor.getTime()),
+            timeText: formatClock(cursor),
+            name: poi.name || '未命名站点',
+            type: poi.type || poi.category || '',
+            stay,
+        });
+        cursor = new Date(cursor.getTime() + stay * 60000);
+    });
+    return {
+        start,
+        items,
+        end: cursor,
+        endText: formatClock(cursor),
+        totalMin: Math.round((cursor.getTime() - start.getTime()) / 60000),
+    };
+}
+
+function formatClock(date) {
+    return String(date.getHours()).padStart(2, '0') + ':' + String(date.getMinutes()).padStart(2, '0');
+}
+
+function addRouteToCalendar() {
+    const data = CW.routeData;
+    const pois = Array.isArray(data && data.pois) ? data.pois : [];
+    if (!data || !pois.length) {
+        if (typeof showToast === 'function') showToast('先生成一条路线');
+        return;
+    }
+    const itinerary = buildItinerary(pois, data);
+    const pad = (n) => String(n).padStart(2, '0');
+    const localStamp = (d) => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+    const utcStamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+    const esc = (s) => String(s || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+    const title = `${CW.currentCity || ''} Citywalk · ${pois[0].name || '路线'}`;
+    const desc = itinerary.items.map((item) => `${item.timeText} ${item.name}（停留 ${item.stay} 分钟）`).join('\n');
+    const lines = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//WanderWalk//Citywalk//CN',
+        'CALSCALE:GREGORIAN',
+        'BEGIN:VEVENT',
+        'UID:' + Date.now() + '@wanderwalk',
+        'DTSTAMP:' + utcStamp,
+        'DTSTART:' + localStamp(itinerary.start),
+        'DTEND:' + localStamp(itinerary.end),
+        'SUMMARY:' + esc(title),
+        'LOCATION:' + esc(CW.currentCity || ''),
+        'DESCRIPTION:' + esc(desc),
+        'END:VEVENT',
+        'END:VCALENDAR',
+    ];
+    const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'citywalk-' + localStamp(itinerary.start).slice(0, 8) + '.ics';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    if (typeof showToast === 'function') showToast('已生成日历文件');
+}
+
+function initItineraryInputs() {
+    ['routeStartDate', 'routeStartTime'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el || el.dataset.itineraryBound === '1') return;
+        el.dataset.itineraryBound = '1';
+        el.addEventListener('change', () => {
+            if (CW.routeData) renderItinerary(CW.routeData.pois || [], CW.routeData);
+        });
+    });
+    const btn = document.getElementById('btnAddToCalendar');
+    if (btn && btn.dataset.itineraryBound !== '1') {
+        btn.dataset.itineraryBound = '1';
+        btn.addEventListener('click', addRouteToCalendar);
+    }
+}
+initItineraryInputs();
+
+const ROUTE_STYLE_LABELS = {
+    balanced: '均衡',
+    atmosphere_first: '氛围优先',
+    efficiency_first: '省力直达'
+};
+
+function setRouteStyleUI(style) {
+    document.querySelectorAll('.route-style-btn').forEach((btn) => {
+        const on = (btn.dataset.style || 'balanced') === style;
+        btn.classList.toggle('active', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+}
+
+function routeMetricText(data) {
+    if (!data) return '—';
+    const km = Number(data.distance) > 0 ? (Number(data.distance) / 1000).toFixed(2) + ' km' : '距离待定';
+    const minutes = Number(data.activity_total_min || data.estimated_total_min || data.duration || 0);
+    const stops = Array.isArray(data.pois) ? data.pois.length : 0;
+    return `${km} · 约 ${Math.round(minutes)} 分钟 · ${stops} 站`;
+}
+
+function renderRouteCompare() {
+    const bar = document.getElementById('routeCompareBar');
+    const text = document.getElementById('routeCompareText');
+    if (!bar || !text) return;
+    const alt = CW.routeAlternative;
+    if (!alt || !alt.data || !CW.routeData) {
+        bar.hidden = true;
+        text.textContent = '';
+        return;
+    }
+    const curStyle = ROUTE_STYLE_LABELS[CW.selectedRouteStyle] || '当前';
+    const oldStyle = ROUTE_STYLE_LABELS[alt.style] || '上一版';
+    text.innerHTML =
+        '<strong>当前 · ' + cwEscapeHtml(curStyle) + '</strong>：' + cwEscapeHtml(routeMetricText(CW.routeData)) +
+        '<br><strong>上一版 · ' + cwEscapeHtml(oldStyle) + '</strong>：' + cwEscapeHtml(routeMetricText(alt.data));
+    bar.hidden = false;
+}
+
+function tryAlternateRoute() {
+    if (!CW.routeData) {
+        if (typeof showToast === 'function') showToast('先生成一条路线');
+        return;
+    }
+    const order = ['balanced', 'atmosphere_first', 'efficiency_first'];
+    const currentStyle = order.includes(CW.selectedRouteStyle) ? CW.selectedRouteStyle : 'balanced';
+    const next = order[(order.indexOf(currentStyle) + 1) % order.length];
+    CW.routeAlternative = { data: CW.routeData, style: currentStyle };
+    CW.selectedRouteStyle = next;
+    setRouteStyleUI(next);
+    if (typeof showToast === 'function') {
+        showToast('换一种走法：' + (ROUTE_STYLE_LABELS[next] || next) + '，正在重新规划');
+    }
+    generateRoute({ keepEdits: true });
+}
+
+function restorePreviousRoute() {
+    const alt = CW.routeAlternative;
+    if (!alt || !alt.data) return;
+    const current = CW.routeData;
+    const currentStyle = CW.selectedRouteStyle;
+    CW.routeData = alt.data;
+    CW.selectedRouteStyle = alt.style || 'balanced';
+    CW.routeAlternative = current ? { data: current, style: currentStyle } : null;
+    setRouteStyleUI(CW.selectedRouteStyle);
+    if (typeof drawPlannedRoute === 'function') drawPlannedRoute(CW.routeData.path, CW.routeData.mode);
+    if (typeof addPoiMarkers === 'function') addPoiMarkers(CW.routeData.pois);
+    if (typeof presentRouteToUser === 'function') presentRouteToUser(CW.routeData);
+    if (typeof renderRouteCompare === 'function') renderRouteCompare();
+}
+
+(function bindRouteInnovation() {
+    document.getElementById('btnAlternateRoute')?.addEventListener('click', tryAlternateRoute);
+    document.getElementById('btnUsePreviousRoute')?.addEventListener('click', restorePreviousRoute);
+})();
 
 function renderResultNarrative(data, pois, planMin, activityMin, freeMin) {
     const el = document.getElementById('resultNarrative');
@@ -408,6 +618,7 @@ function resetSelection() {
 
 function generateRoute(options) {
     const opts = options || {};
+    if (!opts.keepEdits) CW.routeAlternative = null;
     if (!opts.keepEdits) {
         CW.removedPoiNames = [];
         CW.addingRouteStop = false;
@@ -1036,7 +1247,9 @@ function renderRouteStopEditor(poiList) {
     bar.className = 'poi-edit-bar';
     const hint = document.createElement('p');
     hint.className = 'poi-edit-hint';
-    hint.textContent = '拖动 ⋮⋮ 调整站点顺序，将自动重新计算步行路线';
+    hint.textContent = (window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 768)
+        ? '用「上移 / 下移」调整站点顺序，将自动重新计算步行路线'
+        : '拖动 ⋮⋮ 调整站点顺序，将自动重新计算步行路线';
     bar.appendChild(hint);
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -1189,8 +1402,13 @@ function applyRouteResult(data) {
 
     const fitTargets = [CW.startMarker, ...(CW.routeLines || []), ...CW.poiMarkers].filter(Boolean);
     if (CW.endMarker && data.mode !== 'loop') fitTargets.splice(1, 0, CW.endMarker);
+    const panelEl = document.querySelector('.control-panel');
+    const panelWidth = window.innerWidth > 768 && panelEl
+        ? Math.round(panelEl.getBoundingClientRect().width)
+        : 0;
     CW.map.setFitView(fitTargets, {
-        padding: [50, 50, 50, 50],
+        // 桌面右侧面板是 fixed 的，右 padding 要把它让出来
+        padding: [50, 50 + panelWidth, 50, 50],
         animate: true
     });
 
@@ -1285,6 +1503,10 @@ function renderPoiList(pois) {
             ? `<button type="button" class="poi-skip-btn" data-poi-index="${index}">${skipped ? '恢复此站' : '跳过此站'}</button>`
             : '';
         const removeBtn = `<button type="button" class="poi-remove-btn" data-poi-index="${index}">移除此站</button>`;
+        const orderBtns = `<div class="poi-order-btns" aria-label="调整站点顺序">
+            <button type="button" class="poi-order-btn" data-dir="-1" ${index === 0 ? 'disabled' : ''}>上移</button>
+            <button type="button" class="poi-order-btn" data-dir="1" ${index === pois.length - 1 ? 'disabled' : ''}>下移</button>
+        </div>`;
         const safeIcon = cwEscapeHtml(poi.icon || '📍');
         const safeName = cwEscapeHtml(poiName);
         const safeType = cwEscapeHtml(poiType);
@@ -1300,7 +1522,7 @@ function renderPoiList(pois) {
                     <strong class="poi-item-name">${index+1}. ${seedTag}${optionalTag}${skippedTag}${safeName}</strong>
                     <div class="poi-item-type">${safeType}</div>
                     <div class="poi-item-reason">${safeReason}${score ? ` · 氛围分 ${score}` : ''}${poi.stay_time ? ` · 建议停留 ${poi.stay_time} 分钟` : ''}</div>
-                    <div class="poi-item-actions">${navLink}${skipBtn}${removeBtn}</div>
+                    <div class="poi-item-actions">${navLink}${skipBtn}${removeBtn}${orderBtns}</div>
                 </div>
             </div>`;
         const navEl = poiItem.querySelector('.poi-nav');
@@ -1319,6 +1541,13 @@ function renderPoiList(pois) {
                 removeRouteStopAndReplan(index);
             });
         }
+        poiItem.querySelectorAll('.poi-order-btn').forEach((btn) => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const dir = Number(btn.dataset.dir) || 0;
+                if (dir) reorderRoutePoisAndReplan(index, index + dir);
+            });
+        });
         const dragHandle = poiItem.querySelector('.poi-drag-handle');
         if (dragHandle) {
             dragHandle.addEventListener('click', (e) => e.stopPropagation());

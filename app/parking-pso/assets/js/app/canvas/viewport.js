@@ -319,7 +319,7 @@ P.fitViewToLot = function () {
   }
 
 P.fitViewToContent = function (padding = 8) {
-    const b = P.computeSceneBounds(padding);
+    const b = P.computeContentBounds(padding);
     if (!Number.isFinite(b.xMin)) {
       P.fitViewToLot();
       return;

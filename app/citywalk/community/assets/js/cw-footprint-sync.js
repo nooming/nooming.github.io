@@ -171,14 +171,25 @@
             const localPayload = collectPayload();
             const hasLocal = payloadHasLocalData(localPayload);
             if (serverTs === 0 && hasLocal) {
-                await pushToCloud({ force: true });
-                if (!silent && typeof showToast === 'function') showToast('本地数据已上传到账号');
-                return true;
+                const pushed = await pushToCloud({ force: true, silent: true, fromPull: true });
+                if (!silent && typeof showToast === 'function') {
+                    showToast(pushed ? '本地数据已上传到账号' : '同步失败，请稍后重试');
+                }
+                return pushed;
             }
             if (serverTs > localTs) {
+                // 云端整包覆盖前留一份本地备份，避免换设备登录时旧足迹直接丢失
+                if (hasLocal) {
+                    try {
+                        localStorage.setItem('cw_footprint_precloud_backup_v1', JSON.stringify({
+                            at: Date.now(),
+                            payload: localPayload,
+                        }));
+                    } catch (_) { /* ignore */ }
+                }
                 applyCloudAccountData(fp);
             } else if (serverTs < localTs && hasLocal) {
-                await pushToCloud({ silent: true });
+                await pushToCloud({ silent: true, fromPull: true });
             }
             if (!silent && typeof showToast === 'function') showToast('已从云端同步');
             return true;
@@ -193,8 +204,10 @@
 
     async function pushToCloud(opts) {
         if (!global.CitywalkAuth || !CitywalkAuth.isLoggedIn()) return false;
-        if (_syncing) return false;
-        _syncing = true;
+        const fromPull = !!(opts && opts.fromPull);
+        if (_syncing && !fromPull) return false;
+        const ownsLock = !_syncing;
+        if (ownsLock) _syncing = true;
         try {
             const payload = collectPayload();
             const token = CitywalkAuth.getToken();
@@ -220,7 +233,7 @@
             console.warn('account sync push', e);
             return false;
         } finally {
-            _syncing = false;
+            if (ownsLock) _syncing = false;
         }
     }
 

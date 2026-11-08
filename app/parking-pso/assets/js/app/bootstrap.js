@@ -61,8 +61,48 @@
   });
   P.mapCanvas.addEventListener("contextmenu", (e) => e.preventDefault());
 
+  // 双指捏合缩放（pointer 事件之外单独处理，避免和单指平移/拖拽打架）
+  (function bindPinchZoom() {
+    const canvas = P.mapCanvas;
+    let pinch = null;
+    const distance = (a, b) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY) || 1;
+    canvas.addEventListener("touchstart", (e) => {
+      if (!e.touches || e.touches.length !== 2) return;
+      e.preventDefault();
+      P.touchPinching = true;
+      P.panDrag = null;
+      P.drag = null;
+      canvas.classList.remove("is-panning");
+      pinch = { dist: distance(e.touches[0], e.touches[1]) };
+    }, { passive: false });
+    canvas.addEventListener("touchmove", (e) => {
+      if (!pinch || !e.touches || e.touches.length !== 2) return;
+      e.preventDefault();
+      const d = distance(e.touches[0], e.touches[1]);
+      const factor = d / pinch.dist;
+      if (factor > 1.01 || factor < 0.99) {
+        const rect = canvas.getBoundingClientRect();
+        const cx = ((e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left);
+        const cy = ((e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top);
+        P.zoomAtScreen(cx, cy, factor);
+        pinch.dist = d;
+      }
+    }, { passive: false });
+    const endPinch = (e) => {
+      if (!e.touches || e.touches.length < 2) {
+        pinch = null;
+        P.touchPinching = false;
+      }
+    };
+    canvas.addEventListener("touchend", endPinch, { passive: true });
+    canvas.addEventListener("touchcancel", endPinch, { passive: true });
+  })();
+
   document.getElementById("btn-fit-lot-view")?.addEventListener("click", () => P.fitViewToLot?.());
   document.getElementById("btn-fit-content-view")?.addEventListener("click", () => P.fitViewToContent?.());
+  const zoomCenter = (factor) => P.zoomAtScreen?.(P.mapCssW / 2, P.mapCssH / 2, factor);
+  document.getElementById("btn-zoom-in")?.addEventListener("click", () => zoomCenter(1.18));
+  document.getElementById("btn-zoom-out")?.addEventListener("click", () => zoomCenter(1 / 1.18));
 
   P.wireAddModeToggle("btn-add-building", "building");
   P.wireAddModeToggle("btn-add-slot", "slot");
@@ -70,6 +110,13 @@
   P.wireAddModeToggle("btn-add-obstacle", "obstacle");
   P.wireAddModeToggle("btn-add-road", "road");
   document.getElementById("btn-delete").addEventListener("click", P.deleteSelected);
+  document.querySelectorAll(".js-run-optimize").forEach((btn) => {
+    btn.addEventListener("click", () => P.runOptimize?.());
+  });
+  document.getElementById("btn-undo")?.addEventListener("click", () => P.undo?.());
+  document.getElementById("btn-redo")?.addEventListener("click", () => P.redo?.());
+  document.getElementById("btn-copy-summary")?.addEventListener("click", () => P.copyPlanSummary?.());
+  document.getElementById("api-status")?.addEventListener("click", () => P.refreshApiStatus?.());
   document.getElementById("btn-random-dest").addEventListener("click", P.randomizeVehicleDestinations);
   document.getElementById("btn-reset-scenario")?.addEventListener("click", P.resetScenario);
   document.getElementById("btn-export-scenario")?.addEventListener("click", P.exportScenarioToFile);
@@ -88,7 +135,10 @@
     const legend = document.querySelector(".map-legend");
     if (!legend) return;
     const compact = legend.classList.toggle("is-compact");
-    e.target.textContent = compact ? "展开完整图例" : "收起扩展图例";
+    const narrow = window.innerWidth <= 900;
+    e.target.textContent = compact
+      ? (narrow ? "展开图例" : "展开完整图例")
+      : (narrow ? "收起图例" : "收起扩展图例");
   });
   document.getElementById("btn-add-entrance")?.addEventListener("click", () => P.switchTab("scene"));
   document.getElementById("btn-add-obstacle")?.addEventListener("click", () => P.switchTab("scene"));
@@ -153,11 +203,31 @@
       return;
     }
     if (e.key === "Delete" || e.key === "Backspace") {
-      if (document.activeElement?.tagName === "INPUT") return;
+      const ae = document.activeElement;
+      if (ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA" || ae.tagName === "SELECT" || ae.isContentEditable)) {
+        return;
+      }
       P.deleteSelected();
     }
   });
   window.addEventListener("beforeunload", () => P.persistCurrentStateNow());
+
+  // 成熟产品兜底：脚本异常/未处理 Promise 至少给一次可见提示，而不是只打 console
+  let fatalNotified = false;
+  function notifyFatal(error) {
+    if (fatalNotified) return;
+    fatalNotified = true;
+    window.__ppFatal = error;
+    console.error("parking-pso fatal:", error);
+    P.showWorkspaceMessage?.(
+      "页面遇到问题。当前场景可能仍可导出：先「导出 JSON」，再刷新重试。",
+      { level: "error" }
+    );
+  }
+  window.addEventListener("error", (event) => {
+    if (event && event.error) notifyFatal(event.error);
+  });
+  window.addEventListener("unhandledrejection", (event) => notifyFatal(event && event.reason));
 
   P.nVehInput?.addEventListener("change", () => {
     if (!P.scenario) return;
@@ -191,6 +261,23 @@
   });
 
   P.wireWorkflowGuide?.();
+  document.getElementById("btn-save-plan")?.addEventListener("click", async () => {
+    const nameInput = document.getElementById("plan-name");
+    await P.saveNamedPlan?.(nameInput ? nameInput.value : "");
+    if (nameInput) nameInput.value = "";
+    P.renderScenarioLibrary?.();
+    const firstCheck = document.querySelector(".plan-compare-chk");
+    if (firstCheck) {
+      firstCheck.checked = true;
+      firstCheck.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    P.renderComparePanel?.();
+  });
+  document.getElementById("btn-load-plans")?.addEventListener("click", () => P.loadPlans?.());
+  document.getElementById("btn-export-compare")?.addEventListener("click", () => P.exportCompareReport?.());
+  P.loadNamedPlans?.();
+  P.renderScenarioLibrary?.();
+  P.renderComparePanel?.();
 
   document.getElementById("btn-auto-slots")?.addEventListener("click", () => P.runAutoSlots?.());
   document.getElementById("sim-arrival-mode")?.addEventListener("change", () => {

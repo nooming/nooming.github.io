@@ -4,12 +4,29 @@
   if (!P) throw new Error("ParkingApp missing: app/storage/scenario-io.js");
 
 P.readCurrentState = function () {
-    return P.currentStateStore?.readState ? P.currentStateStore.readState() : null;
+    const state = P.currentStateStore?.readState ? P.currentStateStore.readState() : null;
+    if (state && !state.schemaVersion) state.schemaVersion = 1;
+    return state;
+  }
+
+P.markAutosaved = function (ok) {
+    const el = document.getElementById("autosave-status");
+    if (!el) return;
+    if (!ok) {
+      el.textContent = "自动保存失败，请导出备份";
+      el.dataset.state = "error";
+      return;
+    }
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    el.textContent = "已自动保存 " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+    el.dataset.state = "saved";
   }
 
 P.persistCurrentStateNow = function () {
     if (!P.scenario || !P.optimizer || typeof P.optimizer.normalizeScenario !== "function") return;
     const payload = {
+      schemaVersion: P.STATE_SCHEMA_VERSION || 2,
       scenario: P.scenario,
       activeTab: P.activeTab,
       vehiclePage: P.vehiclePage,
@@ -21,6 +38,7 @@ P.persistCurrentStateNow = function () {
 
 P.schedulePersistCurrentState = function () {
     P.currentStateStore?.schedule?.(() => ({
+      schemaVersion: P.STATE_SCHEMA_VERSION || 2,
       scenario: P.scenario,
       activeTab: P.activeTab,
       vehiclePage: P.vehiclePage,

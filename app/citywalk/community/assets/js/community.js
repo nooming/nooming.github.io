@@ -47,10 +47,6 @@ const WW_COPY = {
   ]
 };
 
-function showDemoUnavailable(feature){
-  showToast(feature ? `${feature} · 演示版尚未开放` : '演示版尚未开放');
-}
-
 const IMPORT_GUIDE_DISMISS_KEY = 'ww_import_guide_dismissed';
 
 function dismissImportGuide(){
@@ -424,8 +420,9 @@ function clearCommunitySearch() {
 function applyCommunitySearch(opts) {
   const scroll = !!(opts && opts.scroll);
   syncSearchScopeUi();
-  renderBuddies(activeBuddyFilter());
-  renderInspire();
+  // 当前视图不需要的列表先不重建，避免每次输入都全量刷新图片卡片
+  if (communityViewId !== 'inspire') renderBuddies(activeBuddyFilter());
+  if (communityViewId !== 'buddies') renderInspire();
 
   const key = communitySearchKeyword().trim();
   syncSearchViewForActiveSearch(key, scroll);
@@ -1037,6 +1034,14 @@ function triggerCommunityComposeAction() {
   else if (v === 'inspire') openPublish();
 }
 
+function writeCommunityHash(view, opts) {
+  if (opts && opts.skipHash) return;
+  if (typeof history === 'undefined' || !history.pushState) return;
+  const target = '#' + view;
+  if (location.hash === target) return;
+  try { history.pushState(null, '', target); } catch (e) { /* file:// */ }
+}
+
 function switchCommunityView(view, opts) {
   opts = opts || {};
   if (view === 'me') {
@@ -1064,9 +1069,7 @@ function switchCommunityView(view, opts) {
   syncCommunityComposeUi(view);
 
   window.scrollTo({ top: 0, behavior: opts.instant ? 'auto' : 'smooth' });
-  if (!opts.skipHash && typeof history !== 'undefined' && history.replaceState) {
-    try { history.replaceState(null, '', '#' + view); } catch (e) { /* file:// */ }
-  }
+  writeCommunityHash(view, opts);
 }
 
 function openMePage(opts) {
@@ -1087,9 +1090,7 @@ function openMePage(opts) {
   syncCommunityTabbarActive('');
   syncCommunityComposeUi('');
   window.scrollTo({ top: 0, behavior: opts.instant ? 'auto' : 'smooth' });
-  if (!opts.skipHash && typeof history !== 'undefined' && history.replaceState) {
-    try { history.replaceState(null, '', '#me'); } catch (e) { /* file:// etc. */ }
-  }
+  writeCommunityHash('me', opts);
 }
 
 function closeMePage(targetHash) {
@@ -1126,6 +1127,12 @@ function bindCommunityRouter() {
   const communityFab = document.getElementById('communityFab');
   if (navComposeBtn) navComposeBtn.addEventListener('click', triggerCommunityComposeAction);
   if (communityFab) communityFab.addEventListener('click', triggerCommunityComposeAction);
+  if (typeof window !== 'undefined' && !window.__cwCommunityPopBound) {
+    window.__cwCommunityPopBound = true;
+    window.addEventListener('popstate', function () {
+      syncCommunityViewFromHash();
+    });
+  }
 }
 
 function updateUserAvatarPopover() {
@@ -1929,6 +1936,8 @@ function handleWalkCompletion(payload={}){
 // 供外部路线规划站通过 window.opener.postMessage 发送完成事件。
 // 上线时应将 message 来源限制为实际规划站域名，并在服务端校验完成事件。
 window.addEventListener('message',event=>{
+  const allowed = [location.origin, 'https://noomings.com', 'https://nooming.github.io'];
+  if (location.protocol !== 'file:' && !allowed.includes(event.origin)) return;
   const data=event.data;
   if(!data) return;
   if(data.type==='CITYWALK_ROUTE_COMPLETE'){
@@ -2795,19 +2804,10 @@ function ensureBuddiesPageOpen(options) {
   switchCommunityView('buddies', { skipHash: false, instant: !(options && options.scroll) });
 }
 
-function openBuddiesPage(event) {
-  if (event) event.preventDefault();
-  switchCommunityView('buddies');
-}
-
 function toggleBuddiesPage(event) {
   if (event) { event.preventDefault(); event.stopPropagation(); }
   if (communityViewId === 'buddies') switchCommunityView('home');
   else switchCommunityView('buddies');
-}
-
-function closeBuddiesPage() {
-  switchCommunityView('inspire');
 }
 
 function setHeroPrimaryBuddyLabel(isOpen){
@@ -2819,17 +2819,8 @@ function setHeroPrimaryBuddyLabel(isOpen){
   if(icon) icon.textContent=isOpen?'↕':'👥';
 }
 
-function updateBuddyToggle(isOpen) {
-  setHeroPrimaryBuddyLabel(isOpen);
-  syncCommunityNavActive(isOpen ? 'buddies' : communityViewId);
-}
-
 const MOBILE_LAYOUT_MQ=typeof window!=='undefined'&&window.matchMedia?window.matchMedia('(max-width: 760px)'):null;
 function isMobileLayout(){return MOBILE_LAYOUT_MQ?MOBILE_LAYOUT_MQ.matches:false}
-
-function initMobileLayoutDefaults() {
-  /* 视图由 switchCommunityView 控制，不再折叠搭子区块 */
-}
 
 function syncMobileFilterTriggers(){
   const buddyBtn=document.getElementById('buddyFilterTrigger');
@@ -2926,7 +2917,6 @@ function bindMobileDensityUi(){
   });
   if(MOBILE_LAYOUT_MQ){
     MOBILE_LAYOUT_MQ.addEventListener('change',function(){
-      initMobileLayoutDefaults();
       closeMobileFilterSheet();
       if(!isMobileLayout()) document.body.classList.remove('search-nav-open');
     });
@@ -2942,9 +2932,7 @@ function scrollToId(id) {
   const el = document.getElementById(id);
   if (el) el.scrollIntoView({ behavior: 'smooth' });
 }
-function saveRoute(btn){btn.textContent=btn.textContent==='♡'?'♥':'♡';btn.style.color=btn.textContent==='♥'?'#ff385c':''}
-function toggleLike(el){el.classList.toggle('liked');el.textContent=el.classList.contains('liked')?el.textContent.replace('♡','♥'):el.textContent.replace('♥','♡')}
-function toggleSaveText(el){el.classList.toggle('liked');el.textContent=el.classList.contains('liked')?'♣ 已收藏':'♧ 收藏'}
+
 function favoriteRoute(){if(!currentRouteId)return;toggleRouteFavorite(currentRouteId);document.getElementById('routeFavoriteModalBtn').textContent=isRouteFavorite(currentRouteId)?'♥ 已收藏路线':'♡ 收藏这条路线';}
 
 // city tabs（动态重建后仍可用事件委托）
@@ -3044,10 +3032,70 @@ const meOpenAccountBtn = document.getElementById('meOpenAccountBtn');
 if (meOpenAccountBtn) meOpenAccountBtn.addEventListener('click', function () {
   if (typeof CitywalkAuth !== 'undefined') CitywalkAuth.openAuthModal('account');
 });
+
+const LOCAL_DATA_PREFIX = /^(cw_|ww_|citywalk_)/;
+function exportLocalData() {
+  const data = {
+    exported_at: new Date().toISOString(),
+    origin: location.origin,
+    note: '不包含登录 token；仅包含本机浏览器缓存。',
+    keys: {}
+  };
+  Object.keys(localStorage).filter(k => LOCAL_DATA_PREFIX.test(k) && k !== 'citywalk_auth_token_v1').forEach(k => {
+    const raw = localStorage.getItem(k);
+    try { data.keys[k] = JSON.parse(raw); } catch (_) { data.keys[k] = raw; }
+  });
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'wanderwalk-local-data-' + new Date().toISOString().slice(0, 10) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  showToast('本机数据已导出');
+}
+function clearLocalData() {
+  const ok = window.confirm('清除本机缓存并退出登录？云端账号数据不会被删除。');
+  if (!ok) return;
+  Object.keys(localStorage).filter(k => LOCAL_DATA_PREFIX.test(k)).forEach(k => {
+    try { localStorage.removeItem(k); } catch (_) { /* ignore */ }
+  });
+  location.reload();
+}
+const meExportDataBtn = document.getElementById('meExportDataBtn');
+if (meExportDataBtn) meExportDataBtn.addEventListener('click', exportLocalData);
+const meClearDataBtn = document.getElementById('meClearDataBtn');
+if (meClearDataBtn) meClearDataBtn.addEventListener('click', clearLocalData);
+
+async function checkCommunityServiceStatus() {
+  const el = document.getElementById('meServiceStatus');
+  if (!el) return;
+  if (!navigator.onLine) {
+    el.textContent = '网络：离线 · 本机缓存与草稿仍可用';
+    el.dataset.state = 'offline';
+    return;
+  }
+  try {
+    const base = (typeof CitywalkAuth !== 'undefined' && CitywalkAuth.CW_API) || '';
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(base + '/config/public', { signal: controller.signal, cache: 'no-store' });
+    clearTimeout(timer);
+    el.textContent = res.ok ? '云端服务：在线' : '云端服务：暂不可用 · 本机数据仍可用';
+    el.dataset.state = res.ok ? 'online' : 'offline';
+  } catch (_) {
+    el.textContent = '云端服务：暂不可用 · 本机数据仍可用';
+    el.dataset.state = 'offline';
+  }
+}
+window.addEventListener('online', checkCommunityServiceStatus);
+window.addEventListener('offline', checkCommunityServiceStatus);
+setTimeout(checkCommunityServiceStatus, 1200);
 renderHeroBuddyPreview();
 updateHeroBuddyCount();
 bindMobileDensityUi();
-initMobileLayoutDefaults();
+
 syncMobileFilterTriggers();
 syncCommunityViewFromHash();
 
@@ -3148,3 +3196,22 @@ if(typeof CitywalkAuth!=='undefined'){
 }
 
 window.addEventListener('hashchange', syncCommunityViewFromHash);
+
+// 社区页错误兜底（规划页由 cw-state.js 统一绑定）
+(function bindCommunityErrorBoundary() {
+  if (window.__cwErrorBound) return;
+  window.__cwErrorBound = true;
+  let notified = false;
+  function notify(error) {
+    if (notified) return;
+    notified = true;
+    console.error('citywalk community fatal:', error);
+    if (typeof showToast === 'function') {
+      showToast('页面遇到问题，可刷新重试；本地收藏与草稿不会自动清除。', 7000);
+    }
+  }
+  window.addEventListener('error', (event) => {
+    if (event && event.error) notify(event.error);
+  });
+  window.addEventListener('unhandledrejection', (event) => notify(event && event.reason));
+})();

@@ -28,11 +28,11 @@ async function fetchInspirationCards() {
     const cityHint = CW.cityLocateReady ? CW.currentCity : '';
 
     try {
-        const response = await fetch(`${CW_API}/agent/inspire`, {
+        const response = await cwFetch(`${CW_API}/agent/inspire`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify({ query: query, city: cityHint }),
-        });
+        }, 20000);
         const data = await response.json().catch(() => null);
         if (!data || !data.success) {
             renderInspirationEmpty((data && data.message) || '灵感推荐暂时不可用，稍后再试');

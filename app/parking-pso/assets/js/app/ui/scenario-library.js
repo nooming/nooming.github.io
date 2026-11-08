@@ -188,7 +188,7 @@
       const m = plan.metrics || {};
       card.innerHTML =
         "<strong>" +
-        plan.name +
+        P.escapeHtml(plan.name) +
         "</strong>" +
         '<div class="plan-card-metrics">' +
         (m.gbest_value != null ? "总时间 " + m.gbest_value.toFixed(1) + " s · " : "") +
@@ -211,6 +211,7 @@
       cmpChk.className = "plan-compare-chk";
       cmpChk.dataset.planId = plan.id;
       cmpChk.title = "加入对比";
+      cmpChk.setAttribute("aria-label", "将 " + plan.name + " 加入对比");
       cmpChk.addEventListener("change", () => P.renderComparePanel?.());
       actions.appendChild(loadBtn);
       actions.appendChild(delBtn);

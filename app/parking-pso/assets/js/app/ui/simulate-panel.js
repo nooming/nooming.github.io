@@ -171,6 +171,7 @@
         return { kind: "raw", raw: job.result };
       }
       if (job.status === "failed") throw new Error(job.error || "job failed");
+      if (job.status === "missing") throw new Error("仿真任务不存在或已过期，请重新运行");
       P.syncSimJobProgressUi?.(job.progress);
       if (st) {
         st.textContent = P.formatSimWaitStatus(
@@ -660,7 +661,8 @@
   };
 
   P.ensureStaticOptimizeResult = async function () {
-    if (P.lastResult?.assign?.length) return P.lastResult;
+    const isExact = String(P.lastResult?.optimizer || "").toLowerCase() === "exact";
+    if (P.lastResult?.assign?.length && isExact) return P.lastResult;
     if (!P.api?.optimize) throw new Error("无 optimize API");
     const methodEl = document.getElementById("optimizer-method");
     const method = methodEl?.value === "pso" ? "pso" : "exact";
@@ -890,6 +892,32 @@
     }
     const st = document.getElementById("sim-status");
     const schedule = P.buildSimSchedule();
+    if (!P.apiOnline) {
+      // 离线时不让「运行仿真」变成一次必然失败的请求：先本地 exact 优化，再给本地时间轴
+      if (!P.lastResult) {
+        if (!P.optimizer?.runOptimize) {
+          if (st) st.textContent = "本地优化模块未加载，无法离线仿真。";
+          return;
+        }
+        if (st) st.textContent = "正在本地计算优化…";
+        await new Promise((resolve) => setTimeout(resolve, 30));
+        try {
+          const base = JSON.parse(JSON.stringify(P.scenario));
+          const raw = P.optimizer.runOptimize(base, { method: "exact" });
+          P.lastResult = P.normalizeOptimizeResult(raw, "exact", P.scenario);
+        } catch (e) {
+          if (st) st.textContent = "本地优化失败：" + (e.message || e);
+          return;
+        }
+      }
+      try {
+        const timeline = P.runSimulationLocal(P.lastResult, schedule);
+        P.applySimTimeline(timeline, st, "仿真就绪 · 本地估算");
+      } catch (e) {
+        if (st) st.textContent = "本地仿真失败：" + (e.message || e);
+      }
+      return;
+    }
     try {
       await P.runRollingSimulation(P.scenario, schedule, st, "");
     } catch (e) {

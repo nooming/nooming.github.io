@@ -101,6 +101,59 @@
             position: relative;
         }
 
+        /* 地图脚本失败/被拦截时的占位，不让用户对着空白猜 */
+        .map-fallback {
+            position: fixed;
+            inset: 0;
+            z-index: 90;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 24px;
+            text-align: center;
+            background:
+                linear-gradient(var(--bg-grid-color, rgba(0, 0, 0, 0.028)) 1px, transparent 1px),
+                linear-gradient(90deg, var(--bg-grid-color, rgba(0, 0, 0, 0.028)) 1px, transparent 1px),
+                var(--color-canvas, #f7f7f5);
+            background-size: 28px 28px;
+        }
+
+        .map-fallback[hidden] {
+            display: none;
+        }
+
+        .map-fallback__title {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .map-fallback__desc {
+            margin: 0;
+            font-size: 13px;
+            color: var(--text-medium);
+        }
+
+        .map-fallback__retry {
+            margin-top: 6px;
+            min-height: 40px;
+            padding: 8px 18px;
+            border: 1px solid var(--primary);
+            border-radius: var(--radius-sm);
+            background: var(--bg-white);
+            color: var(--primary-dark);
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .map-fallback__retry:hover {
+            background: rgba(var(--primary-rgb), 0.08);
+        }
+
         /* 加载动画 - 分步骤进度 */
         .loading-overlay {
             position: fixed;
@@ -873,13 +926,15 @@
 
         .result-actions-row {
             display: flex;
+            flex-wrap: wrap;
             gap: 8px;
             margin-top: 12px;
         }
 
         .result-share-block .result-actions-row .btn-generate-plan {
             display: block;
-            flex: 1;
+            flex: 1 1 120px;
+            min-width: 0;
             margin: 0;
         }
 
@@ -1784,6 +1839,26 @@
         }
 
         /* 超小屏幕适配 */
+        @media (max-width: 480px) {
+            .poi-item-type,
+            .poi-item-reason {
+                font-size: 12px;
+            }
+
+            .weather-chip {
+                max-width: 46%;
+                min-width: 112px;
+            }
+
+            .weather-chip-title {
+                font-size: 12px;
+            }
+
+            .panel-env-bar:not(:has(.city-switcher[open])) .weather-chip-desc {
+                display: none;
+            }
+        }
+
         @media (max-width: 375px) {
             .panel-header h2 {
                 font-size: 16px;
@@ -3234,12 +3309,147 @@
             flex-wrap: wrap;
             gap: 8px;
         }
+        .itinerary-panel {
+            margin: 14px 0;
+            padding: 12px;
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            background: var(--bg-light);
+        }
+        .itinerary-head {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .itinerary-head h3 {
+            margin: 0;
+            font-size: 14px;
+            color: var(--text-dark);
+        }
+        .itinerary-controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+        }
+        .itinerary-controls label {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: var(--text-medium);
+        }
+        .itinerary-controls input {
+            min-height: 30px;
+            padding: 3px 6px;
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            background: var(--bg-white);
+            color: var(--text-dark);
+            font: inherit;
+            font-size: 12px;
+        }
+        .itinerary-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+        .itinerary-item {
+            display: grid;
+            grid-template-columns: 46px minmax(0, 1fr);
+            gap: 8px;
+            align-items: start;
+            padding: 7px 0;
+            border-bottom: 1px dashed var(--border-light);
+        }
+        .itinerary-time {
+            font-variant-numeric: tabular-nums;
+            color: var(--primary-dark);
+            font-weight: 700;
+            font-size: 12px;
+        }
+        .itinerary-main {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+            font-size: 13px;
+            color: var(--text-dark);
+        }
+        .itinerary-main strong {
+            overflow-wrap: anywhere;
+        }
+        .itinerary-meta {
+            color: var(--text-light);
+            font-size: 11px;
+        }
+        .itinerary-total {
+            padding-top: 8px;
+            color: var(--text-medium);
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .route-compare {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin: 10px 0;
+            padding: 9px 11px;
+            border: 1px dashed rgba(var(--primary-rgb), 0.45);
+            border-radius: 10px;
+            background: rgba(var(--primary-rgb), 0.06);
+        }
+        .route-compare[hidden] {
+            display: none;
+        }
+        .route-compare__text {
+            font-size: 12px;
+            line-height: 1.55;
+            color: var(--text-medium);
+        }
+        .route-compare__text strong {
+            color: var(--primary-dark);
+        }
         .poi-item-actions {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
             margin-top: 6px;
             align-items: center;
+        }
+        .poi-order-btns {
+            display: none;
+            gap: 4px;
+            margin-left: auto;
+        }
+        .poi-order-btn {
+            border: 1px solid var(--border-light);
+            background: var(--bg-white);
+            color: var(--text-medium);
+            border-radius: 6px;
+            padding: 3px 8px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .poi-order-btn:disabled {
+            opacity: 0.4;
+            cursor: default;
+        }
+        @media (max-width: 768px) {
+            .poi-order-btns {
+                display: flex;
+            }
+            .poi-drag-handle {
+                display: none;
+            }
         }
         .poi-skip-btn,
         .poi-remove-btn,

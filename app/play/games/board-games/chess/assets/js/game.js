@@ -39,6 +39,18 @@
     let resizePending = false;
     let lastAnnouncement = '';
     let sound = null;
+    let toastTimer = 0;
+    const toastEl = document.getElementById('toast');
+
+    function toast(message, ms) {
+        if (!toastEl) return;
+        toastEl.textContent = message;
+        toastEl.classList.add('is-visible');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () {
+            toastEl.classList.remove('is-visible');
+        }, ms || 2000);
+    }
 
     // ------------------------------------------------------------ 音效
     function createSound() {
@@ -513,6 +525,7 @@
 
         if (sound && undone) sound.play('undo');
         updateAll();
+        if (undone) toast('已悔棋', 1600);
         announce('已悔棋，' + COLOR_NAME[game.turn()] + '行棋');
     }
 
@@ -553,6 +566,7 @@
                 if (result) {
                     state.hint = { from: result.from, to: result.to };
                     syncView();
+                    toast('已标出建议着法', 1800);
                     announce('提示：' + result.from.toUpperCase() + ' 到 ' + result.to.toUpperCase());
                 }
             }, 30);
@@ -571,6 +585,7 @@
             els.aiDifficultyPanel.hidden = mode !== 'ai';
         }
         savePrefs();
+        toast(mode === 'ai' ? '已切换为人机对战' : '已切换为双人对战', 1800);
         resetGame();
     }
 
@@ -579,6 +594,8 @@
         document.querySelectorAll('.seg[data-difficulty]').forEach(function (btn) {
             btn.setAttribute('aria-pressed', String(btn.dataset.difficulty === difficulty));
         });
+        var difficultyText = { easy: '简单', medium: '中等', hard: '困难' };
+        toast('AI 难度：' + (difficultyText[difficulty] || difficulty), 1600);
         savePrefs();
         // 若是 AI 回合，立即按新难度重算
         if (!state.gameOver && state.mode === 'ai' && game.turn() === 'b') {
@@ -620,15 +637,22 @@
         });
 
         els.undoBtn.addEventListener('click', undo);
-        els.resetBtn.addEventListener('click', resetGame);
+        els.resetBtn.addEventListener('click', function () {
+            resetGame();
+            toast('新的一局，红方先行', 1800);
+        });
         els.hintBtn.addEventListener('click', requestHint);
         if (els.soundBtn) {
             els.soundBtn.addEventListener('click', function () {
                 setSound(!state.sound);
                 if (state.sound) sound.play('move');
+                toast(state.sound ? '声音已开启' : '声音已关闭', 1500);
             });
         }
-        els.playAgainBtn.addEventListener('click', resetGame);
+        els.playAgainBtn.addEventListener('click', function () {
+            resetGame();
+            toast('新的一局，红方先行', 1800);
+        });
         els.reviewBtn.addEventListener('click', undo);
 
         window.addEventListener('resize', scheduleResize);

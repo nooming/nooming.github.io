@@ -181,6 +181,6 @@
       console.warn("suggest plans failed", e);
     }
     list.innerHTML =
-      '<p class="panel-note">后端不可用。请启动 <code>noomings_backend</code>（<code>python app.py</code>）并配置 <code>PARKING_API_BASE</code> 后重试。</p>';
+      '<p class="panel-note">在线服务暂不可用 · 当前使用本地缓存，云端方案与保存暂不可用。</p>';
   };
 })();

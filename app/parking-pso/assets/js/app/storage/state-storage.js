@@ -4,6 +4,7 @@
   function createStateStorage(config) {
     const storageKey = String(config.storageKey || "");
     const debounceMs = Math.max(0, Number(config.debounceMs) || 0);
+    const onPersist = typeof config.onPersist === "function" ? config.onPersist : null;
     let timer = null;
 
     function readState() {
@@ -18,10 +19,15 @@
 
     function persistNow(payload) {
       if (!payload) return;
+      let ok = false;
       try {
         localStorage.setItem(storageKey, JSON.stringify(payload));
+        ok = true;
       } catch (e) {
         console.warn("状态保存失败:", e?.message || e);
+      }
+      if (onPersist) {
+        try { onPersist(ok); } catch (_) { /* ignore */ }
       }
     }
 

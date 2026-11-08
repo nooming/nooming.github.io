@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#ff6f91">
+<meta name="color-scheme" content="light">
 <meta name="description" content="WanderWalk 社区 · Walk 灵感、同行搭子与足迹记录，和路线规划共用数据。">
 <meta property="og:type" content="website">
 <meta property="og:title" content="WanderWalk · 社区">
@@ -310,12 +311,21 @@
     <div class="me-panel" id="mePanelSettings" hidden role="tabpanel">
       <div class="me-settings-card">
         <p id="meAuthStatus">账号状态加载中…</p>
+        <p id="meServiceStatus" class="me-settings-note">服务状态检查中…</p>
         <div class="me-settings-actions">
           <button type="button" class="me-settings-btn primary" id="meOpenAuthBtn">登录 / 注册</button>
           <button type="button" class="me-settings-btn" id="meOpenAccountBtn" hidden>账号与改密</button>
           <a class="me-settings-btn ghost" href="#spots" onclick="closeMePage('#spots'); return true;">Walk 足迹与规划导入 →</a>
         </div>
         <p class="me-settings-note">笔记与招募收藏默认保存在本浏览器；登录后足迹、路线与点位收藏可同步。笔记/招募收藏的云同步将在后续版本提供。</p>
+        <div class="me-privacy">
+          <h3 class="me-subhead">数据与隐私</h3>
+          <p class="me-settings-note">本机缓存包含偏好、最近路线、足迹与未同步收藏；登录 token 不会导出。清除本机数据不会删除云端账号。</p>
+          <div class="me-settings-actions">
+            <button type="button" class="me-settings-btn" id="meExportDataBtn">导出本机数据</button>
+            <button type="button" class="me-settings-btn ghost" id="meClearDataBtn">清除本机数据</button>
+          </div>
+        </div>
       </div>
     </div>
 </section>
@@ -329,7 +339,7 @@
   <button type="button" class="community-tabbar-btn" data-community-view="spots"><span class="community-tabbar-icon" aria-hidden="true">👣</span><span>足迹</span></button>
 </nav>
 
-<footer><b>WanderWalk</b> 社区 · <a href="../">Citywalk 路线规划</a> · <a href="../../">noomings 首页</a><br><br>城市不是用来赶路的，是用来慢慢走的。<br><br>© 2026 WanderWalk（演示数据）</footer>
+<footer><b>WanderWalk</b> 社区 · <a href="../">Citywalk 路线规划</a> · <a href="../../">noomings 首页</a> · <a href="https://github.com/nooming/nooming.github.io/issues" target="_blank" rel="noopener noreferrer">问题反馈</a><br><br>城市不是用来赶路的，是用来慢慢走的。<br><br>© 2026 WanderWalk（演示数据）</footer>
 
 <!-- 路线详情弹窗 -->
 <div class="modal" id="routeModal">
@@ -338,7 +348,7 @@
     <div class="route-modal">
       <div class="modal-cover-wrap">
         <div id="modalCoverDemo" class="modal-cover route-cover-demo" hidden aria-hidden="true"></div>
-        <img id="modalCover" class="modal-cover" src="" alt="路线图片">
+        <img id="modalCover" class="modal-cover" src="assets/images/covers/feed-route.webp" alt="路线图片">
       </div>
       <div class="modal-info">
         <div class="modal-kicker" id="modalKicker"></div>

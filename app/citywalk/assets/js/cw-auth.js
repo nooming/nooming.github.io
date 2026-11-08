@@ -123,10 +123,22 @@
 
     async function refreshMe() {
         if (!getToken()) return null;
-        const { res, body } = await apiJson('/auth/me', { method: 'GET' });
-        if (!res.ok || !body.success) {
+        let res;
+        let body;
+        try {
+            ({ res, body } = await apiJson('/auth/me', { method: 'GET' }));
+        } catch (e) {
+            // 网络/冷启动失败不清登录态，保留本地缓存
+            console.warn('refreshMe failed', e);
+            return _user || loadCachedUser();
+        }
+        if (res.status === 401) {
             setSession('', null);
             return null;
+        }
+        if (!res.ok || !body.success) {
+            console.warn('refreshMe unavailable', res.status);
+            return _user || loadCachedUser();
         }
         _user = body.user;
         writeJson(AUTH_USER_KEY, _user);
@@ -174,6 +186,12 @@
         }
         modal.classList.add('show');
         if (global.document && global.document.body) global.document.body.style.overflow = 'hidden';
+        if (global.requestAnimationFrame) {
+            global.requestAnimationFrame(function () {
+                const first = modal.querySelector('input:not([type="hidden"]), button');
+                if (first) first.focus();
+            });
+        }
     }
 
     function openAuthModal(mode) {
@@ -219,6 +237,11 @@
 
     async function submitLoginForm(ev) {
         if (ev) ev.preventDefault();
+        const form = ev && ev.target;
+        const btn = form && form.querySelector('[type="submit"]');
+        if (btn && btn.disabled) return;
+        const oldLabel = btn ? btn.textContent : '';
+        if (btn) { btn.disabled = true; btn.textContent = '登录中…'; }
         const email = (document.getElementById('cwAuthLoginEmail') || {}).value || '';
         const password = (document.getElementById('cwAuthLoginPassword') || {}).value || '';
         try {
@@ -230,11 +253,18 @@
             }
         } catch (e) {
             if (typeof showToast === 'function') showToast(e.message || '登录失败');
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = oldLabel; }
         }
     }
 
     async function submitRegisterForm(ev) {
         if (ev) ev.preventDefault();
+        const form = ev && ev.target;
+        const btn = form && form.querySelector('[type="submit"]');
+        if (btn && btn.disabled) return;
+        const oldLabel = btn ? btn.textContent : '';
+        if (btn) { btn.disabled = true; btn.textContent = '注册中…'; }
         const email = (document.getElementById('cwAuthRegEmail') || {}).value || '';
         const password = (document.getElementById('cwAuthRegPassword') || {}).value || '';
         const name = (document.getElementById('cwAuthRegName') || {}).value || '';
@@ -247,6 +277,8 @@
             }
         } catch (e) {
             if (typeof showToast === 'function') showToast(e.message || '注册失败');
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = oldLabel; }
         }
     }
 
@@ -299,14 +331,26 @@
             });
         }
         updateAuthChrome();
+        if (global.document && !global.__cwAuthEscBound) {
+            global.__cwAuthEscBound = true;
+            global.document.addEventListener('keydown', function (e) {
+                if (e.key !== 'Escape') return;
+                const modal = document.getElementById('cwAuthModal');
+                if (modal && modal.classList.contains('show')) closeAuthModal();
+            });
+        }
     }
 
     async function initAuth() {
         bindAuthUi();
         if (!getToken()) return;
-        await refreshMe();
-        if (typeof CitywalkFootprintSync !== 'undefined') {
-            await CitywalkFootprintSync.pullFromCloud({ silent: true });
+        try {
+            await refreshMe();
+            if (typeof CitywalkFootprintSync !== 'undefined') {
+                await CitywalkFootprintSync.pullFromCloud({ silent: true });
+            }
+        } catch (e) {
+            console.warn('initAuth failed', e);
         }
     }
 

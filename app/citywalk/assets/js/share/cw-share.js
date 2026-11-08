@@ -113,8 +113,13 @@ async function generateShareImage() {
 
     const dateStr = now.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' });
 
-    // 主题色（复用 cw-state.js 的全局 colorThemes；secondary/gradient 由 primary/primaryLight 派生）
-    const baseTheme = CW.currentTheme || colorThemes[Math.floor(Math.random() * colorThemes.length)];
+    // 主题色：沿用规划页当前品牌色；secondary/gradient 由 primary/primaryLight 派生
+    const baseTheme = CW.currentTheme || {
+        primary: '#ff6f91',
+        primaryLight: '#ffb3c6',
+        primaryDark: '#e85a7d',
+        primaryRgb: '255,111,145'
+    };
     const primary = baseTheme.primary;
     const secondary = baseTheme.primaryLight;
     const topGrad = `linear-gradient(180deg, ${primary}e6 0%, ${secondary}b3 50%, transparent 100%)`;

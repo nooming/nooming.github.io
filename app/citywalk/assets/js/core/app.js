@@ -2,8 +2,7 @@
         // 状态变量与常量已在 cw-state.js 中声明
         // 地图/天气/路线/分享函数已在 cw-map.js / cw-weather.js / cw-route.js / cw-share.js 中声明
 
-        // ===== 主题（持久化，刷新不重随）=====
-        const CW_THEME_KEY = 'cw_theme_v1';
+        // ===== 主题（固定品牌粉，不随机换色）=====
 
         function applyTheme(theme) {
             if (!theme) return;
@@ -15,16 +14,17 @@
             if (theme.primaryRgb) {
                 root.style.setProperty('--primary-rgb', theme.primaryRgb);
             }
-            if (theme.name) {
-                try { localStorage.setItem(CW_THEME_KEY, theme.name); } catch (_) { /* ignore */ }
-            }
         }
 
         function initPersistedTheme() {
-            let savedName = null;
-            try { savedName = localStorage.getItem(CW_THEME_KEY); } catch (_) { /* ignore */ }
-            const found = savedName ? colorThemes.find(t => t.name === savedName) : null;
-            applyTheme(found || colorThemes[Math.floor(Math.random() * colorThemes.length)]);
+            // 不随机换色：面板、地图线、图钉、分享图统一用品牌粉
+            applyTheme({
+                name: 'WanderWalk',
+                primary: '#ff6f91',
+                primaryLight: '#ffb3c6',
+                primaryDark: '#e85a7d',
+                primaryRgb: '255,111,145'
+            });
         }
 
         initPersistedTheme();
@@ -211,8 +211,8 @@ ${poiText}
                 if (navigator.clipboard && window.isSecureContext) {
                     navigator.clipboard.writeText(planText).then(() => {
                         showToast("攻略已复制 · 可直接分享");
-                    }).catch(err => {
-                        throw err;
+                    }).catch(() => {
+                        showToast("复制没成功，可以手动选中弹窗内容复制");
                     });
                 } else {
                     const textArea = document.createElement('textarea');
@@ -566,7 +566,7 @@ ${poiText}
                 finishSavedRouteRestoreAfterMapReady();
             }
         };
-        if (window.AMap || window.__amapReady) {
+        if (window.AMap || window.__amapReady || window.__cwAmapFailed) {
             window.__cwOnAMapReady();
         }
 
@@ -706,7 +706,16 @@ ${poiText}
         })();
 
         syncPlanPrefsDisclosure();
-        window.addEventListener('resize', syncPlanPrefsDisclosure);
+
+        // 首次进入移动端先给半屏，避免只看到搜索框、找不到「生成路线」
+        if (window.matchMedia(SHEET_MEDIA).matches) {
+            let seenSheet = false;
+            try { seenSheet = localStorage.getItem('cw_sheet_intro_v1') === '1'; } catch (_) { /* ignore */ }
+            if (!seenSheet) {
+                try { localStorage.setItem('cw_sheet_intro_v1', '1'); } catch (_) { /* ignore */ }
+                setSheetDetent('half');
+            }
+        }
 
         (function initTouchGestures() {
             const controlPanel = document.querySelector('.control-panel');

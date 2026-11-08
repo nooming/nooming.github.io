@@ -92,7 +92,7 @@ async function sendAgentChat() {
     if (input) input.value = '';
 
     try {
-        const response = await fetch(`${CW_API}/agent/chat`, {
+        const response = await cwFetch(`${CW_API}/agent/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify({
@@ -100,7 +100,7 @@ async function sendAgentChat() {
                 session_id: CW.agentSessionId,
                 context: buildAgentContext(),
             }),
-        });
+        }, 30000);
 
         const data = await parseAgentResponse(response);
 
@@ -187,11 +187,11 @@ async function fetchAgentGuideText() {
         } : null,
     };
 
-    const response = await fetch(`${CW_API}/agent/guide`, {
+    const response = await cwFetch(`${CW_API}/agent/guide`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),
-    });
+    }, 20000);
     const data = await response.json().catch(() => null);
     if (data && data.success && data.guide_text) {
         return data.guide_text;

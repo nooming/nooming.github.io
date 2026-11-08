@@ -1,18 +1,35 @@
 // ========== Citywalk · 地图模块 ==========
 
+function showMapFallback() {
+    const el = document.getElementById('mapFallback');
+    if (el) el.hidden = false;
+}
+
 function initMap() {
     if (!window.AMap) {
+        showMapFallback();
+        CW.cityLocateReady = true;
+        const cityEl = document.getElementById('currentCity');
+        if (cityEl) cityEl.textContent = CW.currentCity;
+        if (typeof updateWeatherUI === 'function') {
+            updateWeatherUI('天气暂不可用', '地图未加载，暂无法获取天气', '⛅');
+        }
         showToast("地图加载失败 · 请检查网络后刷新");
         return;
     }
 
     try {
+        // 天气与城市定位不依赖地图实例；先启动，地图失败时仍可用
+        startWeatherRefresh();
+        locateUserCity();
+
         CW.map = new AMap.Map('container', {
             zoom: 13,
             center: CW.currentCityCenter,
             viewMode: '2D',
             clickEnable: true,
             dragEnable: true,
+            doubleClickZoom: false,
             resizeEnable: true
         });
 
@@ -67,7 +84,10 @@ function initMap() {
         const mapContainer = document.getElementById('container');
         if (mapContainer) {
             mapContainer.addEventListener('touchstart', function(ev) {
-                if (!ev.touches || ev.touches.length !== 1) return;
+                if (!ev.touches || ev.touches.length !== 1) {
+                    clearLongPress();
+                    return;
+                }
                 const touch = ev.touches[0];
                 clearLongPress();
                 longPressTimer = setTimeout(function() {
@@ -98,9 +118,8 @@ function initMap() {
 
         if (typeof loadMapLayerPrefs === 'function') loadMapLayerPrefs();
 
-        startWeatherRefresh();
-        locateUserCity();
     } catch (e) {
+        showMapFallback();
         showToast("地图加载失败了，请刷新页面重试");
         console.error("地图初始化错误：", e);
     }
@@ -210,6 +229,15 @@ async function locateUserCity(opts) {
             return;
         }
 
+        // 本地已保存过城市：自动定位不覆盖用户选择
+        if (CW.cityPinnedByUser) {
+            const cityEl = document.getElementById('currentCity');
+            if (cityEl) cityEl.textContent = CW.currentCity;
+            getCityWeather(CW.currentCity, true);
+            CW.cityLocateReady = true;
+            return;
+        }
+
         try {
             let { coords, failCode } = await getBrowserPosition();
             if ((CW.cityLocateGen || 0) !== locateGen) {
@@ -236,11 +264,19 @@ async function locateUserCity(opts) {
             if (coords) {
                 url += `?lng=${encodeURIComponent(coords.lng)}&lat=${encodeURIComponent(coords.lat)}`;
             }
-            const response = await fetch(url);
+            const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+            const timer = controller ? setTimeout(() => controller.abort(), 5000) : null;
+            let response;
+            try {
+                response = await fetch(url, controller ? { signal: controller.signal } : undefined);
+            } finally {
+                if (timer) clearTimeout(timer);
+            }
+            if (!response.ok) throw new Error('HTTP ' + response.status);
             const data = await response.json();
             _applyLocatedCity(data, locateGen);
         } catch (e) {
-            console.error('城市定位失败：', e);
+            console.warn('城市定位失败：', e);
             if ((CW.cityLocateGen || 0) === locateGen && !_shareCityLocksLocate()) {
                 const el = document.getElementById('currentCity');
                 if (el) el.textContent = CW.currentCity;
@@ -492,6 +528,13 @@ function addPoiMarkers(pois) {
         CW.map.add(numberLabel);
         CW.poiMarkers.push(numberLabel);
     });
+
+    // 路线重绘时 clearPlanningMapLayers 清掉了灵感钉；开关仍勾选时补回
+    if (CW.mapLayerPrefs?.showInspireOnMap
+        && Array.isArray(CW.inspireCandidates)
+        && CW.inspireCandidates.length) {
+        syncInspireMarkers(CW.inspireCandidates, { fitView: false });
+    }
 }
 
 // 列表项点击时高亮对应 POI 标记（放大 + 主题色光环），其余复位

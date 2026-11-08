@@ -7,6 +7,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#ff6f91">
+    <meta name="color-scheme" content="light">
     <meta name="description" content="WanderWalk · 步行路线规划 · 起终点、必去点与偏好参数 · 同步社区足迹。">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="WanderWalk">
@@ -30,11 +31,17 @@
         window.__amapReady = false;
         function onAMapLoaded() {
             window.__amapReady = true;
+            window.__cwAmapFailed = false;
+            var fallback = document.getElementById('mapFallback');
+            if (fallback) fallback.hidden = true;
             if (typeof window.__cwOnAMapReady === 'function') {
                 window.__cwOnAMapReady();
             }
         }
         function mapLoadError() {
+            window.__cwAmapFailed = true;
+            var fallback = document.getElementById('mapFallback');
+            if (fallback) fallback.hidden = false;
             var toast = document.getElementById('errorToast');
             if (toast) {
                 toast.textContent = '地图加载失败，请刷新页面重试';
@@ -83,6 +90,12 @@
 </head>
 <body>
     <div id="container"></div>
+
+    <div class="map-fallback" id="mapFallback" hidden role="status" aria-live="polite">
+        <p class="map-fallback__title">地图暂时没有加载出来</p>
+        <p class="map-fallback__desc">检查网络后重试，或先刷新页面。</p>
+        <button type="button" class="map-fallback__retry" onclick="location.reload()">重新加载</button>
+    </div>
 
     <button class="back-home-fab" type="button" aria-label="返回站内首页" title="返回首页" onclick="window.location.href='../../'">
         ←
@@ -166,7 +179,7 @@
             <section id="panel-shared" class="panel-shared plan-mode-route" aria-label="选点与模式">
                 <div class="search-box search-box--compact">
                     <label for="searchInput" class="sr-only">搜索地址</label>
-                    <input type="text" id="searchInput" placeholder="搜索地点，回车定位到地图">
+                    <input type="text" id="searchInput" placeholder="搜索地点">
                 </div>
 
                 <div class="plan-mode-group" role="group" aria-label="规划模式">
@@ -324,6 +337,21 @@
                     </div>
                     <div class="weather-nudge weather-nudge--result" id="weatherNudgeResult" style="display:none;"></div>
                     <div class="poi-list" id="poiList"></div>
+                    <section class="itinerary-panel" id="itineraryPanel" hidden aria-labelledby="itineraryTitle">
+                        <div class="itinerary-head">
+                            <h3 id="itineraryTitle">行程时间轴</h3>
+                            <div class="itinerary-controls">
+                                <label>日期 <input type="date" id="routeStartDate"></label>
+                                <label>出发 <input type="time" id="routeStartTime" value="09:30"></label>
+                                <button type="button" class="btn-route-action" id="btnAddToCalendar">加入日历</button>
+                            </div>
+                        </div>
+                        <ol class="itinerary-list" id="itineraryList"></ol>
+                    </section>
+                    <div class="route-compare" id="routeCompareBar" hidden>
+                        <div class="route-compare__text" id="routeCompareText"></div>
+                        <button type="button" class="btn-route-action" id="btnUsePreviousRoute">回到上一版</button>
+                    </div>
                     <div class="route-actions" id="routeActions" style="display:none;">
                         <button type="button" class="btn-route-action" id="btnNextStop">🚶 下一站</button>
                         <button type="button" class="btn-route-action" id="btnOpenAmap">🧭 起终点导航</button>
@@ -334,6 +362,7 @@
                             <button class="btn-generate-plan btn-record-community" id="btnRecordCommunity" type="button">记录到社区</button>
                             <button class="btn-generate-plan btn-copy-link" id="btnCopyShareLink" type="button">复制链接</button>
                             <button class="btn-generate-plan" id="btnGeneratePlan" type="button">生成游记攻略</button>
+                            <button class="btn-generate-plan" id="btnAlternateRoute" type="button">换一种走法</button>
                             <button class="btn-generate-plan btn-share-image" id="btnShareImage" type="button">导出分享图</button>
                         </div>
                     </div>

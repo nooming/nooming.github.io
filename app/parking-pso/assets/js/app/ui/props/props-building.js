@@ -5,6 +5,11 @@
 
   P.renderPropsBuilding = function () {
     const [x, y] = P.scenario.buildings[P.selection.index];
+    const afterGeometryEdit = () => {
+      P.invalidateOptimizationResult();
+      P.commitSceneGeometry();
+      P.draw();
+    };
     P.propsAddNum("楼中心 X (" + P.uLen() + ")", "p-bx", x, () => {
       const v = P.clampBuildingCenter(
         parseFloat(document.getElementById("p-bx").value) || 0,
@@ -13,7 +18,7 @@
       if (P.canPlaceBuilding(v.wx, v.wy, P.selection.index)) {
         P.scenario.buildings[P.selection.index][0] = v.wx;
       }
-      P.draw();
+      afterGeometryEdit();
     });
     P.propsAddNum("楼中心 Y (" + P.uLen() + ")", "p-by", y, () => {
       const v = P.clampBuildingCenter(
@@ -23,7 +28,7 @@
       if (P.canPlaceBuilding(v.wx, v.wy, P.selection.index)) {
         P.scenario.buildings[P.selection.index][1] = v.wy;
       }
-      P.draw();
+      afterGeometryEdit();
     });
   };
 })();

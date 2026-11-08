@@ -70,6 +70,18 @@
     };
 
     var game = new Go.GoGame({ size: state.size, komi: Go.DEFAULT_KOMI });
+    var toastEl = $('toast');
+    var toastTimer = 0;
+
+    function toast(message, ms) {
+        if (!toastEl) return;
+        toastEl.textContent = message;
+        toastEl.classList.add('is-visible');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () {
+            toastEl.classList.remove('is-visible');
+        }, ms || 2000);
+    }
 
     /* ------------------------------------------------------------------ *
      * 渲染
@@ -688,6 +700,7 @@
         disarmResign();
         if (game.history.length === 0) return;
         if (state.mode === 'ai' && !hasHumanHistory()) return;
+        var before = game.history.length;
 
         // 确认有可撤销的内容后再取消 AI，避免执白开局时把 AI 的思考取消掉
         cancelAI();
@@ -701,6 +714,7 @@
         closeDialog();
         clearHint();
         refresh();
+        if (game.history.length !== before) toast('已悔棋', 1600);
     }
 
     function passTurn() {
@@ -714,6 +728,7 @@
         state.highlightUntil = 0;
         clearHint();
         refresh();
+        toast('已停一手', 1500);
     }
 
     function disarmResign() {
@@ -732,6 +747,7 @@
             el.resignBtn.classList.add('is-armed');
             clearTimeout(state.resignTimer);
             state.resignTimer = setTimeout(disarmResign, 3200);
+            toast('再点一次确认认输', 1800);
             return;
         }
 
@@ -845,6 +861,7 @@
         state.mode = mode;
         state.resultShown = false;
         newGame();
+        toast(mode === 'ai' ? '已切换为人机对战' : '已切换为双人对战', 1800);
     }
 
     function setSize(rawSize) {
@@ -853,6 +870,7 @@
         state.size = size;
         state.resultShown = false;
         newGame();
+        toast('棋盘：' + size + ' 路', 1600);
     }
 
     function setHumanColor(value) {
@@ -861,6 +879,7 @@
         state.humanColor = color;
         state.resultShown = false;
         newGame();
+        toast(color === WHITE ? '你执白后行' : '你执黑先行', 1800);
     }
 
     function setDifficulty(difficulty) {
@@ -868,6 +887,8 @@
         state.difficulty = difficulty;
         updateUI();
         persist();
+        var text = { easy: '简单', medium: '中等', hard: '困难' };
+        toast('AI 难度：' + (text[difficulty] || difficulty), 1600);
     }
 
     function bindEvents() {
@@ -906,7 +927,10 @@
         el.resignBtn.addEventListener('click', resignGame);
         el.whereBtn.addEventListener('click', showLastMove);
         el.exportBtn.addEventListener('click', exportSGF);
-        el.newBtn.addEventListener('click', newGame);
+        el.newBtn.addEventListener('click', function () {
+            newGame();
+            toast('新的一局，黑方先行', 1800);
+        });
 
         el.resultContinue.addEventListener('click', function () {
             closeDialog();
@@ -918,6 +942,7 @@
             closeDialog();
             state.resultShown = false;
             newGame();
+            toast('新的一局，黑方先行', 1800);
         });
 
         if (typeof ResizeObserver === 'function') {

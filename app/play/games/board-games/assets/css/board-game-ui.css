@@ -230,8 +230,8 @@ canvas#board:focus-visible {
    Footer / toast / helpers
    -------------------------------------------------------------------------- */
 
-/* 五子棋 #toast：须覆盖 common.css 全站 .toast（top/right），避免提示被拉成竖条 */
-.gomoku-root #toast.toast {
+/* 棋类 #toast：须覆盖 common.css 全站 .toast（top/right），避免提示被拉成竖条 */
+:is(.gomoku-root, .chess-root, .go-root) #toast.toast {
     position: fixed;
     top: auto;
     right: auto;
@@ -254,7 +254,7 @@ canvas#board:focus-visible {
     transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.gomoku-root #toast.toast.is-visible {
+:is(.gomoku-root, .chess-root, .go-root) #toast.toast.is-visible {
     opacity: 1;
     transform: translate(-50%, 0);
 }
@@ -328,9 +328,10 @@ canvas#board:focus-visible {
         max-height: 150px;
     }
 
-    .gomoku-root #toast.toast {
+    :is(.gomoku-root, .chess-root, .go-root) #toast.toast {
         bottom: max(16px, env(safe-area-inset-bottom, 0px) + 10px);
-        width: calc(100% - 32px);
+        width: max-content;
+        max-width: calc(100% - 32px);
     }
 }
 
@@ -359,7 +360,7 @@ canvas#board:focus-visible {
 @media print {
     .sidebar,
     .board-help,
-    .gomoku-root #toast.toast {
+    :is(.gomoku-root, .chess-root, .go-root) #toast.toast {
         display: none !important;
     }
 

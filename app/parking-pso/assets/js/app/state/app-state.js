@@ -87,6 +87,7 @@
     lastResult: null,
     SNAPSHOT_STORAGE_KEY: "parking-pso-snapshots-v1",
     CURRENT_STATE_STORAGE_KEY: "parking-pso-current-state-v1",
+    STATE_SCHEMA_VERSION: 2,
     currentStateStore: null,
     snapshotStore: null,
     MAX_BENCHMARK_RUNS: 50,
@@ -135,12 +136,21 @@
     ? P.storageFactory.createStateStorage({
         storageKey: P.CURRENT_STATE_STORAGE_KEY,
         debounceMs: 450,
+        onPersist: (ok) => P.markAutosaved?.(ok),
       })
     : null;
   P.snapshotStore = P.storageFactory?.createSnapshotStorage
     ? P.storageFactory.createSnapshotStorage(P.SNAPSHOT_STORAGE_KEY, 20)
     : null;
   P.MAX_BENCHMARK_RUNS = P.analysisTools?.MAX_BENCHMARK_RUNS || 50;
+
+  P.escapeHtml = function (value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  };
 
   P._closestPointOnSegment = function (px, py, x1, y1, x2, y2) {
     if (P.geometry?.closestPointOnSegment) {

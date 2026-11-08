@@ -247,10 +247,18 @@ function sharePayloadNeedsEndpoints(payload) {
     return Number.isFinite(payload.elng) && Number.isFinite(payload.elat);
 }
 
+/** 分享参数里的城市名只当纯文本：限长 + 去掉控制字符与 HTML 元字符 */
+function sanitizeShareCityName(city) {
+    return String(city == null ? '' : city)
+        .replace(/[\u0000-\u001f<>"'&]/g, '')
+        .trim()
+        .slice(0, 24);
+}
+
 /** 去掉尾缀「市」后查 CITY_COORDS；命中则返回表内短名，否则空串 */
 function normalizeShareCityKey(city) {
     if (!city) return '';
-    const raw = String(city).trim();
+    const raw = sanitizeShareCityName(city);
     if (!raw) return '';
     const short = raw.replace(/市$/, '');
     if (CITY_COORDS[short]) return short;
@@ -262,7 +270,7 @@ function normalizeShareCityKey(city) {
 function displayShareCityName(city) {
     const key = normalizeShareCityKey(city);
     if (key) return key;
-    const raw = String(city || '').trim();
+    const raw = sanitizeShareCityName(city);
     return raw.replace(/市$/, '') || raw;
 }
 
@@ -302,8 +310,12 @@ function fitShareEndpointMarkers(payload) {
     if (CW.startMarker) fitTargets.push(CW.startMarker);
     if (payload && payload.mode !== 'loop' && CW.endMarker) fitTargets.push(CW.endMarker);
     if (!fitTargets.length) return;
+    const panelEl = document.querySelector('.control-panel');
+    const panelWidth = window.innerWidth > 768 && panelEl
+        ? Math.round(panelEl.getBoundingClientRect().width)
+        : 0;
     CW.map.setFitView(fitTargets, {
-        padding: [50, 50, 50, 50],
+        padding: [50, 50 + panelWidth, 50, 50],
         animate: true
     });
 }

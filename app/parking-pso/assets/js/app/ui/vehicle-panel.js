@@ -148,6 +148,14 @@ P.rebuildVehicleTargetsUI = function () {
     const modeEl = document.getElementById("entrance-mode");
     if (modeEl) modeEl.value = P.scenario.entrance_mode || "auto";
     el.innerHTML = "";
+    const head = document.createElement("div");
+    head.className = "vehicle-target-head";
+    head.setAttribute("aria-hidden", "true");
+    head.innerHTML =
+      "<span>车号</span><span>目的楼</span><span>入口</span><span>需求</span><span>" +
+      arrivalLab +
+      "</span>";
+    el.appendChild(head);
     for (let i = start; i < end; i++) {
       const row = document.createElement("div");
       row.className = "vehicle-target-row";
@@ -170,6 +178,7 @@ P.rebuildVehicleTargetsUI = function () {
       }
       const sel = document.createElement("select");
       sel.id = "veh-dest-" + i;
+      sel.setAttribute("aria-label", "车 " + (i + 1) + " 目的楼");
       if (nb === 0) {
         const opt = document.createElement("option");
         opt.value = "0";
@@ -198,6 +207,7 @@ P.rebuildVehicleTargetsUI = function () {
       elab.setAttribute("for", "veh-ent-" + i);
       const eSel = document.createElement("select");
       eSel.id = "veh-ent-" + i;
+      eSel.setAttribute("aria-label", "车 " + (i + 1) + " 入口");
       for (let ei = 0; ei < ne; ei++) {
         const opt = document.createElement("option");
         opt.value = String(ei);
@@ -238,6 +248,7 @@ P.rebuildVehicleTargetsUI = function () {
       rlab.setAttribute("for", "veh-req-" + i);
       const rSel = document.createElement("select");
       rSel.id = "veh-req-" + i;
+      rSel.setAttribute("aria-label", "车 " + (i + 1) + " 需求");
       ["normal", "accessible", "ev", "visitor"].forEach((t) => {
         const opt = document.createElement("option");
         opt.value = t;
@@ -261,6 +272,7 @@ P.rebuildVehicleTargetsUI = function () {
       aIn.min = "0";
       aIn.step = "0.5";
       aIn.className = "vehicle-arrival-input";
+      aIn.setAttribute("aria-label", "车 " + (i + 1) + " " + arrivalLab);
       const av = P.scenario.vehicle_arrival_sec[i];
       aIn.value = String(Number.isFinite(Number(av)) ? Number(av) : i * 2);
       aIn.title =

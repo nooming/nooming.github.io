@@ -1,16 +1,16 @@
-﻿/**
- * 发现区示例数据。封面为仓库内 JPEG（Pexels 源，见 assets/images/covers/README.md）。
+/**
+ * 发现区示例数据。封面为仓库内 WebP（Pexels 源，见 assets/images/covers/README.md）。
  * 路径相对 community/index.html。
  */
 const COVER_IMG = {
-  beijing: 'assets/images/covers/beijing-hutong.jpg',
-  shanghai: 'assets/images/covers/shanghai-creek.jpg',
-  chengdu: 'assets/images/covers/chengdu-street.jpg',
-  hangzhou: 'assets/images/covers/hangzhou-lake.jpg',
-  guangzhou: 'assets/images/covers/guangzhou-shamian.jpg',
-  shenzhen: 'assets/images/covers/shenzhen-oct.jpg',
-  tips: 'assets/images/covers/feed-guide.jpg',
-  placeholder: 'assets/images/covers/feed-route.jpg'
+  beijing: 'assets/images/covers/beijing-hutong.webp',
+  shanghai: 'assets/images/covers/shanghai-creek.webp',
+  chengdu: 'assets/images/covers/chengdu-street.webp',
+  hangzhou: 'assets/images/covers/hangzhou-lake.webp',
+  guangzhou: 'assets/images/covers/guangzhou-shamian.webp',
+  shenzhen: 'assets/images/covers/shenzhen-oct.webp',
+  tips: 'assets/images/covers/feed-guide.webp',
+  placeholder: 'assets/images/covers/feed-route.webp'
 };
 
 /** @deprecated 别名，与 COVER_IMG 相同 */
@@ -18,11 +18,11 @@ const SAMPLE_IMG = COVER_IMG;
 
 /** 动态区按类型；无单独图时回退 */
 const FEED_TYPE_IMG = {
-  '路线': 'assets/images/covers/feed-route.jpg',
-  '攻略': 'assets/images/covers/feed-guide.jpg',
-  '打卡': 'assets/images/covers/feed-checkin.jpg',
-  '拍照': 'assets/images/covers/feed-photo.jpg',
-  '夜游': 'assets/images/covers/feed-night.jpg'
+  '路线': 'assets/images/covers/feed-route.webp',
+  '攻略': 'assets/images/covers/feed-guide.webp',
+  '打卡': 'assets/images/covers/feed-checkin.webp',
+  '拍照': 'assets/images/covers/feed-photo.webp',
+  '夜游': 'assets/images/covers/feed-night.webp'
 };
 
 const CITY_COVER = {

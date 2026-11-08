@@ -13,6 +13,8 @@
       P.scenario.slots[idx][0] = parseFloat(document.getElementById("p-sx").value) || 0;
       P.scenario.slots[idx][1] = parseFloat(document.getElementById("p-sy").value) || 0;
       if (!P.applySnapToSlot(idx)) return;
+      P.invalidateOptimizationResult();
+      P.commitSceneGeometry();
       P.renderProps();
       P.draw();
     };
@@ -21,6 +23,8 @@
     P.propsAddNum("车位角度 (deg)", "p-st", (P.normalizeAngle(pose.theta) * 180) / Math.PI, () => {
       const deg = parseFloat(document.getElementById("p-st").value) || 0;
       P.scenario.slots[idx][2] = P.normalizeAngle((deg * Math.PI) / 180);
+      P.invalidateOptimizationResult();
+      P.commitSceneGeometry();
       P.draw();
     });
     P.ensureConstraints();
@@ -44,6 +48,7 @@
     sel.addEventListener("change", () => {
       P.scenario.slot_types[idx] = sel.value;
       P.invalidateOptimizationResult();
+      P.commitSceneGeometry();
       P.draw();
     });
     wrap.appendChild(lab);

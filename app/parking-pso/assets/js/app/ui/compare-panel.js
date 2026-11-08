@@ -72,7 +72,7 @@
 
     plans = plans.slice(0, 4);
     let html = '<table class="compare-data"><thead><tr><th>指标</th>';
-    for (const p of plans) html += "<th>" + p.name + "</th>";
+    for (const p of plans) html += "<th>" + P.escapeHtml(p.name) + "</th>";
     html += "</tr></thead><tbody>";
     for (const mk of METRIC_KEYS) {
       html += "<tr><td>" + mk.label + "</td>";

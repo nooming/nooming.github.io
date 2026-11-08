@@ -59,7 +59,12 @@ const CW = {
     cityLocatePromise: null,
     /** 用户手动切城或分享指定城市后递增，用于丢弃迟到的自动定位结果 */
     cityLocateGen: 0,
+    /** 用户已保存/手动指定城市时，自动定位不要覆盖 */
+    cityPinnedByUser: false
 };
+
+// 供 cw-prefs 等 IIFE 模块访问同一份状态
+if (typeof window !== 'undefined') window.CW = CW;
 
 /** 与后端 MAX_CITYWALK_SPAN_M 一致 */
 const MAX_CITYWALK_SPAN_M = 25000;
@@ -73,6 +78,36 @@ function cwEscapeHtml(s) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
 }
+
+/** 带超时的 fetch：网络挂起时按钮 / 加载态不会永远卡住 */
+async function cwFetch(url, options, timeoutMs) {
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = controller ? setTimeout(() => controller.abort(), timeoutMs || 25000) : null;
+    try {
+        return await fetch(url, Object.assign({}, options, controller ? { signal: controller.signal } : {}));
+    } finally {
+        if (timer) clearTimeout(timer);
+    }
+}
+
+// 成熟产品兜底：脚本/未处理 Promise 至少提示一次，本地数据不会被自动清除
+(function bindCitywalkErrorBoundary() {
+    if (typeof window === 'undefined' || window.__cwErrorBound) return;
+    window.__cwErrorBound = true;
+    let notified = false;
+    function notify(error) {
+        if (notified) return;
+        notified = true;
+        console.error('citywalk fatal:', error);
+        if (typeof showToast === 'function') {
+            showToast('页面遇到问题，可刷新重试；已保存的本地数据不会清除。', 7000);
+        }
+    }
+    window.addEventListener('error', (event) => {
+        if (event && event.error) notify(event.error);
+    });
+    window.addEventListener('unhandledrejection', (event) => notify(event && event.reason));
+})();
 
 // --- POI 类型别名（前端单一来源）---
 // 之前 cw-agent.js / app.js 各写过一份，已收敛到此处统一引用。
@@ -108,15 +143,3 @@ const API_BASE_URL =
         ? 'http://localhost:5000'
         : 'https://noomings-backend.zeabur.app';
 const CW_API = `${API_BASE_URL}/api/citywalk`;
-
-// --- 主题配色方案 ---
-const colorThemes = [
-    { name: '日落橙', primary: '#ff7e5f', primaryLight: '#feb47b', primaryDark: '#e85d40', primaryRgb: '255,126,95' },
-    { name: '薄荷绿', primary: '#11998e', primaryLight: '#38ef7d', primaryDark: '#0d7a6e', primaryRgb: '17,153,142' },
-    { name: '珊瑚粉', primary: '#ff6b6b', primaryLight: '#feca57', primaryDark: '#ee5a5a', primaryRgb: '255,107,107' },
-    { name: '深海蓝', primary: '#4facfe', primaryLight: '#00f2fe', primaryDark: '#3d9be5', primaryRgb: '79,172,254' },
-    { name: '紫罗兰', primary: '#a18cd1', primaryLight: '#fbc2eb', primaryDark: '#8a7bc8', primaryRgb: '161,140,209' },
-    { name: '樱花粉', primary: '#f093fb', primaryLight: '#f5576c', primaryDark: '#e07ce8', primaryRgb: '240,147,251' },
-    { name: '森林绿', primary: '#56ab2f', primaryLight: '#a8e063', primaryDark: '#4a9a28', primaryRgb: '86,171,47' },
-    { name: '焦糖棕', primary: '#8B4513', primaryLight: '#D2691E', primaryDark: '#6d360f', primaryRgb: '139,69,19' }
-];

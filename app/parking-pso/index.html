@@ -12,6 +12,7 @@
   <script>window.PARKING_API_BASE = window.PARKING_API_BASE || "";</script>
   <link rel="stylesheet" href="assets/styles/tokens.css" />
   <link rel="stylesheet" href="assets/styles/app.css" />
+  <link rel="stylesheet" href="assets/styles/app-theme.css" />
 </head>
 <body class="page-container page-container--app-topbar">
   <header class="app-topbar" role="banner">
@@ -41,14 +42,16 @@
           <div class="map-view-tools" aria-label="地图视图">
             <button type="button" id="btn-fit-lot-view" title="适应地块">适应地块</button>
             <button type="button" id="btn-fit-content-view" title="适应内容">适应内容</button>
+            <button type="button" id="btn-zoom-in" title="放大" aria-label="放大">＋</button>
+            <button type="button" id="btn-zoom-out" title="缩小" aria-label="缩小">－</button>
           </div>
           <canvas id="map" width="720" height="720" aria-label="小区平面图"></canvas>
           <aside class="map-legend is-compact" aria-label="平面图图例">
             <h3 class="map-legend-title">图例</h3>
             <ul class="map-legend-list">
               <li><span class="map-legend-swatch map-legend-swatch--entrance" aria-hidden="true"></span>入口</li>
-              <li><span class="map-legend-swatch map-legend-swatch--building" aria-hidden="true"></span>居民楼（楼号）</li>
-              <li><span class="map-legend-swatch map-legend-swatch--slot" aria-hidden="true"></span>车位（优化后车→楼）</li>
+              <li><span class="map-legend-swatch map-legend-swatch--building" aria-hidden="true"></span>居民楼<span class="map-legend-detail">（楼号）</span></li>
+              <li><span class="map-legend-swatch map-legend-swatch--slot" aria-hidden="true"></span>车位<span class="map-legend-detail">（优化后车→楼）</span></li>
               <li><span class="map-legend-swatch map-legend-swatch--grass" aria-hidden="true"></span>中央花坛</li>
               <li><span class="map-legend-swatch map-legend-swatch--road" aria-hidden="true"></span>道路</li>
               <li><span class="map-legend-swatch map-legend-swatch--strip" aria-hidden="true"></span>泊位带</li>
@@ -101,12 +104,25 @@
             <section id="tab-overview" class="tab-panel is-active" data-tab-panel="overview">
               <div class="panel">
                 <h2>总览</h2>
+                <div class="overview-stats" aria-label="场景规模">
+                  <div><span>车辆</span><strong id="ov-stat-veh">12</strong></div>
+                  <div><span>车位</span><strong id="ov-stat-slots">12</strong></div>
+                  <div><span>入口</span><strong id="ov-stat-entrances">2</strong></div>
+                  <div><span>居民楼</span><strong id="ov-stat-buildings">8</strong></div>
+                </div>
                 <div id="workflow-first-hint" class="workflow-first-hint" hidden>
                   <p>画场地 → 布位 → 仿真。</p>
                   <button type="button" id="btn-workflow-dismiss">知道了</button>
                 </div>
                 <ol id="workflow-steps" class="workflow-steps" aria-label="主流程步骤"></ol>
                 <p id="lot-dim-hint" class="panel-note"></p>
+              </div>
+              <div class="panel panel--diagnosis">
+                <div class="diagnosis-head">
+                  <h2>场景体检</h2>
+                  <span id="diagnosis-score" class="diagnosis-score">—</span>
+                </div>
+                <ul id="diagnosis-list" class="diagnosis-list" aria-live="polite"></ul>
               </div>
               <details class="panel panel--fold">
                 <summary>导入 / 导出 / 重置</summary>
@@ -116,6 +132,24 @@
                   <button type="button" id="btn-reset-scenario">重置为默认场景</button>
                 </div>
                 <input id="scenario-import-input" type="file" accept=".json,application/json" hidden />
+              </details>
+              <details class="panel panel--fold">
+                <summary>使用说明与数据</summary>
+                <p class="panel-note">场景会自动保存到本机浏览器（不同步）；换设备前请「导出 JSON」备份。撤销/重做保留最近 40 步。</p>
+                <p class="panel-note">离线时「运行优化」用本地 exact 算法，「运行仿真」生成本地估算时间轴；云端方案库与保存需后端可用。</p>
+                <p class="panel-note">文件与场景不上传服务器；问题反馈：<a href="https://github.com/nooming/nooming.github.io/issues" target="_blank" rel="noopener noreferrer">GitHub Issues</a>。</p>
+              </details>
+              <details class="panel panel--fold" id="plan-library-panel">
+                <summary>方案库与对比</summary>
+                <div class="toolbar plan-save-row">
+                  <input id="plan-name" type="text" placeholder="方案名（可选）" />
+                  <button type="button" id="btn-save-plan">保存当前方案</button>
+                  <button type="button" id="btn-load-plans">刷新方案库</button>
+                </div>
+                <div id="plan-library-list" class="plan-library-list"></div>
+                <div id="compare-table" class="compare-table"></div>
+                <canvas id="compare-radar" class="compare-radar" width="320" height="220" aria-label="方案对比雷达图"></canvas>
+                <button type="button" id="btn-export-compare" class="compare-export">导出对比报告</button>
               </details>
             </section>
 
@@ -310,6 +344,14 @@
             </section>
 
           </div><!-- .workspace-panels -->
+
+          <div class="workspace-dock" role="group" aria-label="方案操作">
+            <button type="button" class="primary js-run-optimize" id="btn-run-optimize">运行优化</button>
+            <button type="button" class="dock-btn" id="btn-undo" disabled title="撤销上一步编辑">撤销</button>
+            <button type="button" class="dock-btn" id="btn-redo" disabled title="重做上一步编辑">重做</button>
+            <button type="button" class="dock-btn" id="btn-copy-summary" title="复制当前方案摘要">摘要</button>
+            <span id="autosave-status" class="autosave-status" role="status">尚未修改</span>
+          </div>
 
           <div id="app-compat-hooks" hidden aria-hidden="true">
             <select id="optimizer-method"><option value="exact" selected>exact</option></select>

@@ -84,6 +84,7 @@
 
   P.pointerDown = function (ev) {
     if (!P.scenario) return;
+    if (P.touchPinching) return;
     P.ensureScenarioCollections();
 
     const isPan = ev.button === 2;
@@ -105,6 +106,20 @@
     if (P.handleUnderlayCalibrationClick?.(wx, wy)) return;
 
     if (P.handlePendingAddPointerDown(wx, wy, ev)) return;
+
+    // 触屏：从空白处拖拽平移地图；点在对象上仍进入拖拽 / 选择
+    if (ev.pointerType === "touch" && !P.pendingAdd && !P.pickAt(wx, wy)) {
+      ev.preventDefault();
+      const { sx, sy } = P.eventToScreen(ev);
+      P.panDrag = {
+        startSx: sx,
+        startSy: sy,
+        origPanX: P.viewPanX ?? 0,
+        origPanY: P.viewPanY ?? 0,
+      };
+      P.mapCanvas.classList.add("is-panning");
+      return;
+    }
 
     const nearVertex = P.pickAnyObstacleVertex(wx, wy, 16);
     if (nearVertex) {
@@ -220,11 +235,22 @@
       P.rebuildVehicleTargetsUI();
       P.setSelection(null);
     } else if (P.selection.kind === "slot") {
-      P.scenario.slots.splice(P.selection.index, 1);
+      const si = P.selection.index;
+      P.scenario.slots.splice(si, 1);
+      if (Array.isArray(P.scenario.slot_types)) P.scenario.slot_types.splice(si, 1);
       P.setSelection(null);
     } else if (P.selection.kind === "entrance") {
       if (P.scenario.entrances.length <= 1) return;
-      P.scenario.entrances.splice(P.selection.index ?? 0, 1);
+      const ei = P.selection.index ?? 0;
+      P.scenario.entrances.splice(ei, 1);
+      if (Array.isArray(P.scenario.vehicle_entrances)) {
+        const maxIndex = Math.max(0, P.scenario.entrances.length - 1);
+        P.scenario.vehicle_entrances = P.scenario.vehicle_entrances.map((v) => {
+          const n = Number(v) || 0;
+          if (n === ei) return 0;
+          return Math.max(0, Math.min(maxIndex, n > ei ? n - 1 : n));
+        });
+      }
       P.ensureScenarioCollections();
       P.ensureVehicleEntrancesArray();
       P.rebuildVehicleTargetsUI();

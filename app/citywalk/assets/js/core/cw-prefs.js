@@ -42,7 +42,9 @@
 
         if (prefs.planMode === 'loop' || prefs.planMode === 'route') {
             CW.planMode = prefs.planMode;
-            if (typeof global.syncPanelSharedPlanMode === 'function') {
+            if (typeof global.switchPlanMode === 'function') {
+                global.switchPlanMode(prefs.planMode);
+            } else if (typeof global.syncPanelSharedPlanMode === 'function') {
                 global.syncPanelSharedPlanMode();
             }
         }
@@ -91,6 +93,9 @@
         const city = (cityName || '').trim();
         if (!city || !global.CW) return;
         const CW = global.CW;
+        // 已保存的城市优先，自动定位不再覆盖
+        CW.cityPinnedByUser = true;
+        CW.cityLocateGen = (CW.cityLocateGen || 0) + 1;
         const coordsMap = global.CITY_COORDS || {};
         const el = document.getElementById('currentCity');
 

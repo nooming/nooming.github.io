@@ -11,6 +11,7 @@
   };
 
   P.loadDefault = async function (options = {}) {
+    let cached = null;
     try {
       if (!P.optimizer || typeof P.optimizer.normalizeScenario !== "function") {
         throw new Error("optimizer module missing");
@@ -19,7 +20,7 @@
       let sourceScenario = null;
       let restored = false;
       if (!forceDefault) {
-        const cached = P.readCurrentState();
+        cached = P.readCurrentState();
         if (cached && cached.scenario) {
           sourceScenario = cached.scenario;
           restored = true;
@@ -46,7 +47,8 @@
       P.ensureScenarioCollections();
       P.syncMapCanvasSize();
       if (!restored || !cached?.viewState) {
-        P.fitViewToLot();
+        if (window.innerWidth <= 900) P.fitViewToLot();
+        else P.fitViewToContent(8);
       }
       P.sanitizeScenarioGeometry();
       P.ensureVehicleDestinationsArray();
@@ -68,25 +70,31 @@
       const legendBtn = document.getElementById("btn-legend-toggle");
       const roadShapeMode = document.getElementById("road-shape-mode");
       if (legend) legend.classList.add("is-compact");
-      if (legendBtn) legendBtn.textContent = "展开完整图例";
+      if (legendBtn) legendBtn.textContent = window.innerWidth <= 900 ? "展开图例" : "展开完整图例";
       P.roadDraftClosed = P.scenario?.road?.closed !== false;
       if (roadShapeMode) roadShapeMode.value = P.roadDraftClosed ? "closed" : "open";
       P.switchTab(restored ? P.activeTab : "overview");
-      P.scheduleAutoEntrancePreviewRefresh();
       P.schedulePersistCurrentState();
       P.syncLotInputsFromScenario?.();
       P.updateActionGates?.();
       P.updateRunBarSummary?.();
+      P.renderDiagnosis?.();
       P.syncPsoLabInputsFromScenario?.();
       P.togglePsoLabVisibility?.();
+      P.resetUndoHistory?.();
       P.clearWorkspaceMessage?.();
       P.draw();
     } catch (e) {
+      console.error(e);
+      if (cached && !options._retried) {
+        // 本地缓存损坏时不把用户锁在错误页：清掉缓存，用内置默认场景重试一次
+        P.clearPersistedCurrentState?.();
+        return P.loadDefault({ forceDefault: true, _retried: true });
+      }
       P.showWorkspaceMessage?.(
-        "默认场景加载失败，请检查 assets/data/default-scenario.json 或 optimizer 模块是否可访问。",
+        "默认场景加载失败。请刷新页面，或用「导入 / 导出 / 重置」恢复默认场景。",
         { level: "error" }
       );
-      console.error(e);
     }
   };
 

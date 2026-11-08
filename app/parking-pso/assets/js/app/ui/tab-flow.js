@@ -29,6 +29,9 @@ P.switchTab = function (tabKey) {
         if (P.simState?.timeline) P.drawSimQueueChart?.(P.simState.timeline);
       });
       P.draw();
+    } else if (P.activeTab === "vehicle") {
+      // 自动入口预览很重（exact 优化），进入车辆页再算，避免首屏 1s 长任务
+      if (!P.lastResult && !P.autoEntrancePreview) P.scheduleAutoEntrancePreviewRefresh?.();
     } else {
       const warm = document.getElementById("sim-warm-status");
       if (warm) warm.hidden = true;
