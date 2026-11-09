@@ -121,6 +121,7 @@
                     { label: "导航", href: "/app/navigation/" },
                     { label: "笔记", href: "/app/notes/" },
                     { label: "Citywalk", href: "/app/citywalk/" },
+                    { label: "另一个我", href: "/app/another-life/" },
                 ],
             },
             {
@@ -615,12 +616,13 @@
         return path === base || path.indexOf(base + "/") === 0;
     }
 
-    /** 独立应用：与 Citywalk 相同，不注入导航壳 */
+    /** 独立应用：Citywalk、笔记、停车、另一个我，不注入导航壳 */
     function isNoShellAppPath(path) {
         return (
             path.indexOf("/app/citywalk") === 0 ||
             path.indexOf("/app/notes") === 0 ||
-            underApp("parking-pso", path)
+            underApp("parking-pso", path) ||
+            underApp("another-life", path)
         );
     }
 

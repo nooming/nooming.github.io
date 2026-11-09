@@ -33,6 +33,13 @@ body {
     height: 1.5rem;
 }
 
+/* 四格入口在中等宽度排两行，避免 3 + 1 */
+@media (min-width: 576px) and (max-width: 1023.98px) {
+    .top-banners--hub-lead .top-entry {
+        flex: 1 1 calc(50% - 7px);
+    }
+}
+
 /* 仅首页 hero；勿用裸 header 选择器（会与 .site-shell-top 冲突） */
 header.hub-hero {
     text-align: center;
@@ -363,6 +370,196 @@ header.hub-hero .hub-hero__word {
     border: 1px solid var(--color-border-subtle);
 }
 
+/* --- 首页「另一个我」聚光卡：同学作品，手写批注 --- */
+.top-entry--spotlight {
+    --spotlight-red: #b23a2b;
+    --spotlight-marker: var(--color-theme);
+    --spotlight-shadow: rgba(178, 58, 43, 0.28);
+    --spotlight-stamp-bg: #b23a2b;
+    --spotlight-stamp-fg: #fff8e8;
+    --spotlight-stamp-inner: rgba(255, 248, 232, 0.65);
+    z-index: 2;
+    border: 2px solid var(--color-ink);
+    background: var(--color-card);
+    box-shadow: 5px 5px 0 var(--spotlight-shadow);
+    transform: rotate(-0.8deg);
+}
+
+.top-entry--spotlight::before {
+    height: 4px;
+    background: var(--spotlight-red);
+    transform: scaleX(1);
+}
+
+.top-entry--spotlight .top-entry-name {
+    padding: 1px 5px;
+    background: linear-gradient(180deg, transparent 48%, var(--spotlight-marker) 48%);
+}
+
+.top-entry--spotlight:hover,
+.top-entry--spotlight:focus-visible {
+    transform: rotate(0) translateY(-2px);
+    box-shadow: 7px 7px 0 var(--spotlight-shadow);
+}
+
+.spotlight-stamp {
+    position: absolute;
+    top: -14px;
+    right: 12px;
+    z-index: 4;
+    padding: 4px 8px 3px;
+    font-family: "Kaiti SC", "KaiTi", "STKaiti", "Segoe Print", cursive;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    line-height: 1.2;
+    color: var(--spotlight-stamp-fg);
+    background: var(--spotlight-stamp-bg);
+    box-shadow: inset 0 0 0 1px var(--spotlight-stamp-inner);
+    transform: rotate(7deg);
+    pointer-events: none;
+    white-space: nowrap;
+    transition: transform 0.25s ease;
+}
+
+.top-entry--spotlight:hover .spotlight-stamp,
+.top-entry--spotlight:focus-visible .spotlight-stamp {
+    transform: rotate(3deg) scale(1.04);
+}
+
+.spotlight-note {
+    position: absolute;
+    right: 8px;
+    bottom: 4px;
+    z-index: 4;
+    font-family: "Kaiti SC", "KaiTi", "STKaiti", "Segoe Print", cursive;
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--spotlight-red);
+    transform: rotate(-3deg);
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.spotlight-arrow {
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    color: var(--spotlight-red);
+    opacity: 0.94;
+    pointer-events: none;
+    transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.spotlight-arrow svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.spotlight-arrow--tl {
+    top: -30px;
+    left: -22px;
+}
+
+.spotlight-arrow--br {
+    right: -22px;
+    bottom: -30px;
+}
+
+.spotlight-arrow--r {
+    top: 50%;
+    right: -36px;
+    transform: translateY(-50%);
+}
+
+.spotlight-arrow--bl {
+    bottom: -30px;
+    left: -22px;
+}
+
+.top-entry--spotlight:hover .spotlight-arrow,
+.top-entry--spotlight:focus-visible .spotlight-arrow {
+    opacity: 1;
+}
+
+.top-entry--spotlight:hover .spotlight-arrow--tl,
+.top-entry--spotlight:focus-visible .spotlight-arrow--tl {
+    transform: translate(2px, 2px);
+}
+
+.top-entry--spotlight:hover .spotlight-arrow--br,
+.top-entry--spotlight:focus-visible .spotlight-arrow--br {
+    transform: translate(-2px, -2px);
+}
+
+.top-entry--spotlight:hover .spotlight-arrow--r,
+.top-entry--spotlight:focus-visible .spotlight-arrow--r {
+    transform: translate(-2px, -50%);
+}
+
+.top-entry--spotlight:hover .spotlight-arrow--bl,
+.top-entry--spotlight:focus-visible .spotlight-arrow--bl {
+    transform: translate(2px, -2px);
+}
+
+html[data-theme="dark"] .top-entry--spotlight {
+    --spotlight-red: #ff8a70;
+    --spotlight-marker: rgba(255, 250, 0, 0.22);
+    --spotlight-shadow: rgba(255, 138, 112, 0.30);
+    --spotlight-stamp-bg: #ff8a70;
+    --spotlight-stamp-fg: #1a1a17;
+    --spotlight-stamp-inner: rgba(26, 26, 23, 0.35);
+    border-color: var(--color-theme-deep);
+}
+
+@media (max-width: 1023.98px) {
+    .spotlight-arrow--tl {
+        display: none;
+    }
+
+    .spotlight-stamp {
+        top: 5px;
+        right: auto;
+        left: 8px;
+        transform: rotate(-3deg);
+    }
+}
+
+@media (max-width: 767.98px) {
+    .spotlight-arrow--r {
+        right: -24px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .spotlight-arrow,
+    .spotlight-note {
+        display: none;
+    }
+
+    .top-entry--spotlight {
+        transform: none;
+        box-shadow: 4px 4px 0 var(--spotlight-shadow);
+    }
+
+    .top-entry--spotlight:hover,
+    .top-entry--spotlight:focus-visible {
+        transform: translateY(-1px);
+    }
+
+    .spotlight-stamp {
+        font-size: 0.64rem;
+    }
+}
+
 .hub-home a.feature-card:focus-visible,
 .hub-home .top-entry:focus-visible,
 .hub-home .github-link:focus-visible {
@@ -374,4 +571,9 @@ header.hub-hero .hub-hero__word {
 .hub-home .top-entry:focus:not(:focus-visible),
 .hub-home .github-link:focus:not(:focus-visible) {
     outline: none;
+}
+
+.hub-home .top-entry--spotlight:focus-visible {
+    outline-color: var(--spotlight-red);
+    outline-offset: 5px;
 }
