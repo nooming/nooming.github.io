@@ -57,7 +57,7 @@
     return readyArt.get(key);
   }
 
-  // 换幕：新画面从一滴墨晕开的形状里显出来（用素材里的 ink-bloom 当遮罩），而不是简单淡入淡出
+  // 换幕：新画面从一滴墨晕开的形状里显出来（用不规则 clip-path 长大），而不是简单淡入淡出
   let sceneZ = 3;
   async function setScene(key, bloomAt) {
     const token = ++sceneLoadId;
@@ -307,7 +307,17 @@
   function drawBackdrop(ctx, W, H, img, px, tex) {
     // 与故事页 CSS 同一套：手机=上半幅画+底部融进深青；电脑=整幅画+左侧一层薄影。第一幕是那幅深青抽象画：贴底对齐，让山脉露出来
     const mobile = W < 761;
-    const artH = mobile ? Math.round(H * .35) : H;
+    const body = document.body;
+    const prev = { screen: body.dataset.screen, beat: body.dataset.beat };
+    body.dataset.screen = 'story'; body.dataset.beat = 'origin';
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:absolute;left:-9999px;top:0;width:1px;height:var(--split);visibility:hidden;pointer-events:none';
+    body.append(probe);
+    const artH = Math.round(probe.getBoundingClientRect().height) || Math.round(H * (mobile ? .45 : .35));
+    probe.remove();
+    body.dataset.screen = prev.screen || ''; body.dataset.beat = prev.beat || '';
+    const cx = parseFloat(getComputedStyle(body).getPropertyValue('--cx')) || 0;
+    const cy = parseFloat(getComputedStyle(body).getPropertyValue('--cy')) || 0;
     ctx.fillStyle = '#0f2b2a'; ctx.fillRect(0, 0, W, H);
     if (tex && tex.naturalWidth) {
       const sc = Math.max(W / tex.naturalWidth, H / tex.naturalHeight);
@@ -317,8 +327,9 @@
       const scale = Math.max(W / img.naturalWidth, artH / img.naturalHeight);
       const dw = img.naturalWidth * scale, dh = img.naturalHeight * scale;
       ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, artH); ctx.clip();
+      ctx.translate(cx, cy);
       { const oy = mobile ? artH : artH / 2; ctx.translate(W / 2, oy); ctx.scale(1.07, 1.07); ctx.translate(-W / 2, -oy); }
-      ctx.drawImage(img, (W - dw) * px, mobile ? artH - dh : (artH - dh) * .5, dw, dh);
+      ctx.drawImage(img, (W - dw) * .5, mobile ? artH - dh : (artH - dh) * .5, dw, dh);
       ctx.restore();
     }
     let g;
@@ -828,6 +839,7 @@
     const copy = $('story-copy');
     copy.classList.remove('copy-enter'); void copy.offsetWidth; copy.classList.add('copy-enter');
     copy.scrollTop = 0;
+    document.body.classList.remove('story-reading');
     [...copy.children].forEach((child, i) => child.style.setProperty('--i', i));
     [...$('st-marks').children, ...$('st-lines').children, ...$('st-omens').children].forEach((child, i) => child.style.setProperty('--j', i));
     copy.style.setProperty('--dir', String(direction));
@@ -1531,6 +1543,14 @@
       dx = 0;
     };
     area.addEventListener('pointerup', end); area.addEventListener('pointercancel', end);
+  })();
+
+  // 正文向上翻读时，画面收起一部分，给文字留出空间
+  (function storyReading() {
+    const copy = $('story-copy');
+    if (new URLSearchParams(location.search).get('read') === 'move') document.body.classList.add('read-move');
+    const sync = () => { if (copy.scrollTop > 6) document.body.classList.add('story-reading'); };
+    copy.addEventListener('scroll', sync, { passive: true });
   })();
 
   document.addEventListener('visibilitychange', () => {
