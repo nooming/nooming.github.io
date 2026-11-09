@@ -14,7 +14,7 @@ GitHub Pages 静态站：顶栏 **首页 · 实验 · 工具 · 阅读 · 娱乐
 - **导航**：[app/navigation/](../app/navigation/) — 外链主题索引
 - **笔记**：[app/notes/](../app/notes/) — 画布 + 文本；本地持久化
 - **Citywalk**：[app/citywalk/](../app/citywalk/)（说明见 [app/citywalk/README.md](../app/citywalk/README.md)）
-- **另一个我**：[app/another-life/](../app/another-life/) — 单文件交互叙事；生辰排盘在页面内计算
+- **另一个我**：[app/another-life/](../app/another-life/) — 静态交互叙事；字体 / 插画按需加载，生辰排盘在页面内计算
 
 ### 首页 · 实践（`#practice`）
 - **停车**：[app/parking-pso/](../app/parking-pso/) — 匈牙利或 PSO（在线优化服务）；源码与 `scripts/deploy.ps1` 同目录
@@ -75,7 +75,7 @@ GitHub Pages 静态站：顶栏 **首页 · 实验 · 工具 · 阅读 · 娱乐
 ├── assets/                     # 全站 CSS/JS/icons；site-shell、article.css、home.css
 ├── app/
 │   ├── navigation/  notes/  citywalk/   # 首页 · 独立入口（Citywalk 独立壳）
-│   ├── another-life/                    # 首页 · 独立入口（单文件叙事）
+│   ├── another-life/                    # 首页 · 独立入口（静态资源拆分）
 │   ├── parking-pso/                     # 首页 · 实践
 │   ├── lab/                             # 实验：proton、pixelflow、fan-rpm
 │   ├── tools/                           # 工具：doc-tools、编码媒体、ocr、decision 随机、灯牌等
