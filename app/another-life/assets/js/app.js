@@ -3,15 +3,41 @@
   const $ = (id) => document.getElementById(id);
   const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const B = window.BAZI;
-  const { Solar, Lunar, LunarYear, LunarMonth } = B.lib;
+  // 排盘引擎与字形文件都不再首屏下载：点“展开”时才拉 bazi.js，进命盘页时才拉 fire-glyphs.js。
+  const BAZI_SRC = 'assets/js/bazi.js';
+  let baziLoad = null;
+  function loadBazi() {
+    if (window.BAZI) return Promise.resolve(window.BAZI);
+    if (!baziLoad) baziLoad = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = BAZI_SRC;
+      script.async = true;
+      script.onload = () => (window.BAZI ? resolve(window.BAZI) : reject(new Error('排盘脚本未就绪')));
+      script.onerror = () => { baziLoad = null; script.remove(); reject(new Error('排盘脚本加载失败')); };
+      document.head.append(script);
+    });
+    return baziLoad;
+  }
+  const bazi = () => window.BAZI;
+  let glyphLoad = null;
+  function loadGlyphs() {
+    if (window.FIRE_GLYPHS) return Promise.resolve();
+    if (!glyphLoad) glyphLoad = new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = 'assets/js/fire-glyphs.js';
+      script.async = true;
+      script.onload = resolve;
+      script.onerror = () => { glyphLoad = null; resolve(); };
+      document.head.append(script);
+    });
+    return glyphLoad;
+  }
   const cities = window.CITY_RAW.split(';').filter(Boolean).map((line) => {
     const [name, lon, lat] = line.split(',');
     return { name, lon: Number(lon), lat: Number(lat) };
   });
   let calendar = 'solar';
   let result = null;
-  let timeline = [];
   let nodes = [];
   let pageIndex = 0;
   let busy = false;
@@ -26,8 +52,8 @@
   let audio;
   let master;
   let sceneLoadId = 0;
-  let worker;
   const readyArt = new Map();
+  const decodedArt = [];
   const screens = ['cover', 'birth', 'inscription', 'story'];
 
   function toast(message) {
@@ -45,13 +71,27 @@
     $('scene-layers').hidden = id !== 'story';
     if (id !== 'story') document.body.dataset.weather = 'clear';
     document.body.dataset.screen = id;
+    // 换屏时把焦点交给新屏的标题，读屏和键盘用户不会停留在已经隐藏的控件上
+    if (id === 'story') {
+      startDrift();
+      setTimeout(() => { if (document.body.dataset.screen === 'story') $('story-copy').focus({ preventScroll: true }); }, 80);
+    } else {
+      stopDrift();
+      if (id === 'birth') setTimeout(() => { if (document.body.dataset.screen === 'birth') $('birth-title').focus({ preventScroll: true }); }, 80);
+    }
   }
 
   function preloadArt(key) {
     if (!readyArt.has(key)) readyArt.set(key, new Promise((resolve) => {
       const image = new Image();
-      image.onload = () => { (image.decode ? image.decode() : Promise.resolve()).catch(() => {}).then(() => { (window.__decoded = window.__decoded || []).push(image); resolve(window.ART[key]); }); };
+      image.onload = () => { (image.decode ? image.decode() : Promise.resolve()).catch(() => {}).then(() => {
+        // 只留最近 6 张解码图，避免整段人生下来把几十张 1600px 位图一直钉在内存里
+        decodedArt.push(image); if (decodedArt.length > 6) decodedArt.shift();
+        resolve(window.ART[key]);
+      }); };
       image.onerror = () => resolve(window.ART[key]);
+      const srcset = window.ART_SRCSET && window.ART_SRCSET[key];
+      if (srcset) { image.sizes = '100vw'; image.srcset = srcset; }
       image.src = window.ART[key];
     }));
     return readyArt.get(key);
@@ -61,11 +101,15 @@
   let sceneZ = 3;
   async function setScene(key, bloomAt) {
     const token = ++sceneLoadId;
+    if (currentArt === key) return;
     const src = await preloadArt(key);
     if (token !== sceneLoadId || currentArt === key) return;
     const next = activeImage ? $('scene-a') : $('scene-b');
     const old = activeImage ? $('scene-b') : $('scene-a');
     next.getAnimations().forEach((a) => { if (a.id === 'ink') a.cancel(); });
+    const srcset = window.ART_SRCSET && window.ART_SRCSET[key];
+    if (srcset) { next.sizes = '100vw'; next.srcset = srcset; }
+    else { next.removeAttribute('srcset'); next.removeAttribute('sizes'); }
     next.src = src;
     next.style.clipPath = ''; next.style.transition = '';
     next.style.animation = 'none';
@@ -151,6 +195,7 @@
     const monthNames = ['正', '二', '三', '四', '五', '六', '七', '八', '九', '十', '冬', '腊'];
     let months;
     if (calendar === 'lunar') {
+      const { LunarYear } = bazi().lib;
       const all = LunarYear.fromYear(year).getMonths().map((month) => month.getMonth());
       const start = all.indexOf(1);
       months = all.slice(start, start + 13);
@@ -159,7 +204,7 @@
     } else months = Array.from({ length: 12 }, (_, i) => i + 1);
     options('month', months.map((month) => [month, calendar === 'lunar' ? `${month < 0 ? '闰' : ''}${monthNames[Math.abs(month) - 1]}月` : `${month}月`]), months.includes(monthValue) ? monthValue : Math.abs(monthValue));
     const month = Number($('month').value);
-    const count = calendar === 'lunar' ? LunarMonth.fromYm(year, month).getDayCount() : new Date(Date.UTC(year, month, 0)).getUTCDate();
+    const count = calendar === 'lunar' ? bazi().lib.LunarMonth.fromYm(year, month).getDayCount() : new Date(Date.UTC(year, month, 0)).getUTCDate();
     const lunarDays = ['初一','初二','初三','初四','初五','初六','初七','初八','初九','初十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十','廿一','廿二','廿三','廿四','廿五','廿六','廿七','廿八','廿九','三十'];
     options('day', Array.from({ length: count }, (_, i) => [i + 1, calendar === 'lunar' ? lunarDays[i] : `${i + 1}日`]), Math.min(dayValue || 1, count));
   }
@@ -172,11 +217,13 @@
   cities.forEach((city) => { const option = document.createElement('option'); option.value = city.name; $('cities').append(option); });
   $('year').addEventListener('change', () => syncDate());
   $('month').addEventListener('change', () => syncDate());
-  document.querySelectorAll('[name=calendar]').forEach((radio) => radio.addEventListener('change', () => {
+  document.querySelectorAll('[name=calendar]').forEach((radio) => radio.addEventListener('change', async () => {
     const year = Number($('year').value);
     const month = Number($('month').value);
     const day = Number($('day').value);
     const target = radio.value;
+    try { await loadBazi(); } catch (error) { toast('排盘脚本未能加载，请检查网络后重试'); document.querySelector(`[name=calendar][value=${calendar}]`).checked = true; return; }
+    const { Solar, Lunar } = bazi().lib;
     const converted = calendar === 'solar' ? Solar.fromYmd(year, month, day).getLunar() : Lunar.fromYmd(year, month, day).getSolar();
     if (converted.getYear() < 1900 || converted.getYear() > 2100) {
       document.querySelector(`[name=calendar][value=${calendar}]`).checked = true;
@@ -214,36 +261,28 @@
   async function compute(input) {
     const opts = Object.assign({ today: singaporeToday(), robustN: 400 }, window.__examOpt ? window.__examOpt() : {});
     function main() {
-      const res = B.run(input, opts);
-      if (res.error) return { result: res, timeline: [] };
-      const all = B.L.evaluateAll(res.natal, res.chart, { fromYear: Number(res.chart.clock.slice(0, 4)), count: 92 });
-      return { result: res, timeline: all.years };
+      const res = bazi().run(input, opts);
+      return { result: res };
     }
-    return new Promise((resolve, reject) => {
-      let url;
-      (async () => {
-        try {
-          const baziUrl = $('bz').src;
-          if (!baziUrl) throw new Error('排盘脚本地址缺失');
-          const baziSource = await fetch(baziUrl).then((response) => {
-            if (!response.ok) throw new Error('排盘脚本加载失败');
-            return response.text();
-          });
-          const source = baziSource + `\nself.onmessage=e=>{try{const r=BAZI.run(e.data.input,e.data.opts);const years=r.error?[]:BAZI.L.evaluateAll(r.natal,r.chart,{fromYear:Number(r.chart.clock.slice(0,4)),count:92}).years;self.postMessage(JSON.parse(JSON.stringify({result:r,timeline:years})))}catch(error){self.postMessage({error:error.message})}};`;
-          url = URL.createObjectURL(new Blob([source], { type: 'text/javascript' }));
-          worker = new Worker(url);
-          const cleanup = () => { clearTimeout(timer); worker?.terminate(); worker = null; URL.revokeObjectURL(url); };
-          const timer = setTimeout(() => { cleanup(); reject(new Error('推演超时，请重试')); }, 30000);
-          worker.onmessage = (event) => { cleanup(); event.data.error ? reject(new Error(event.data.error)) : resolve(event.data); };
-          worker.onerror = () => { cleanup(); try { resolve(main()); } catch (error) { reject(error); } };
-          worker.postMessage({ input, opts });
-        } catch (error) {
-          worker?.terminate();
-          if (url) URL.revokeObjectURL(url);
-          try { resolve(main()); } catch (fallbackError) { reject(fallbackError); }
-        }
-      })();
-    });
+    // 真 worker 文件（importScripts 加载引擎），不再是“把 bazi.js 源码 fetch 下来再拼 blob”
+    try {
+      return await new Promise((resolve, reject) => {
+        let worker;
+        try { worker = new Worker('assets/js/bazi-worker.js'); }
+        catch (error) { const e = new Error('worker 不可用'); e.infra = true; reject(e); return; }
+        const timer = setTimeout(() => { worker.terminate(); const e = new Error('推演超时，请重试'); e.infra = false; reject(e); }, 20000);
+        worker.onmessage = (event) => {
+          clearTimeout(timer); worker.terminate();
+          if (event.data && event.data.error) reject(new Error(event.data.error));
+          else resolve({ result: event.data.result });
+        };
+        worker.onerror = () => { clearTimeout(timer); worker.terminate(); const e = new Error('worker 启动失败'); e.infra = true; reject(e); };
+        worker.postMessage({ input, opts });
+      });
+    } catch (error) {
+      if (!error.infra) throw error;
+      return main();
+    }
   }
 
   function createFireWriter(targetId, char, size) {
@@ -308,14 +347,17 @@
     // 与故事页 CSS 同一套：手机=上半幅画+底部融进深青；电脑=整幅画+左侧一层薄影。第一幕是那幅深青抽象画：贴底对齐，让山脉露出来
     const mobile = W < 761;
     const body = document.body;
-    const prev = { screen: body.dataset.screen, beat: body.dataset.beat };
-    body.dataset.screen = 'story'; body.dataset.beat = 'origin';
-    const probe = document.createElement('div');
-    probe.style.cssText = 'position:absolute;left:-9999px;top:0;width:1px;height:var(--split);visibility:hidden;pointer-events:none';
-    body.append(probe);
-    const artH = Math.round(probe.getBoundingClientRect().height) || Math.round(H * (mobile ? .45 : .35));
-    probe.remove();
-    body.dataset.screen = prev.screen || ''; body.dataset.beat = prev.beat || '';
+    let artH = H;
+    if (mobile) {
+      const prev = { screen: body.dataset.screen, beat: body.dataset.beat };
+      body.dataset.screen = 'story'; body.dataset.beat = 'origin';
+      const probe = document.createElement('div');
+      probe.style.cssText = 'position:absolute;left:-9999px;top:0;width:1px;height:var(--split);visibility:hidden;pointer-events:none';
+      body.append(probe);
+      artH = Math.round(probe.getBoundingClientRect().height) || Math.round(H * .45);
+      probe.remove();
+      body.dataset.screen = prev.screen || ''; body.dataset.beat = prev.beat || '';
+    }
     const cx = parseFloat(getComputedStyle(body).getPropertyValue('--cx')) || 0;
     const cy = parseFloat(getComputedStyle(body).getPropertyValue('--cy')) || 0;
     ctx.fillStyle = '#0f2b2a'; ctx.fillRect(0, 0, W, H);
@@ -621,6 +663,7 @@
   async function inscription(isEcho = false) {
     echoMode = isEcho;
     showScreen('inscription');
+    await loadGlyphs();
     const token = ++goldToken;
     goldWriters = [];
     $('gold-continue').disabled = true;
@@ -636,14 +679,7 @@
     const size = innerWidth <= 760 ? 64 : innerHeight <= 700 ? 78 : 100;
     keys.forEach((key, i) => Array.from(chart.pillars[key].ganzhi).forEach((char, j) => {
       if (window.FIRE_GLYPHS?.[char]) { { const w = createFireWriter(`glyph-${i}-${j}`, char, size); w.row = j; goldWriters.push(w); } }
-      else if (window.HanziWriter && window.HANZI_DATA[char]) {
-        const writer = HanziWriter.create(`glyph-${i}-${j}`, char, {
-          width: size, height: size, padding: 4, showCharacter: false, showOutline: false,
-          strokeColor: '#dfbd77', radicalColor: '#ebcb88', strokeAnimationSpeed: 3,
-          delayBetweenStrokes: 65, charDataLoader: () => window.HANZI_DATA[char],
-        });
-        writer.row = j; goldWriters.push(writer);
-      } else $(`glyph-${i}-${j}`).innerHTML = `<span class="gold-char-fallback">${char}</span>`;
+      else $(`glyph-${i}-${j}`).innerHTML = `<span class="gold-char-fallback">${char}</span>`;
     }));
     if (reduced) return revealGold();
     try {
@@ -771,7 +807,10 @@
         el.style.backgroundPosition = `${item.frame / 3 * 100}% center`;
         el.classList.add('sheet');
       } else {
-        const image = new Image(); image.src = window.ART[item.asset]; image.alt = '';
+        const image = new Image();
+        const srcset = window.ART_SRCSET && window.ART_SRCSET[item.asset];
+        if (srcset) { image.sizes = '45vw'; image.srcset = srcset; }
+        image.src = window.ART[item.asset]; image.alt = '';
         el.append(image);
       }
       stage.append(el);
@@ -891,7 +930,7 @@
   function download() {
     const header = `另一个我 · 一生批注\n出生钟面时间 ${result.chart.clock}\n四柱 ${['year', 'month', 'day', 'hour'].map((key) => result.chart.pillars[key].ganzhi).join(' ')}\n`;
     const narrative = nodes.map((n) => `\n【${n.chapter}】${n.year ? `${n.year}年 ${n.gz} ${n.age}岁 ${n.label}（${n.state}）` : ''}\n${n.head}\n${(n.lines || []).join('\n')}${(n.omens || []).length ? '\n' + n.omens.map((o) => `· ${o.t}：${o.m}`).join('\n') : ''}`).join('\n');
-    const report = B.R.renderText(result.report, { why: true });
+    const report = bazi().R.renderText(result.report, { why: true });
     const text = header + narrative + '\n\n完整解读与依据\n' + report + '\n\n评分为规则内的相对刻度，不是概率；高龄年份用于取景，不是寿命推断。';
     const url = URL.createObjectURL(new Blob(['﻿' + text], { type: 'text/plain;charset=utf-8' }));
     const link = document.createElement('a'); link.href = url; link.download = '另一个我-一生批注.txt'; link.click();
@@ -931,6 +970,8 @@
     finaleRunning = true;
     ensureFinaleDom();
     const F = $('finale'), art = $('finale-art');
+    const finaleSrcset = window.ART_SRCSET && window.ART_SRCSET['finale-art'];
+    if (finaleSrcset) { art.sizes = '100vw'; art.srcset = finaleSrcset; }
     art.src = window.ART['finale-art'];
     F.dataset.ready = 'false'; F.hidden = false;
     gsap.set(F, { opacity: 1 });
@@ -1131,9 +1172,13 @@
     const knownCity = cities.find((city) => city.name === $('city').value.trim());
     const advanced = document.querySelector('.advanced');
     if (!knownCity && !advanced.open) { advanced.open = true; $('form-error').textContent = '请确认出生地的经纬度后，再展开人生。'; return; }
+    if (!window.BAZI) {
+      $('form-error').textContent = '正在准备排盘…';
+      try { await loadBazi(); } catch (error) { $('form-error').textContent = '排盘脚本加载失败，请检查网络后重试。'; return; }
+    }
     let quick;
     const input = inputOf();
-    try { quick = B.core.compute(input); } catch (error) { $('form-error').textContent = error.message; return; }
+    try { quick = bazi().core.compute(input); } catch (error) { $('form-error').textContent = error.message; return; }
     if (quick.error) { $('form-error').textContent = quick.error; return; }
     const today = singaporeToday();
     const todayString = `${today.year}-${String(today.month).padStart(2, '0')}-${String(today.day).padStart(2, '0')}`;
@@ -1146,9 +1191,8 @@
       const data = await compute(input);
       if (data.result.error) throw new Error(data.result.error);
       result = data.result;
-      timeline = data.timeline;
       choices = {};
-      nodes = LifeStory.create(result, timeline);
+      nodes = LifeStory.create(result);
       pageIndex = 0;
       $('timeline-buttons').innerHTML = nodes.map((node, index) => `<button data-index="${index}" aria-label="${node.chapter}">${node.ch}</button>`).join('');
       $('chapter-list').innerHTML = nodes.map((node, index) => `<button data-index="${index}">${String(index + 1).padStart(2, '0')} · ${escape(node.chapter)}<small>${node.year ? `${node.year}年 · ${node.age}岁 · ${node.label}` : escape(node.head)}</small></button>`).join('');
@@ -1182,7 +1226,8 @@
     showScreen('birth');
     setScene('childhood');
     syncBirthReels();
-    document.querySelector('[data-write-mode=ink]')?.focus({ preventScroll:true });
+    // 填表这段时间通常有十几秒：趁空闲把排盘引擎和字形文件悄悄下好，点“展开”时就不用等
+    setTimeout(() => { loadBazi().catch(() => {}); loadGlyphs(); }, 1200);
   }
 
   async function playEntry() {
@@ -1471,17 +1516,20 @@
   const drift = { dragX: 0, tx: 0, ty: 0, mx: 0, my: 0, gx: 0, gy: 0 };
   addEventListener('pointermove', (event) => { if (event.pointerType === 'mouse') { drift.mx = (event.clientX / innerWidth - .5) * 16; drift.my = (event.clientY / innerHeight - .5) * 9; } }, { passive: true });
   addEventListener('deviceorientation', (event) => { if (event.gamma == null) return; drift.gx = Math.max(-1, Math.min(1, event.gamma / 25)) * 7; drift.gy = Math.max(-1, Math.min(1, ((event.beta || 45) - 50) / 25)) * 4; }, { passive: true });
-  (function loop(now) {
-    if (!reduced && document.body.dataset.screen === 'story' && !document.hidden) {
-      const t = now / 1000;
-      const gx = Math.sin(t * .23) * 4.5 + Math.sin(t * .09 + 1) * 3, gy = Math.cos(t * .17) * 2.6;
-      drift.tx += ((gx + drift.mx + drift.gx - drift.dragX * .09) - drift.tx) * .06;
-      drift.ty += ((gy + drift.my + drift.gy) - drift.ty) * .06;
-      document.body.style.setProperty('--cx', drift.tx.toFixed(2));
-      document.body.style.setProperty('--cy', drift.ty.toFixed(2));
-    }
-    requestAnimationFrame(loop);
-  })(0);
+  let driftFrame = 0;
+  function driftLoop(now) {
+    driftFrame = 0;
+    if (reduced || document.body.dataset.screen !== 'story' || document.hidden) return;
+    const t = now / 1000;
+    const gx = Math.sin(t * .23) * 4.5 + Math.sin(t * .09 + 1) * 3, gy = Math.cos(t * .17) * 2.6;
+    drift.tx += ((gx + drift.mx + drift.gx - drift.dragX * .09) - drift.tx) * .06;
+    drift.ty += ((gy + drift.my + drift.gy) - drift.ty) * .06;
+    document.body.style.setProperty('--cx', drift.tx.toFixed(2));
+    document.body.style.setProperty('--cy', drift.ty.toFixed(2));
+    driftFrame = requestAnimationFrame(driftLoop);
+  }
+  function startDrift() { if (!driftFrame && !reduced) driftFrame = requestAnimationFrame(driftLoop); }
+  function stopDrift() { if (driftFrame) { cancelAnimationFrame(driftFrame); driftFrame = 0; } }
 
   // 数字滚动：翻到下一站时，年份与年龄像时间一样滚过去
   const roll = { year: null, age: 0, raf: 0 };
@@ -1554,10 +1602,17 @@
   })();
 
   document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stopDrift();
+    else if (document.body.dataset.screen === 'story') startDrift();
     if (!audio) return;
     if (document.hidden) audio.suspend().catch(() => {});
     else if (soundOn) audio.resume().catch(() => {});
   });
   setScene('opening');
-  window.__life = { inputOf, get result() { return result; }, get nodes() { return nodes; }, get timeline() { return timeline; }, get pageIndex() { return pageIndex; }, get choices() { return { ...choices }; }, skipEntry() { finishEntry(); }, plan() { const pl = scenePlan(); return nodes.map((n) => n.key + ':' + (n.year || '-') + ':' + (pl[n.key] ? pl[n.key].bg : '-')); }, finale() { playFinale(); }, finaleClick() { finaleToSeal(); }, jump(i) { showScreen('story'); pageIndex = i; showNode(1); }, burn() { burnToStory(() => { showScreen('story'); showNode(1, { instant: true }); }); } };
+  let resizeTimer;
+  addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => { if (document.body.dataset.screen === 'story') moveBead(); }, 150);
+  });
+  window.__life = { inputOf, get result() { return result; }, get nodes() { return nodes; }, get pageIndex() { return pageIndex; }, get choices() { return { ...choices }; }, skipEntry() { finishEntry(); }, plan() { const pl = scenePlan(); return nodes.map((n) => n.key + ':' + (n.year || '-') + ':' + (pl[n.key] ? pl[n.key].bg : '-')); }, finale() { playFinale(); }, finaleClick() { finaleToSeal(); }, jump(i) { showScreen('story'); pageIndex = i; showNode(1); }, burn() { burnToStory(() => { showScreen('story'); showNode(1, { instant: true }); }); } };
 })();

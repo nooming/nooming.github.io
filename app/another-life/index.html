@@ -5,21 +5,27 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0f2b2a">
 <title>另一个我 · 一生的平行来信</title>
-<link rel="icon" href="../../assets/brand/favicon.svg" type="image/svg+xml">
+<meta name="description" content="写下一个生辰，得到一条平行人生：四柱八字、十二幕场景与一生的批注。传统命理文化体验，出生信息只在本地计算。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="另一个我 · 一生的平行来信">
+<meta property="og:description" content="写下一个生辰，得到一条平行人生：四柱八字、十二幕场景与一生的批注。">
+<meta property="og:image" content="assets/img/art-opening.webp">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/brand/favicon.png" type="image/png">
 <link rel="stylesheet" href="assets/css/app.css">
-<link rel="preload" as="image" href="assets/img/scene-a.webp">
 <link rel="preload" as="image" href="assets/img/art-seal-reference.webp">
 <link rel="preload" as="image" href="assets/img/seal-paper.webp">
+<link rel="preload" as="font" type="font/woff2" href="assets/fonts/wen-kai.woff2" crossorigin>
 
 
 </head>
-<body><svg width="0" height="0" aria-hidden="true" style="position:absolute"><defs><filter id="paper-ink-texture"><feTurbulence type="fractalNoise" baseFrequency=".72" numOctaves="2" seed="12" result="paper-grain"/><feDisplacementMap in="SourceGraphic" in2="paper-grain" scale=".45" xChannelSelector="R" yChannelSelector="B" result="rough"/><feColorMatrix in="paper-grain" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .7 0 0 0 .35" result="graphite"/><feComposite in="rough" in2="graphite" operator="in"/></filter><filter id="stamp" x="-12%" y="-12%" width="124%" height="124%"><feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="2" seed="9" result="w"/><feDisplacementMap in="SourceGraphic" in2="w" scale="3.6" xChannelSelector="R" yChannelSelector="G" result="d"/><feTurbulence type="fractalNoise" baseFrequency=".32" numOctaves="3" seed="3" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -16 0 0 0 12.9" result="a"/><feComposite in="d" in2="a" operator="in"/></filter></defs></svg>
-<div id="scenery"><img id="scene-a" class="scene-image active" src="assets/img/scene-a.webp" alt=""><img id="scene-b" class="scene-image" alt=""><div class="atmosphere"></div><div id="scene-layers" hidden aria-hidden="true"></div><div id="scene-weather" aria-hidden="true"></div><div id="character" hidden aria-hidden="true"></div><div class="scene-shade"></div><div class="grain"></div><div class="motes" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div>
+<body><h1 class="sr-only">另一个我 · 一生的平行来信</h1><svg width="0" height="0" aria-hidden="true" style="position:absolute"><defs><filter id="paper-ink-texture"><feTurbulence type="fractalNoise" baseFrequency=".72" numOctaves="2" seed="12" result="paper-grain"/><feDisplacementMap in="SourceGraphic" in2="paper-grain" scale=".45" xChannelSelector="R" yChannelSelector="B" result="rough"/><feColorMatrix in="paper-grain" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .7 0 0 0 .35" result="graphite"/><feComposite in="rough" in2="graphite" operator="in"/></filter><filter id="stamp" x="-12%" y="-12%" width="124%" height="124%"><feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="2" seed="9" result="w"/><feDisplacementMap in="SourceGraphic" in2="w" scale="3.6" xChannelSelector="R" yChannelSelector="G" result="d"/><feTurbulence type="fractalNoise" baseFrequency=".32" numOctaves="3" seed="3" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -16 0 0 0 12.9" result="a"/><feComposite in="d" in2="a" operator="in"/></filter></defs></svg>
+<div id="scenery"><img id="scene-a" class="scene-image active" src="assets/img/scene-a.webp" srcset="assets/img/scene-a-960.webp 960w, assets/img/scene-a.webp 1200w" sizes="100vw" fetchpriority="low" alt=""><img id="scene-b" class="scene-image" alt=""><div class="atmosphere"></div><div id="scene-layers" hidden aria-hidden="true"></div><div id="scene-weather" aria-hidden="true"></div><div id="character" hidden aria-hidden="true"></div><div class="scene-shade"></div><div class="grain"></div><div class="motes" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div>
 <header><a class="wordmark" href="#" id="home">另一个我<span>ANOTHER LIFE</span></a><div class="header-actions"><button id="sound" aria-pressed="false">声音 关</button><button id="open-chapters" hidden>人生目录</button><button id="edit" hidden>重写生辰</button></div></header>
 <section id="cover" class="screen" aria-label="朱砂印章开场"><div class="seal-content"><div id="entry-seal" role="img" aria-label="朱砂印章，算一卦"></div><p id="entry-caption"></p><button id="begin" class="primary">启 卷 <span>↗</span></button></div></section><canvas id="entry-canvas" hidden aria-hidden="true"></canvas>
 <section id="birth" class="screen" hidden aria-label="在相册扉页留下生辰">
-  <div class="album-stage"><picture class="album-art"><source media="(max-width:760px)" srcset="assets/img/art-album-mobile.webp"><img src="assets/img/art-album-desktop.webp" alt="阳光下摊开的旧相册，纸页等待写下生辰" loading="lazy" decoding="async"></picture>
-  <div class="birth-copy"><p class="eyebrow">ANOTHER LIFE / 人生扉页</p><h2>这一页，<br>写下你。</h2><p>从来到世界的那天，<br>开始另一条时间。</p><p id="album-record">有些故事，从第一笔开始。</p></div>
+  <div class="album-stage"><picture class="album-art"><source media="(max-width:760px)" sizes="100vw" srcset="assets/img/art-album-mobile-780.webp 780w, assets/img/art-album-mobile.webp 941w"><source sizes="100vw" srcset="assets/img/art-album-desktop-960.webp 960w, assets/img/art-album-desktop-1440.webp 1440w, assets/img/art-album-desktop.webp 1672w"><img src="assets/img/art-album-desktop.webp" alt="阳光下摊开的旧相册，纸页等待写下生辰" loading="lazy" decoding="async"></picture>
+  <div class="birth-copy"><p class="eyebrow">ANOTHER LIFE / 人生扉页</p><h2 id="birth-title" tabindex="-1">这一页，<br>写下你。</h2><p>从来到世界的那天，<br>开始另一条时间。</p><p id="album-record">有些故事，从第一笔开始。</p></div>
   <div class="form-wrap"><form id="birth-form">
         <p class="form-caption">在这里，留下你的生辰</p>
         <div class="field"><span class="field-label">历法</span><div class="segmented"><label><input type="radio" name="calendar" value="solar" checked>阳历</label><label><input type="radio" name="calendar" value="lunar">农历</label></div></div>
@@ -49,7 +55,7 @@
   <div id="st-glyph" aria-hidden="true"></div><div id="st-stamp" aria-hidden="true"></div>
   <div id="story-copy" class="st-panel" tabindex="-1">
     <div class="st-top"><i id="st-seal" aria-hidden="true"></i><div class="st-meta"><span id="st-title"></span><span id="st-when"></span></div><div class="st-badges"><b id="st-state"></b><b id="st-label"></b></div></div>
-    <h2 id="st-head"></h2>
+    <h2 id="st-head" aria-live="polite" aria-atomic="true"></h2>
     <ol id="st-marks" hidden></ol>
     <div id="st-lines"></div>
     <ul id="st-omens"></ul>
@@ -59,15 +65,12 @@
   </div>
   <div class="st-foot"><div class="st-time"><div id="timeline-buttons"></div><div class="st-track"><i id="timeline-progress"></i></div><i id="st-bead" class="st-bead"></i></div><div class="reader-controls"><button id="previous" aria-label="上一幕">←</button><span id="page-number"></span><button id="next">往下走 <span>→</span></button></div></div>
 </main>
-<dialog id="report-dialog"><div class="dialog-head"><p class="eyebrow">故事背后的时间</p><button data-close="report-dialog" class="close" aria-label="关闭底稿">×</button></div><h2>八字底稿</h2><div id="node-basis"></div><details id="full-report"><summary>原始完整解读 · 十个篇章</summary><div id="report-content"></div></details><p class="disclosure">场景、道具和人物行动为平行人生的艺术编排。原引擎中的评分属于规则相对刻度。高龄章节的年龄用于叙事取景，不代表寿命推断。健康内容保留传统民俗语境。</p></dialog>
-<dialog id="chapters-dialog"><div class="dialog-head"><p class="eyebrow">沿着时间，去见自己</p><button data-close="chapters-dialog" class="close" aria-label="关闭目录">×</button></div><h2>这一生的几个关口</h2><div id="chapter-list"></div></dialog>
+<dialog id="report-dialog" aria-labelledby="report-title"><div class="dialog-head"><p class="eyebrow">故事背后的时间</p><button data-close="report-dialog" class="close" aria-label="关闭底稿">×</button></div><h2 id="report-title">八字底稿</h2><div id="node-basis"></div><details id="full-report"><summary>原始完整解读 · 十个篇章</summary><div id="report-content"></div></details><p class="disclosure">场景、道具和人物行动为平行人生的艺术编排。原引擎中的评分属于规则相对刻度。高龄章节的年龄用于叙事取景，不代表寿命推断。健康内容保留传统民俗语境。</p></dialog>
+<dialog id="chapters-dialog" aria-labelledby="chapters-title"><div class="dialog-head"><p class="eyebrow">沿着时间，去见自己</p><button data-close="chapters-dialog" class="close" aria-label="关闭目录">×</button></div><h2 id="chapters-title">这一生的几个关口</h2><div id="chapter-list"></div></dialog>
 <div id="ink-intro" hidden aria-hidden="true"><img class="splash" alt=""><img class="drop" alt=""></div><div id="toast" role="status" hidden></div>
-<script id="bz" src="assets/js/bazi.js" defer></script>
 <script src="assets/js/data.js" defer></script>
-<script src="assets/js/hanzi-writer.js" defer></script>
 <script src="assets/js/config.js" defer></script>
 <script src="assets/js/gsap.js" defer></script>
-<script src="assets/js/fire-glyphs.js" defer></script>
 <script src="assets/js/app.js" defer></script>
 </body>
 </html>
