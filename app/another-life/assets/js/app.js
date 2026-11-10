@@ -4,7 +4,7 @@
   const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   // 排盘引擎与字形文件都不再首屏下载：点“展开”时才拉 bazi.js，进命盘页时才拉 fire-glyphs.js。
-  const BAZI_SRC = 'assets/js/bazi.js?v=20261110dd';
+  const BAZI_SRC = 'assets/js/bazi.js?v=20261110ee';
   let baziLoad = null;
   function loadBazi() {
     if (window.BAZI) return Promise.resolve(window.BAZI);
@@ -24,7 +24,7 @@
     if (window.FIRE_GLYPHS) return Promise.resolve();
     if (!glyphLoad) glyphLoad = new Promise((resolve) => {
       const script = document.createElement('script');
-      script.src = 'assets/js/fire-glyphs.js?v=20261110dd';
+      script.src = 'assets/js/fire-glyphs.js?v=20261110ee';
       script.async = true;
       script.onload = resolve;
       script.onerror = () => { glyphLoad = null; resolve(); };
@@ -1589,101 +1589,94 @@
 
   async function playEntry() {
     if (entryActive) return;
-    const albumKey = entryAlbumKey();
-    const albumEl = document.querySelector('.album-art img');
-    if (reduced) {
-      beginLoad('正在启卷…');
-      try { await preloadArt(albumKey); } finally { endLoad(); }
-      return finishEntry();
-    }
+    if (reduced) return finishEntry();
     entryActive = true;
     const run = ++entryRun;
-    pauseMotion();
     $('begin').disabled = true;
-    if (albumEl) albumEl.loading = 'eager';
-    beginLoad('正在启卷…');
-    try { await Promise.all([sealReady, preloadArt(albumKey)]); } finally { endLoad(); }
+    await sealReady;
     if (!entryActive || run !== entryRun) return;
-
-    beginLoad('正在准备画面…');
-    let prep = null;
-    try { prep = await prepareEntryMorph().catch(() => null); } finally { endLoad(); }
-    if (!entryActive || run !== entryRun) return;
-    if (!prep) { finishEntry(); return; }
-    const { W, H, ratio, target, step, P } = prep;
     const canvas = $('entry-canvas');
-    canvas.hidden = false; canvas.style.opacity = '1';
-    canvas.width = Math.round(W * ratio); canvas.height = Math.round(H * ratio);
-    const ctx = canvas.getContext('2d');
-    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-    const settled = document.createElement('canvas');
-    settled.width = Math.round(W * ratio); settled.height = Math.round(H * ratio);
-    const sctx = settled.getContext('2d');
-    sctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    canvas.hidden = false;
+    const context = canvas.getContext('2d');
+    const width = innerWidth, height = innerHeight;
+    const ratio = Math.min(devicePixelRatio, 2);
+    canvas.width = width * ratio; canvas.height = height * ratio;
+    context.setTransform(ratio, 0, 0, ratio, 0, 0);
+    const rect = $('entry-seal').getBoundingClientRect();
+    const sampled = document.createElement('canvas');
+    sampled.width = Math.round(rect.width); sampled.height = Math.round(rect.height);
+    const sampleContext = sampled.getContext('2d', { willReadFrequently:true });
+    const sourceWidth = width <= 760 ? 490 : 550;
+    const sourceHeight = sourceWidth * sealImage.height / sealImage.width;
+    sampleContext.drawImage(sealImage, (rect.width - sourceWidth) / 2, (rect.height - sourceHeight) * .52, sourceWidth, sourceHeight);
+    const data = sampleContext.getImageData(0, 0, sampled.width, sampled.height).data;
+    const particles = [];
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
 
-    const clamp = (v) => Math.max(0, Math.min(1, v));
-    const ease = (u) => u < .5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
-    const state = { p: 0, r: 0 };
-    const tmp = document.createElement('canvas');
-    const tx = tmp.getContext('2d');
-    const drawPage = (r) => {
-      const b = Math.max(1, Math.pow(step, 1 - ease(clamp(r))));
-      if (b <= 1.4) {
-        ctx.imageSmoothingEnabled = true;
-        ctx.drawImage(target, 0, 0, target.width, target.height, 0, 0, W, H);
-      } else {
-        const c2 = Math.ceil(W / b), r2 = Math.ceil(H / b);
-        tmp.width = c2; tmp.height = r2;
-        tx.clearRect(0, 0, c2, r2);
-        tx.imageSmoothingQuality = 'high';
-        tx.drawImage(target, 0, 0, target.width, target.height, 0, 0, c2, r2);
-        ctx.imageSmoothingEnabled = false;
-        ctx.drawImage(tmp, 0, 0, c2, r2, 0, 0, W, H);
-        ctx.imageSmoothingEnabled = true;
+    for (let y = 0; y < sampled.height; y += 2) {
+      for (let x = 0; x < sampled.width; x += 2) {
+        const i = (y * sampled.width + x) * 4;
+        if (data[i] <= 105 || data[i] <= data[i + 1] * 1.45 || data[i + 1] >= 155) continue;
+        const seed = (particles.length * .61803398875) % 1;
+        const depth = .35 + ((particles.length * .754877666) % 1) * 1.2;
+        const originX = rect.left + x, originY = rect.top + y;
+        const angle = ((particles.length * .41421356237) % 1) * Math.PI * 2;
+        const speed = 24 + ((particles.length * .73205080756) % 1) * 68;
+        particles.push({ x:originX, y:originY, seed, depth,
+          release:(1 - y / sampled.height) * .48 + seed * .36,
+          vx:Math.cos(angle)*speed*depth + 12, vy:Math.sin(angle)*speed*depth-26,
+          lifetime:1.1+seed*1.4,
+          color:`rgb(${Math.min(255, data[i] + seed * 22)},${Math.min(220, data[i + 1] + seed * 20)},${data[i + 2]})`,
+          previousX:originX, previousY:originY,
+        });
       }
-    };
-    const drawParticles = (p) => {
-      ctx.clearRect(0, 0, W, H);
-      ctx.drawImage(settled, 0, 0, W, H);
-      for (const q of P) {
-        const local = clamp((p - q.d) / (1 - q.d || 1));
-        if (local >= 1) {
-          if (!q.settled) {
-            q.settled = true;
-            sctx.fillStyle = `rgb(${q.tr | 0},${q.tg | 0},${q.tb | 0})`;
-            const size = step + .6;
-            sctx.fillRect(q.tx - size / 2, q.ty - size / 2, size, size);
-          }
-          continue;
+    }
+    const clamp = value => Math.max(0, Math.min(1, value));
+    const state = { pixels:0, travel:0, fade:0 };
+    function paint() {
+      context.clearRect(0, 0, width, height);
+      $('entry-seal').style.opacity = String(1 - state.pixels);
+      for (const p of particles) {
+        const elapsed = Math.max(0, state.travel * 4.4 - p.release * 1.65);
+        const u = clamp(elapsed / p.lifetime);
+        const gust = elapsed * elapsed;
+        const x = p.x + p.vx * elapsed + gust * 11 + Math.sin(elapsed * 2.4 + p.seed * 18) * elapsed * 11;
+        const y = p.y + p.vy * elapsed - gust * 8 + Math.cos(elapsed * 2.1 + p.seed * 14) * elapsed * 9;
+        const fade = Math.exp(-Math.pow(elapsed / p.lifetime, 2.3)) * (1 - state.fade);
+        const opacity = state.pixels * fade;
+        const size = Math.max(.4, (1.7 + p.depth * .32) * (1 - u * .52));
+        context.fillStyle = p.color;
+        if (u > .05 && u < .97 && p.depth > 1.2) {
+          context.strokeStyle = p.color; context.lineWidth = size * .55;
+          context.globalAlpha = opacity * .17;
+          context.beginPath(); context.moveTo(p.previousX, p.previousY); context.lineTo(x, y); context.stroke();
         }
-        if (local <= 0) continue;
-        const ee = ease(local), m = 1 - ee;
-        const x = m * m * q.sx + 2 * m * ee * q.cx + ee * ee * q.tx;
-        const y = m * m * q.sy + 2 * m * ee * q.cy + ee * ee * q.ty;
-        const c = clamp((local - .45) / .5);
-        const size = 2.1 + (step + .6 - 2.1) * ee;
-        ctx.fillStyle = `rgb(${(q.sr + (q.tr - q.sr) * c) | 0},${(q.sg + (q.tg - q.sg) * c) | 0},${(q.sb + (q.tb - q.sb) * c) | 0})`;
-        ctx.fillRect(x - size / 2, y - size / 2, size, size);
+        context.globalAlpha = opacity;
+        context.fillRect(x - size / 2, y - size / 2, size, size);
+        if (u > .1 && p.depth > 1.4) {
+          context.globalAlpha = opacity * .07;
+          context.beginPath(); context.arc(x, y, size * 3.2, 0, Math.PI * 2); context.fill();
+        }
+        p.previousX = x; p.previousY = y;
       }
-    };
-    const paint = () => {
-      const p = state.p, r = state.r;
-      $('entry-seal').style.opacity = String(1 - clamp((p - .18) / .5));
-      ctx.clearRect(0, 0, W, H);
-      if (p >= 1) drawPage(r);
-      else drawParticles(p);
-    };
-    paint();
-    gsap.set(['.birth-copy', '.form-wrap'], { opacity: 0, y: 8 });
-    entryTimeline = gsap.timeline({ onUpdate: paint, onComplete: finishEntry });
-    entryTimeline.to(['#entry-caption', '#begin'], { opacity: 0, duration: .4 }, 0);
-    entryTimeline.to(state, { p: 1, duration: 4.4, ease: 'none' }, 0);
-    entryTimeline.call(() => { showScreen('birth'); }, [], 4.4);
-    entryTimeline.to(state, { r: 1, duration: 1.5, ease: 'power1.inOut' }, 3.9);
-    entryTimeline.to(canvas, { opacity: 0, duration: .7, ease: 'power1.inOut' }, 5.2);
-    entryTimeline.to('.birth-copy', { opacity: 1, y: 0, duration: .6, ease: 'power2.out' }, 5.2);
-    entryTimeline.to('.form-wrap', { opacity: 1, y: 0, duration: .8, ease: 'power2.out' }, 5.3);
-    entryTimeline.to({}, { duration: .2 });
+      context.globalAlpha = 1;
+    }
+    entryTimeline = gsap.timeline({ onUpdate:paint, onComplete:finishEntry });
+    entryTimeline.to(['#entry-caption', '#begin'], { opacity:0, duration:.65 }, 0);
+    entryTimeline.to(state, { pixels:1, duration:.85, ease:'power2.inOut' }, .3);
+    entryTimeline.to(state, { travel:1, duration:3.7, ease:'power2.inOut' }, .8);
+    entryTimeline.call(() => {
+      $('birth').hidden = false;
+      document.body.dataset.screen = 'birth';
+      gsap.set('.birth-copy', { opacity:0, y:10 });
+      gsap.set('.form-wrap', { opacity:0, y:12 });
+    }, [], 1.8);
+    entryTimeline.to('#cover', { opacity:0, duration:1.5, ease:'power2.inOut' }, 1.9);
+    entryTimeline.to('.birth-copy', { opacity:1, y:0, duration:1.1, ease:'power2.out' }, 2.6);
+    entryTimeline.to('.form-wrap', { opacity:1, y:0, duration:1.35, ease:'power2.out' }, 2.9);
+    entryTimeline.to(state, { fade:1, duration:1.8, ease:'power1.inOut' }, 3.1);
+    entryTimeline.to({}, { duration:.25 });
   }
 
   function syncBirthReels(direction=0, activeId=null) {
@@ -1977,9 +1970,6 @@
   });
   setScene('opening');
   // 封面静止时提前把相册页和粒子目标算好，点击启卷不再先卡一下。
-  const scheduleEntryPrep = () => { prepareEntryMorph().catch(() => {}); };
-  if ('requestIdleCallback' in window) requestIdleCallback(scheduleEntryPrep, { timeout: 1600 });
-  else setTimeout(scheduleEntryPrep, 700);
   let resizeTimer;
   addEventListener('resize', () => {
     clearTimeout(resizeTimer);
