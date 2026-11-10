@@ -4,7 +4,7 @@
   const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   // 排盘引擎与字形文件都不再首屏下载：点“展开”时才拉 bazi.js，进命盘页时才拉 fire-glyphs.js。
-  const BAZI_SRC = 'assets/js/bazi.js?v=20261110x';
+  const BAZI_SRC = 'assets/js/bazi.js?v=20261110y';
   let baziLoad = null;
   function loadBazi() {
     if (window.BAZI) return Promise.resolve(window.BAZI);
@@ -24,7 +24,7 @@
     if (window.FIRE_GLYPHS) return Promise.resolve();
     if (!glyphLoad) glyphLoad = new Promise((resolve) => {
       const script = document.createElement('script');
-      script.src = 'assets/js/fire-glyphs.js?v=20261110x';
+      script.src = 'assets/js/fire-glyphs.js?v=20261110y';
       script.async = true;
       script.onload = resolve;
       script.onerror = () => { glyphLoad = null; resolve(); };
@@ -62,6 +62,19 @@
 
   const loadingChip = $('loading-chip');
   const loadingLabel = $('loading-label');
+  let motionPaused = false;
+  function pauseMotion() {
+    if (motionPaused) return;
+    motionPaused = true;
+    document.body.classList.add('motion-paused');
+    document.querySelectorAll('svg').forEach((svg) => { try { svg.pauseAnimations(); } catch (_) { /* ignore */ } });
+  }
+  function resumeMotion() {
+    if (!motionPaused) return;
+    motionPaused = false;
+    document.body.classList.remove('motion-paused');
+    document.querySelectorAll('svg').forEach((svg) => { try { svg.unpauseAnimations(); } catch (_) { /* ignore */ } });
+  }
   let loadingCount = 0, loadingTimer = 0, loadingHideTimer = 0, loadingShownAt = 0;
   function beginLoad(label = '正在加载…') {
     loadingLabel.textContent = label;
@@ -482,6 +495,7 @@
     if (burnRunning) return;
     if (reduced) { arrive(); return; }
     burnRunning = true;
+    pauseMotion();
     beginLoad('正在准备入卷…');
     let burnLoading = true;
     const stopBurnLoading = () => {
@@ -491,8 +505,8 @@
     };
     try {
     const W = innerWidth, H = innerHeight;
-    const dpr = Math.min(devicePixelRatio || 1, 3, Math.sqrt(8e6 / Math.max(1, W * H)));
-    const k = Math.min(.6, Math.sqrt(110000 / (W * H)));
+    const dpr = Math.min(devicePixelRatio || 1, 2, Math.sqrt(8e6 / Math.max(1, W * H)));
+    const k = Math.min(.42, Math.sqrt(45000 / (W * H)));
     const gw = Math.ceil(W * k) + 2, gh = Math.ceil(H * k) + 2;
     const src = glyphSources();
     const bgKey = bgOf(nodes[0]);
@@ -659,6 +673,7 @@
     setTimeout(() => { overlay.remove(); burnRunning = false; }, 760);
     } finally {
       stopBurnLoading();
+      resumeMotion();
     }
   }
 
@@ -1394,6 +1409,7 @@
   function resetEntry() {
     entryRun++;
     entryActive = false;
+    resumeMotion();
     entryTimeline?.kill();
     entryTimeline = null;
     entryWorker?.terminate();
@@ -1421,7 +1437,7 @@
     const albumKey = innerWidth <= 760 ? 'album-mobile' : 'album-desktop';
     const albumEl = document.querySelector('.album-art img');
     const W = innerWidth, H = innerHeight;
-    const ratio = Math.min(devicePixelRatio || 1, 2);
+    const ratio = Math.min(devicePixelRatio || 1, innerWidth <= 760 ? 1.5 : 2);
     if (albumEl) albumEl.loading = 'eager';
     try { await document.fonts.ready; } catch (_) { /* 字体就绪后再取文字位置 */ }
     await Promise.all([sealReady, preloadArt(albumKey)]);
@@ -1465,7 +1481,7 @@
     birth.hidden = wasHidden;
     if (copy) copy.style.opacity = copyOpacity;
 
-    const step = Math.max(4, Math.round(Math.sqrt(W * H / 13000)));
+    const step = Math.max(4, Math.round(Math.sqrt(W * H / (W <= 760 ? 8000 : 13000))));
     const cols = Math.ceil(W / step), rows = Math.ceil(H / step);
     const cell = document.createElement('canvas'); cell.width = cols; cell.height = rows;
     const cc = cell.getContext('2d', { willReadFrequently: true });
@@ -1533,6 +1549,7 @@
     }
     entryActive = true;
     const run = ++entryRun;
+    pauseMotion();
     $('begin').disabled = true;
     if (albumEl) albumEl.loading = 'eager';
     beginLoad('正在启卷…');
@@ -1560,7 +1577,7 @@
         particleCanvas.setAttribute('aria-hidden', 'true');
         document.body.append(particleCanvas);
         const offscreen = particleCanvas.transferControlToOffscreen();
-        const worker = new Worker('assets/js/entry-particles.js?v=20261110x');
+        const worker = new Worker('assets/js/entry-particles.js?v=20261110y');
         const dropWorker = () => {
           worker.terminate();
           particleCanvas.remove();
@@ -1935,7 +1952,9 @@
   });
   setScene('opening');
   // 封面静止时提前把相册页和粒子目标算好，点击启卷不再先卡一下。
-  setTimeout(() => { prepareEntryMorph().catch(() => {}); }, 700);
+  const scheduleEntryPrep = () => { prepareEntryMorph().catch(() => {}); };
+  if ('requestIdleCallback' in window) requestIdleCallback(scheduleEntryPrep, { timeout: 1600 });
+  else setTimeout(scheduleEntryPrep, 700);
   let resizeTimer;
   addEventListener('resize', () => {
     clearTimeout(resizeTimer);
