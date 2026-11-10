@@ -4,7 +4,7 @@
   const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   // 排盘引擎与字形文件都不再首屏下载：点“展开”时才拉 bazi.js，进命盘页时才拉 fire-glyphs.js。
-  const BAZI_SRC = 'assets/js/bazi.js?v=20261110p';
+  const BAZI_SRC = 'assets/js/bazi.js?v=20261110s';
   let baziLoad = null;
   function loadBazi() {
     if (window.BAZI) return Promise.resolve(window.BAZI);
@@ -24,7 +24,7 @@
     if (window.FIRE_GLYPHS) return Promise.resolve();
     if (!glyphLoad) glyphLoad = new Promise((resolve) => {
       const script = document.createElement('script');
-      script.src = 'assets/js/fire-glyphs.js?v=20261110p';
+      script.src = 'assets/js/fire-glyphs.js?v=20261110s';
       script.async = true;
       script.onload = resolve;
       script.onerror = () => { glyphLoad = null; resolve(); };
@@ -1179,8 +1179,11 @@
     if (quick.clock.slice(0, 10) > todayString) { $('form-error').textContent = '请选择已经发生的出生日期。'; return; }
     busy = true;
     $('form-error').textContent = '';
-    $('calculate').disabled = true;
-    $('calculate').textContent = '正在展开时间…';
+    const calcButton = $('calculate');
+    calcButton.disabled = true;
+    calcButton.setAttribute('aria-busy', 'true');
+    calcButton.innerHTML = '正在展开时间… <span class="calc-seal" aria-hidden="true"></span>';
+    calcButton.classList.add('is-loading');
     try {
       const data = await compute(input);
       if (data.result.error) throw new Error(data.result.error);
@@ -1194,7 +1197,13 @@
       preloadArt('opening');
       inscription();
     } catch (error) { $('form-error').textContent = `推演没有完成。${error.message}`; }
-    finally { busy = false; $('calculate').disabled = false; $('calculate').innerHTML = '展开我的平行人生 <span>↗</span>'; }
+    finally {
+      calcButton.classList.remove('is-loading');
+      calcButton.removeAttribute('aria-busy');
+      busy = false;
+      calcButton.disabled = false;
+      calcButton.innerHTML = '展开我的平行人生 <span>↗</span>';
+    }
   });
 
   let entryActive = false;
