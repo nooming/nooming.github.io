@@ -4,7 +4,7 @@
   const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   // 排盘引擎与字形文件都不再首屏下载：点“展开”时才拉 bazi.js，进命盘页时才拉 fire-glyphs.js。
-  const BAZI_SRC = 'assets/js/bazi.js?v=20261110o';
+  const BAZI_SRC = 'assets/js/bazi.js?v=20261110p';
   let baziLoad = null;
   function loadBazi() {
     if (window.BAZI) return Promise.resolve(window.BAZI);
@@ -24,7 +24,7 @@
     if (window.FIRE_GLYPHS) return Promise.resolve();
     if (!glyphLoad) glyphLoad = new Promise((resolve) => {
       const script = document.createElement('script');
-      script.src = 'assets/js/fire-glyphs.js?v=20261110o';
+      script.src = 'assets/js/fire-glyphs.js?v=20261110p';
       script.async = true;
       script.onload = resolve;
       script.onerror = () => { glyphLoad = null; resolve(); };
@@ -174,6 +174,17 @@
   options('hour', Array.from({ length: 24 }, (_, hour) => [hour, `${String(hour).padStart(2, '0')} 时 · ${branches[Math.floor((hour + 1) / 2) % 12]}`]), 12);
   options('minute', Array.from({ length: 60 }, (_, minute) => [minute, `${String(minute).padStart(2, '0')} 分`]), 0);
   cities.forEach((city) => { const option = document.createElement('option'); option.value = city.name; $('cities').append(option); });
+  let cityApplied = $('city').value.trim();
+  function syncCityCoords(force = false) {
+    const name = $('city').value.trim();
+    const match = cities.find((city) => city.name === name);
+    if (match && (force || match.name !== cityApplied)) {
+      $('longitude').value = match.lon;
+      $('latitude').value = match.lat;
+      cityApplied = match.name;
+    }
+    return match;
+  }
   $('year').addEventListener('change', () => syncDate());
   $('month').addEventListener('change', () => syncDate());
   document.querySelectorAll('[name=calendar]').forEach((radio) => radio.addEventListener('change', async () => {
@@ -192,10 +203,9 @@
     $('year').value = converted.getYear();
     syncDate(converted.getMonth(), converted.getDay());
   }));
+  $('city').addEventListener('input', () => { syncCityCoords(false); });
   $('city').addEventListener('change', () => {
-    const match = cities.find((city) => city.name === $('city').value.trim());
-    if (match) { $('longitude').value = match.lon; $('latitude').value = match.lat; }
-    else toast('城市未收录，请在校时设置里填写经纬度');
+    if (!syncCityCoords(true)) toast('城市未收录，请在校时设置里填写经纬度');
   });
 
   function inputOf() {
@@ -1153,7 +1163,7 @@
   $('birth-form').addEventListener('submit', async (event) => {
     event.preventDefault();
     if (busy) return;
-    const knownCity = cities.find((city) => city.name === $('city').value.trim());
+    const knownCity = syncCityCoords(false);
     const advanced = document.querySelector('.advanced');
     if (!knownCity && !advanced.open) { advanced.open = true; $('form-error').textContent = '请确认出生地的经纬度后，再展开人生。'; return; }
     if (!window.BAZI) {
