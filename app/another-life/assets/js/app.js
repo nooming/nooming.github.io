@@ -4,7 +4,7 @@
   const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   // 排盘引擎与字形文件都不再首屏下载：点“展开”时才拉 bazi.js，进命盘页时才拉 fire-glyphs.js。
-  const BAZI_SRC = 'assets/js/bazi.js?v=20261110jj';
+  const BAZI_SRC = 'assets/js/bazi.js?v=20261110kk';
   let baziLoad = null;
   function loadBazi() {
     if (window.BAZI) return Promise.resolve(window.BAZI);
@@ -24,7 +24,7 @@
     if (window.FIRE_GLYPHS) return Promise.resolve();
     if (!glyphLoad) glyphLoad = new Promise((resolve) => {
       const script = document.createElement('script');
-      script.src = 'assets/js/fire-glyphs.js?v=20261110jj';
+      script.src = 'assets/js/fire-glyphs.js?v=20261110kk';
       script.async = true;
       script.onload = resolve;
       script.onerror = () => { glyphLoad = null; resolve(); };
@@ -1249,9 +1249,17 @@
     F.querySelectorAll('#finale-text span').forEach((s) => {
       const r = s.getBoundingClientRect(), cs = getComputedStyle(s);
       if (s.classList.contains('w')) {
-        sc.save(); sc.translate(r.left, r.top + r.height * .1); sc.scale(r.width / 34, r.width / 34);
-        sc.strokeStyle = cs.color; sc.lineWidth = 3.6; sc.lineCap = 'round'; sc.lineJoin = 'round';
-        sc.stroke(new Path2D('M3 5.5 C4 22 12 24.5 16.5 11.5 C21 24.5 29.5 22 31 4.5')); sc.restore();
+        const bw = s.offsetWidth || r.width, bh = s.offsetHeight || r.height;
+        const scale = Math.min(bw / 34, bh / 26);
+        const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+        sc.save();
+        sc.translate(cx, cy);
+        sc.rotate(-9 * Math.PI / 180);
+        sc.scale(scale, scale);
+        sc.translate(-17, -13);
+        sc.strokeStyle = cs.color; sc.lineWidth = 3.8; sc.lineCap = 'round'; sc.lineJoin = 'round';
+        sc.stroke(new Path2D('M3 5.5 C4 22 12 24.5 16.5 11.5 C21 24.5 29.5 22 31 4.5'));
+        sc.restore();
         return;
       }
       sc.font = cs.fontSize + ' ' + cs.fontFamily; sc.fillStyle = cs.color; sc.textAlign = 'center'; sc.textBaseline = 'middle';
