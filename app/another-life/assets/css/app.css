@@ -665,10 +665,7 @@ body.finale-end #entry-caption,body.finale-end #begin,body.finale-end #skip-entr
 #birth .album-navigation button{font-size:12px;line-height:1.4;white-space:nowrap;flex:none;padding:6px 0;letter-spacing:.02em}
 #album-page-number{font-size:10px;line-height:1.4;white-space:nowrap;margin-right:auto;letter-spacing:.1em}
 @media(max-width:760px){#birth .album-navigation{gap:6px;padding-right:14px}#birth .album-navigation button{font-size:clamp(12px,3.85vw,15px)}#album-page-number{font-size:clamp(11px,3.33vw,13px)}}
-/* 满屏取景，向左侧多露一点书页；桌面用原始打开书本图补底，不再出现透明带。 */
+/* 满屏取景，向左侧多露一点书页；不缩书本，彻底去掉四周边带。 */
 @media(max-width:760px){
-  #birth::before{content:'';position:absolute;inset:-2%;z-index:0;background:url('../img/art-album-desktop.webp') 50% 100%/cover no-repeat;filter:blur(18px) brightness(1.02) saturate(.96);transform:scale(1.05);pointer-events:none}
-  #birth .album-stage{inset:auto;left:50%;top:50%;width:96%;height:96%;transform:translate(-50%,-50%);z-index:1}
   #birth .album-art img{object-fit:cover;object-position:0 50%}
-  #birth .birth-copy,#birth .form-wrap{z-index:2}
 }
