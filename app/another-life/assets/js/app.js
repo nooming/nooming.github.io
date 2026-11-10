@@ -657,7 +657,7 @@
     $('gold-terms').classList.add('visible');
     $('gold-continue').disabled = false;
     $('gold-continue').innerHTML = echoMode ? '回到这一生 <span>↗</span>' : '焚字入卷 <span>↗</span>';
-    $('gold-skip').hidden = true;
+    $('gold-skip').classList.add('is-hidden');
   }
 
   async function inscription(isEcho = false) {
@@ -669,6 +669,7 @@
     $('gold-continue').disabled = true;
     $('gold-continue').innerHTML = '正在落字 <span>·</span>';
     $('gold-skip').hidden = false;
+    $('gold-skip').classList.remove('is-hidden');
     $('gold-terms').classList.remove('visible');
     const chart = result.chart;
     const n = result.natal;

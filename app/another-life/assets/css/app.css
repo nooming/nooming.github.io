@@ -257,6 +257,7 @@ body[data-screen=birth] header { color:#fff2d4; background:none; backdrop-filter
 #inscription #gold-foot{font-family:'WenKai',serif;font-size:12px;letter-spacing:.12em;color:#958773;margin:27px 0 0;line-height:1.8}
 #inscription #gold-continue{font-family:'WenKai',serif;font-size:14px;letter-spacing:.16em;min-width:245px;margin-top:19px;padding:14px 0;color:#d1b482;border-color:#a58b5b70;justify-content:space-between}
 #inscription #gold-continue span{font-size:16px;opacity:.7}
+#inscription #gold-skip.is-hidden{visibility:hidden;pointer-events:none}
 #inscription #gold-skip{font-family:'WenKai',serif;font-size:11px;color:#877d6e;margin-top:8px}
 @media(max-width:760px){#inscription .inscription-inner{padding:45px 24px 25px}#inscription .inscription-inner h2{font-size:21px;margin-bottom:32px}#inscription #gold-pillars{gap:13px}#inscription #gold-terms{margin-top:25px}.destiny-pattern{font-size:21px}.destiny-reading{gap:19px}.destiny-elements{padding-left:18px}#inscription #gold-foot{font-size:11px}}
 @media(max-height:730px){#inscription .inscription-inner{padding-top:30px}#inscription .inscription-inner h2{margin-bottom:23px}#inscription #gold-terms{margin-top:19px}#inscription #gold-foot{margin-top:17px}}
