@@ -4,7 +4,7 @@
   const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   // 排盘引擎与字形文件都不再首屏下载：点“展开”时才拉 bazi.js，进命盘页时才拉 fire-glyphs.js。
-  const BAZI_SRC = 'assets/js/bazi.js?v=20261110ee';
+  const BAZI_SRC = 'assets/js/bazi.js?v=20261110ff';
   let baziLoad = null;
   function loadBazi() {
     if (window.BAZI) return Promise.resolve(window.BAZI);
@@ -24,7 +24,7 @@
     if (window.FIRE_GLYPHS) return Promise.resolve();
     if (!glyphLoad) glyphLoad = new Promise((resolve) => {
       const script = document.createElement('script');
-      script.src = 'assets/js/fire-glyphs.js?v=20261110ee';
+      script.src = 'assets/js/fire-glyphs.js?v=20261110ff';
       script.async = true;
       script.onload = resolve;
       script.onerror = () => { glyphLoad = null; resolve(); };
@@ -1593,6 +1593,8 @@
     entryActive = true;
     const run = ++entryRun;
     $('begin').disabled = true;
+    // 开头不等相册，但在后台以高优先级把它取好，避免出生页淡入时露出后面的场景图。
+    preloadArt(entryAlbumKey(), 'high').catch(() => {});
     await sealReady;
     if (!entryActive || run !== entryRun) return;
     const canvas = $('entry-canvas');

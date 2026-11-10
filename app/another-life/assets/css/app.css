@@ -69,7 +69,9 @@ body[data-composed=true] .timeline{overflow-x:auto;scrollbar-width:none}
 @media(max-width:760px){body[data-screen=birth] header{top:0;left:0;right:0;padding:20px 6vw;background:#142829ed;backdrop-filter:blur(8px)}}
 
 /* The form is ink on a physical illustrated page, positioned inside the artwork. */
-#birth { display:block; padding:0; overflow:hidden; background:none; isolation:isolate; }
+#birth{display:block;padding:0;overflow:hidden;background:#f4eedf;isolation:isolate}
+/* 启卷/出生页不要露出场景图；等真正进入故事再显示。 */
+body[data-screen=cover] #scenery,body[data-screen=birth] #scenery{visibility:hidden}
 .album-stage { position:absolute; left:50%; top:50%; width:max(100vw,177.7778vh); height:max(100vh,56.25vw); transform:translate(-50%,-50%); }
 .album-art { position:absolute; inset:0; display:block; pointer-events:none; }
 .album-art img { width:100%; height:100%; object-fit:fill; display:block; }
