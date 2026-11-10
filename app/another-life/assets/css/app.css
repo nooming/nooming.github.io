@@ -658,11 +658,12 @@ body.finale-end #entry-caption,body.finale-end #begin,body.finale-end #skip-entr
 /* 封面只需要“另一个我 / 启卷”几个字：小字体立即到，整副毛笔字等到命盘页再下，首屏少 850KB */
 @font-face{font-family:"BrushUI";font-weight:400;font-style:normal;font-display:swap;src:url(../fonts/brush-ui.woff2) format("woff2")}
 .wordmark,#cover .primary{font-family:'BrushUI','WenKai',serif}
-/* 排盘等待：只有真正超过 270ms 才出现的小印章，从上到下循环填充。 */
-#calculate .calc-seal{display:inline-block;width:36px;height:38px;flex:none;background:url('../img/seal-paper.webp') center/contain no-repeat;clip-path:inset(0 0 100% 0);opacity:0}
-#calculate.is-loading .calc-seal{opacity:1;animation:calcSealFill 1.15s ease-in-out .27s infinite}
-@keyframes calcSealFill{0%{clip-path:inset(0 0 100% 0)}55%,78%{clip-path:inset(0)}100%{clip-path:inset(0 0 100% 0)}}
-@media(prefers-reduced-motion:reduce){#calculate.is-loading .calc-seal{opacity:1;animation:none;clip-path:none}}
+/* 全局右下角加载提示：真实阻塞超过 270ms 才出现，引用计数归零后淡出。 */
+#loading-chip{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:calc(110px + env(safe-area-inset-bottom));z-index:60;display:flex;align-items:center;gap:7px;padding:6px 11px 6px 7px;border:1px solid #a78c5c55;border-radius:999px;background:#f6eddcf2;box-shadow:0 6px 20px #3a2a1a24;color:#6f5b42;font-size:11px;letter-spacing:.08em;pointer-events:none;opacity:0;visibility:hidden;transform:translateY(4px);transition:opacity .18s ease,transform .18s ease,visibility .18s}
+#loading-chip.is-visible{opacity:1;visibility:visible;transform:none}
+#loading-chip .loading-seal{width:24px;height:26px;background:url('../img/seal-paper.webp') center/contain no-repeat;clip-path:inset(0 0 100% 0);animation:sealLoadingFill 1.15s ease-in-out infinite}
+@keyframes sealLoadingFill{0%{clip-path:inset(0 0 100% 0)}55%,78%{clip-path:inset(0)}100%{clip-path:inset(0 0 100% 0)}}
+@media(prefers-reduced-motion:reduce){#loading-chip .loading-seal{animation:none;clip-path:none}}
 /* 手机上年份「1996年」在 26px 时会比滚轮宽 5px，被右侧裁掉；最终覆盖回合适的字号。 */
 @media(max-width:760px){#birth .reel-row.selected{font-size:clamp(16px,4.8vw,19px)}}
 /* 书本底部导航：三件事都要在一行里，不能把“上一步/继续填写”挤成竖排。 */

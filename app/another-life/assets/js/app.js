@@ -4,7 +4,7 @@
   const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   // 排盘引擎与字形文件都不再首屏下载：点“展开”时才拉 bazi.js，进命盘页时才拉 fire-glyphs.js。
-  const BAZI_SRC = 'assets/js/bazi.js?v=20261110s';
+  const BAZI_SRC = 'assets/js/bazi.js?v=20261110u';
   let baziLoad = null;
   function loadBazi() {
     if (window.BAZI) return Promise.resolve(window.BAZI);
@@ -24,7 +24,7 @@
     if (window.FIRE_GLYPHS) return Promise.resolve();
     if (!glyphLoad) glyphLoad = new Promise((resolve) => {
       const script = document.createElement('script');
-      script.src = 'assets/js/fire-glyphs.js?v=20261110s';
+      script.src = 'assets/js/fire-glyphs.js?v=20261110u';
       script.async = true;
       script.onload = resolve;
       script.onerror = () => { glyphLoad = null; resolve(); };
@@ -58,6 +58,37 @@
     $('toast').hidden = false;
     clearTimeout(toast.timer);
     toast.timer = setTimeout(() => { $('toast').hidden = true; }, 3200);
+  }
+
+  const loadingChip = $('loading-chip');
+  const loadingLabel = $('loading-label');
+  let loadingCount = 0, loadingTimer = 0, loadingHideTimer = 0, loadingShownAt = 0;
+  function beginLoad(label = '正在加载…') {
+    loadingLabel.textContent = label;
+    loadingCount++;
+    clearTimeout(loadingHideTimer);
+    if (loadingCount !== 1) return;
+    clearTimeout(loadingTimer);
+    loadingTimer = setTimeout(() => {
+      if (!loadingCount) return;
+      loadingChip.hidden = false;
+      loadingShownAt = performance.now();
+      requestAnimationFrame(() => loadingChip.classList.add('is-visible'));
+    }, 270);
+  }
+  function endLoad() {
+    loadingCount = Math.max(0, loadingCount - 1);
+    if (loadingCount) return;
+    clearTimeout(loadingTimer);
+    if (!loadingShownAt) return;
+    const wait = Math.max(0, 350 - (performance.now() - loadingShownAt));
+    clearTimeout(loadingHideTimer);
+    loadingHideTimer = setTimeout(() => {
+      if (loadingCount) return;
+      loadingChip.classList.remove('is-visible');
+      loadingShownAt = 0;
+      loadingHideTimer = setTimeout(() => { if (!loadingCount) loadingChip.hidden = true; }, 180);
+    }, wait);
   }
 
   function showScreen(id) {
@@ -1168,7 +1199,11 @@
     if (!knownCity && !advanced.open) { advanced.open = true; $('form-error').textContent = '请确认出生地的经纬度后，再展开人生。'; return; }
     if (!window.BAZI) {
       $('form-error').textContent = '正在准备排盘…';
-      try { await loadBazi(); } catch (error) { $('form-error').textContent = '排盘脚本加载失败，请检查网络后重试。'; return; }
+      beginLoad('正在准备排盘…');
+      try { await loadBazi(); } catch (error) {
+        $('form-error').textContent = '排盘脚本加载失败，请检查网络后重试。';
+        return;
+      } finally { endLoad(); }
     }
     let quick;
     const input = inputOf();
@@ -1180,10 +1215,10 @@
     busy = true;
     $('form-error').textContent = '';
     const calcButton = $('calculate');
+    beginLoad('正在展开…');
     calcButton.disabled = true;
     calcButton.setAttribute('aria-busy', 'true');
-    calcButton.innerHTML = '正在展开时间… <span class="calc-seal" aria-hidden="true"></span>';
-    calcButton.classList.add('is-loading');
+    calcButton.textContent = '正在展开时间…';
     try {
       const data = await compute(input);
       if (data.result.error) throw new Error(data.result.error);
@@ -1198,7 +1233,7 @@
       inscription();
     } catch (error) { $('form-error').textContent = `推演没有完成。${error.message}`; }
     finally {
-      calcButton.classList.remove('is-loading');
+      endLoad();
       calcButton.removeAttribute('aria-busy');
       busy = false;
       calcButton.disabled = false;
@@ -1344,15 +1379,22 @@
     if (entryActive) return;
     const albumKey = innerWidth <= 760 ? 'album-mobile' : 'album-desktop';
     const albumEl = document.querySelector('.album-art img');
-    if (reduced) { await preloadArt(albumKey); return finishEntry(); }
+    if (reduced) {
+      beginLoad('正在启卷…');
+      try { await preloadArt(albumKey); } finally { endLoad(); }
+      return finishEntry();
+    }
     entryActive = true;
     const run = ++entryRun;
     $('begin').disabled = true;
     if (albumEl) albumEl.loading = 'eager';
-    await Promise.all([sealReady, preloadArt(albumKey)]);
+    beginLoad('正在启卷…');
+    try { await Promise.all([sealReady, preloadArt(albumKey)]); } finally { endLoad(); }
     if (!entryActive || run !== entryRun) return;
 
-    const prep = await prepareEntryMorph().catch(() => null);
+    beginLoad('正在准备画面…');
+    let prep = null;
+    try { prep = await prepareEntryMorph().catch(() => null); } finally { endLoad(); }
     if (!entryActive || run !== entryRun) return;
     if (!prep) { finishEntry(); return; }
     const { W, H, ratio, target, step, P } = prep;
