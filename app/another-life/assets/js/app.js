@@ -1265,13 +1265,16 @@
     const midX = sampled.width / 2, midY = sampled.height / 2;
     const maxR = Math.hypot(midX, midY);
 
-    for (let y = 0; y < sampled.height; y += 1) {
-      for (let x = 0; x < sampled.width; x += 1) {
+    const coarse = innerWidth <= 760;
+    const step = 2;
+    for (let y = 0; y < sampled.height; y += step) {
+      for (let x = 0; x < sampled.width; x += step) {
         const i = (y * sampled.width + x) * 4;
         if (data[i] <= 105 || data[i] <= data[i + 1] * 1.45 || data[i + 1] >= 155) continue;
         const seed = (particles.length * .61803398875) % 1;
         const depth = .35 + ((particles.length * .754877666) % 1) * 1.2;
-        const originX = rect.left + x, originY = rect.top + y;
+        const originX = rect.left + x + (seed - .5) * step * .8;
+        const originY = rect.top + y + (seed - .5) * step * .8;
         const angle = ((particles.length * .41421356237) % 1) * Math.PI * 2;
         const speed = 24 + ((particles.length * .73205080756) % 1) * 44;
         const radial = Math.hypot(x - midX, y - midY) / maxR;
@@ -1297,16 +1300,16 @@
         const y = p.y + p.vy * elapsed - gust * 8 + Math.cos(elapsed * 2.1 + p.seed * 14) * elapsed * 9;
         const fade = Math.exp(-Math.pow(elapsed / p.lifetime, 2.3)) * (1 - state.fade);
         const opacity = state.pixels * fade;
-        const size = Math.max(.35, (0.8 + p.depth * .2) * (1 - u * .55));
+        const size = Math.max(.35, ((coarse ? 1.2 : .8) + p.depth * .2) * (1 - u * .55));
         context.fillStyle = p.color;
-        if (u > .05 && u < .97 && p.depth > 1.2) {
+        if (!coarse && u > .05 && u < .97 && p.depth > 1.2) {
           context.strokeStyle = p.color; context.lineWidth = size * .5;
           context.globalAlpha = opacity * .12;
           context.beginPath(); context.moveTo(p.previousX, p.previousY); context.lineTo(x, y); context.stroke();
         }
         context.globalAlpha = opacity;
-        context.beginPath(); context.arc(x, y, size * .55, 0, Math.PI * 2); context.fill();
-        if (u > .1 && p.depth > 1.4) {
+        context.fillRect(x - size / 2, y - size / 2, size, size);
+        if (!coarse && u > .1 && p.depth > 1.4) {
           context.globalAlpha = opacity * .06;
           context.beginPath(); context.arc(x, y, size * 3.2, 0, Math.PI * 2); context.fill();
         }
