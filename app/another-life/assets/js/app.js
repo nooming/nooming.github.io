@@ -4,7 +4,7 @@
   const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   // 排盘引擎与字形文件都不再首屏下载：点“展开”时才拉 bazi.js，进命盘页时才拉 fire-glyphs.js。
-  const BAZI_SRC = 'assets/js/bazi.js?v=20261110y';
+  const BAZI_SRC = 'assets/js/bazi.js?v=20261110z';
   let baziLoad = null;
   function loadBazi() {
     if (window.BAZI) return Promise.resolve(window.BAZI);
@@ -24,7 +24,7 @@
     if (window.FIRE_GLYPHS) return Promise.resolve();
     if (!glyphLoad) glyphLoad = new Promise((resolve) => {
       const script = document.createElement('script');
-      script.src = 'assets/js/fire-glyphs.js?v=20261110y';
+      script.src = 'assets/js/fire-glyphs.js?v=20261110z';
       script.async = true;
       script.onload = resolve;
       script.onerror = () => { glyphLoad = null; resolve(); };
@@ -1568,32 +1568,38 @@
     const ctx = canvas.getContext('2d');
     ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
 
-    // 粒子绘制交给 OffscreenCanvas worker；主线程只画目标页和推进时间线。
+    // 单块 Worker 画布：粒子、已落定静态层和目标页都在 Worker 里合成。
     let workerMode = false;
-    if (typeof Worker !== 'undefined' && HTMLCanvasElement.prototype.transferControlToOffscreen) {
+    let targetBitmap = null;
+    if (typeof Worker !== 'undefined' && HTMLCanvasElement.prototype.transferControlToOffscreen && typeof createImageBitmap === 'function') {
       try {
+        targetBitmap = await createImageBitmap(target);
         const particleCanvas = document.createElement('canvas');
         particleCanvas.className = 'entry-particles';
         particleCanvas.setAttribute('aria-hidden', 'true');
         document.body.append(particleCanvas);
         const offscreen = particleCanvas.transferControlToOffscreen();
-        const worker = new Worker('assets/js/entry-particles.js?v=20261110y');
+        const worker = new Worker('assets/js/entry-particles.js?v=20261110z');
         const dropWorker = () => {
           worker.terminate();
           particleCanvas.remove();
+          canvas.hidden = false;
           if (entryWorker === worker) entryWorker = null;
           if (entryParticleCanvas === particleCanvas) entryParticleCanvas = null;
           workerMode = false;
         };
         worker.onerror = dropWorker;
-        worker.postMessage({ type: 'init', canvas: offscreen, W, H, ratio, step, P }, [offscreen]);
+        worker.postMessage({ type: 'init', canvas: offscreen, W, H, ratio, step, P, target: targetBitmap }, [offscreen, targetBitmap]);
         entryWorker = worker;
         entryParticleCanvas = particleCanvas;
         workerMode = true;
+        canvas.hidden = true;
       } catch (_) {
+        try { targetBitmap?.close(); } catch (__) { /* ignore */ }
         entryWorker?.terminate(); entryWorker = null;
         entryParticleCanvas?.remove(); entryParticleCanvas = null;
         workerMode = false;
+        canvas.hidden = false;
       }
     }
 
@@ -1630,19 +1636,11 @@
         ctx.fillRect(x - size / 2, y - size / 2, size, size);
       }
     };
-    let pageCleared = false, workerCleared = false;
     const paint = () => {
       const p = state.p, r = state.r;
       $('entry-seal').style.opacity = String(1 - clamp((p - .18) / .5));
       if (workerMode && entryWorker) {
-        if (p < 1) {
-          if (!pageCleared) { ctx.clearRect(0, 0, W, H); pageCleared = true; }
-          entryWorker.postMessage({ type: 'draw', p });
-        } else {
-          if (!workerCleared) { entryWorker.postMessage({ type: 'clear' }); workerCleared = true; }
-          if (!pageCleared) { ctx.clearRect(0, 0, W, H); pageCleared = true; }
-          drawPage(r);
-        }
+        entryWorker.postMessage({ type: 'draw', p, r });
         return;
       }
       ctx.clearRect(0, 0, W, H);
@@ -1656,7 +1654,7 @@
     entryTimeline.to(state, { p: 1, duration: 4.4, ease: 'none' }, 0);
     entryTimeline.call(() => { showScreen('birth'); }, [], 4.4);
     entryTimeline.to(state, { r: 1, duration: 1.5, ease: 'power1.inOut' }, 3.9);
-    entryTimeline.to(entryParticleCanvas ? [canvas, entryParticleCanvas] : canvas, { opacity: 0, duration: .7, ease: 'power1.inOut' }, 5.2);
+    entryTimeline.to(entryParticleCanvas || canvas, { opacity: 0, duration: .7, ease: 'power1.inOut' }, 5.2);
     entryTimeline.to('.birth-copy', { opacity: 1, y: 0, duration: .6, ease: 'power2.out' }, 5.2);
     entryTimeline.to('.form-wrap', { opacity: 1, y: 0, duration: .8, ease: 'power2.out' }, 5.3);
     entryTimeline.to({}, { duration: .2 });
