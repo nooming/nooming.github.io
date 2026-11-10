@@ -4,7 +4,7 @@
   const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   // 排盘引擎与字形文件都不再首屏下载：点“展开”时才拉 bazi.js，进命盘页时才拉 fire-glyphs.js。
-  const BAZI_SRC = 'assets/js/bazi.js?v=20261110n';
+  const BAZI_SRC = 'assets/js/bazi.js?v=20261110o';
   let baziLoad = null;
   function loadBazi() {
     if (window.BAZI) return Promise.resolve(window.BAZI);
@@ -24,7 +24,7 @@
     if (window.FIRE_GLYPHS) return Promise.resolve();
     if (!glyphLoad) glyphLoad = new Promise((resolve) => {
       const script = document.createElement('script');
-      script.src = 'assets/js/fire-glyphs.js?v=20261110n';
+      script.src = 'assets/js/fire-glyphs.js?v=20261110o';
       script.async = true;
       script.onload = resolve;
       script.onerror = () => { glyphLoad = null; resolve(); };
@@ -1236,9 +1236,6 @@
     const tc = target.getContext('2d');
     tc.setTransform(ratio, 0, 0, ratio, 0, 0);
     tc.fillStyle = '#f4eedf'; tc.fillRect(0, 0, W, H);
-    const stageW = Math.max(W, 1.7777778 * H);
-    const stageH = Math.max(H, .5625 * W);
-    if (source && source.naturalWidth) tc.drawImage(source, (W - stageW) / 2, (H - stageH) / 2, stageW, stageH);
     // 像片尾那样连标题/扉页文字一起取样，不是只拼一张空相册
     const birth = $('birth');
     const copy = document.querySelector('.birth-copy');
@@ -1246,6 +1243,23 @@
     const copyOpacity = copy ? copy.style.opacity : '';
     birth.hidden = false;
     if (copy) copy.style.opacity = '1';
+    // 按真实的 <img> 取景（cover + object-position）画目标页，粒子页才会和背景对齐
+    const albumImg = document.querySelector('.album-art img');
+    const artRect = albumImg ? albumImg.getBoundingClientRect() : null;
+    if (source && source.naturalWidth && artRect && artRect.width) {
+      const nw = source.naturalWidth || source.width, nh = source.naturalHeight || source.height;
+      const fit = albumImg ? getComputedStyle(albumImg).objectFit : 'cover';
+      let dx = artRect.left, dy = artRect.top, dw = artRect.width, dh = artRect.height;
+      if (fit === 'cover') {
+        const scale = Math.max(dw / nw, dh / nh);
+        dw = nw * scale; dh = nh * scale;
+        const op = (getComputedStyle(albumImg).objectPosition || '50% 50%').split(/\s+/);
+        const pct = (v) => v && v.includes('%') ? parseFloat(v) / 100 : 0;
+        dx = artRect.left - (dw - artRect.width) * pct(op[0] || '50%');
+        dy = artRect.top - (dh - artRect.height) * pct(op[1] || '50%');
+      }
+      tc.drawImage(source, dx, dy, dw, dh);
+    }
     try { paintDom(tc, [document.querySelector('header'), copy].filter(Boolean)); } catch (_) { /* 忽略 */ }
     birth.hidden = wasHidden;
     if (copy) copy.style.opacity = copyOpacity;
