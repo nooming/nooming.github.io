@@ -4,7 +4,7 @@
   const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   // 排盘引擎与字形文件都不再首屏下载：点“展开”时才拉 bazi.js，进命盘页时才拉 fire-glyphs.js。
-  const BAZI_SRC = 'assets/js/bazi.js?v=20261110kk';
+  const BAZI_SRC = 'assets/js/bazi.js?v=20261110ll';
   let baziLoad = null;
   function loadBazi() {
     if (window.BAZI) return Promise.resolve(window.BAZI);
@@ -24,7 +24,7 @@
     if (window.FIRE_GLYPHS) return Promise.resolve();
     if (!glyphLoad) glyphLoad = new Promise((resolve) => {
       const script = document.createElement('script');
-      script.src = 'assets/js/fire-glyphs.js?v=20261110kk';
+      script.src = 'assets/js/fire-glyphs.js?v=20261110ll';
       script.async = true;
       script.onload = resolve;
       script.onerror = () => { glyphLoad = null; resolve(); };
@@ -1126,7 +1126,7 @@
       F.dataset.ready = 'false'; F.hidden = false;
       gsap.set(F, { opacity: 1 });
       gsap.set(art, { opacity: 0 });
-      gsap.set('#finale-text span', { opacity: 0, y: -12, filter: 'blur(7px)' });
+      gsap.set('#finale-text span', { opacity: 0, y: 0, filter: 'none' });
       gsap.set('#finale-hint', { opacity: 0 });
       gsap.set('#finale-text .w path', { strokeDashoffset: 90 });
       gsap.set('#finale-text .stamp', { opacity: 0, scale: 1.5, rotate: 0 });
@@ -1216,8 +1216,8 @@
       const col1 = '#finale-text p:nth-child(1) span', col2 = '#finale-text p:nth-child(2) span';
       const n1 = FINALE_LINES[0].length;
       const at = PD + SW + 1.2;   // 背景清晰后稍停一下再落字
-      tl.to(col1, { opacity: 1, y: 0, filter: 'blur(0px)', duration: .95, ease: 'power2.out', stagger: .22 }, at);
-      tl.to(col2, { opacity: 1, y: 0, filter: 'blur(0px)', duration: .95, ease: 'power2.out', stagger: .22 }, at + n1 * .22 + .3);
+      tl.to(col1, { opacity: 1, duration: .95, ease: 'power2.out', stagger: .22 }, at);
+      tl.to(col2, { opacity: 1, duration: .95, ease: 'power2.out', stagger: .22 }, at + n1 * .22 + .3);
       tl.to('#finale-text .w path', { strokeDashoffset: 0, duration: .8, ease: 'power2.out' }, at + n1 * .22 + .3 + (FINALE_LINES[1].length - 1) * .22 + .15);
       const sAt = at + n1 * .22 + .3 + (FINALE_LINES[1].length - 1) * .22 + .15 + .8 + .25;
       // 落章：从高处按下去，微微一顿
