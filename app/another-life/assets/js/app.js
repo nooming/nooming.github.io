@@ -4,7 +4,7 @@
   const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   // 排盘引擎与字形文件都不再首屏下载：点“展开”时才拉 bazi.js，进命盘页时才拉 fire-glyphs.js。
-  const BAZI_SRC = 'assets/js/bazi.js?v=20261110ff';
+  const BAZI_SRC = 'assets/js/bazi.js?v=20261110gg';
   let baziLoad = null;
   function loadBazi() {
     if (window.BAZI) return Promise.resolve(window.BAZI);
@@ -24,7 +24,7 @@
     if (window.FIRE_GLYPHS) return Promise.resolve();
     if (!glyphLoad) glyphLoad = new Promise((resolve) => {
       const script = document.createElement('script');
-      script.src = 'assets/js/fire-glyphs.js?v=20261110ff';
+      script.src = 'assets/js/fire-glyphs.js?v=20261110gg';
       script.async = true;
       script.onload = resolve;
       script.onerror = () => { glyphLoad = null; resolve(); };
@@ -1261,6 +1261,9 @@
     resetEntry();
     document.body.classList.add('finale-end');
     showScreen('cover');
+    // 封面先透明地留在画布下面，避免像素画布还没盖上来时闪出米色底。
+    const cover = $('cover');
+    gsap.set(cover, { opacity: 0 });
     gsap.set(['#story', 'header'], { clearProps: 'opacity' });
     $('entry-seal').style.opacity = '0';
     const rect = $('entry-seal').getBoundingClientRect();
@@ -1333,6 +1336,7 @@
     paint();
     canvas.hidden = false;
     F.hidden = true;
+    gsap.set(cover, { opacity: 1 });
     const total = PD + 0.95 + .55 + 2.9;
     const tl = gsap.timeline();
     tl.to(T, { t: total, duration: total, ease: 'none', onUpdate: paint }, 0);
