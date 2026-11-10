@@ -4,7 +4,7 @@
   const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   // 排盘引擎与字形文件都不再首屏下载：点“展开”时才拉 bazi.js，进命盘页时才拉 fire-glyphs.js。
-  const BAZI_SRC = 'assets/js/bazi.js?v=20261110aa';
+  const BAZI_SRC = 'assets/js/bazi.js?v=20261110bb';
   let baziLoad = null;
   function loadBazi() {
     if (window.BAZI) return Promise.resolve(window.BAZI);
@@ -24,7 +24,7 @@
     if (window.FIRE_GLYPHS) return Promise.resolve();
     if (!glyphLoad) glyphLoad = new Promise((resolve) => {
       const script = document.createElement('script');
-      script.src = 'assets/js/fire-glyphs.js?v=20261110aa';
+      script.src = 'assets/js/fire-glyphs.js?v=20261110bb';
       script.async = true;
       script.onload = resolve;
       script.onerror = () => { glyphLoad = null; resolve(); };
@@ -122,9 +122,10 @@
     }
   }
 
-  function preloadArt(key) {
+  function preloadArt(key, priority = 'auto') {
     if (!readyArt.has(key)) readyArt.set(key, new Promise((resolve) => {
       const image = new Image();
+      image.fetchPriority = priority;
       image.onload = () => { (image.decode ? image.decode() : Promise.resolve()).catch(() => {}).then(() => {
         // 只留最近 6 张解码图，避免整段人生下来把几十张 1600px 位图一直钉在内存里
         decodedArt.push(image); if (decodedArt.length > 6) decodedArt.shift();
@@ -136,6 +137,19 @@
       image.src = window.ART[key];
     }));
     return readyArt.get(key);
+  }
+  const entryAlbumKey = () => innerWidth <= 760 ? 'album-mobile-small' : 'album-desktop-small';
+  function prefetchArt(key) {
+    if (!key || !window.ART[key] || readyArt.has(key) || navigator.connection?.saveData) return;
+    preloadArt(key, 'low').catch(() => {});
+  }
+  function prefetchBirthMedia(step) {
+    prefetchArt(entryAlbumKey());
+    if (step === 1) {
+      ['bg-fate', 'bg-fate-p', 'bg-ink'].forEach(prefetchArt);
+    } else if (step === 2) {
+      ['childhood', 'school', 'bg-exam', 'bg-campus', 'departure'].forEach(prefetchArt);
+    }
   }
 
   // 换幕：新画面从一滴墨晕开的形状里显出来（用不规则 clip-path 长大），而不是简单淡入淡出
@@ -1428,7 +1442,7 @@
   let entryMorphCache = null;
   let entryMorphBuilding = null;
   async function buildEntryMorph() {
-    const albumKey = innerWidth <= 760 ? 'album-mobile' : 'album-desktop';
+    const albumKey = entryAlbumKey();
     const albumEl = document.querySelector('.album-art img');
     const W = innerWidth, H = innerHeight;
     const ratio = Math.min(devicePixelRatio || 1, 1.5);
@@ -1518,7 +1532,7 @@
   }
 
   async function prepareEntryMorph() {
-    const key = innerWidth <= 760 ? 'album-mobile' : 'album-desktop';
+    const key = entryAlbumKey();
     const W = innerWidth, H = innerHeight;
     if (entryMorphCache && entryMorphCache.key === key && entryMorphCache.W === W && entryMorphCache.H === H) return entryMorphCache;
     if (entryMorphBuilding) {
@@ -1534,7 +1548,7 @@
 
   async function playEntry() {
     if (entryActive) return;
-    const albumKey = innerWidth <= 760 ? 'album-mobile' : 'album-desktop';
+    const albumKey = entryAlbumKey();
     const albumEl = document.querySelector('.album-art img');
     if (reduced) {
       beginLoad('正在启卷…');
@@ -1748,6 +1762,7 @@
     }
     function next(){
       if(step===2&&!document.querySelector('[name=gender]:checked')){status.textContent='请点选男或女，再继续。';fields[3].classList.add('needs-gender');return;}
+      if(step===1 || step===2) prefetchBirthMedia(step);
       showStep(Math.min(3,step+1));
     }
     $('album-next').addEventListener('click',next); $('album-back').addEventListener('click',()=>showStep(Math.max(1,step-1)));
