@@ -4,7 +4,7 @@
   const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   // 排盘引擎与字形文件都不再首屏下载：点“展开”时才拉 bazi.js，进命盘页时才拉 fire-glyphs.js。
-  const BAZI_SRC = 'assets/js/bazi.js?v=20261110v';
+  const BAZI_SRC = 'assets/js/bazi.js?v=20261110w';
   let baziLoad = null;
   function loadBazi() {
     if (window.BAZI) return Promise.resolve(window.BAZI);
@@ -24,7 +24,7 @@
     if (window.FIRE_GLYPHS) return Promise.resolve();
     if (!glyphLoad) glyphLoad = new Promise((resolve) => {
       const script = document.createElement('script');
-      script.src = 'assets/js/fire-glyphs.js?v=20261110v';
+      script.src = 'assets/js/fire-glyphs.js?v=20261110w';
       script.async = true;
       script.onload = resolve;
       script.onerror = () => { glyphLoad = null; resolve(); };
@@ -482,6 +482,14 @@
     if (burnRunning) return;
     if (reduced) { arrive(); return; }
     burnRunning = true;
+    beginLoad('正在准备入卷…');
+    let burnLoading = true;
+    const stopBurnLoading = () => {
+      if (!burnLoading) return;
+      burnLoading = false;
+      endLoad();
+    };
+    try {
     const W = innerWidth, H = innerHeight;
     const dpr = Math.min(devicePixelRatio || 1, 3, Math.sqrt(8e6 / Math.max(1, W * H)));
     const k = Math.min(.6, Math.sqrt(110000 / (W * H)));
@@ -570,6 +578,7 @@
     $('inscription').classList.add('igniting');
     haptic([16, 90, 10, 70, 12, 56, 14, 44, 16, 34, 18, 26, 22, 20, 26, 14, 30]);   // 越烧越密的心跳
     $('inscription').style.pointerEvents = 'none';
+    stopBurnLoading();
     const total = maxD + 46 + 40;
     const duration = 3600;
     const sparks = [];
@@ -648,6 +657,9 @@
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     overlay.style.transition = 'opacity .7s ease'; overlay.style.opacity = '0';
     setTimeout(() => { overlay.remove(); burnRunning = false; }, 760);
+    } finally {
+      stopBurnLoading();
+    }
   }
 
   function revealGold() {
@@ -1419,7 +1431,7 @@
         particleCanvas.setAttribute('aria-hidden', 'true');
         document.body.append(particleCanvas);
         const offscreen = particleCanvas.transferControlToOffscreen();
-        const worker = new Worker('assets/js/entry-particles.js?v=20261110v');
+        const worker = new Worker('assets/js/entry-particles.js?v=20261110w');
         const dropWorker = () => {
           worker.terminate();
           particleCanvas.remove();
