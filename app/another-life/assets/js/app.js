@@ -4,7 +4,7 @@
   const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   // 排盘引擎与字形文件都不再首屏下载：点“展开”时才拉 bazi.js，进命盘页时才拉 fire-glyphs.js。
-  const BAZI_SRC = 'assets/js/bazi.js?v=20261110w';
+  const BAZI_SRC = 'assets/js/bazi.js?v=20261110x';
   let baziLoad = null;
   function loadBazi() {
     if (window.BAZI) return Promise.resolve(window.BAZI);
@@ -24,7 +24,7 @@
     if (window.FIRE_GLYPHS) return Promise.resolve();
     if (!glyphLoad) glyphLoad = new Promise((resolve) => {
       const script = document.createElement('script');
-      script.src = 'assets/js/fire-glyphs.js?v=20261110w';
+      script.src = 'assets/js/fire-glyphs.js?v=20261110x';
       script.async = true;
       script.onload = resolve;
       script.onerror = () => { glyphLoad = null; resolve(); };
@@ -978,58 +978,187 @@
   let finaleRunning = false;
   const FINALE_LINES = ['你一定要好好生活', '别想太多w'];
   function ensureFinaleDom() {
-    if ($('finale')) return;
-    const el = document.createElement('div');
-    el.id = 'finale'; el.hidden = true;
-    el.innerHTML = '<img id="finale-art" alt=""><div id="finale-text" role="img" aria-label="你一定要好好生活，别想太多w">'
-      + FINALE_LINES.map((line) => '<p>' + Array.from(line).map((c) => c === 'w' ? '<span class="w"><svg viewBox="0 0 34 26" aria-hidden="true"><path d="M3 5.5 C4 22 12 24.5 16.5 11.5 C21 24.5 29.5 22 31 4.5"/></svg></span>' : '<span>' + c + '</span>').join('') + '</p>').join('')
-      + '</div><div id="finale-hint">轻 点 一 下</div>';
-    document.body.append(el);
-    const canvas = document.createElement('canvas');
-    canvas.id = 'finale-canvas'; canvas.hidden = true; canvas.setAttribute('aria-hidden', 'true');
-    document.body.append(canvas);
-    const opts = document.createElement('div');
-    opts.id = 'finale-opts'; opts.hidden = true;
-    opts.innerHTML = '<button type="button" id="finale-exit">退 出</button><i></i><button type="button" id="finale-again">重 来</button>';
-    $('cover').append(opts);
-    const bye = document.createElement('p');
-    bye.id = 'finale-bye'; bye.hidden = true; bye.textContent = '好好生活。';
-    $('cover').append(bye);
-    $('finale-exit').addEventListener('click', finaleExit);
-    $('finale-again').addEventListener('click', finaleAgain);
-    el.addEventListener('click', () => { if (el.dataset.ready === 'true') finaleToSeal(); });
-  }
+      if ($('finale')) return;
+      const el = document.createElement('div');
+      el.id = 'finale'; el.hidden = true;
+      el.innerHTML = '<img id="finale-art" alt=""><div id="finale-text" role="img" aria-label="你一定要好好生活，别想太多w">'
+        + FINALE_LINES.map((line, i) => '<p>' + Array.from(line).map((c) => c === 'w' ? '<span class="w"><svg viewBox="0 0 34 26" aria-hidden="true"><path d="M3 5.5 C4 22 12 24.5 16.5 11.5 C21 24.5 29.5 22 31 4.5"/></svg></span>' : '<span>' + c + '</span>').join('') + (i === 1 ? '<i class="stamp"><img alt=""></i>' : '') + '</p>').join('')
+        + '</div><div id="finale-hint">轻 点 一 下</div>';
+      document.body.append(el);
+      const canvas = document.createElement('canvas');
+      canvas.id = 'finale-canvas'; canvas.hidden = true; canvas.setAttribute('aria-hidden', 'true');
+      document.body.append(canvas);
+      const opts = document.createElement('div');
+      opts.id = 'finale-opts'; opts.hidden = true;
+      opts.innerHTML = '<button type="button" id="finale-exit">退 出</button><i></i><button type="button" id="finale-again">重 来</button>';
+      $('cover').append(opts);
+      const bye = document.createElement('p');
+      bye.id = 'finale-bye'; bye.hidden = true; bye.textContent = '好好生活。';
+      $('cover').append(bye);
+      $('finale-exit').addEventListener('click', finaleExit);
+      $('finale-again').addEventListener('click', finaleAgain);
+      el.addEventListener('click', () => { if (el.dataset.ready === 'true') finaleToSeal(); });
+    }
 
-  function playFinale() {
-    if (finaleRunning) return;
-    finaleRunning = true;
-    ensureFinaleDom();
-    const F = $('finale'), art = $('finale-art');
-    const finaleSrcset = window.ART_SRCSET && window.ART_SRCSET['finale-art'];
-    if (finaleSrcset) { art.sizes = '100vw'; art.srcset = finaleSrcset; }
-    art.src = window.ART['finale-art'];
-    F.dataset.ready = 'false'; F.hidden = false;
-    gsap.set(F, { opacity: 1 });
-    gsap.set(art, { opacity: 0 });
-    gsap.set('#finale-text span', { opacity: 0, y: 0, filter: 'none' });
-    gsap.set('#finale-hint', { opacity: 0 });
-    gsap.set('#finale-text .w path', { strokeDashoffset: 90 });
-    haptic([10, 40, 10]);
-    const tl = gsap.timeline();
-    tl.to(['#story', 'header'], { opacity: 0, duration: .9, ease: 'power1.out' }, 0);
-    tl.to(art, { opacity: 1, duration: 3.6, ease: 'power1.inOut' }, .6);
-    const col1 = '#finale-text p:nth-child(1) span', col2 = '#finale-text p:nth-child(2) span';
-    const n1 = FINALE_LINES[0].length;
-    const at = 3.3;
-    // 只做从上到下的逐字显影，一列结束再下一列；不位移、不模糊。
-    tl.to(col1, { opacity: 1, duration: .16, ease: 'none', stagger: .16 }, at);
-    const col2At = at + n1 * .16 + .22;
-    tl.to(col2, { opacity: 1, duration: .16, ease: 'none', stagger: .16 }, col2At);
-    tl.to('#finale-text .w path', { strokeDashoffset: 0, duration: .6, ease: 'power1.out' }, col2At + (FINALE_LINES[1].length - 1) * .16 + .1);
-    const done = col2At + FINALE_LINES[1].length * .16 + .35;
-    tl.call(() => { F.dataset.ready = 'true'; }, [], done);
-    tl.to('#finale-hint', { opacity: .5, duration: 1.4, ease: 'power1.out' }, done + 1.6);
-  }
+
+    // ── 取「归」最后一屏（背景图 + 暗色渐变）和终章亮色画面，各画成一张画布，用来做格子粒子的过渡 ──
+    function splitTop(str) { const out = []; let d = 0, cur = ''; for (const ch of str) { if (ch === '(') d++; if (ch === ')') d--; if (ch === ',' && d === 0) { out.push(cur.trim()); cur = ''; } else cur += ch; } if (cur.trim()) out.push(cur.trim()); return out; }
+    function paintShade(c, rect, bgImage) {
+      splitTop(bgImage).forEach((layer) => {
+        const m = layer.match(/^linear-gradient\((.*)\)$/); if (!m) return;
+        const parts = splitTop(m[1]); let ang = 180;
+        if (/deg$/.test(parts[0])) ang = parseFloat(parts.shift());
+        else if (/^to /.test(parts[0])) { const t = parts.shift(); ang = /top/.test(t) ? 0 : /right/.test(t) ? 90 : /left/.test(t) ? 270 : 180; }
+        const a = ang * Math.PI / 180, dx = Math.sin(a), dy = -Math.cos(a);
+        const len = Math.abs(rect.width * dx) + Math.abs(rect.height * dy);
+        const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+        const g = c.createLinearGradient(cx - dx * len / 2, cy - dy * len / 2, cx + dx * len / 2, cy + dy * len / 2);
+        const stops = parts.map((q) => { const mm = q.match(/^(rgba?\([^)]*\)|#[0-9a-f]+|\w+)\s*(-?[\d.]+)(px|%)?$/i); if (!mm) return null; const col = mm[1].match(/[\d.]+/g).map(Number); return { r: col[0], g: col[1], b: col[2], a: col.length > 3 ? col[3] : 1, pos: mm[2] === undefined ? null : parseFloat(mm[2]) / (mm[3] === 'px' ? len : 100) }; }).filter(Boolean);
+        stops.forEach((q, i) => { if (q.a === 0) { const nb = stops[i - 1] || stops[i + 1]; if (nb) { q.r = nb.r; q.g = nb.g; q.b = nb.b; } } });
+        stops.forEach((q) => g.addColorStop(Math.max(0, Math.min(1, q.pos == null ? 0 : q.pos)), 'rgba(' + q.r + ',' + q.g + ',' + q.b + ',' + q.a + ')'));
+        c.fillStyle = g; c.fillRect(rect.left, rect.top, rect.width, rect.height);
+      });
+    }
+    function snapStory(W, H, ratio) {
+      const cv = document.createElement('canvas'); cv.width = Math.round(W * ratio); cv.height = Math.round(H * ratio);
+      const c = cv.getContext('2d'); c.setTransform(ratio, 0, 0, ratio, 0, 0);
+      c.fillStyle = '#0f2b2a'; c.fillRect(0, 0, W, H);
+      try {
+        const imgs = Array.from(document.querySelectorAll('.scene-image.active')); const im = imgs[imgs.length - 1];
+        if (im && im.naturalWidth) {
+          const r = im.getBoundingClientRect(), cs = getComputedStyle(im);
+          const op = (cs.objectPosition || '50% 50%').split(' ').map((v) => parseFloat(v) / 100);
+          const k = Math.max(r.width / im.naturalWidth, r.height / im.naturalHeight);
+          c.save(); c.beginPath(); c.rect(r.left, r.top, r.width, r.height); c.clip();
+          c.drawImage(im, r.left + (r.width - im.naturalWidth * k) * op[0], r.top + (r.height - im.naturalHeight * k) * (op[1] == null ? .5 : op[1]), im.naturalWidth * k, im.naturalHeight * k);
+          c.restore();
+        }
+        const sh = document.querySelector('.scene-shade');
+        if (sh) paintShade(c, sh.getBoundingClientRect(), getComputedStyle(sh).backgroundImage);
+      } catch (e) { /* 取不到就只用底色 */ }
+      return cv;
+    }
+    function snapArt(W, H, ratio, art) {
+      const cv = document.createElement('canvas'); cv.width = Math.round(W * ratio); cv.height = Math.round(H * ratio);
+      const c = cv.getContext('2d'); c.setTransform(ratio, 0, 0, ratio, 0, 0);
+      const op = (getComputedStyle(art).objectPosition || '50% 50%').split(' ').map((v) => parseFloat(v) / 100);
+      const sw = art.naturalWidth || 1600, sh = art.naturalHeight || 900, k = Math.max(W / sw, H / sh);
+      c.drawImage(art, (W - sw * k) * op[0], (H - sh * k) * (op[1] == null ? .5 : op[1]), sw * k, sh * k);
+      return cv;
+    }
+
+    async function playFinale() {
+      if (finaleRunning) return;
+      finaleRunning = true;
+      ensureFinaleDom();
+      const F = $('finale'), art = $('finale-art'), canvas = $('finale-canvas');
+      art.src = window.ART['finale-art'];
+      $('finale-text').querySelector('.stamp img').src = window.ART['finale-stamp'];
+      try { await art.decode(); } catch (e) { /* ignore */ }
+      F.dataset.ready = 'false'; F.hidden = false;
+      gsap.set(F, { opacity: 1 });
+      gsap.set(art, { opacity: 0 });
+      gsap.set('#finale-text span', { opacity: 0, y: -12, filter: 'blur(7px)' });
+      gsap.set('#finale-hint', { opacity: 0 });
+      gsap.set('#finale-text .w path', { strokeDashoffset: 90 });
+      gsap.set('#finale-text .stamp', { opacity: 0, scale: 1.5, rotate: 0 });
+      haptic([10, 40, 10]);
+      const W = innerWidth, H = innerHeight, ratio = Math.min(devicePixelRatio || 1, 2);
+      const A = snapStory(W, H, ratio), B = snapArt(W, H, ratio, art);
+      const step = Math.max(4, Math.round(Math.sqrt(W * H / 13000)));
+      const cols = Math.ceil(W / step), rows = Math.ceil(H / step);
+      const cellOf = (src) => { const cc = document.createElement('canvas'); cc.width = cols; cc.height = rows; const x = cc.getContext('2d', { willReadFrequently: true }); x.imageSmoothingQuality = 'high'; x.drawImage(src, 0, 0, src.width, src.height, 0, 0, cols, rows); return x.getImageData(0, 0, cols, rows).data; };
+      const da = cellOf(A), db = cellOf(B);
+      let rs = 20261110;
+      const rnd = () => ((rs = (rs * 1664525 + 1013904223) >>> 0) / 4294967296);
+      const P = [];
+      const mx0 = W / 2, my0 = H / 2, rmax = Math.hypot(mx0, my0);
+      for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+        const k = (j * cols + i) * 4, k2 = ((rows - 1 - j) * cols + (cols - 1 - i)) * 4;   // 转约半圈后落在对面那一格
+        const x = i * step + step / 2, y = j * step + step / 2, r0 = Math.hypot(x - mx0, y - my0), th0 = Math.atan2(y - my0, x - mx0);
+        // 整体是一股连贯的水流：延迟只随半径（再加一点螺旋）变化，个体的随机量很小，所以看起来是成片地流，不是各飞各的
+        const spiral = ((th0 + Math.PI) / (2 * Math.PI)) * .3;
+        P.push({ x: i * step, y: j * step, i, j, r0, th0, a: [da[k], da[k + 1], da[k + 2]], b: [db[k], db[k + 1], db[k + 2]], b2: [db[k2], db[k2 + 1], db[k2 + 2]], d: (r0 / rmax) * 1.0 + spiral + rnd() * .4, dur: 2.9 + rnd() * .9, pull: .22 + rnd() * .62, rot: Math.PI * (.9 + rnd() * .2), jr: (rnd() - .5) * .7, ja: (rnd() - .5) * 1.3 });
+      }
+      canvas.width = W * ratio; canvas.height = H * ratio;
+      const ctx = canvas.getContext('2d'); ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      const clamp = (v) => Math.max(0, Math.min(1, v));
+      const ease = (u) => (u < .5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
+      const PD = .4, SW = 5.9;           // 先逐级变粗，再逐格换色
+      const T = { t: 0 };
+      const BASE = [13, 36, 36];
+      const ucv = document.createElement('canvas'); ucv.width = cols; ucv.height = rows;
+      const ux = ucv.getContext('2d'), uimg = ux.createImageData(cols, rows);
+      const tmp = document.createElement('canvas'); tmp.width = cols * step + step; tmp.height = rows * step + step;
+      const tx = tmp.getContext('2d'); tx.imageSmoothingQuality = 'high';
+      const paint = () => {
+        ctx.clearRect(0, 0, W, H);
+        if (T.t < PD) {
+          const bsz = Math.pow(step, ease(clamp(T.t / PD)));
+          if (bsz < 1.4) { ctx.imageSmoothingEnabled = true; ctx.drawImage(A, 0, 0, W, H); return; }
+          const c2 = Math.ceil(W / bsz), r2 = Math.ceil(H / bsz);
+          tx.clearRect(0, 0, c2 + 1, r2 + 1);
+          tx.drawImage(A, 0, 0, W * ratio, H * ratio, 0, 0, W / bsz, H / bsz);
+          ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(tmp, 0, 0, c2, r2, 0, 0, c2 * bsz, r2 * bsz);
+          ctx.imageSmoothingEnabled = true;
+          return;
+        }
+        const t = T.t - PD, S1 = step + .6, mix = (x, y, k) => (x + (y - x) * k) | 0;
+        // 下层：粒子离开的地方先露出一层沉静的深色底（不是新颜色），等粒子一粒粒落回来盖上去，才换成新的颜色
+        for (const p of P) {
+          const kL = clamp((t - p.d) / .55), kR = clamp((t - p.d - p.dur * .98) / .35), sm = (v) => v * v * (3 - 2 * v);
+          const o = (p.j * cols + p.i) * 4, l = sm(kL), r = sm(kR);
+          for (let q = 0; q < 3; q++) { const v = p.a[q] + (BASE[q] - p.a[q]) * l; uimg.data[o + q] = (v + (p.b[q] - v) * r) | 0; }
+          uimg.data[o + 3] = 255;
+        }
+        ux.putImageData(uimg, 0, 0);
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(ucv, 0, 0, cols, rows, 0, 0, cols * step, rows * step);
+        // 上层：旧画面的每一格卷进中间，转约半圈，颜色一路渐变，最后落到对面去盖出新的画面；后面拖着两道淡淡的尾
+        const mx = W / 2, my = H / 2;
+        const at = (p, u) => {
+          const e = .5 - .5 * Math.cos(Math.PI * u), s1 = Math.sin(Math.PI * u);
+          const r = p.r0 * (1 - p.pull * Math.pow(s1, 1.3)) * (1 + p.jr * s1);
+          const th = p.th0 + p.rot * e + p.ja * s1;
+          return [mx + r * Math.cos(th), my + r * Math.sin(th), s1];
+        };
+        for (const p of P) {
+          const u = clamp((t - p.d) / p.dur);
+          if (u <= 0 || u >= 1) continue;
+          let c = clamp((u - .15) / .7); c = c * c * (3 - 2 * c);
+          const q = at(p, u), sz = S1 * (1 - .5 * q[2]);
+          const R = mix(p.a[0], p.b2[0], c), G = mix(p.a[1], p.b2[1], c), B = mix(p.a[2], p.b2[2], c), col = 'rgb(' + R + ',' + G + ',' + B + ')';
+          ctx.fillStyle = col;
+          { const uu = u - .03; if (uu > 0) { const q0 = at(p, uu); ctx.globalAlpha = .22; ctx.fillRect(q0[0] - sz * .4, q0[1] - sz * .4, sz * .8, sz * .8); ctx.globalAlpha = 1; } }
+          ctx.fillRect(q[0] - sz / 2, q[1] - sz / 2, sz, sz);
+        }
+      };
+      // 底下的旧画面先淡掉界面（只剩背景图），再把画布无缝盖上去
+      const tl0 = gsap.timeline();
+      tl0.to(['#story', 'header'], { opacity: 0, duration: .5, ease: 'power1.out' }, 0);
+      await new Promise((res) => tl0.call(res, [], .5));
+      paint(); canvas.hidden = false;
+      const total = PD + SW + .6;
+      const tl = gsap.timeline();
+      tl.to(T, { t: total, duration: total, ease: 'none', onUpdate: paint }, 0);
+      tl.set(art, { opacity: 1 }, PD + SW);   // 新画面在画布底下就位
+      tl.to(canvas, { opacity: 0, duration: .18, ease: 'power1.out' }, PD + SW + .02);
+      tl.call(() => { canvas.hidden = true; gsap.set(canvas, { clearProps: 'opacity' }); }, [], PD + SW + .4);
+      const col1 = '#finale-text p:nth-child(1) span', col2 = '#finale-text p:nth-child(2) span';
+      const n1 = FINALE_LINES[0].length;
+      const at = PD + SW + 1.2;   // 背景清晰后稍停一下再落字
+      tl.to(col1, { opacity: 1, y: 0, filter: 'blur(0px)', duration: .95, ease: 'power2.out', stagger: .22 }, at);
+      tl.to(col2, { opacity: 1, y: 0, filter: 'blur(0px)', duration: .95, ease: 'power2.out', stagger: .22 }, at + n1 * .22 + .3);
+      tl.to('#finale-text .w path', { strokeDashoffset: 0, duration: .8, ease: 'power2.out' }, at + n1 * .22 + .3 + (FINALE_LINES[1].length - 1) * .22 + .15);
+      const sAt = at + n1 * .22 + .3 + (FINALE_LINES[1].length - 1) * .22 + .15 + .8 + .25;
+      // 落章：从高处按下去，微微一顿
+      tl.to('#finale-text .stamp', { opacity: .94, scale: 1, rotate: 0, duration: .34, ease: 'power3.in' }, sAt);
+      tl.fromTo('#finale-text .stamp', { y: -6 }, { y: 0, duration: .5, ease: 'elastic.out(1.1,.5)' }, sAt + .3);
+      const done = sAt + .9;
+      tl.call(() => { F.dataset.ready = 'true'; }, [], done);
+      tl.to('#finale-hint', { opacity: .5, duration: 1.4, ease: 'power1.out' }, done + 1.6);
+    }
 
   async function finaleToSeal() {
     const F = $('finale');
@@ -1431,7 +1560,7 @@
         particleCanvas.setAttribute('aria-hidden', 'true');
         document.body.append(particleCanvas);
         const offscreen = particleCanvas.transferControlToOffscreen();
-        const worker = new Worker('assets/js/entry-particles.js?v=20261110w');
+        const worker = new Worker('assets/js/entry-particles.js?v=20261110x');
         const dropWorker = () => {
           worker.terminate();
           particleCanvas.remove();
