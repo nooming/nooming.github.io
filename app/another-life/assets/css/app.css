@@ -585,10 +585,10 @@ body.no-enter #story *,body.no-enter #story *::before,body.no-enter #story *::af
 #birth .exam-row{display:grid;grid-template-columns:96px 1fr;align-items:center;gap:6px 18px;margin-top:4px;padding-top:10px;border-top:1px solid #9d846233}
 #birth .exam-row .exam-hint{margin:0;font-size:12px;line-height:1.75;color:#a08c6a;letter-spacing:.04em}
 @media(max-width:760px){#birth .exam-row{grid-template-columns:92px 1fr}#birth .exam-row .exam-hint{font-size:10.5px}}
-#birth .exam-row .birth-reel{grid-template-rows:14px 64px 14px}
-#birth .exam-row .reel-viewport{height:64px}
-#birth .exam-row .reel-track{top:-43px}
-#birth .exam-row .reel-viewport::after{top:16px}
+#birth .exam-row .birth-reel{grid-template-rows:14px 72px 14px}
+#birth .exam-row .reel-viewport{height:72px; -webkit-mask-image:none; mask-image:none}
+#birth .exam-row .reel-track{top:-39px}
+#birth .exam-row .reel-viewport::after{top:20px;height:32px}
 #birth .exam-row .reel-row{height:30px;line-height:30px}
 #birth .album-gender>.field-label{display:none}
 #birth .advanced,#birth .footnote{display:none!important}
