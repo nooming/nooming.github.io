@@ -4,7 +4,7 @@
   const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   // 排盘引擎与字形文件都不再首屏下载：点“展开”时才拉 bazi.js，进命盘页时才拉 fire-glyphs.js。
-  const BAZI_SRC = 'assets/js/bazi.js?v=20261110ll';
+  const BAZI_SRC = 'assets/js/bazi.js?v=20261110mm';
   let baziLoad = null;
   function loadBazi() {
     if (window.BAZI) return Promise.resolve(window.BAZI);
@@ -24,7 +24,7 @@
     if (window.FIRE_GLYPHS) return Promise.resolve();
     if (!glyphLoad) glyphLoad = new Promise((resolve) => {
       const script = document.createElement('script');
-      script.src = 'assets/js/fire-glyphs.js?v=20261110ll';
+      script.src = 'assets/js/fire-glyphs.js?v=20261110mm';
       script.async = true;
       script.onload = resolve;
       script.onerror = () => { glyphLoad = null; resolve(); };
@@ -1262,8 +1262,11 @@
         sc.restore();
         return;
       }
-      sc.font = cs.fontSize + ' ' + cs.fontFamily; sc.fillStyle = cs.color; sc.textAlign = 'center'; sc.textBaseline = 'middle';
-      sc.fillText(s.textContent, r.left + r.width / 2, r.top + r.height / 2 + parseFloat(cs.fontSize) * .04);
+      sc.font = cs.fontSize + ' ' + cs.fontFamily; sc.fillStyle = cs.color; sc.textAlign = 'center'; sc.textBaseline = 'alphabetic';
+      const metrics = sc.measureText(s.textContent);
+      const asc = metrics.actualBoundingBoxAscent || parseFloat(cs.fontSize) * .78;
+      const desc = metrics.actualBoundingBoxDescent || parseFloat(cs.fontSize) * .22;
+      sc.fillText(s.textContent, r.left + r.width / 2, r.top + (r.height - asc - desc) / 2 + asc);
     });
     // 崔思洋小印也属于这一屏，必须一起进像素快照，否则点下后它会先消失。
     const stamp = F.querySelector('#finale-text .stamp');
