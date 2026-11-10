@@ -4,7 +4,7 @@
   const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   // 排盘引擎与字形文件都不再首屏下载：点“展开”时才拉 bazi.js，进命盘页时才拉 fire-glyphs.js。
-  const BAZI_SRC = 'assets/js/bazi.js?v=20261110nn';
+  const BAZI_SRC = 'assets/js/bazi.js?v=20261110oo';
   let baziLoad = null;
   function loadBazi() {
     if (window.BAZI) return Promise.resolve(window.BAZI);
@@ -24,7 +24,7 @@
     if (window.FIRE_GLYPHS) return Promise.resolve();
     if (!glyphLoad) glyphLoad = new Promise((resolve) => {
       const script = document.createElement('script');
-      script.src = 'assets/js/fire-glyphs.js?v=20261110nn';
+      script.src = 'assets/js/fire-glyphs.js?v=20261110oo';
       script.async = true;
       script.onload = resolve;
       script.onerror = () => { glyphLoad = null; resolve(); };
@@ -1130,6 +1130,7 @@
       F.dataset.ready = 'false'; F.hidden = false;
       gsap.set(F, { opacity: 1 });
       gsap.set(art, { opacity: 0 });
+      gsap.set('#finale-text', { opacity: 1 });
       gsap.set('#finale-text span', { opacity: 0, y: 0, filter: 'none' });
       gsap.set('#finale-hint', { opacity: 0 });
       gsap.set('#finale-text .w path', { strokeDashoffset: 90 });
@@ -1250,38 +1251,9 @@
     const sw = art.naturalWidth || 1600, sh = art.naturalHeight || 900;
     const k = Math.max(W / sw, H / sh);
     sc.drawImage(art, (W - sw * k) * op[0], (H - sh * k) * (op[1] == null ? .5 : op[1]), sw * k, sh * k);
-    F.querySelectorAll('#finale-text span').forEach((s) => {
-      const r = s.getBoundingClientRect(), cs = getComputedStyle(s);
-      if (s.classList.contains('w')) {
-        const bw = s.offsetWidth || r.width, bh = s.offsetHeight || r.height;
-        const scale = Math.min(bw / 34, bh / 26);
-        const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-        sc.save();
-        sc.translate(cx, cy);
-        sc.rotate(-9 * Math.PI / 180);
-        sc.scale(scale, scale);
-        sc.translate(-17, -13);
-        sc.strokeStyle = cs.color; sc.lineWidth = 3.8; sc.lineCap = 'round'; sc.lineJoin = 'round';
-        sc.stroke(new Path2D('M3 5.5 C4 22 12 24.5 16.5 11.5 C21 24.5 29.5 22 31 4.5'));
-        sc.restore();
-        return;
-      }
-      sc.font = cs.fontSize + ' ' + cs.fontFamily; sc.fillStyle = cs.color; sc.textAlign = 'center'; sc.textBaseline = 'alphabetic';
-      const metrics = sc.measureText(s.textContent);
-      const asc = metrics.actualBoundingBoxAscent || parseFloat(cs.fontSize) * .78;
-      const desc = metrics.actualBoundingBoxDescent || parseFloat(cs.fontSize) * .22;
-      sc.fillText(s.textContent, r.left + r.width / 2, r.top + (r.height - asc - desc) / 2 + asc);
-    });
-    // 崔思洋小印也属于这一屏，必须一起进像素快照，否则点下后它会先消失。
-    const stamp = F.querySelector('#finale-text .stamp');
-    const stampImg = stamp?.querySelector('img');
-    if (stamp && stampImg && stampImg.complete) {
-      const r = stamp.getBoundingClientRect();
-      sc.save();
-      sc.globalAlpha = parseFloat(getComputedStyle(stamp).opacity) || 1;
-      sc.drawImage(stampImg, r.left, r.top, r.width, r.height);
-      sc.restore();
-    }
+    // 文字和崔思洋小印不再重绘进快照：它们原位叠在像素画布上方淡出，
+    // 这样不会被 canvas 的 baseline 算法带偏，也不会出现 w/印章突然消失。
+
     // 2 先把封面铺在下面（被明亮的画盖着，看不见），量出印章的位置；封面只留印章
     resetEntry();
     document.body.classList.add('finale-end');
@@ -1360,14 +1332,19 @@
     };
     paint();
     canvas.hidden = false;
-    F.hidden = true;
+    F.style.zIndex = '206';
+    F.style.background = 'transparent';
+    F.style.pointerEvents = 'none';
+    art.style.opacity = '0';
+    canvas.style.zIndex = '205';
     gsap.set(cover, { opacity: 1 });
     const total = PD + 0.95 + .55 + 2.9;
     const tl = gsap.timeline();
     tl.to(T, { t: total, duration: total, ease: 'none', onUpdate: paint }, 0);
+    tl.to(['#finale-text', '#finale-hint'], { opacity: 0, duration: .55, ease: 'power1.out' }, .15);
     tl.to(T, { fade: 1, duration: .8, ease: 'power1.inOut', onUpdate: paint }, total - .45);
     tl.to('#entry-seal', { opacity: 1, duration: .8, ease: 'power1.inOut' }, total - .45);
-    tl.call(() => { canvas.hidden = true; }, [], total + .5);
+    tl.call(() => { canvas.hidden = true; F.hidden = true; }, [], total + .5);
     const opts = $('finale-opts');
     opts.hidden = false; gsap.set(opts, { opacity: 0 });
     tl.to(opts, { opacity: 1, duration: 1.1, ease: 'power1.out' }, total + .35 + 2);
