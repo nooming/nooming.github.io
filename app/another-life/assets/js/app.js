@@ -663,7 +663,6 @@
   async function inscription(isEcho = false) {
     echoMode = isEcho;
     showScreen('inscription');
-    await loadGlyphs();
     const token = ++goldToken;
     goldWriters = [];
     $('gold-continue').disabled = true;
@@ -678,11 +677,31 @@
     $('gold-pillars').setAttribute('aria-label', keys.map((key) => chart.pillars[key].ganzhi).join(' '));
     $('gold-terms').innerHTML = `<div class="destiny-identity"><span>${chart.input.genderCode === 'M' ? '乾造' : '坤造'}</span><i></i><span>${n.dm.gan}${n.dm.el}日主</span><i></i><span>${escape(n.strength.label)}</span></div><div class="destiny-reading"><span class="destiny-pattern">${escape(n.geju.name)}</span><div class="destiny-elements"><p><em>喜</em>${n.xiji.xi.map(item=>item.el).join(' · ')}</p><p><em>忌</em>${n.xiji.ji.map(item=>item.el).join(' · ') || '无明确忌神'}</p></div></div><div class="destiny-onset"><span>${chart.yun.forward ? '顺行' : '逆行'} · ${chart.yun.start.years}岁${chart.yun.start.months}个月${chart.yun.start.days}天起运</span><time>${chart.yun.startSolar}</time></div>`;
     const size = innerWidth <= 760 ? 64 : innerHeight <= 700 ? 78 : 100;
-    keys.forEach((key, i) => Array.from(chart.pillars[key].ganzhi).forEach((char, j) => {
-      if (window.FIRE_GLYPHS?.[char]) { { const w = createFireWriter(`glyph-${i}-${j}`, char, size); w.row = j; goldWriters.push(w); } }
-      else $(`glyph-${i}-${j}`).innerHTML = `<span class="gold-char-fallback">${char}</span>`;
+    // 先把四柱显示出来，不等金文字形文件。字形慢时直接落到文字，不让人对着空白页等。
+    const paintFallback = () => keys.forEach((key, i) => Array.from(chart.pillars[key].ganzhi).forEach((char, j) => {
+      const holder = $(`glyph-${i}-${j}`);
+      if (holder) holder.innerHTML = `<span class="gold-char-fallback">${char}</span>`;
     }));
+    paintFallback();
+    // 最多等 1.5 秒；超时就用当前文字先把命盘页交出去，按钮仍然可点。
+    const loaded = await Promise.race([
+      loadGlyphs().then(() => true),
+      new Promise((resolve) => setTimeout(() => resolve(false), 1500)),
+    ]);
+    if (token !== goldToken) return;
+    if (loaded && window.FIRE_GLYPHS) {
+      keys.forEach((key, i) => Array.from(chart.pillars[key].ganzhi).forEach((char, j) => {
+        const holder = $(`glyph-${i}-${j}`);
+        if (!holder) return;
+        holder.innerHTML = '';
+        if (window.FIRE_GLYPHS?.[char]) { const w = createFireWriter(`glyph-${i}-${j}`, char, size); w.row = j; goldWriters.push(w); }
+        else holder.innerHTML = `<span class="gold-char-fallback">${char}</span>`;
+      }));
+    }
+    $('gold-continue').disabled = false;
+    $('gold-continue').innerHTML = echoMode ? '回到这一生 <span>↗</span>' : '焚字入卷 <span>↗</span>';
     if (reduced) return revealGold();
+    if (!goldWriters.length) { revealGold(); return; }
     try {
       // 四柱一起、一口气下来：天干快落到底时，地支紧接着从同一道火线继续往下
       const runs = [];
@@ -1234,104 +1253,136 @@
   async function playEntry() {
     if (entryActive) return;
     const albumKey = innerWidth <= 760 ? 'album-mobile' : 'album-desktop';
-    const albumImage = document.querySelector('.album-art img');
+    const albumEl = document.querySelector('.album-art img');
     if (reduced) { await preloadArt(albumKey); return finishEntry(); }
     entryActive = true;
     const run = ++entryRun;
     $('begin').disabled = true;
-    if (albumImage) albumImage.loading = 'eager';
-    // 相册底图是进入生辰页的整页背景。先把它取回来再起动画，
-    // 否则启卷过程中会先露出背后的场景图，等底图加载完再突然换成相册页。
+    if (albumEl) albumEl.loading = 'eager';
     await Promise.all([sealReady, preloadArt(albumKey)]);
     if (!entryActive || run !== entryRun) return;
+
+    const W = innerWidth, H = innerHeight;
+    const ratio = Math.min(devicePixelRatio || 1, 2);
     const canvas = $('entry-canvas');
-    canvas.hidden = false;
-    const context = canvas.getContext('2d');
-    const width = innerWidth, height = innerHeight;
-    const ratio = Math.min(devicePixelRatio, 2);
-    canvas.width = width * ratio; canvas.height = height * ratio;
-    context.setTransform(ratio, 0, 0, ratio, 0, 0);
+    canvas.hidden = false; canvas.style.opacity = '1';
+    canvas.width = Math.round(W * ratio); canvas.height = Math.round(H * ratio);
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+    let source = albumEl;
+    if (!source || !source.complete || !source.naturalWidth) {
+      source = new Image();
+      source.src = window.ART[albumKey];
+      try { await source.decode(); } catch (_) { /* 已缓存失败时继续用底色 */ }
+    }
+    const target = document.createElement('canvas');
+    target.width = Math.round(W * ratio); target.height = Math.round(H * ratio);
+    const tc = target.getContext('2d');
+    tc.setTransform(ratio, 0, 0, ratio, 0, 0);
+    tc.fillStyle = '#f4eedf'; tc.fillRect(0, 0, W, H);
+    const stageW = Math.max(W, 1.7777778 * H);
+    const stageH = Math.max(H, .5625 * W);
+    if (source && source.naturalWidth) tc.drawImage(source, (W - stageW) / 2, (H - stageH) / 2, stageW, stageH);
+    // 像片尾那样连标题/扉页文字一起取样，不是只拼一张空相册
+    const birth = $('birth');
+    const copy = document.querySelector('.birth-copy');
+    const wasHidden = birth.hidden;
+    const copyOpacity = copy ? copy.style.opacity : '';
+    birth.hidden = false;
+    if (copy) copy.style.opacity = '1';
+    try { paintDom(tc, [document.querySelector('header'), copy].filter(Boolean)); } catch (_) { /* 忽略 */ }
+    birth.hidden = wasHidden;
+    if (copy) copy.style.opacity = copyOpacity;
+
+    const step = Math.max(4, Math.round(Math.sqrt(W * H / 13000)));
+    const cols = Math.ceil(W / step), rows = Math.ceil(H / step);
+    const cell = document.createElement('canvas'); cell.width = cols; cell.height = rows;
+    const cc = cell.getContext('2d', { willReadFrequently: true });
+    cc.imageSmoothingQuality = 'high';
+    cc.drawImage(target, 0, 0, W * ratio, H * ratio, 0, 0, cols, rows);
+    const td = cc.getImageData(0, 0, cols, rows).data;
+
     const rect = $('entry-seal').getBoundingClientRect();
     const sampled = document.createElement('canvas');
-    sampled.width = Math.round(rect.width); sampled.height = Math.round(rect.height);
-    const sampleContext = sampled.getContext('2d', { willReadFrequently:true });
-    const sourceWidth = width <= 760 ? 490 : 550;
+    sampled.width = Math.max(1, Math.round(rect.width));
+    sampled.height = Math.max(1, Math.round(rect.height));
+    const sc = sampled.getContext('2d', { willReadFrequently: true });
+    const sourceWidth = W <= 760 ? 490 : 550;
     const sourceHeight = sourceWidth * sealImage.height / sealImage.width;
-    sampleContext.drawImage(sealImage, (rect.width - sourceWidth) / 2, (rect.height - sourceHeight) * .52, sourceWidth, sourceHeight);
-    const data = sampleContext.getImageData(0, 0, sampled.width, sampled.height).data;
-    const particles = [];
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    const midX = sampled.width / 2, midY = sampled.height / 2;
-    const maxR = Math.hypot(midX, midY);
+    sc.drawImage(sealImage, (rect.width - sourceWidth) / 2, (rect.height - sourceHeight) * .52, sourceWidth, sourceHeight);
+    const sd = sc.getImageData(0, 0, sampled.width, sampled.height).data;
+    const starts = [];
+    for (let y = 0; y < sampled.height; y += 2) for (let x = 0; x < sampled.width; x += 2) {
+      const i = (y * sampled.width + x) * 4;
+      if (sd[i] <= 105 || sd[i] <= sd[i + 1] * 1.45 || sd[i + 1] >= 155) continue;
+      starts.push({ x: rect.left + x, y: rect.top + y, r: sd[i], g: sd[i + 1], b: sd[i + 2] });
+    }
+    if (!starts.length) starts.push({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, r: 190, g: 60, b: 45 });
+    let rs = 20261110;
+    const rnd = () => ((rs = (rs * 1664525 + 1013904223) >>> 0) / 4294967296);
+    for (let i = starts.length - 1; i > 0; i--) { const j = (rnd() * (i + 1)) | 0; [starts[i], starts[j]] = [starts[j], starts[i]]; }
 
-    const coarse = innerWidth <= 760;
-    const step = 2;
-    for (let y = 0; y < sampled.height; y += step) {
-      for (let x = 0; x < sampled.width; x += step) {
-        const i = (y * sampled.width + x) * 4;
-        if (data[i] <= 105 || data[i] <= data[i + 1] * 1.45 || data[i + 1] >= 155) continue;
-        const seed = (particles.length * .61803398875) % 1;
-        const depth = .35 + ((particles.length * .754877666) % 1) * 1.2;
-        const originX = rect.left + x + (seed - .5) * step * .8;
-        const originY = rect.top + y + (seed - .5) * step * .8;
-        const angle = ((particles.length * .41421356237) % 1) * Math.PI * 2;
-        const speed = 24 + ((particles.length * .73205080756) % 1) * 44;
-        const radial = Math.hypot(x - midX, y - midY) / maxR;
-        particles.push({ x:originX, y:originY, seed, depth,
-          release:(1 - radial) * .52 + seed * .18,
-          vx:Math.cos(angle)*speed*depth + 7, vy:Math.sin(angle)*speed*depth-14,
-          lifetime:1.1+seed*1.4,
-          color:`rgb(${Math.min(255, data[i] + seed * 22)},${Math.min(220, data[i + 1] + seed * 20)},${data[i + 2]})`,
-          previousX:originX, previousY:originY,
-        });
-      }
+    const P = [];
+    let n = 0;
+    for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+      const i = (y * cols + x) * 4;
+      const s = starts[n % starts.length]; n++;
+      const tx = x * step + step / 2, ty = y * step + step / 2;
+      const mx = (s.x + tx) / 2 + (rnd() - .5) * W * .42;
+      const my = (s.y + ty) / 2 + (rnd() - .5) * H * .42 - H * .08;
+      P.push({ sx: s.x, sy: s.y, tx, ty, cx: mx, cy: my,
+        sr: s.r, sg: s.g, sb: s.b, tr: td[i], tg: td[i + 1], tb: td[i + 2], d: rnd() * .16 });
     }
-    const clamp = value => Math.max(0, Math.min(1, value));
-    const state = { pixels:0, travel:0, fade:0 };
-    function paint() {
-      context.clearRect(0, 0, width, height);
-      $('entry-seal').style.opacity = String(1 - state.pixels);
-      for (const p of particles) {
-        const elapsed = Math.max(0, state.travel * 4.4 - p.release * 1.65);
-        const u = clamp(elapsed / p.lifetime);
-        const gust = elapsed * elapsed;
-        const x = p.x + p.vx * elapsed + gust * 11 + Math.sin(elapsed * 2.4 + p.seed * 18) * elapsed * 11;
-        const y = p.y + p.vy * elapsed - gust * 8 + Math.cos(elapsed * 2.1 + p.seed * 14) * elapsed * 9;
-        const fade = Math.exp(-Math.pow(elapsed / p.lifetime, 2.3)) * (1 - state.fade);
-        const opacity = state.pixels * fade;
-        const size = Math.max(.35, ((coarse ? 1.2 : .8) + p.depth * .2) * (1 - u * .55));
-        context.fillStyle = p.color;
-        if (!coarse && u > .05 && u < .97 && p.depth > 1.2) {
-          context.strokeStyle = p.color; context.lineWidth = size * .5;
-          context.globalAlpha = opacity * .12;
-          context.beginPath(); context.moveTo(p.previousX, p.previousY); context.lineTo(x, y); context.stroke();
+    const clamp = (v) => Math.max(0, Math.min(1, v));
+    const ease = (u) => u < .5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
+    const state = { p: 0, r: 0 };
+    const tmp = document.createElement('canvas');
+    const tx = tmp.getContext('2d');
+    const paint = () => {
+      const p = state.p, r = state.r;
+      ctx.clearRect(0, 0, W, H);
+      $('entry-seal').style.opacity = String(1 - clamp((p - .18) / .5));
+      if (p >= 1 || r > 0) {
+        // 反向复刻片尾的 1.5 秒像素化前奏：从整格像素页逐级还原到清晰页
+        const b = Math.max(1, Math.pow(step, 1 - ease(clamp(r))));
+        if (b <= 1.4) {
+          ctx.imageSmoothingEnabled = true;
+          ctx.drawImage(target, 0, 0, target.width, target.height, 0, 0, W, H);
+        } else {
+          const c2 = Math.ceil(W / b), r2 = Math.ceil(H / b);
+          tmp.width = c2; tmp.height = r2;
+          tx.clearRect(0, 0, c2, r2);
+          tx.imageSmoothingQuality = 'high';
+          tx.drawImage(target, 0, 0, target.width, target.height, 0, 0, c2, r2);
+          ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(tmp, 0, 0, c2, r2, 0, 0, W, H);
+          ctx.imageSmoothingEnabled = true;
         }
-        context.globalAlpha = opacity;
-        context.fillRect(x - size / 2, y - size / 2, size, size);
-        if (!coarse && u > .1 && p.depth > 1.4) {
-          context.globalAlpha = opacity * .06;
-          context.beginPath(); context.arc(x, y, size * 3.2, 0, Math.PI * 2); context.fill();
-        }
-        p.previousX = x; p.previousY = y;
+        return;
       }
-      context.globalAlpha = 1;
-    }
-    entryTimeline = gsap.timeline({ onUpdate:paint, onComplete:finishEntry });
-    entryTimeline.to(['#entry-caption', '#begin'], { opacity:0, duration:.65 }, 0);
-    entryTimeline.to(state, { pixels:1, duration:.85, ease:'power2.inOut' }, .3);
-    entryTimeline.to(state, { travel:1, duration:3.7, ease:'power2.inOut' }, .8);
-    entryTimeline.call(() => {
-      $('birth').hidden = false;
-      document.body.dataset.screen = 'birth';
-      gsap.set('.birth-copy', { opacity:0, y:10 });
-      gsap.set('.form-wrap', { opacity:0, y:12 });
-    }, [], 1.8);
-    entryTimeline.to('#cover', { opacity:0, duration:1.5, ease:'power2.inOut' }, 1.9);
-    entryTimeline.to('.birth-copy', { opacity:1, y:0, duration:1.1, ease:'power2.out' }, 2.6);
-    entryTimeline.to('.form-wrap', { opacity:1, y:0, duration:1.35, ease:'power2.out' }, 2.9);
-    entryTimeline.to(state, { fade:1, duration:1.8, ease:'power1.inOut' }, 3.1);
-    entryTimeline.to({}, { duration:.25 });
+      for (const q of P) {
+        const local = clamp((p - q.d) / (1 - q.d || 1));
+        const ee = ease(local), m = 1 - ee;
+        const x = m * m * q.sx + 2 * m * ee * q.cx + ee * ee * q.tx;
+        const y = m * m * q.sy + 2 * m * ee * q.cy + ee * ee * q.ty;
+        const c = clamp((local - .45) / .5);
+        const size = 2.1 + (step + .6 - 2.1) * ee;
+        ctx.fillStyle = `rgb(${(q.sr + (q.tr - q.sr) * c) | 0},${(q.sg + (q.tg - q.sg) * c) | 0},${(q.sb + (q.tb - q.sb) * c) | 0})`;
+        ctx.fillRect(x - size / 2, y - size / 2, size, size);
+      }
+    };
+    paint();
+    gsap.set(['.birth-copy', '.form-wrap'], { opacity: 0, y: 8 });
+    entryTimeline = gsap.timeline({ onUpdate: paint, onComplete: finishEntry });
+    entryTimeline.to(['#entry-caption', '#begin'], { opacity: 0, duration: .4 }, 0);
+    entryTimeline.to(state, { p: 1, duration: 4.4, ease: 'power2.inOut' }, .1);
+    entryTimeline.call(() => { showScreen('birth'); }, [], 4.5);
+    entryTimeline.to(state, { r: 1, duration: 1.5, ease: 'power1.inOut' }, 4.5);
+    entryTimeline.to(canvas, { opacity: 0, duration: .45, ease: 'power1.inOut' }, 5.8);
+    entryTimeline.to('.birth-copy', { opacity: 1, y: 0, duration: .5, ease: 'power2.out' }, 5.85);
+    entryTimeline.to('.form-wrap', { opacity: 1, y: 0, duration: .7, ease: 'power2.out' }, 5.95);
+    entryTimeline.to({}, { duration: .2 });
   }
 
   function syncBirthReels(direction=0, activeId=null) {
@@ -1606,12 +1657,12 @@
   })();
 
   // 正文向上翻读时，画面收起一部分，给文字留出空间。
-  // 需要先滚出一小段再进入（避免轻扫就锁住），并允许向下滑/滚轮向上回位。
+  // 滚动停稳后再进入，避免上滑途中突然让位；回到顶部才退出，回滑不会中途收起。
   (function storyReading() {
     const copy = $('story-copy');
     if (new URLSearchParams(location.search).get('read') === 'move') document.body.classList.add('read-move');
-    const THRESHOLD = 48, RETRIGGER = 24, DELAY = 110, COOLDOWN = 700;
-    let timer = 0, suppress = 0, touchY = null;
+    const THRESHOLD = 48, RETRIGGER = 24, DELAY = 300, COOLDOWN = 500;
+    let timer = 0, suppress = 0;
     const reading = () => document.body.classList.contains('story-reading');
     const enter = () => {
       clearTimeout(timer); timer = 0;
@@ -1624,23 +1675,20 @@
     };
     const onScroll = () => {
       if (performance.now() < suppress) return;
+      if (reading()) {
+        if (copy.scrollTop <= 4) leave();
+        return;
+      }
       if (copy.scrollTop > THRESHOLD) {
-        if (!reading() && !timer) timer = setTimeout(() => {
+        if (!timer) timer = setTimeout(() => {
           timer = 0;
           if (copy.scrollTop > RETRIGGER) enter();
         }, DELAY);
-      } else if (!reading()) {
+      } else {
         clearTimeout(timer); timer = 0;
       }
     };
     copy.addEventListener('scroll', onScroll, { passive: true });
-    // 向下滑 / 滚轮向上 = 回位；同一次上滑不会误触
-    copy.addEventListener('wheel', (e) => { if (reading() && e.deltaY < 0) leave(); }, { passive: true });
-    copy.addEventListener('touchstart', (e) => { touchY = e.touches[0] ? e.touches[0].clientY : null; }, { passive: true });
-    copy.addEventListener('touchmove', (e) => {
-      if (!reading() || touchY == null || !e.touches[0]) return;
-      if (e.touches[0].clientY - touchY > 8) leave();
-    }, { passive: true });
   })();
 
   document.addEventListener('visibilitychange', () => {
