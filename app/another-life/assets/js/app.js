@@ -4,7 +4,7 @@
   const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   // 排盘引擎与字形文件都不再首屏下载：点“展开”时才拉 bazi.js，进命盘页时才拉 fire-glyphs.js。
-  const BAZI_SRC = 'assets/js/bazi.js';
+  const BAZI_SRC = 'assets/js/bazi.js?v=20261110g';
   let baziLoad = null;
   function loadBazi() {
     if (window.BAZI) return Promise.resolve(window.BAZI);
@@ -24,7 +24,7 @@
     if (window.FIRE_GLYPHS) return Promise.resolve();
     if (!glyphLoad) glyphLoad = new Promise((resolve) => {
       const script = document.createElement('script');
-      script.src = 'assets/js/fire-glyphs.js';
+      script.src = 'assets/js/fire-glyphs.js?v=20261110g';
       script.async = true;
       script.onload = resolve;
       script.onerror = () => { glyphLoad = null; resolve(); };
@@ -48,9 +48,6 @@
   let goldWriters = [];
   let echoMode = false;
   let choices = {};
-  let soundOn = false;
-  let audio;
-  let master;
   let sceneLoadId = 0;
   const readyArt = new Map();
   const decodedArt = [];
@@ -140,44 +137,6 @@
     old.classList.remove('active');
     Object.assign(next.style, { clipPath: '', transition: '' });
     grow.cancel();
-  }
-
-  function toggleSound() {
-    try {
-      if (!audio) {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContext) return toast('当前浏览器暂不支持环境声音');
-        audio = new AudioContext();
-        master = audio.createGain();
-        master.gain.value = 0;
-        master.connect(audio.destination);
-        [130.81, 196, 261.63].forEach((frequency, i) => {
-          const oscillator = audio.createOscillator();
-          const gain = audio.createGain();
-          oscillator.frequency.value = frequency;
-          gain.gain.value = .015 / (i + 1);
-          oscillator.connect(gain).connect(master);
-          oscillator.start();
-        });
-      }
-      audio.resume().catch(() => {});
-      soundOn = !soundOn;
-      master.gain.setTargetAtTime(soundOn ? 1 : 0, audio.currentTime, .6);
-      $('sound').textContent = `声音 ${soundOn ? '开' : '关'}`;
-      $('sound').setAttribute('aria-pressed', String(soundOn));
-    } catch (error) { toast('声音未能启用，可继续阅读'); }
-  }
-
-  function chime(index = 0) {
-    if (!soundOn || !audio) return;
-    const oscillator = audio.createOscillator();
-    const gain = audio.createGain();
-    oscillator.frequency.value = [261.63, 293.66, 329.63, 392, 440][index % 5];
-    gain.gain.setValueAtTime(.05, audio.currentTime);
-    gain.gain.exponentialRampToValueAtTime(.0001, audio.currentTime + 2.2);
-    oscillator.connect(gain).connect(master);
-    oscillator.start();
-    oscillator.stop(audio.currentTime + 2.2);
   }
 
   function options(id, entries, selected) {
@@ -569,7 +528,6 @@
 
     $('inscription').classList.add('igniting');
     haptic([16, 90, 10, 70, 12, 56, 14, 44, 16, 34, 18, 26, 22, 20, 26, 14, 30]);   // 越烧越密的心跳
-    crackle(3300);
     $('inscription').style.pointerEvents = 'none';
     const total = maxD + 46 + 40;
     const duration = 3600;
@@ -690,13 +648,18 @@
     ]);
     if (token !== goldToken) return;
     if (loaded && window.FIRE_GLYPHS) {
-      keys.forEach((key, i) => Array.from(chart.pillars[key].ganzhi).forEach((char, j) => {
-        const holder = $(`glyph-${i}-${j}`);
-        if (!holder) return;
-        holder.innerHTML = '';
-        if (window.FIRE_GLYPHS?.[char]) { const w = createFireWriter(`glyph-${i}-${j}`, char, size); w.row = j; goldWriters.push(w); }
-        else holder.innerHTML = `<span class="gold-char-fallback">${char}</span>`;
-      }));
+      const glyphChars = [...new Set(keys.flatMap((key) => Array.from(chart.pillars[key].ganzhi)))];
+      const glyphPaths = glyphChars.map((char) => window.FIRE_GLYPHS?.[char]).filter(Boolean);
+      const glyphsSane = glyphPaths.length === glyphChars.length && new Set(glyphPaths).size === glyphChars.length;
+      if (glyphsSane) {
+        keys.forEach((key, i) => Array.from(chart.pillars[key].ganzhi).forEach((char, j) => {
+          const holder = $(`glyph-${i}-${j}`);
+          if (!holder) return;
+          holder.innerHTML = '';
+          if (window.FIRE_GLYPHS?.[char]) { const w = createFireWriter(`glyph-${i}-${j}`, char, size); w.row = j; goldWriters.push(w); }
+          else holder.innerHTML = `<span class="gold-char-fallback">${char}</span>`;
+        }));
+      }
     }
     $('gold-continue').disabled = false;
     $('gold-continue').innerHTML = echoMode ? '回到这一生 <span>↗</span>' : '焚字入卷 <span>↗</span>';
@@ -707,7 +670,6 @@
       const runs = [];
       for (const row of [0, 1]) {
         if (token !== goldToken) return;
-        chime(row * 3);
         runs.push(...goldWriters.filter((w) => w.row === row).map((w) => w.animateCharacter()));
         if (row === 0) await new Promise((r) => setTimeout(r, 1120));
       }
@@ -867,7 +829,7 @@
     $('story').dataset.sealpos = node.key === 'now' ? 'left' : 'right';
     $('st-seal').setAttribute('aria-label', node.ch);
     const stamped = $('story'); stamped.classList.remove('stamp-go'); void stamped.offsetWidth; stamped.classList.add('stamp-go');
-    if (!dry && sealStyle !== 'glyph') { const at = pageIndex; setTimeout(() => { if (pageIndex === at) { haptic(16); thud(1.1); } }, 460); }
+    if (!dry && sealStyle !== 'glyph') { const at = pageIndex; setTimeout(() => { if (pageIndex === at) { haptic(16); } }, 460); }
     $('st-title').textContent = node.chapter;
     const isYear = Boolean(node.year);
     rollWhen($('st-when'), node);
@@ -904,7 +866,7 @@
     copy.style.setProperty('--dir', String(direction));
     moveBead();
     if (dry) return;
-    if (!instant) { haptic(direction > 0 ? [10, 40, 8] : 8); thud(.8); }
+    if (!instant) { haptic(direction > 0 ? [10, 40, 8] : 8); }
     [1, 2].forEach((k) => { if (nodes[pageIndex + k]) preloadArt(bgOf(nodes[pageIndex + k])); });
   }
 
@@ -919,7 +881,7 @@
         const out = copy.animate([{ opacity: 0, transform: `translateX(${-dir * 22}px)`, filter: 'blur(4px)' }], { duration: 210, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' });
         try { await out.finished; } catch (_) { /* 忽略 */ }
       }
-      pageIndex = index; showNode(dir); chime(index);
+      pageIndex = index; showNode(dir);
       copy.getAnimations().forEach((a) => { if (!a.id) a.cancel(); });
     } finally { setTimeout(() => { turning = false; }, 380); }
   }
@@ -931,7 +893,7 @@
     const was = li.classList.contains('open');
     [...$('st-marks').children].forEach((x) => x.classList.remove('open'));
     if (!was) li.classList.add('open');
-    haptic(10); thud(.5);
+    haptic(10);
   });
   // 统一的底色：深青宣纸（取自那幅抽象画的暗部），故事页的下半幅与命盘页都铺它
   (() => { const st = document.createElement('style'); st.textContent = `:root{--ink-tex:url("${new URL(window.ART['bg-ink'], document.baseURI).href}")}`; document.head.append(st); })();
@@ -996,7 +958,7 @@
     F.dataset.ready = 'false'; F.hidden = false;
     gsap.set(F, { opacity: 1 });
     gsap.set(art, { opacity: 0 });
-    gsap.set('#finale-text span', { opacity: 0, y: -12, filter: 'blur(7px)' });
+    gsap.set('#finale-text span', { opacity: 0, y: 0, filter: 'none' });
     gsap.set('#finale-hint', { opacity: 0 });
     gsap.set('#finale-text .w path', { strokeDashoffset: 90 });
     haptic([10, 40, 10]);
@@ -1006,10 +968,12 @@
     const col1 = '#finale-text p:nth-child(1) span', col2 = '#finale-text p:nth-child(2) span';
     const n1 = FINALE_LINES[0].length;
     const at = 3.3;
-    tl.to(col1, { opacity: 1, y: 0, filter: 'blur(0px)', duration: .95, ease: 'power2.out', stagger: .22 }, at);
-    tl.to(col2, { opacity: 1, y: 0, filter: 'blur(0px)', duration: .95, ease: 'power2.out', stagger: .22 }, at + n1 * .22 + .3);
-    tl.to('#finale-text .w path', { strokeDashoffset: 0, duration: .8, ease: 'power2.out' }, at + n1 * .22 + .3 + (FINALE_LINES[1].length - 1) * .22 + .15);
-    const done = at + n1 * .22 + .3 + FINALE_LINES[1].length * .22 + .9;
+    // 只做从上到下的逐字显影，一列结束再下一列；不位移、不模糊。
+    tl.to(col1, { opacity: 1, duration: .16, ease: 'none', stagger: .16 }, at);
+    const col2At = at + n1 * .16 + .22;
+    tl.to(col2, { opacity: 1, duration: .16, ease: 'none', stagger: .16 }, col2At);
+    tl.to('#finale-text .w path', { strokeDashoffset: 0, duration: .6, ease: 'power1.out' }, col2At + (FINALE_LINES[1].length - 1) * .16 + .1);
+    const done = col2At + FINALE_LINES[1].length * .16 + .35;
     tl.call(() => { F.dataset.ready = 'true'; }, [], done);
     tl.to('#finale-hint', { opacity: .5, duration: 1.4, ease: 'power1.out' }, done + 1.6);
   }
@@ -1250,25 +1214,16 @@
     setTimeout(() => { loadBazi().catch(() => {}); loadGlyphs(); }, 1200);
   }
 
-  async function playEntry() {
-    if (entryActive) return;
+  let entryMorphCache = null;
+  let entryMorphBuilding = null;
+  async function buildEntryMorph() {
     const albumKey = innerWidth <= 760 ? 'album-mobile' : 'album-desktop';
     const albumEl = document.querySelector('.album-art img');
-    if (reduced) { await preloadArt(albumKey); return finishEntry(); }
-    entryActive = true;
-    const run = ++entryRun;
-    $('begin').disabled = true;
-    if (albumEl) albumEl.loading = 'eager';
-    await Promise.all([sealReady, preloadArt(albumKey)]);
-    if (!entryActive || run !== entryRun) return;
-
     const W = innerWidth, H = innerHeight;
     const ratio = Math.min(devicePixelRatio || 1, 2);
-    const canvas = $('entry-canvas');
-    canvas.hidden = false; canvas.style.opacity = '1';
-    canvas.width = Math.round(W * ratio); canvas.height = Math.round(H * ratio);
-    const ctx = canvas.getContext('2d');
-    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    if (albumEl) albumEl.loading = 'eager';
+    try { await document.fonts.ready; } catch (_) { /* 字体就绪后再取文字位置 */ }
+    await Promise.all([sealReady, preloadArt(albumKey)]);
 
     let source = albumEl;
     if (!source || !source.complete || !source.naturalWidth) {
@@ -1334,6 +1289,45 @@
       P.push({ sx: s.x, sy: s.y, tx, ty, cx: mx, cy: my,
         sr: s.r, sg: s.g, sb: s.b, tr: td[i], tg: td[i + 1], tb: td[i + 2], d: rnd() * .16 });
     }
+    return { key: albumKey, W, H, ratio, target, step, P };
+  }
+
+  async function prepareEntryMorph() {
+    const key = innerWidth <= 760 ? 'album-mobile' : 'album-desktop';
+    const W = innerWidth, H = innerHeight;
+    if (entryMorphCache && entryMorphCache.key === key && entryMorphCache.W === W && entryMorphCache.H === H) return entryMorphCache;
+    if (entryMorphBuilding) {
+      const value = await entryMorphBuilding;
+      if (value && value.key === key && value.W === W && value.H === H) return value;
+    }
+    entryMorphBuilding = buildEntryMorph().then((value) => {
+      entryMorphCache = value;
+      return value;
+    }).finally(() => { entryMorphBuilding = null; });
+    return entryMorphBuilding;
+  }
+
+  async function playEntry() {
+    if (entryActive) return;
+    const albumKey = innerWidth <= 760 ? 'album-mobile' : 'album-desktop';
+    const albumEl = document.querySelector('.album-art img');
+    if (reduced) { await preloadArt(albumKey); return finishEntry(); }
+    entryActive = true;
+    const run = ++entryRun;
+    $('begin').disabled = true;
+    if (albumEl) albumEl.loading = 'eager';
+    await Promise.all([sealReady, preloadArt(albumKey)]);
+    if (!entryActive || run !== entryRun) return;
+
+    const prep = await prepareEntryMorph().catch(() => null);
+    if (!entryActive || run !== entryRun) return;
+    if (!prep) { finishEntry(); return; }
+    const { W, H, ratio, target, step, P } = prep;
+    const canvas = $('entry-canvas');
+    canvas.hidden = false; canvas.style.opacity = '1';
+    canvas.width = Math.round(W * ratio); canvas.height = Math.round(H * ratio);
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
     const clamp = (v) => Math.max(0, Math.min(1, v));
     const ease = (u) => u < .5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
     const state = { p: 0, r: 0 };
@@ -1343,7 +1337,7 @@
       const p = state.p, r = state.r;
       ctx.clearRect(0, 0, W, H);
       $('entry-seal').style.opacity = String(1 - clamp((p - .18) / .5));
-      if (p >= 1 || r > 0) {
+      if (p >= 1) {
         // 反向复刻片尾的 1.5 秒像素化前奏：从整格像素页逐级还原到清晰页
         const b = Math.max(1, Math.pow(step, 1 - ease(clamp(r))));
         if (b <= 1.4) {
@@ -1376,12 +1370,12 @@
     gsap.set(['.birth-copy', '.form-wrap'], { opacity: 0, y: 8 });
     entryTimeline = gsap.timeline({ onUpdate: paint, onComplete: finishEntry });
     entryTimeline.to(['#entry-caption', '#begin'], { opacity: 0, duration: .4 }, 0);
-    entryTimeline.to(state, { p: 1, duration: 4.4, ease: 'power2.inOut' }, .1);
-    entryTimeline.call(() => { showScreen('birth'); }, [], 4.5);
-    entryTimeline.to(state, { r: 1, duration: 1.5, ease: 'power1.inOut' }, 4.5);
-    entryTimeline.to(canvas, { opacity: 0, duration: .45, ease: 'power1.inOut' }, 5.8);
-    entryTimeline.to('.birth-copy', { opacity: 1, y: 0, duration: .5, ease: 'power2.out' }, 5.85);
-    entryTimeline.to('.form-wrap', { opacity: 1, y: 0, duration: .7, ease: 'power2.out' }, 5.95);
+    entryTimeline.to(state, { p: 1, duration: 4.4, ease: 'none' }, 0);
+    entryTimeline.call(() => { showScreen('birth'); }, [], 4.4);
+    entryTimeline.to(state, { r: 1, duration: 1.5, ease: 'power1.inOut' }, 3.9);
+    entryTimeline.to(canvas, { opacity: 0, duration: .7, ease: 'power1.inOut' }, 5.2);
+    entryTimeline.to('.birth-copy', { opacity: 1, y: 0, duration: .6, ease: 'power2.out' }, 5.2);
+    entryTimeline.to('.form-wrap', { opacity: 1, y: 0, duration: .8, ease: 'power2.out' }, 5.3);
     entryTimeline.to({}, { duration: .2 });
   }
 
@@ -1518,9 +1512,8 @@
   ['year', 'month', 'day', 'hour', 'minute'].forEach((id) => $(id).addEventListener('change', () => haptic(5)));
   $('edit').addEventListener('click', () => { showScreen('birth'); $('reel-year').focus({ preventScroll: true }); });
   $('home').addEventListener('click', (event) => { event.preventDefault(); if (!busy) { goldToken++; resetEntry(); showScreen('cover'); setScene('opening'); } });
-  $('sound').addEventListener('click', toggleSound);
   $('gold-skip').addEventListener('click', revealGold);
-  $('gold-continue').addEventListener('click', () => { if (burnRunning) return; goldToken++; burnToStory(() => { showScreen('story'); showNode(1, { instant: true }); }); });
+  $('gold-continue').addEventListener('click', () => { if (burnRunning || !result) return; goldToken++; burnToStory(() => { showScreen('story'); showNode(1, { instant: true }); }); });
   $('next').addEventListener('click', () => { if (pageIndex === nodes.length - 1) playFinale(); else goTo(pageIndex + 1); });
   $('previous').addEventListener('click', () => goTo(pageIndex - 1));
   $('echo-gold').addEventListener('click', () => showEight());
@@ -1542,28 +1535,6 @@
   // 震动（安卓/部分浏览器）、点按涟漪、跟手滑动、镜头缓慢漂移与视差、数字滚动、火星般的时间轴光点。
   const canVibrate = typeof navigator.vibrate === 'function';
   function haptic(pattern) { if (reduced || !canVibrate) return; try { navigator.vibrate(pattern); } catch (_) { /* 忽略 */ } }
-  let noiseBuf;
-  function crackle(ms) {            // 烧字时的噼啪声（仅声音开着时）
-    if (!soundOn || !audio) return;
-    if (!noiseBuf) { noiseBuf = audio.createBuffer(1, audio.sampleRate * .03, audio.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length); }
-    const n = Math.floor(ms / 22);
-    for (let i = 0; i < n; i++) {
-      const p = i / n; if (Math.random() > .22 + .6 * p) continue;
-      const t = audio.currentTime + (i / n) * ms / 1000 + Math.random() * .02;
-      const s = audio.createBufferSource(); s.buffer = noiseBuf; s.playbackRate.value = .6 + Math.random() * 1.6;
-      const f = audio.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 1400 + Math.random() * 4200;
-      const g = audio.createGain(); g.gain.value = (.015 + Math.random() * .05) * (.5 + p);
-      s.connect(f).connect(g).connect(master); s.start(t);
-    }
-  }
-  function thud(strength = 1) {      // 印章落下的闷响
-    if (!soundOn || !audio) return;
-    const o = audio.createOscillator(), g = audio.createGain(), t = audio.currentTime;
-    o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(42, t + .22);
-    g.gain.setValueAtTime(.16 * strength, t); g.gain.exponentialRampToValueAtTime(.0001, t + .3);
-    o.connect(g).connect(master); o.start(t); o.stop(t + .32);
-  }
-
   // 点按涟漪 + 按钮轻震
   document.addEventListener('pointerdown', (event) => {
     if (reduced) return;
@@ -1680,7 +1651,8 @@
         return;
       }
       if (copy.scrollTop > THRESHOLD) {
-        if (!timer) timer = setTimeout(() => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
           timer = 0;
           if (copy.scrollTop > RETRIGGER) enter();
         }, DELAY);
@@ -1694,11 +1666,10 @@
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) stopDrift();
     else if (document.body.dataset.screen === 'story') startDrift();
-    if (!audio) return;
-    if (document.hidden) audio.suspend().catch(() => {});
-    else if (soundOn) audio.resume().catch(() => {});
   });
   setScene('opening');
+  // 封面静止时提前把相册页和粒子目标算好，点击启卷不再先卡一下。
+  setTimeout(() => { prepareEntryMorph().catch(() => {}); }, 700);
   let resizeTimer;
   addEventListener('resize', () => {
     clearTimeout(resizeTimer);
