@@ -4,7 +4,7 @@
   const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   // 排盘引擎与字形文件都不再首屏下载：点“展开”时才拉 bazi.js，进命盘页时才拉 fire-glyphs.js。
-  const BAZI_SRC = 'assets/js/bazi.js?v=20261110u';
+  const BAZI_SRC = 'assets/js/bazi.js?v=20261110v';
   let baziLoad = null;
   function loadBazi() {
     if (window.BAZI) return Promise.resolve(window.BAZI);
@@ -24,7 +24,7 @@
     if (window.FIRE_GLYPHS) return Promise.resolve();
     if (!glyphLoad) glyphLoad = new Promise((resolve) => {
       const script = document.createElement('script');
-      script.src = 'assets/js/fire-glyphs.js?v=20261110u';
+      script.src = 'assets/js/fire-glyphs.js?v=20261110v';
       script.async = true;
       script.onload = resolve;
       script.onerror = () => { glyphLoad = null; resolve(); };
@@ -1244,6 +1244,8 @@
   let entryActive = false;
   let entryRun = 0;
   let entryTimeline;
+  let entryWorker = null;
+  let entryParticleCanvas = null;
   const sealImage = new Image();
   const sealReady = new Promise(resolve => { sealImage.onload = resolve; sealImage.onerror = resolve; });
   sealImage.src = window.ART['seal-reference'];
@@ -1253,6 +1255,10 @@
     entryActive = false;
     entryTimeline?.kill();
     entryTimeline = null;
+    entryWorker?.terminate();
+    entryWorker = null;
+    entryParticleCanvas?.remove();
+    entryParticleCanvas = null;
     $('entry-canvas').hidden = true;
     gsap.set(['#cover', '#entry-seal', '#entry-caption', '#begin', '.birth-copy', '.form-wrap'], { clearProps:'opacity,transform,filter' });
     $('begin').disabled = false;
@@ -1403,33 +1409,58 @@
     canvas.width = Math.round(W * ratio); canvas.height = Math.round(H * ratio);
     const ctx = canvas.getContext('2d');
     ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+    // 粒子绘制交给 OffscreenCanvas worker；主线程只画目标页和推进时间线。
+    let workerMode = false;
+    if (typeof Worker !== 'undefined' && HTMLCanvasElement.prototype.transferControlToOffscreen) {
+      try {
+        const particleCanvas = document.createElement('canvas');
+        particleCanvas.className = 'entry-particles';
+        particleCanvas.setAttribute('aria-hidden', 'true');
+        document.body.append(particleCanvas);
+        const offscreen = particleCanvas.transferControlToOffscreen();
+        const worker = new Worker('assets/js/entry-particles.js?v=20261110v');
+        const dropWorker = () => {
+          worker.terminate();
+          particleCanvas.remove();
+          if (entryWorker === worker) entryWorker = null;
+          if (entryParticleCanvas === particleCanvas) entryParticleCanvas = null;
+          workerMode = false;
+        };
+        worker.onerror = dropWorker;
+        worker.postMessage({ type: 'init', canvas: offscreen, W, H, ratio, step, P }, [offscreen]);
+        entryWorker = worker;
+        entryParticleCanvas = particleCanvas;
+        workerMode = true;
+      } catch (_) {
+        entryWorker?.terminate(); entryWorker = null;
+        entryParticleCanvas?.remove(); entryParticleCanvas = null;
+        workerMode = false;
+      }
+    }
+
     const clamp = (v) => Math.max(0, Math.min(1, v));
     const ease = (u) => u < .5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
     const state = { p: 0, r: 0 };
     const tmp = document.createElement('canvas');
     const tx = tmp.getContext('2d');
-    const paint = () => {
-      const p = state.p, r = state.r;
-      ctx.clearRect(0, 0, W, H);
-      $('entry-seal').style.opacity = String(1 - clamp((p - .18) / .5));
-      if (p >= 1) {
-        // 反向复刻片尾的 1.5 秒像素化前奏：从整格像素页逐级还原到清晰页
-        const b = Math.max(1, Math.pow(step, 1 - ease(clamp(r))));
-        if (b <= 1.4) {
-          ctx.imageSmoothingEnabled = true;
-          ctx.drawImage(target, 0, 0, target.width, target.height, 0, 0, W, H);
-        } else {
-          const c2 = Math.ceil(W / b), r2 = Math.ceil(H / b);
-          tmp.width = c2; tmp.height = r2;
-          tx.clearRect(0, 0, c2, r2);
-          tx.imageSmoothingQuality = 'high';
-          tx.drawImage(target, 0, 0, target.width, target.height, 0, 0, c2, r2);
-          ctx.imageSmoothingEnabled = false;
-          ctx.drawImage(tmp, 0, 0, c2, r2, 0, 0, W, H);
-          ctx.imageSmoothingEnabled = true;
-        }
-        return;
+    const drawPage = (r) => {
+      const b = Math.max(1, Math.pow(step, 1 - ease(clamp(r))));
+      if (b <= 1.4) {
+        ctx.imageSmoothingEnabled = true;
+        ctx.drawImage(target, 0, 0, target.width, target.height, 0, 0, W, H);
+      } else {
+        const c2 = Math.ceil(W / b), r2 = Math.ceil(H / b);
+        tmp.width = c2; tmp.height = r2;
+        tx.clearRect(0, 0, c2, r2);
+        tx.imageSmoothingQuality = 'high';
+        tx.drawImage(target, 0, 0, target.width, target.height, 0, 0, c2, r2);
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(tmp, 0, 0, c2, r2, 0, 0, W, H);
+        ctx.imageSmoothingEnabled = true;
       }
+    };
+    const drawParticles = (p) => {
       for (const q of P) {
         const local = clamp((p - q.d) / (1 - q.d || 1));
         const ee = ease(local), m = 1 - ee;
@@ -1441,6 +1472,25 @@
         ctx.fillRect(x - size / 2, y - size / 2, size, size);
       }
     };
+    let pageCleared = false, workerCleared = false;
+    const paint = () => {
+      const p = state.p, r = state.r;
+      $('entry-seal').style.opacity = String(1 - clamp((p - .18) / .5));
+      if (workerMode && entryWorker) {
+        if (p < 1) {
+          if (!pageCleared) { ctx.clearRect(0, 0, W, H); pageCleared = true; }
+          entryWorker.postMessage({ type: 'draw', p });
+        } else {
+          if (!workerCleared) { entryWorker.postMessage({ type: 'clear' }); workerCleared = true; }
+          if (!pageCleared) { ctx.clearRect(0, 0, W, H); pageCleared = true; }
+          drawPage(r);
+        }
+        return;
+      }
+      ctx.clearRect(0, 0, W, H);
+      if (p >= 1) drawPage(r);
+      else drawParticles(p);
+    };
     paint();
     gsap.set(['.birth-copy', '.form-wrap'], { opacity: 0, y: 8 });
     entryTimeline = gsap.timeline({ onUpdate: paint, onComplete: finishEntry });
@@ -1448,7 +1498,7 @@
     entryTimeline.to(state, { p: 1, duration: 4.4, ease: 'none' }, 0);
     entryTimeline.call(() => { showScreen('birth'); }, [], 4.4);
     entryTimeline.to(state, { r: 1, duration: 1.5, ease: 'power1.inOut' }, 3.9);
-    entryTimeline.to(canvas, { opacity: 0, duration: .7, ease: 'power1.inOut' }, 5.2);
+    entryTimeline.to(entryParticleCanvas ? [canvas, entryParticleCanvas] : canvas, { opacity: 0, duration: .7, ease: 'power1.inOut' }, 5.2);
     entryTimeline.to('.birth-copy', { opacity: 1, y: 0, duration: .6, ease: 'power2.out' }, 5.2);
     entryTimeline.to('.form-wrap', { opacity: 1, y: 0, duration: .8, ease: 'power2.out' }, 5.3);
     entryTimeline.to({}, { duration: .2 });
