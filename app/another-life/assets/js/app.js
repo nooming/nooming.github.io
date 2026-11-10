@@ -1232,11 +1232,16 @@
 
   async function playEntry() {
     if (entryActive) return;
-    if (reduced) return finishEntry();
+    const albumKey = innerWidth <= 760 ? 'album-mobile' : 'album-desktop';
+    const albumImage = document.querySelector('.album-art img');
+    if (reduced) { await preloadArt(albumKey); return finishEntry(); }
     entryActive = true;
     const run = ++entryRun;
     $('begin').disabled = true;
-    await sealReady;
+    if (albumImage) albumImage.loading = 'eager';
+    // 相册底图是进入生辰页的整页背景。先把它取回来再起动画，
+    // 否则启卷过程中会先露出背后的场景图，等底图加载完再突然换成相册页。
+    await Promise.all([sealReady, preloadArt(albumKey)]);
     if (!entryActive || run !== entryRun) return;
     const canvas = $('entry-canvas');
     canvas.hidden = false;
@@ -1583,7 +1588,7 @@
       if (!active) return; active = false;
       const v = Math.abs(dx) / Math.max(1, performance.now() - st);
       const go = dragging && (Math.abs(dx) > 78 || v > .55 && Math.abs(dx) > 32);
-      copy.style.transition = 'transform .45s cubic-bezier(.2,1.2,.4,1),opacity .3s';
+      copy.style.transition = 'transform .45s cubic-bezier(.2,1.2,.4,1),opacity .3s,top .6s cubic-bezier(.16,1,.3,1)';
       copy.style.transform = ''; copy.style.opacity = '';
       drift.dragX = 0; dragging = false;
       if (go) goTo(pageIndex + (dx < 0 ? 1 : -1));
@@ -1593,12 +1598,42 @@
     area.addEventListener('pointerup', end); area.addEventListener('pointercancel', end);
   })();
 
-  // 正文向上翻读时，画面收起一部分，给文字留出空间
+  // 正文向上翻读时，画面收起一部分，给文字留出空间。
+  // 需要先滚出一小段再进入（避免轻扫就锁住），并允许向下滑/滚轮向上回位。
   (function storyReading() {
     const copy = $('story-copy');
     if (new URLSearchParams(location.search).get('read') === 'move') document.body.classList.add('read-move');
-    const sync = () => { if (copy.scrollTop > 6) document.body.classList.add('story-reading'); };
-    copy.addEventListener('scroll', sync, { passive: true });
+    const THRESHOLD = 48, RETRIGGER = 24, DELAY = 110, COOLDOWN = 700;
+    let timer = 0, suppress = 0, touchY = null;
+    const reading = () => document.body.classList.contains('story-reading');
+    const enter = () => {
+      clearTimeout(timer); timer = 0;
+      if (!reading()) document.body.classList.add('story-reading');
+    };
+    const leave = () => {
+      clearTimeout(timer); timer = 0;
+      suppress = performance.now() + COOLDOWN;
+      document.body.classList.remove('story-reading');
+    };
+    const onScroll = () => {
+      if (performance.now() < suppress) return;
+      if (copy.scrollTop > THRESHOLD) {
+        if (!reading() && !timer) timer = setTimeout(() => {
+          timer = 0;
+          if (copy.scrollTop > RETRIGGER) enter();
+        }, DELAY);
+      } else if (!reading()) {
+        clearTimeout(timer); timer = 0;
+      }
+    };
+    copy.addEventListener('scroll', onScroll, { passive: true });
+    // 向下滑 / 滚轮向上 = 回位；同一次上滑不会误触
+    copy.addEventListener('wheel', (e) => { if (reading() && e.deltaY < 0) leave(); }, { passive: true });
+    copy.addEventListener('touchstart', (e) => { touchY = e.touches[0] ? e.touches[0].clientY : null; }, { passive: true });
+    copy.addEventListener('touchmove', (e) => {
+      if (!reading() || touchY == null || !e.touches[0]) return;
+      if (e.touches[0].clientY - touchY > 8) leave();
+    }, { passive: true });
   })();
 
   document.addEventListener('visibilitychange', () => {

@@ -9549,7 +9549,9 @@ module.exports = function makeReport(core, T, lib) {
       : old ? e('健康', '枭神夺食：思虑多、动手少，脾胃与睡眠需留意', '这一年有无思虑过重、脾胃或睡眠方面的毛病？')
       : e('事业', '枭神夺食：想法多、落地难，计划被自己的犹豫或外力打断；肠胃与饮食需留意', '这一年有无计划被拖住，或肠胃/饮食方面的毛病？');
     if (id === 'shangguan-jian-guan') return sch ? e('学业', '伤官见官：与老师、家长起冲突，口舌是非', '这一年有无与老师、家长顶撞的事？') : e('官非', '伤官见官：与上级、长辈、规则起冲突，口舌是非', '这一年有无与上司/长辈/规则的冲突或口舌？');
-    if (id === 'guansha-hunza') return sch ? e('学业', '官杀混杂：管束来源不止一个，家长、老师各说各的，志愿与方向选择多而乱', '这一年有无被几头管、不知听谁的情况？')
+    if (id === 'guansha-hunza') return kid ? e('学业', '官杀混杂：管束的人不止一个，家里、老师说法不一，不知听谁的，容易委屈或拧着来', '这一年有无被几头管、不知听谁的情况？')
+      : teen ? e('学业', '官杀混杂：管束来自家长、老师、规则好几头，方向与选择多而乱', '这一年有无被几头管、对方向拿不定主意的情况？')
+      : sch ? e('学业', '官杀混杂：管束来源不止一个，家长、老师各说各的，志愿与方向选择多而乱', '这一年有无被几头管、不知听谁的情况？')
       : stu ? e('事业', '官杀混杂：压力来源不止一个，学业、实习、去向一起压来，选择多而乱', '这一年有无多头压力、要在几个去向间纠结的情况？')
       : old ? e('健康', '官杀混杂：压力来源不止一个，身体、家事、琐事一起找上门', '这一年有无几件事同时压上来的情况？')
       : e('事业', '官杀混杂：压力来源不止一个，选择多而乱', '这一年有无多头压力、要在几个选择间纠结的情况？');
@@ -10319,9 +10321,16 @@ module.exports = function makeReport(core, T, lib) {
           case 'child': { if (fam && FAM[fam]) o.push(FAM[fam] + '。'); if (par && PAR[par]) o.push(PAR[par] + '。'); if (weakEl && KH[weakEl]) o.push(KH[weakEl] + '。');
             const t = trait(/^偏强|^偏弱|^生于/); if (t) o.push(fn(t.text) + '。'); break; }
           case 'school': {
+            const SUB = { 木: '语文、历史等需要阅读与表达的科目', 火: '物理、艺术、体育与需要表现力的科目', 土: '数学基础、地理等稳扎稳打的科目', 金: '数学逻辑、英语与规则分明的科目', 水: '化学、生物与需要灵活推理的科目' };
+            const cnt = natal.counts.el, els = Object.keys(cnt).sort((x, y) => cnt[y] - cnt[x]);
+            if (SUB[els[0]]) o.push(`学科倾向：${els[0]}最旺，对${SUB[els[0]]}更来电；${weakEl && SUB[weakEl] ? weakEl + '偏弱，' + SUB[weakEl] + '要多花点力气补。' : '偏科时要有意补一补弱项。'}`);
             const f1 = fav('比劫'); o.push(f1 === '喜' ? '比劫为喜神：同伴是助力，班里总有能互相带、互相比的人；朋友圈对你的成绩是加分项。' : f1 === '忌' ? '比劫为忌神：同伴里容易攀比、扎堆、被带偏，朋友多不一定是好事，择友比交友重要。' : '比劫中性：朋友多少都行，关键看这个圈子往哪边带你。');
             const f2 = fav('官杀'); o.push(f2 === '喜' ? '官杀为喜神：严师和规矩对你有益，被管着反而出成绩。' : f2 === '忌' ? '官杀为忌神：管得越死越逆反，要给你一点自主的空间；压得太狠，容易表面服从、心里对着干。' : '官杀中性：对老师的态度因人而异，遇到对路的老师才肯下功夫。');
             const f3 = fav('食伤'); o.push(f3 === '喜' ? '食伤为喜神：爱表达、爱问为什么，讲题、写作、做项目比死记更出效果。' : f3 === '忌' ? '食伤为忌神：话多招事，爱顶嘴、爱走神，要把表达欲用在正地方。' : '食伤中性：表达与动手是你的辅助通道，别只靠刷题。');
+            if (par && PAR[par]) o.push(PAR[par].replace('从小', '这几年') + '。');
+            const sn = trait(/^生于/); if (sn) o.push('青春期的状态：' + fn(sn.text.replace(/^生于/, '生于')) + '。');
+            const tc = trait(/桃花/); if (tc) o.push('人缘方面：' + fn(tc.text) + '，青春期容易被人注意，也容易被心思分走。');
+            if (weakEl && EH[weakEl]) o.push(`身体上的提醒：${weakEl}偏弱，${EH[weakEl]}。`);
             const t = sec('学业').filter((y) => y.kind === 'trait')[1]; if (t) o.push(fn(t.text) + '。'); break; }
           case 'exam': {
             const t = sec('学业').filter((y) => y.kind === 'trait').find((y) => /文昌|学堂/.test(y.text));
@@ -10352,13 +10361,14 @@ module.exports = function makeReport(core, T, lib) {
           case 'turn': {
             const y = b.year, lA = all.luckOf(y - 2), lB = all.luckOf(y + 1);
             if (lA && lB && lA.gz !== lB.gz) { const qa = (lkBrief(lA).match(/「[^」]+」/g) || []), qb = (lkBrief(lB).match(/「[^」]+」/g) || []); if (qa.length && qb.length) o.push(`前后对照：${lA.gz}运的后半程是${qa[qa.length - 1]}，换到${lB.gz}运后，开局是${qb[0]}。`); }
+            else if (lA && lB) { const qq = (lkBrief(lB).match(/「[^」]+」/g) || []); if (qq.length) o.push(`这几年走${lB.gz}运，没有换运的大动作，主调是${qq.length > 1 ? qq[0] + '转' + qq[qq.length - 1] : qq[0]}——转折更多落在流年的冲合与心态上。`); }
             if (fam && OLDFAM[fam]) o.push(OLDFAM[fam] + '。');
             if (weakEl && MH[weakEl]) o.push(`中年的身体：${weakEl}偏弱，${MH[weakEl]}，每年体检别省。`); break; }
           case 'late': {
             const t = pg(3); if (t && KIDS[t]) o.push(KIDS[t] + '。');
             const ad = sec('健康').find((x) => x.kind === 'advice'); if (ad) o.push(fn(ad.text) + '。'); break; }
         }
-        return o.filter((x) => x && !/中性：/.test(x));
+        return o.filter((x) => x && !/中性：/.test(x) && !/^[^，。：]{0,8}中性。?$/.test(x));
       };
       seq.forEach((b, n) => {
         const pool = [];
@@ -10390,9 +10400,7 @@ module.exports = function makeReport(core, T, lib) {
             const LBL = { 大顺: '遇到肯带你的师傅、领导，被看中', 顺: '日子过得比同伴顺手', 平: '按部就班，一点点熬出来', 滞: '要多忍、多等，别急着换地方', 凶: '这一年最磨人，守住身体和饭碗' };
             b.title = '磨炼'; b.head = `${b.year}年前后没有大学可读：这几年多在下乡、进厂、当兵、学手艺中磨炼`; pool.push(`这一年运势${b.label}：${LBL[b.label] || ''}`); break;
           } else {
-            const x = first(sec('学业'), /^升学窗口/); if (x) pool.push(x.text);
-            else { const tr = sec('学业').filter((y) => y.kind === 'trait').slice(1, 3); tr.forEach((y) => pool.push(y.text));
-              if (!tr.length) { const LB = { 大顺: '机缘多，容易被老师或前辈看见', 顺: '日子过得顺手，学得进、也玩得开', 平: '按部就班，没有大起落', 滞: '慢一点，要多等多忍，别急着下结论', 凶: '这一年磨人，先守住身体和心态' }; pool.push(`${b.year}年${b.gz}：${b.stem.split('·')[0].trim()}，是${b.label}年——${LB[b.label] || ''}`); } }
+            { const LB = { 大顺: '机缘多，容易被老师或前辈看见', 顺: '日子过得顺手，学得进、也玩得开', 平: '按部就班，没有大起落', 滞: '慢一点，要多等多忍，别急着下结论', 凶: '这一年磨人，先守住身体和心态' }; pool.push(`${b.year}年${b.gz}：${b.stem.split('·')[0].trim()}，是${b.label}年——${LB[b.label] || ''}`); }
             break; }
           case 'depart': sec('事业').filter((x) => /^(主路|副路)/.test(x.text)).forEach((x) => pool.push(x.text.replace(/行业带：.*$/, '').replace(/。$/, ''))); break;
           case 'bond': {
