@@ -4,7 +4,7 @@
   const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   // 排盘引擎与字形文件都不再首屏下载：点“展开”时才拉 bazi.js，进命盘页时才拉 fire-glyphs.js。
-  const BAZI_SRC = 'assets/js/bazi.js?v=20261110cc';
+  const BAZI_SRC = 'assets/js/bazi.js?v=20261110dd';
   let baziLoad = null;
   function loadBazi() {
     if (window.BAZI) return Promise.resolve(window.BAZI);
@@ -24,7 +24,7 @@
     if (window.FIRE_GLYPHS) return Promise.resolve();
     if (!glyphLoad) glyphLoad = new Promise((resolve) => {
       const script = document.createElement('script');
-      script.src = 'assets/js/fire-glyphs.js?v=20261110cc';
+      script.src = 'assets/js/fire-glyphs.js?v=20261110dd';
       script.async = true;
       script.onload = resolve;
       script.onerror = () => { glyphLoad = null; resolve(); };
@@ -51,6 +51,7 @@
   let choices = {};
   let sceneLoadId = 0;
   const readyArt = new Map();
+  const artCache = new Map();
   const decodedArt = [];
   const screens = ['cover', 'birth', 'inscription', 'story'];
 
@@ -127,7 +128,7 @@
     if (!readyArt.has(key)) readyArt.set(key, new Promise((resolve) => {
       const image = new Image();
       image.fetchPriority = priority;
-      image.onload = () => { (image.decode ? image.decode() : Promise.resolve()).catch(() => {}).then(() => {
+      image.onload = () => { artCache.set(key, image); (image.decode ? image.decode() : Promise.resolve()).catch(() => {}).then(() => {
         // 只留最近 6 张解码图，避免整段人生下来把几十张 1600px 位图一直钉在内存里
         decodedArt.push(image); if (decodedArt.length > 6) decodedArt.shift();
         resolve(window.ART[key]);
@@ -147,9 +148,9 @@
   function prefetchBirthMedia(step) {
     prefetchArt(entryAlbumKey());
     if (step === 1) {
-      ['bg-fate', 'bg-fate-p', 'bg-ink'].forEach(prefetchArt);
+      (innerWidth <= 760 ? ['bg-fate-small', 'bg-fate-p', 'bg-ink'] : ['bg-fate', 'bg-fate-p', 'bg-ink']).forEach(prefetchArt);
     } else if (step === 2) {
-      ['childhood', 'school', 'bg-exam', 'bg-campus', 'departure'].forEach(prefetchArt);
+      ['school', 'bg-exam', 'bg-campus'].forEach(prefetchArt);
     }
   }
 
@@ -506,32 +507,27 @@
     }
   }
 
-  async function burnToStory(arrive) {
-    if (burnRunning) return;
-    if (reduced) { arrive(); return; }
-    burnRunning = true;
-    pauseMotion();
-    beginLoad('正在准备入卷…');
-    let burnLoading = true;
-    const stopBurnLoading = () => {
-      if (!burnLoading) return;
-      burnLoading = false;
-      endLoad();
-    };
-    try {
+  // 入卷的逐像素准备与动画分离：命盘可点后就在空闲时先算好，点击只负责燃烧。
+  let burnPrepCache = null;
+  function burnBgKey(key) {
+    return innerWidth <= 760 && key === 'bg-fate' ? 'bg-fate-small' : key;
+  }
+  async function prepareBurn() {
     const W = innerWidth, H = innerHeight;
-    const dpr = Math.min(devicePixelRatio || 1, 2, Math.sqrt(8e6 / Math.max(1, W * H)));
     const k = Math.min(.42, Math.sqrt(45000 / (W * H)));
     const gw = Math.ceil(W * k) + 2, gh = Math.ceil(H * k) + 2;
     const src = glyphSources();
-    const bgKey = bgOf(nodes[0]);
-    const art = new Image(); art.src = await preloadArt(bgKey);
-    try { await art.decode(); } catch (_) { /* 图片已在缓存时可能直接失败，忽略 */ }
+    const bgKey = burnBgKey(bgOf(nodes[0]));
+    await preloadArt(bgKey);
+    let art = artCache.get(bgKey);
+    if (!art) { art = new Image(); art.src = window.ART[bgKey]; }
+    if (!art.complete) { try { await art.decode(); } catch (_) { /* ignore */ } }
     const px = W < 761 ? (sceneComposition(nodes[0], 'M')?.px ?? .6) : .5;
-    const tex = new Image(); tex.src = window.ART['bg-ink'];
-    try { await tex.decode(); } catch (_) { /* 忽略 */ }
+    await preloadArt('bg-ink');
+    let tex = artCache.get('bg-ink');
+    if (!tex) { tex = new Image(); tex.src = window.ART['bg-ink']; }
+    if (!tex.complete) { try { await tex.decode(); } catch (_) { /* ignore */ } }
 
-    // 1) 字形栅格 → 边界种子
     const raster = document.createElement('canvas'); raster.width = gw; raster.height = gh;
     const rc = raster.getContext('2d', { willReadFrequently: true });
     src.forEach((g, n) => {
@@ -557,19 +553,18 @@
       if (!edge) continue;
       dist[i] = 0;
     }
-    // 精确欧氏距离变换（Felzenszwalb）：等距线是圆，不是八边形
     const BIG = 1e20;
     const f1 = new Float32Array(Math.max(gw, gh)), d1 = new Float32Array(Math.max(gw, gh)), i1 = new Int32Array(Math.max(gw, gh));
     const vv = new Int32Array(Math.max(gw, gh)), zz = new Float32Array(Math.max(gw, gh) + 1);
     function pass(n) {
-      let k = 0; vv[0] = 0; zz[0] = -BIG; zz[1] = BIG;
+      let kk = 0; vv[0] = 0; zz[0] = -BIG; zz[1] = BIG;
       for (let q = 1; q < n; q++) {
         let s;
-        for (;;) { const p = vv[k]; s = ((f1[q] + q * q) - (f1[p] + p * p)) / (2 * q - 2 * p); if (s <= zz[k]) k--; else break; if (k < 0) { k = 0; break; } }
-        k++; vv[k] = q; zz[k] = s; zz[k + 1] = BIG;
+        for (;;) { const p = vv[kk]; s = ((f1[q] + q * q) - (f1[p] + p * p)) / (2 * q - 2 * p); if (s <= zz[kk]) kk--; else break; if (kk < 0) { kk = 0; break; } }
+        kk++; vv[kk] = q; zz[kk] = s; zz[kk + 1] = BIG;
       }
-      k = 0;
-      for (let q = 0; q < n; q++) { while (zz[k + 1] < q) k++; d1[q] = (q - vv[k]) * (q - vv[k]) + f1[vv[k]]; i1[q] = vv[k]; }
+      kk = 0;
+      for (let q = 0; q < n; q++) { while (zz[kk + 1] < q) kk++; d1[q] = (q - vv[kk]) * (q - vv[kk]) + f1[vv[kk]]; i1[q] = vv[kk]; }
     }
     const g2 = new Float32Array(N), srcY = new Int32Array(N);
     for (let x = 0; x < gw; x++) {
@@ -584,11 +579,36 @@
     }
     let maxD = 0;
     for (let i = 0; i < N; i++) { dist[i] = dist[i] >= 1e9 ? 0 : dist[i] / k; if (dist[i] > maxD) maxD = dist[i]; }
-
-    // 2) 噪声：边缘不规则 + 缓慢闪动
     const n1 = noiseField(gw, gh, Math.max(3, 14 * k), 7), n2 = noiseField(gw, gh, Math.max(2, 5 * k), 19), n3 = noiseField(gw, gh, Math.max(2, 9 * k), 31);
     const jag = new Float32Array(N);
     for (let i = 0; i < N; i++) jag[i] = (n1[i] * .66 + n2[i] * .34) * 46;
+    return { W, H, k, gw, gh, src, art, px, tex, gd, N, dist, n1, n2, n3, jag, maxD };
+  }
+  function ensureBurnPrep() {
+    const W = innerWidth, H = innerHeight;
+    if (burnPrepCache && burnPrepCache.result === result && burnPrepCache.W === W && burnPrepCache.H === H) return burnPrepCache.promise;
+    const promise = prepareBurn();
+    burnPrepCache = { result, W, H, promise };
+    promise.catch(() => { if (burnPrepCache?.promise === promise) burnPrepCache = null; });
+    return promise;
+  }
+
+  async function burnToStory(arrive) {
+    if (burnRunning) return;
+    if (reduced) { arrive(); return; }
+    burnRunning = true;
+    pauseMotion();
+    beginLoad('正在准备入卷…');
+    let burnLoading = true;
+    const stopBurnLoading = () => {
+      if (!burnLoading) return;
+      burnLoading = false;
+      endLoad();
+    };
+    try {
+    const prep = await ensureBurnPrep();
+    const { W, H, k, gw, gh, art, px, tex, N, dist, n1, n2, n3, jag, maxD } = prep;
+    const dpr = Math.min(devicePixelRatio || 1, 2, Math.sqrt(8e6 / Math.max(1, W * H)));
 
     // 3) 画布
     const overlay = document.createElement('div'); overlay.className = 'burn-overlay';
@@ -699,6 +719,8 @@
     $('gold-continue').disabled = false;
     $('gold-continue').innerHTML = echoMode ? '回到这一生 <span>↗</span>' : '焚字入卷 <span>↗</span>';
     $('gold-skip').classList.add('is-hidden');
+    // 用户看字的这几秒先把入卷距离场/噪声算好，点击时只做最后的快照和燃烧。
+    setTimeout(() => { if (result && nodes.length) ensureBurnPrep().catch(() => {}); }, 80);
   }
 
   async function inscription(isEcho = false) {
@@ -760,6 +782,8 @@
     }
     $('gold-continue').disabled = false;
     $('gold-continue').innerHTML = echoMode ? '回到这一生 <span>↗</span>' : '焚字入卷 <span>↗</span>';
+    // 字已经落定，趁写字动画还在跑，把入卷准备先做掉。
+    setTimeout(() => { if (result && nodes.length) ensureBurnPrep().catch(() => {}); }, 30);
     if (reduced) return revealGold();
     if (!goldWriters.length) { revealGold(); return; }
     try {
@@ -1450,6 +1474,8 @@
     showScreen('birth');
     setScene('childhood');
     syncBirthReels();
+    // 相册小图在进入出生页时就低优先级预取，不等到翻页。
+    prefetchArt(entryAlbumKey());
     // 填表这段时间通常有十几秒：趁空闲把排盘引擎和字形文件悄悄下好，点“展开”时就不用等
     setTimeout(() => { loadBazi().catch(() => {}); loadGlyphs(); }, 1200);
   }
