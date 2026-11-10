@@ -483,7 +483,7 @@
     if (reduced) { arrive(); return; }
     burnRunning = true;
     const W = innerWidth, H = innerHeight;
-    const dpr = Math.min(devicePixelRatio || 1, 1.5);
+    const dpr = Math.min(devicePixelRatio || 1, 3, Math.sqrt(8e6 / Math.max(1, W * H)));
     const k = Math.min(.6, Math.sqrt(110000 / (W * H)));
     const gw = Math.ceil(W * k) + 2, gh = Math.ceil(H * k) + 2;
     const src = glyphSources();
@@ -1262,19 +1262,22 @@
     const particles = [];
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
+    const midX = sampled.width / 2, midY = sampled.height / 2;
+    const maxR = Math.hypot(midX, midY);
 
-    for (let y = 0; y < sampled.height; y += 2) {
-      for (let x = 0; x < sampled.width; x += 2) {
+    for (let y = 0; y < sampled.height; y += 1) {
+      for (let x = 0; x < sampled.width; x += 1) {
         const i = (y * sampled.width + x) * 4;
         if (data[i] <= 105 || data[i] <= data[i + 1] * 1.45 || data[i + 1] >= 155) continue;
         const seed = (particles.length * .61803398875) % 1;
         const depth = .35 + ((particles.length * .754877666) % 1) * 1.2;
         const originX = rect.left + x, originY = rect.top + y;
         const angle = ((particles.length * .41421356237) % 1) * Math.PI * 2;
-        const speed = 24 + ((particles.length * .73205080756) % 1) * 68;
+        const speed = 24 + ((particles.length * .73205080756) % 1) * 44;
+        const radial = Math.hypot(x - midX, y - midY) / maxR;
         particles.push({ x:originX, y:originY, seed, depth,
-          release:(1 - y / sampled.height) * .48 + seed * .36,
-          vx:Math.cos(angle)*speed*depth + 12, vy:Math.sin(angle)*speed*depth-26,
+          release:(1 - radial) * .52 + seed * .18,
+          vx:Math.cos(angle)*speed*depth + 7, vy:Math.sin(angle)*speed*depth-14,
           lifetime:1.1+seed*1.4,
           color:`rgb(${Math.min(255, data[i] + seed * 22)},${Math.min(220, data[i + 1] + seed * 20)},${data[i + 2]})`,
           previousX:originX, previousY:originY,
@@ -1294,17 +1297,17 @@
         const y = p.y + p.vy * elapsed - gust * 8 + Math.cos(elapsed * 2.1 + p.seed * 14) * elapsed * 9;
         const fade = Math.exp(-Math.pow(elapsed / p.lifetime, 2.3)) * (1 - state.fade);
         const opacity = state.pixels * fade;
-        const size = Math.max(.4, (1.7 + p.depth * .32) * (1 - u * .52));
+        const size = Math.max(.35, (0.8 + p.depth * .2) * (1 - u * .55));
         context.fillStyle = p.color;
         if (u > .05 && u < .97 && p.depth > 1.2) {
-          context.strokeStyle = p.color; context.lineWidth = size * .55;
-          context.globalAlpha = opacity * .17;
+          context.strokeStyle = p.color; context.lineWidth = size * .5;
+          context.globalAlpha = opacity * .12;
           context.beginPath(); context.moveTo(p.previousX, p.previousY); context.lineTo(x, y); context.stroke();
         }
         context.globalAlpha = opacity;
-        context.fillRect(x - size / 2, y - size / 2, size, size);
+        context.beginPath(); context.arc(x, y, size * .55, 0, Math.PI * 2); context.fill();
         if (u > .1 && p.depth > 1.4) {
-          context.globalAlpha = opacity * .07;
+          context.globalAlpha = opacity * .06;
           context.beginPath(); context.arc(x, y, size * 3.2, 0, Math.PI * 2); context.fill();
         }
         p.previousX = x; p.previousY = y;
@@ -1589,7 +1592,7 @@
       if (!active) return; active = false;
       const v = Math.abs(dx) / Math.max(1, performance.now() - st);
       const go = dragging && (Math.abs(dx) > 78 || v > .55 && Math.abs(dx) > 32);
-      copy.style.transition = 'transform .45s cubic-bezier(.2,1.2,.4,1),opacity .3s,top .6s cubic-bezier(.16,1,.3,1)';
+      copy.style.transition = 'transform .45s cubic-bezier(.2,1.2,.4,1),opacity .3s,top .6s cubic-bezier(.16,1,.3,1),padding-bottom .6s cubic-bezier(.16,1,.3,1)';
       copy.style.transform = ''; copy.style.opacity = '';
       drift.dragX = 0; dragging = false;
       if (go) goTo(pageIndex + (dx < 0 ? 1 : -1));
