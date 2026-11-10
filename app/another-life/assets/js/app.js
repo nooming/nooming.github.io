@@ -4,7 +4,7 @@
   const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   // 排盘引擎与字形文件都不再首屏下载：点“展开”时才拉 bazi.js，进命盘页时才拉 fire-glyphs.js。
-  const BAZI_SRC = 'assets/js/bazi.js?v=20261110bb';
+  const BAZI_SRC = 'assets/js/bazi.js?v=20261110cc';
   let baziLoad = null;
   function loadBazi() {
     if (window.BAZI) return Promise.resolve(window.BAZI);
@@ -24,7 +24,7 @@
     if (window.FIRE_GLYPHS) return Promise.resolve();
     if (!glyphLoad) glyphLoad = new Promise((resolve) => {
       const script = document.createElement('script');
-      script.src = 'assets/js/fire-glyphs.js?v=20261110bb';
+      script.src = 'assets/js/fire-glyphs.js?v=20261110cc';
       script.async = true;
       script.onload = resolve;
       script.onerror = () => { glyphLoad = null; resolve(); };
@@ -41,6 +41,7 @@
   let nodes = [];
   let pageIndex = 0;
   let busy = false;
+  let inscriptionPending = false;
   let turning = false;
   let activeImage = 0;
   let currentArt = 'opening';
@@ -702,8 +703,22 @@
 
   async function inscription(isEcho = false) {
     echoMode = isEcho;
-    showScreen('inscription');
     const token = ++goldToken;
+    inscriptionPending = true;
+    beginLoad('正在准备命盘…');
+    try {
+      // 先把命盘用到的两款字载入，避免「年柱月柱」先用兜底字闪一下再换。
+      await Promise.race([
+        Promise.all([
+          document.fonts.load('16px Brush'),
+          document.fonts.load('16px WenKai'),
+        ]).catch(() => {}),
+        new Promise((resolve) => setTimeout(resolve, 2500)),
+      ]);
+    } finally { endLoad(); }
+    if (token !== goldToken) { inscriptionPending = false; return; }
+    showScreen('inscription');
+    inscriptionPending = false;
     goldWriters = [];
     $('gold-continue').disabled = true;
     $('gold-continue').innerHTML = '正在落字 <span>·</span>';
@@ -1363,7 +1378,7 @@
 
   $('birth-form').addEventListener('submit', async (event) => {
     event.preventDefault();
-    if (busy) return;
+    if (busy || inscriptionPending) return;
     const knownCity = syncCityCoords(false);
     const advanced = document.querySelector('.advanced');
     if (!knownCity && !advanced.open) { advanced.open = true; $('form-error').textContent = '请确认出生地的经纬度后，再展开人生。'; return; }
