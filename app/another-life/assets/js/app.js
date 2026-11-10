@@ -4,7 +4,7 @@
   const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   // 排盘引擎与字形文件都不再首屏下载：点“展开”时才拉 bazi.js，进命盘页时才拉 fire-glyphs.js。
-  const BAZI_SRC = 'assets/js/bazi.js?v=20261110mm';
+  const BAZI_SRC = 'assets/js/bazi.js?v=20261110nn';
   let baziLoad = null;
   function loadBazi() {
     if (window.BAZI) return Promise.resolve(window.BAZI);
@@ -24,7 +24,7 @@
     if (window.FIRE_GLYPHS) return Promise.resolve();
     if (!glyphLoad) glyphLoad = new Promise((resolve) => {
       const script = document.createElement('script');
-      script.src = 'assets/js/fire-glyphs.js?v=20261110mm';
+      script.src = 'assets/js/fire-glyphs.js?v=20261110nn';
       script.async = true;
       script.onload = resolve;
       script.onerror = () => { glyphLoad = null; resolve(); };
@@ -1120,6 +1120,10 @@
       finaleRunning = true;
       ensureFinaleDom();
       const F = $('finale'), art = $('finale-art'), canvas = $('finale-canvas');
+      const finaleText = $('finale-text');
+      // 手机地址栏会在点按时收起/展开，dvh 一变整列文字（含 w）就会下移；开场前锁成当时的像素位置。
+      if (innerWidth <= 760) finaleText.style.top = Math.round((window.visualViewport?.height || innerHeight) * .10) + 'px';
+      else finaleText.style.removeProperty('top');
       art.src = window.ART['finale-art'];
       $('finale-text').querySelector('.stamp img').src = window.ART['finale-stamp'];
       try { await art.decode(); } catch (e) { /* ignore */ }
