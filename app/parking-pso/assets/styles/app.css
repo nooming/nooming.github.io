@@ -1435,6 +1435,43 @@ select option {
   padding: 4px 10px;
 }
 
+/* Overview: one compact algorithm switch instead of a separate panel */
+.overview-method-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 2px;
+  padding: 7px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.overview-method-row label {
+  flex: 0 0 auto;
+  color: #7f90a8;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+}
+
+.overview-method-row select {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 7px;
+  background: #101b28;
+  color: #dce8f7;
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.overview-method-hint {
+  margin: 0 0 2px !important;
+  font-size: 0.68rem !important;
+  line-height: 1.5 !important;
+}
+
 .metric-label {
   font-size: 0.63rem;
   color: var(--pp-muted);

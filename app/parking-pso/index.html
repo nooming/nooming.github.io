@@ -108,7 +108,7 @@
             <!-- ===== Tab: 总览 ===== -->
             <section id="tab-overview" class="tab-panel is-active" data-tab-panel="overview">
               <div class="panel">
-                <h2>总览</h2>
+                <h2>当前场景</h2>
                 <div class="overview-stats" aria-label="场景规模">
                   <div><span>车辆</span><strong id="ov-stat-veh">12</strong></div>
                   <div><span>车位</span><strong id="ov-stat-slots">12</strong></div>
@@ -120,6 +120,14 @@
                   <button type="button" id="btn-workflow-dismiss">知道了</button>
                 </div>
                 <ol id="workflow-steps" class="workflow-steps" aria-label="主流程步骤"></ol>
+                <div class="overview-method-row">
+                  <label for="optimizer-method">算法</label>
+                  <select id="optimizer-method">
+                    <option value="exact" selected>匈牙利 exact（全局最优）</option>
+                    <option value="pso">PSO 粒子群（近似）</option>
+                  </select>
+                </div>
+                <p id="optimizer-method-hint" class="panel-note overview-method-hint"></p>
                 <p id="lot-dim-hint" class="panel-note"></p>
               </div>
               <div class="panel panel--diagnosis">
@@ -156,18 +164,6 @@
                 <canvas id="compare-radar" class="compare-radar" width="320" height="220" aria-label="方案对比雷达图"></canvas>
                 <button type="button" id="btn-export-compare" class="compare-export">导出对比报告</button>
               </details>
-
-              <div class="panel">
-                <h2>优化方法</h2>
-                <div class="prop-grid">
-                  <label for="optimizer-method">算法</label>
-                  <select id="optimizer-method">
-                    <option value="exact" selected>匈牙利 exact（全局最优）</option>
-                    <option value="pso">PSO 粒子群（近似）</option>
-                  </select>
-                </div>
-                <p id="optimizer-method-hint" class="panel-note"></p>
-              </div>
 
               <details class="panel panel--fold pso-lab" id="pso-lab-panel" hidden>
                 <summary>PSO 参数</summary>
