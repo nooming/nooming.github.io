@@ -120,6 +120,7 @@
                 links: [
                     { label: "导航", href: "/app/navigation/" },
                     { label: "笔记", href: "/app/notes/" },
+                    { label: "停车", href: "/app/parking-pso/" },
                     { label: "另一个我", href: "/app/another-life/" },
                 ],
             },
