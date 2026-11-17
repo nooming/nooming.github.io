@@ -2113,12 +2113,73 @@
     });
   }
 
+  function buildCostContext(scenarioInput) {
+    const s = normalizeScenario(scenarioInput);
+    const road = s.road || roadModel.roadFromInner?.(s.inner, DEFAULT_ROAD_WIDTH) || null;
+    const prep = precomputeFromNormalized(s);
+    const nSlot = prep.nSlot;
+    const nB = prep.nB;
+    const nVeh = Math.min(Number(s.n_veh) || 0, nSlot);
+    if (!nVeh || !nSlot || !nB) return { ok: false };
+    s.n_veh = nVeh;
+    normalizeVehicleDestinations(s);
+    const vehTargets = s.vehicle_destinations.slice(0, nVeh);
+    const vehEntrances = s.vehicle_entrances.slice(0, nVeh);
+    const entranceMode = s.entrance_mode === "fixed" ? "fixed" : "auto";
+    const entranceCount = prep.entrancesPos.length || 1;
+    const vCar = 10.0;
+    const vWalk = 1.5;
+
+    function resolveDrive(slotIndex, vehIdx) {
+      if (entranceMode === "fixed") {
+        const eiRaw = Number(vehEntrances[vehIdx]);
+        const ei = Number.isFinite(eiRaw) ? Math.max(0, Math.min(entranceCount - 1, eiRaw)) : 0;
+        return {
+          driveTime: prep.driveDistByEntrance[slotIndex][ei] / vCar,
+          entranceIndex: ei,
+        };
+      }
+      let bestEi = 0;
+      let bestDrive = prep.driveDistByEntrance[slotIndex][0] / vCar;
+      for (let ei = 1; ei < entranceCount; ei++) {
+        const cur = prep.driveDistByEntrance[slotIndex][ei] / vCar;
+        if (cur < bestDrive) {
+          bestDrive = cur;
+          bestEi = ei;
+        }
+      }
+      return { driveTime: bestDrive, entranceIndex: bestEi };
+    }
+
+    const cost = Array.from({ length: nVeh }, (_, i) =>
+      Array.from({ length: nSlot }, (_, j) => {
+        const drive = resolveDrive(j, i).driveTime;
+        const walk = prep.walkMat[j][vehTargets[i]] / vWalk;
+        return drive + walk + vehicleSlotPenalty(s, i, j);
+      })
+    );
+
+    return {
+      ok: true,
+      s,
+      road,
+      prep,
+      nVeh,
+      nSlot,
+      vehTargets,
+      resolveDrive,
+      vWalk,
+      cost,
+    };
+  }
+
   window.ParkingOptimizer = {
     RESULT_KEYS,
     defaultScenario,
     normalizeScenario,
     runOptimize,
     runOptimizeAsync,
+    buildCostContext,
   };
 })();
 

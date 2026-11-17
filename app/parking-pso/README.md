@@ -11,7 +11,7 @@
 | `index.html` | **线上入口**（bundle，GitHub Pages 默认打开） |
 | `index.dev.html` | **本地开发**（按模块加载 `assets/js/**`，改逻辑用这个） |
 | `index.bundled.html` | `bundle-js.ps1` 生成的 bundle 版 HTML 模板 |
-| `assets/js/app/`、`optimizer/`、`core/` | 源码 |
+| `assets/js/app/`、`optimizer/`、`core/` | 源码，含本地滚动仿真入口 |
 | `assets/js/*.bundle.js` | 打包产物（发布前需重新生成） |
 | `scripts/bundle-js.ps1` | 合并脚本为 bundle（保持 `app-state` 在 storage / default-source / analysis / tab-utils 之后） |
 | `scripts/deploy.ps1` | 打 bundle 并覆盖 `index.html` |
@@ -22,7 +22,8 @@
 
 - 不发起后端请求，顶栏显示「本地计算」；
 - 优化用本地 exact；PSO 引擎保留，但当前界面未开放；
-- 仿真是本地估算；服务端滚动/蒙特卡洛暂不启用；
+- 仿真用本地 FIFO 滚动分配 + 本地回放；
+- 支持本地到达对照和 Monte Carlo 抽样；
 - 方案库、场景自动保存都在本机浏览器。
 
 ## 编辑与恢复

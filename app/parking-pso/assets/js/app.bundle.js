@@ -4735,15 +4735,14 @@ P.runOptimize = async function () {
     if (compareBtn) {
       const cmpOk =
         !simStep &&
-        !!P.apiOnline &&
         (P.canRunRollingSimulation?.()?.ok || false) &&
-        !!(P.api?.simulateRolling && P.api?.simulate);
+        (!!P.runRollingLocal || !!(P.api?.simulateRolling && P.api?.simulate));
       compareBtn.disabled = !cmpOk;
       compareBtn.title = simStep
         ? "逐车调试下不可用"
         : cmpOk
           ? "对比滚动与全信息基准"
-          : "需联网且场景就绪";
+          : "场景就绪后可运行";
     }
     if (playSim) {
       playSim.disabled = !hasTimeline;
@@ -5095,6 +5094,205 @@ P.runOptimize = async function () {
     return schedule;
   };
 
+  P._localRng = function (seed) {
+    let state = (Number(seed) || 42) >>> 0;
+    return function () {
+      state = (state + 0x6d2b79f5) >>> 0;
+      let t = state;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  };
+
+  P.buildLocalArrivals = function (n, schedule) {
+    const count = Math.max(0, Number(n) || 0);
+    if (!count) return [];
+    const sched = schedule || {};
+    const mode = String(sched.mode || "uniform").toLowerCase();
+    if (mode === "explicit") {
+      const raw = Array.isArray(sched.arrivals_sec) && sched.arrivals_sec.length
+        ? sched.arrivals_sec
+        : (P.resolveVehicleArrivalsSec?.() || []);
+      const out = [];
+      for (let i = 0; i < count; i++) {
+        const v = Number(raw[i]);
+        out.push(Number.isFinite(v) ? Math.max(0, v) : i * 60);
+      }
+      return out;
+    }
+    if (mode === "burst") {
+      const gap = Number(sched.burst_gap_sec) || 2;
+      return Array.from({ length: count }, (_, i) => i * gap);
+    }
+    if (mode === "poisson") {
+      const rng = P._localRng(sched.seed);
+      const rate = Math.max(1e-6, Number(sched.lambda) || 0.04);
+      let t = 0;
+      return Array.from({ length: count }, () => {
+        t += -Math.log(Math.max(1e-9, 1 - rng())) / rate;
+        return Math.round(t * 1000) / 1000;
+      });
+    }
+    if (mode === "normal_gap") {
+      const rng = P._localRng(sched.seed);
+      const mean = Number(sched.mean_gap_sec) || 30;
+      const sigma = Math.max(0, Number(sched.sigma_gap_sec) || 10);
+      const gauss = () => {
+        const u = Math.max(1e-9, rng());
+        const v = Math.max(1e-9, rng());
+        return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+      };
+      let t = 0;
+      const out = [0];
+      for (let i = 1; i < count; i++) {
+        t += Math.max(0.5, mean + sigma * gauss());
+        out.push(Math.round(t * 1000) / 1000);
+      }
+      return out;
+    }
+    const duration = (Number(sched.duration_min) || 20) * 60;
+    return Array.from({ length: count }, (_, i) => i * (duration / Math.max(1, count)));
+  };
+
+  P.runRollingLocal = function (schedule) {
+    const sched = { ...(schedule || {}) };
+    const ctx = P.optimizer?.buildCostContext?.(P.scenario);
+    if (!ctx?.ok) {
+      return { success: false, message: "场景无效", timeline: { frames: [], stats: {}, duration: 0 } };
+    }
+    const nVeh = ctx.nVeh;
+    const nSlot = ctx.nSlot;
+    const arrivals = P.buildLocalArrivals(nVeh, sched);
+    sched.arrivals_sec = arrivals;
+    const dwellS = Math.max(0, Number(sched.dwell_min) || 0) * 60;
+    const free = new Set(Array.from({ length: nSlot }, (_, i) => i));
+    const slotFreeAt = new Array(nSlot).fill(0);
+    const assign = new Array(nVeh).fill(-1);
+    const prefix = sched.prefix_assign;
+    if (Array.isArray(prefix)) {
+      for (let i = 0; i < Math.min(prefix.length, nVeh); i++) {
+        const j = Number(prefix[i]);
+        if (Number.isInteger(j) && j >= 0 && j < nSlot && free.has(j)) {
+          assign[i] = j;
+          free.delete(j);
+          if (dwellS > 0) {
+            const drive = ctx.resolveDrive(j, i);
+            const walk = ctx.prep.walkMat[j][ctx.vehTargets[i]] / ctx.vWalk;
+            slotFreeAt[j] = arrivals[i] + drive.driveTime + walk + dwellS;
+          }
+        }
+      }
+    }
+
+    const order = Array.from({ length: nVeh }, (_, i) => i).sort(
+      (a, b) => arrivals[a] - arrivals[b] || a - b
+    );
+    const log = [];
+    for (const vi of order) {
+      if (assign[vi] >= 0) {
+        log.push({ vehicle_index: vi, arrival: arrivals[vi], slot_index: assign[vi], status: "prefixed" });
+        continue;
+      }
+      let bestJ = -1;
+      let bestC = Infinity;
+      for (let j = 0; j < nSlot; j++) {
+        if (dwellS > 0) {
+          if (slotFreeAt[j] > arrivals[vi] + 1e-6) continue;
+        } else if (!free.has(j)) {
+          continue;
+        }
+        const c = ctx.cost[vi][j];
+        if (c < bestC) {
+          bestC = c;
+          bestJ = j;
+        }
+      }
+      if (bestJ < 0) {
+        log.push({ vehicle_index: vi, arrival: arrivals[vi], status: "rejected_no_slot" });
+        continue;
+      }
+      assign[vi] = bestJ;
+      if (dwellS > 0) {
+        const drive = ctx.resolveDrive(bestJ, vi);
+        const walk = ctx.prep.walkMat[bestJ][ctx.vehTargets[vi]] / ctx.vWalk;
+        slotFreeAt[bestJ] = arrivals[vi] + drive.driveTime + walk + dwellS;
+      } else {
+        free.delete(bestJ);
+      }
+      log.push({
+        vehicle_index: vi,
+        arrival: arrivals[vi],
+        slot_index: bestJ,
+        status: "assigned",
+        marginal_cost: bestC,
+      });
+    }
+    if (assign.some((j) => j < 0)) {
+      return {
+        success: false,
+        message: "车位不足，无法为全部到达车辆分配",
+        assignment_log: log,
+        timeline: { frames: [], stats: {}, duration: 0 },
+      };
+    }
+
+    const breakdown = [];
+    const bestEntrances = [];
+    let total = 0;
+    for (let i = 0; i < nVeh; i++) {
+      const j = assign[i];
+      const drive = ctx.resolveDrive(j, i);
+      const walk = ctx.prep.walkMat[j][ctx.vehTargets[i]] / ctx.vWalk;
+      const penalty = Number(ctx.s.soft_constraints?.type_mismatch_penalty || 0) &&
+        (ctx.s.vehicle_requirements?.[i] || "normal") !== (ctx.s.slot_types?.[j] || "normal")
+        ? Number(ctx.s.soft_constraints?.type_mismatch_penalty || 0)
+        : 0;
+      total += drive.driveTime + walk + penalty;
+      bestEntrances.push(drive.entranceIndex);
+      breakdown.push({
+        vehicle_index: i,
+        slot_index: j,
+        destination_index: ctx.vehTargets[i],
+        entrance_index: drive.entranceIndex,
+        drive_time: drive.driveTime,
+        walk_time: walk,
+        penalty,
+        total_time: drive.driveTime + walk + penalty,
+      });
+    }
+
+    const pack = window.ParkingOptimizerPack?.packResult;
+    if (typeof pack !== "function") {
+      return { success: false, message: "本地结果打包模块未加载", timeline: { frames: [], stats: {}, duration: 0 } };
+    }
+    const result = pack(ctx.s, {
+      gbestValue: total,
+      historyBest: [total],
+      bestAssign: assign,
+      bestEntrances,
+      vehicleBreakdown: breakdown,
+      slotsPos: ctx.prep.slotsPos,
+      buildingsPos: ctx.prep.buildingsPos,
+      obstacles: ctx.s.obstacles,
+      vehTargets: ctx.vehTargets,
+      boxesByBi: ctx.prep.boxesByBi,
+      navByBi: ctx.prep.navByBi,
+      lot: ctx.s.lot,
+      road: ctx.road,
+      optimizer: "rolling",
+    });
+    return {
+      success: true,
+      result,
+      timeline: P.runSimulationLocal(result, sched),
+      assignment_log: log,
+      rolling_total_cost: total,
+      policy: "rolling_fifo_greedy",
+      schedule_realized: { mode: sched.mode || "uniform", arrivals_sec: arrivals, seed: sched.seed },
+    };
+  };
+
   P.syncSimToolbarVisibility = function () {
     const mode = P.getSimArrivalProcessMode();
     const step = mode === "step";
@@ -5108,9 +5306,9 @@ P.runOptimize = async function () {
       toolbar.classList.toggle("toolbar--simulate-has-play", step && hasTimeline);
     }
     const mcBtn = document.getElementById("btn-monte-carlo");
-    if (mcBtn) mcBtn.hidden = window.PARKING_LOCAL_ONLY || !stochastic;
+    if (mcBtn) mcBtn.hidden = !stochastic;
     const compareBtn = document.getElementById("btn-run-arrival-compare");
-    if (compareBtn) compareBtn.hidden = !!window.PARKING_LOCAL_ONLY;
+    if (compareBtn) compareBtn.hidden = false;
     const playSim = document.getElementById("btn-sim-play");
     if (playSim) {
       playSim.hidden = step && !hasTimeline;
@@ -5645,7 +5843,7 @@ P.runOptimize = async function () {
       P.syncResultToScenario?.();
       P.updateResultsPanel?.();
     }
-    let label = "在线滚动仿真就绪";
+    let label = P.apiOnline ? "在线滚动仿真就绪" : "本地滚动仿真就绪";
     if (out?.rolling_total_cost != null && out?.static_reference_value != null) {
       const gap = out.rolling_total_cost - out.static_reference_value;
       label +=
@@ -5683,6 +5881,15 @@ P.runOptimize = async function () {
   P.ensureStaticOptimizeResult = async function () {
     const isExact = String(P.lastResult?.optimizer || "").toLowerCase() === "exact";
     if (P.lastResult?.assign?.length && isExact) return P.lastResult;
+    if (!P.apiOnline && P.optimizer?.runOptimize) {
+      const raw = P.optimizer.runOptimize(JSON.parse(JSON.stringify(P.scenario)), {
+        method: "exact",
+      });
+      P.lastResult = P.normalizeOptimizeResult(raw, "exact", P.scenario);
+      P.syncResultToScenario?.();
+      P.updateResultsPanel?.();
+      return P.lastResult;
+    }
     if (!P.api?.optimize) throw new Error("无 optimize API");
     const methodEl = document.getElementById("optimizer-method");
     const method = methodEl?.value === "pso" ? "pso" : "exact";
@@ -5834,13 +6041,53 @@ P.runOptimize = async function () {
       if (st) st.textContent = "Monte Carlo 仅用于 Poisson / 正态间隔到达。";
       return;
     }
-    if (!P.apiOnline || !P.api?.monteCarloRolling) {
-      if (st) st.textContent = "Monte Carlo 需连接后端 API。";
-      return;
-    }
     const schedule = P.buildSimSchedule();
     if (st) st.textContent = "随机抽样中…";
     try {
+      if (!P.apiOnline) {
+        const runs = 20;
+        const baseSeed = Number.isFinite(Number(schedule.seed)) ? Number(schedule.seed) : 42;
+        const staticResult = await P.ensureStaticOptimizeResult();
+        const staticCost = Number(staticResult?.gbest_value ?? staticResult?.gbestValue ?? 0);
+        const rollCosts = [];
+        const deltas = [];
+        const samples = [];
+        for (let r = 0; r < runs; r++) {
+          if (st) st.textContent = "本地抽样 " + (r + 1) + "/" + runs + "…";
+          await new Promise((resolve) => setTimeout(resolve, 0));
+          const out = P.runRollingLocal({ ...schedule, seed: baseSeed + r });
+          if (!out?.success) throw new Error(out?.message || "本地滚动失败");
+          const rc = Number(out.rolling_total_cost) || 0;
+          rollCosts.push(rc);
+          deltas.push(rc - staticCost);
+          samples.push({
+            run: r,
+            seed: baseSeed + r,
+            arrivals_sec: out.schedule_realized?.arrivals_sec || [],
+            rolling_total_cost: rc,
+          });
+        }
+        const pct = (arr) => {
+          const sorted = arr.slice().sort((a, b) => a - b);
+          return sorted.length ? sorted[Math.floor(0.95 * (sorted.length - 1))] : 0;
+        };
+        const mean = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
+        const summary = {
+          success: true,
+          runs_requested: runs,
+          runs_completed: runs,
+          base_seed: baseSeed,
+          rolling_cost_mean: mean(rollCosts),
+          rolling_cost_p95: pct(rollCosts),
+          delta_mean: mean(deltas),
+          delta_p95: pct(deltas),
+          static_cost: staticCost,
+          samples,
+        };
+        P.renderMonteCarloSummary(summary);
+        if (st) st.textContent = "本地抽样完成 · 均值 " + summary.rolling_cost_mean.toFixed(1) + " s";
+        return;
+      }
       const init = await P.api.monteCarloRolling(P.scenario, schedule, 20, schedule.seed ?? 42, true);
       let out = init;
       if (init.job_id) {
@@ -5864,14 +6111,23 @@ P.runOptimize = async function () {
       if (st) st.textContent = gate.reason;
       return;
     }
-    if (!P.apiOnline || !P.api?.simulateRolling || !P.api?.simulate) {
-      P.showWorkspaceMessage?.("对照需连接后端 API", { level: "warn", alsoResult: false });
-      if (st) st.textContent = "对照需连接后端 API";
-      return;
-    }
     const schedule = P.buildSimSchedule({ include_static_reference: true });
-    if (st) st.textContent = "对照计算中…";
+    if (st) st.textContent = "本地对照计算中…";
     try {
+      if (!P.apiOnline) {
+        const rollingOut = P.runRollingLocal(schedule);
+        if (!rollingOut?.success || !rollingOut?.timeline?.frames?.length) {
+          throw new Error(rollingOut?.message || "本地滚动仿真无时间轴");
+        }
+        const staticResult = await P.ensureStaticOptimizeResult();
+        const staticTimeline = P.runSimulationLocal(staticResult, schedule);
+        P.arrivalCompare = { schedule, rollingOut, staticTimeline, staticResult };
+        P.renderArrivalCompareTable(rollingOut, staticTimeline, staticResult);
+        P.applyRollingSimOutcome(rollingOut, st);
+        P.syncSimModeHint?.();
+        P.updateActionGates?.();
+        return;
+      }
       const rollInit = await P.api.simulateRolling(P.scenario, schedule, true);
       const rollingOut = await P.fetchSimApiPayload(rollInit, true, st);
       if (!rollingOut?.timeline?.frames?.length) {
@@ -5913,28 +6169,17 @@ P.runOptimize = async function () {
     const st = document.getElementById("sim-status");
     const schedule = P.buildSimSchedule();
     if (!P.apiOnline) {
-      // 离线时不让「运行仿真」变成一次必然失败的请求：先本地 exact 优化，再给本地时间轴
-      if (!P.lastResult) {
-        if (!P.optimizer?.runOptimize) {
-          if (st) st.textContent = "本地优化模块未加载，无法离线仿真。";
-          return;
-        }
-        if (st) st.textContent = "正在本地计算优化…";
-        await new Promise((resolve) => setTimeout(resolve, 30));
-        try {
-          const base = JSON.parse(JSON.stringify(P.scenario));
-          const raw = P.optimizer.runOptimize(base, { method: "exact" });
-          P.lastResult = P.normalizeOptimizeResult(raw, "exact", P.scenario);
-        } catch (e) {
-          if (st) st.textContent = "本地优化失败：" + (e.message || e);
-          return;
-        }
-      }
+      if (st) st.textContent = "本地滚动计算中…";
+      await new Promise((resolve) => setTimeout(resolve, 20));
       try {
-        const timeline = P.runSimulationLocal(P.lastResult, schedule);
-        P.applySimTimeline(timeline, st, "仿真就绪 · 本地估算");
+        const out = P.runRollingLocal(schedule);
+        if (!out?.success) {
+          if (st) st.textContent = out?.message || "本地滚动仿真失败";
+          return;
+        }
+        P.applyRollingSimOutcome(out, st);
       } catch (e) {
-        if (st) st.textContent = "本地仿真失败：" + (e.message || e);
+        if (st) st.textContent = "本地滚动仿真失败：" + (e.message || e);
       }
       return;
     }
@@ -6008,25 +6253,11 @@ P.runOptimize = async function () {
   P.runSimulationLocal = function (result, schedule) {
     const breakdown = result.vehicle_breakdown || [];
     const n = breakdown.length;
-    const mode = schedule.mode || "uniform";
-    const duration_s = (schedule.duration_min || 20) * 60;
-    let arrivals = [];
-    if (mode === "explicit") {
-      arrivals = (P.resolveVehicleArrivalsSec?.() || []).slice(0, n);
-      while (arrivals.length < n) {
-        const prev = arrivals.length ? arrivals[arrivals.length - 1] : 0;
-        arrivals.push(prev + 2);
-      }
-    } else if (mode === "burst") {
-      const gap = schedule.burst_gap_sec || 2;
-      for (let i = 0; i < n; i++) arrivals.push(i * gap);
-    } else {
-      const step = duration_s / Math.max(1, n);
-      for (let i = 0; i < n; i++) arrivals.push(i * step);
-    }
+    const arrivals = P.buildLocalArrivals(n, schedule);
     const drive_durations = breakdown.map((bd) => Number(bd.drive_time || 0));
     const cap = Math.max(1, schedule.entrance_capacity || 1);
     const realistic = schedule.realistic !== false;
+    const liveScenario = result.scenario || P.scenario || {};
     let drive_starts = arrivals.slice();
     if (realistic) {
       let nEnt = Math.max(1, P.scenario?.entrances?.length || 1);
@@ -6054,9 +6285,9 @@ P.runOptimize = async function () {
       const walk_t = Number(bd.walk_time || 0);
       const ds = drive_starts[i];
       const ei = Number(bd.entrance_index || 0);
-      const ent = (P.scenario?.entrances || [[0, 0]])[ei] || [0, 0];
+      const ent = (liveScenario.entrances || [[0, 0]])[ei] || [0, 0];
       const si = Number(bd.slot_index ?? 0);
-      const slot = (P.scenario?.slots || [])[si] || [0, 0];
+      const slot = (liveScenario.slots || [])[si] || [0, 0];
       const parkAt = [slot[0], slot[1]];
       const dpRaw = result.drive_paths?.[i];
       const drive_path =

@@ -217,15 +217,14 @@
     if (compareBtn) {
       const cmpOk =
         !simStep &&
-        !!P.apiOnline &&
         (P.canRunRollingSimulation?.()?.ok || false) &&
-        !!(P.api?.simulateRolling && P.api?.simulate);
+        (!!P.runRollingLocal || !!(P.api?.simulateRolling && P.api?.simulate));
       compareBtn.disabled = !cmpOk;
       compareBtn.title = simStep
         ? "逐车调试下不可用"
         : cmpOk
           ? "对比滚动与全信息基准"
-          : "需联网且场景就绪";
+          : "场景就绪后可运行";
     }
     if (playSim) {
       playSim.disabled = !hasTimeline;
