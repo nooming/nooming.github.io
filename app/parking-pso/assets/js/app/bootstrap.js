@@ -280,6 +280,7 @@
   P.renderComparePanel?.();
 
   document.getElementById("btn-auto-slots")?.addEventListener("click", () => P.runAutoSlots?.());
+  document.getElementById("btn-suggest-plans")?.addEventListener("click", () => P.runSuggestPlans?.());
   document.getElementById("sim-arrival-mode")?.addEventListener("change", () => {
     P.syncSimArrivalFields?.();
   });

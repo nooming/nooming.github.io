@@ -80,6 +80,7 @@
       P.updateRunBarSummary?.();
       P.renderDiagnosis?.();
       P.syncPsoLabInputsFromScenario?.();
+      P.wirePsoLabPanel?.();
       P.togglePsoLabVisibility?.();
       P.resetUndoHistory?.();
       P.clearWorkspaceMessage?.();

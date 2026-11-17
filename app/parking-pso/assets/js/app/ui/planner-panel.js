@@ -164,7 +164,64 @@
   P.runSuggestPlans = async function () {
     const list = document.getElementById("suggest-plans-list");
     if (!list || !P.scenario) return;
-    list.innerHTML = '<p class="panel-note">生成候选方案中…</p>';
+    list.innerHTML = '<p class="panel-note">生成本地候选方案…</p>';
+    if (!P.apiOnline && P.optimizer?.runOptimize) {
+      try {
+        const base = JSON.parse(JSON.stringify(P.scenario));
+        const plans = [];
+        const makePlan = (id, title, description, scenario) => {
+          const raw = P.optimizer.runOptimize(JSON.parse(JSON.stringify(scenario)), {
+            method: "exact",
+          });
+          const result = P.normalizeOptimizeResult(raw, "exact", scenario);
+          plans.push({
+            id,
+            title,
+            description,
+            scenario: result.scenario || scenario,
+            result,
+            metrics: P.computePlanMetrics ? P.computePlanMetrics(result) : {},
+          });
+        };
+
+        makePlan("min_total_time", "最小总时间", "当前布局下匈牙利全局最优分配", base);
+
+        const fair = JSON.parse(JSON.stringify(base));
+        const fairSlots = Array.isArray(fair.slots) ? fair.slots : [];
+        if (fairSlots.length > 2) {
+          const midY = fairSlots.reduce((sum, s) => sum + Number(s[1] || 0), 0) / fairSlots.length;
+          for (const s of fairSlots) {
+            s[2] = Number(s[1]) < midY ? 0 : Math.PI;
+          }
+        }
+        makePlan("balanced_walk", "均衡步行", "调整车位朝向，平衡南北侧步行距离", fair);
+
+        const expanded = JSON.parse(JSON.stringify(base));
+        let generated = null;
+        const savedScenario = P.scenario;
+        try {
+          P.scenario = JSON.parse(JSON.stringify(base));
+          generated = P.generateSlotsAlongStrips?.(
+            Math.max((expanded.slots || []).length, (expanded.n_veh || 12) + 2)
+          );
+        } finally {
+          P.scenario = savedScenario;
+        }
+        if (generated?.slots?.length) {
+          expanded.slots = generated.slots.map((s) => [s[0], s[1], s[2] || 0]);
+          expanded.slot_types = generated.slots.map(() => "normal");
+        }
+        makePlan("max_utilization", "提高利用率", "沿道路补全车位后重新优化", expanded);
+
+        P._lastSuggestPlans = plans;
+        P.renderSuggestPlans(plans);
+        return;
+      } catch (e) {
+        console.warn("local suggest plans failed", e);
+        list.innerHTML = '<p class="panel-note">本地候选方案生成失败：' + (e.message || e) + "</p>";
+        return;
+      }
+    }
     if (!P.apiOnline) await P.refreshApiStatus?.();
     try {
       if (P.api?.suggestPlans && P.apiOnline) {
@@ -180,7 +237,6 @@
     } catch (e) {
       console.warn("suggest plans failed", e);
     }
-    list.innerHTML =
-      '<p class="panel-note">本机版本暂不提供方案建议；可使用「自动车位」和本地优化。</p>';
+    list.innerHTML = '<p class="panel-note">候选方案生成失败。</p>';
   };
 })();

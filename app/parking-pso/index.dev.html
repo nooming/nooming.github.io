@@ -151,6 +151,57 @@
                 <canvas id="compare-radar" class="compare-radar" width="320" height="220" aria-label="方案对比雷达图"></canvas>
                 <button type="button" id="btn-export-compare" class="compare-export">导出对比报告</button>
               </details>
+
+              <div class="panel">
+                <h2>优化方法</h2>
+                <div class="prop-grid">
+                  <label for="optimizer-method">算法</label>
+                  <select id="optimizer-method">
+                    <option value="exact" selected>匈牙利 exact（全局最优）</option>
+                    <option value="pso">PSO 粒子群（近似）</option>
+                  </select>
+                </div>
+                <p id="optimizer-method-hint" class="panel-note"></p>
+              </div>
+
+              <details class="panel panel--fold pso-lab" id="pso-lab-panel" hidden>
+                <summary>PSO 参数</summary>
+                <div class="prop-grid prop-grid--pair">
+                  <div class="prop-field">
+                    <label for="pso-n-particles">粒子数</label>
+                    <input id="pso-n-particles" type="number" min="2" max="100" step="1" />
+                  </div>
+                  <div class="prop-field">
+                    <label for="pso-n-iter">迭代次数</label>
+                    <input id="pso-n-iter" type="number" min="10" max="3000" step="10" />
+                  </div>
+                </div>
+                <div class="pso-preset-seg">
+                  <button type="button" class="pso-preset-btn" data-preset="speed">速度优先</button>
+                  <button type="button" class="pso-preset-btn" data-preset="balanced">平衡</button>
+                  <button type="button" class="pso-preset-btn" data-preset="accuracy">精度优先</button>
+                </div>
+                <details class="pso-lab-advanced">
+                  <summary>高级参数</summary>
+                  <div class="prop-grid">
+                    <label for="pso-w">惯性权重 w</label>
+                    <div><input id="pso-w" type="range" min="0.1" max="1" step="0.05" /> <span id="pso-w-val" class="range-val"></span></div>
+                    <label for="pso-c1">c1</label>
+                    <div><input id="pso-c1" type="range" min="0.1" max="3" step="0.1" /> <span id="pso-c1-val" class="range-val"></span></div>
+                    <label for="pso-c2">c2</label>
+                    <div><input id="pso-c2" type="range" min="0.1" max="3" step="0.1" /> <span id="pso-c2-val" class="range-val"></span></div>
+                    <label for="pso-vmax">v_max</label>
+                    <div><input id="pso-vmax" type="range" min="0.05" max="1" step="0.05" /> <span id="pso-vmax-val" class="range-val"></span></div>
+                    <label for="pso-seed">随机种子</label>
+                    <input id="pso-seed" type="number" placeholder="可选" />
+                  </div>
+                </details>
+                <div class="toolbar">
+                  <button type="button" id="btn-pso-reset-params">恢复默认</button>
+                  <button type="button" id="btn-pso-replay">播放分配收敛</button>
+                </div>
+                <p id="pso-lab-last-stats" class="panel-note"></p>
+              </details>
             </section>
 
             <!-- ===== Tab: 场景编辑 ===== -->
@@ -202,8 +253,10 @@
                 </div>
                 <div class="toolbar">
                   <button type="button" id="btn-auto-slots">沿道路自动布位</button>
+                  <button type="button" id="btn-suggest-plans">生成候选方案</button>
                 </div>
                 <p id="auto-slots-status" class="panel-note"></p>
+                <div id="suggest-plans-list" class="suggest-plans-list"></div>
               </div>
               <details class="panel panel--scroll panel--props">
                 <summary>选中项属性</summary>
@@ -354,8 +407,6 @@
           </div>
 
           <div id="app-compat-hooks" hidden aria-hidden="true">
-            <select id="optimizer-method"><option value="exact" selected>exact</option></select>
-            <input id="pso-seed" type="number" />
             <p id="result-status"></p>
             <p id="result-gbest" hidden></p>
             <p id="result-breakdown"></p>

@@ -120,7 +120,10 @@
     const panel = document.getElementById("pso-lab-panel");
     const hint = document.getElementById("optimizer-method-hint");
     const isPso = methodEl?.value === "pso";
-    if (panel) panel.hidden = !isPso;
+    if (panel) {
+      panel.hidden = !isPso;
+      if (isPso && panel.tagName === "DETAILS") panel.open = true;
+    }
     if (hint) {
       hint.textContent = isPso
         ? "PSO 为启发式近似解，可与匈牙利结果对比偏差；下方实验室可调粒子数与迭代。"
