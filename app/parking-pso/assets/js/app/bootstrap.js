@@ -281,6 +281,8 @@
 
   document.getElementById("btn-auto-slots")?.addEventListener("click", () => P.runAutoSlots?.());
   document.getElementById("btn-suggest-plans")?.addEventListener("click", () => P.runSuggestPlans?.());
+  document.getElementById("btn-run-benchmark")?.addEventListener("click", () => P.runBenchmark?.());
+  document.getElementById("btn-recommend-params")?.addEventListener("click", () => P.recommendParams?.());
   document.getElementById("sim-arrival-mode")?.addEventListener("change", () => {
     P.syncSimArrivalFields?.();
   });

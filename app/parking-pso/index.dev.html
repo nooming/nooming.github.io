@@ -201,6 +201,21 @@
                   <button type="button" id="btn-pso-replay">播放分配收敛</button>
                 </div>
                 <p id="pso-lab-last-stats" class="panel-note"></p>
+
+                <div class="pso-lab__title">Benchmark / 推荐配置</div>
+                <div class="prop-grid prop-grid--pair">
+                  <div class="prop-field">
+                    <label for="benchmark-runs">对比次数</label>
+                    <input id="benchmark-runs" type="number" min="1" max="50" step="1" value="6" />
+                  </div>
+                </div>
+                <div class="toolbar">
+                  <button type="button" id="btn-run-benchmark">运行 Benchmark</button>
+                  <button type="button" id="btn-recommend-params">推荐配置</button>
+                  <button type="button" id="btn-apply-recommend" hidden>应用推荐</button>
+                </div>
+                <div id="benchmark-output" class="benchmark-summary"></div>
+                <div id="recommend-output" class="benchmark-summary"></div>
               </details>
             </section>
 
