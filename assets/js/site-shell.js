@@ -120,19 +120,7 @@
                 links: [
                     { label: "导航", href: "/app/navigation/" },
                     { label: "笔记", href: "/app/notes/" },
-                    { label: "Citywalk", href: "/app/citywalk/" },
                     { label: "另一个我", href: "/app/another-life/" },
-                ],
-            },
-            {
-                title: "实践",
-                links: [
-                    { label: "停车", href: "/app/parking-pso/" },
-                    {
-                        label: "物理探究 · 外链",
-                        href: "https://physics.noomings.com",
-                        external: true,
-                    },
                 ],
             },
             {
@@ -1206,7 +1194,22 @@
         }
     }
 
+    function injectIcpFooter() {
+        var footer = document.querySelector("footer.site-footer");
+        if (!footer || footer.querySelector(".site-footer__icp")) return;
+        var p = document.createElement("p");
+        p.className = "site-footer__icp";
+        var a = document.createElement("a");
+        a.href = "https://beian.miit.gov.cn/";
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.textContent = "沪ICP备2026061427号";
+        p.appendChild(a);
+        footer.appendChild(p);
+    }
+
     function init() {
+        injectIcpFooter();
         var path = normalizePath(window.location.pathname);
         var ctx = detectContext(path);
         if (!ctx) return;

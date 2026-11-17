@@ -1,4 +1,4 @@
-# robots.txt for nooming.github.io
+# robots.txt for noomings.com
 
 User-agent: *
 Allow: /
@@ -6,7 +6,9 @@ Allow: /
 # 禁止爬取的文件和目录
 Disallow: /docs/
 Disallow: /*.zip$
+Disallow: /app/citywalk/
+Disallow: /app/parking-pso/
 
 # Sitemap
-Sitemap: https://nooming.github.io/sitemap.xml
+Sitemap: https://noomings.com/sitemap.xml
 
