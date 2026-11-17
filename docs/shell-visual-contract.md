@@ -68,7 +68,7 @@
 
 | 区域 | 说明 |
 |------|------|
-| `app/notes/`、`app/citywalk/`、`app/parking-pso/` | 独立产品壳，本契约不作为强制标准 |
+| `app/notes/`、`app/parking-pso/` | 独立产品壳，本契约不作为强制标准 |
 | 棋类/牌桌对局区、星铎 `star-duo.css` 全屏 | 沉浸配色保留 |
 | 灯牌 `#stage` | 举牌舞台 |
 | 语义色按钮 | 如下载成功绿钮等，可保留色相 |
@@ -76,4 +76,3 @@
 ## 8. 相关文档
 
 - 文案：[copy-style.md](./copy-style.md)
-- 信息架构：[app-ia.md](./app-ia.md)
