@@ -683,3 +683,12 @@ body.motion-paused #cover *,body.motion-paused #inscription *,body.motion-paused
 }
 #birth .footnote a{color:inherit;text-decoration:none}
 #birth .footnote a:hover{text-decoration:underline}
+
+/* 手机填写页：前两步的翻页条离书页底边太近，抬高后留出装订与安全区呼吸。 */
+@media(max-width:760px){
+  #birth-form[data-album-step="1"] .album-navigation,
+  #birth-form[data-album-step="2"] .album-navigation{margin-bottom:22px}
+  /* 终章的两列竖排是整屏的主视觉，手机上再放大一档；提示也一起放大。 */
+  #finale-text{left:10vw;top:9dvh;font-size:clamp(34px,10vw,58px);line-height:1.82}
+  #finale-hint{bottom:max(40px,env(safe-area-inset-bottom));font-size:17px;letter-spacing:.55em}
+}
