@@ -2087,6 +2087,10 @@ select option {
   margin: 0;
 }
 
+#compare-radar[hidden] {
+  display: none !important;
+}
+
 .panel--fold summary,
 .panel-fold-item > summary,
 .panel--props > summary {
@@ -2144,10 +2148,14 @@ select option {
   overflow: hidden;
 }
 
+#pso-lab-panel[hidden] {
+  display: none !important;
+}
+
 .panel--schemes-library .plan-library-list {
-  flex: 1;
-  min-height: 120px;
-  max-height: none;
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 320px;
   margin-top: 8px;
 }
 

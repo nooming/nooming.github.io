@@ -3979,6 +3979,7 @@ P.runOptimize = async function () {
     const table = document.getElementById("compare-table");
     const canvas = document.getElementById("compare-radar");
     if (!table) return;
+    if (canvas) canvas.hidden = true;
     table.innerHTML = '<p class="panel-note">加载对比数据…</p>';
 
     const checked = Array.from(document.querySelectorAll(".plan-compare-chk:checked"));
@@ -4057,6 +4058,7 @@ P.runOptimize = async function () {
     }
     html += "</tbody></table>";
     table.innerHTML = html;
+    if (canvas) canvas.hidden = false;
     P.drawCompareRadar(canvas, plans);
     P.updateWorkflowGuide?.();
   };
