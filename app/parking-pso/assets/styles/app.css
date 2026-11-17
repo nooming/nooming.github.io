@@ -232,6 +232,17 @@
   font-weight: 600;
 }
 
+.local-only-banner__icp {
+  color: inherit;
+  text-decoration: none;
+  opacity: 0.8;
+}
+
+.local-only-banner__icp:hover {
+  text-decoration: underline;
+  opacity: 1;
+}
+
 .hint {
   font-size: 0.84rem;
   color: var(--pp-muted);
