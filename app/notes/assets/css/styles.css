@@ -14,6 +14,42 @@ body {
     background-size: var(--bg-grid-size) var(--bg-grid-size);
 }
 
+/* 笔记是全屏画布，普通页脚会被 100vh + overflow:hidden 裁掉；ICP 固定在右下角。 */
+body > footer.site-footer {
+    position: fixed;
+    right: 16px;
+    bottom: 8px;
+    left: auto;
+    z-index: 130;
+    margin: 0;
+    padding: 0;
+    width: auto;
+    max-width: none;
+    text-align: right;
+    background: transparent;
+    pointer-events: auto;
+}
+
+body > footer.site-footer > p:first-child {
+    display: none;
+}
+
+body > footer.site-footer .site-footer__icp {
+    margin: 0;
+    font-size: 10px;
+    line-height: 1.3;
+    opacity: 0.62;
+}
+
+body > footer.site-footer .site-footer__icp a {
+    color: #5b6470;
+    text-decoration: none;
+}
+
+body > footer.site-footer .site-footer__icp a:hover {
+    text-decoration: underline;
+}
+
 .app {
     display: flex;
     flex-direction: column;
