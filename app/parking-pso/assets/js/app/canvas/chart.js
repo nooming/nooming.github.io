@@ -131,7 +131,7 @@ P.drawChart = function (series, optimizerKind, drawOpts) {
       P.cctx.font = '12px "Segoe UI", "Microsoft YaHei", sans-serif';
       P.cctx.textAlign = "center";
       P.cctx.textBaseline = "middle";
-      P.cctx.fillText("运行优化后显示：精确为单点，PSO 为收敛曲线", w / 2, (plotTop + plotH / 2) | 0);
+      P.cctx.fillText("运行优化后显示收敛曲线", w / 2, (plotTop + plotH / 2) | 0);
       P.chartDrawAxisDecor(w, h);
       return;
     }

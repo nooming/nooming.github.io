@@ -167,7 +167,7 @@
 
               <details class="panel panel--fold pso-lab" id="pso-lab-panel" hidden>
                 <summary>PSO 参数</summary>
-                <div class="prop-grid prop-grid--pair">
+                <div class="pso-param-grid">
                   <div class="prop-field">
                     <label for="pso-n-particles">粒子数</label>
                     <input id="pso-n-particles" type="number" min="2" max="100" step="1" />
@@ -203,6 +203,7 @@
                 </div>
                 <p id="pso-lab-last-stats" class="panel-note"></p>
 
+                <div class="pso-section-title">收敛曲线</div>
                 <div class="chart-toolbar">
                   <label class="chart-toggle"><input id="chart-zoom-convergence" type="checkbox" checked /> 聚焦收敛</label>
                   <label class="chart-toggle"><input id="chart-show-exact-ref" type="checkbox" checked /> 显示 exact 基准</label>
@@ -214,11 +215,9 @@
                 <p id="chart-meta" class="chart-meta" hidden></p>
 
                 <div class="pso-lab__title">Benchmark / 推荐配置</div>
-                <div class="prop-grid prop-grid--pair">
-                  <div class="prop-field">
-                    <label for="benchmark-runs">对比次数</label>
-                    <input id="benchmark-runs" type="number" min="1" max="50" step="1" value="6" />
-                  </div>
+                <div class="pso-benchmark-row">
+                  <label for="benchmark-runs">对比次数</label>
+                  <input id="benchmark-runs" type="number" min="1" max="50" step="1" value="6" />
                 </div>
                 <div class="toolbar">
                   <button type="button" id="btn-run-benchmark">运行 Benchmark</button>

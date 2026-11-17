@@ -602,15 +602,15 @@
     propsEmpty: document.getElementById("props-empty"),
     propsForm: document.getElementById("props-form"),
     CHART_THEME: {
-      bg: "#f8fafc",
-      axisText: "#64748b",
-      helperText: "#475569",
-      line: "#0284c7",
-      lineSoft: "rgba(2,132,199,0.32)",
-      psoLine: "#d97706",
-      exactRef: "rgba(100,116,139,0.85)",
-      dotStroke: "#0369a1",
-      labelText: "#0f172a",
+      bg: "#0b1220",
+      axisText: "#94a3b8",
+      helperText: "#cbd5e1",
+      line: "#38bdf8",
+      lineSoft: "rgba(56,189,248,0.28)",
+      psoLine: "#fbbf24",
+      exactRef: "rgba(148,163,184,0.85)",
+      dotStroke: "#e2e8f0",
+      labelText: "#f1f5f9",
     },
     importInput: document.getElementById("scenario-import-input"),
     nVehInput: document.getElementById("n-veh"),
@@ -3225,7 +3225,13 @@ P.scheduleAutoEntrancePreviewRefresh = function () {
         ? "PSO 为启发式近似解，可与匈牙利结果对比偏差；下方实验室可调粒子数与迭代。"
         : "车辆数较少时优先匈牙利（全局最优、无迭代曲线）。";
     }
-    if (isPso) P.syncPsoLabInputsFromScenario();
+    if (isPso) {
+      P.syncPsoLabInputsFromScenario();
+      requestAnimationFrame(() => {
+        P.syncChartCanvasSize?.();
+        P.drawChart?.(P.lastChartSeries || [], P.lastChartOptimizer || "pso");
+      });
+    }
   };
 
   P.wirePsoLabPanel = function () {
@@ -8597,7 +8603,7 @@ P.drawChart = function (series, optimizerKind, drawOpts) {
       P.cctx.font = '12px "Segoe UI", "Microsoft YaHei", sans-serif';
       P.cctx.textAlign = "center";
       P.cctx.textBaseline = "middle";
-      P.cctx.fillText("运行优化后显示：精确为单点，PSO 为收敛曲线", w / 2, (plotTop + plotH / 2) | 0);
+      P.cctx.fillText("运行优化后显示收敛曲线", w / 2, (plotTop + plotH / 2) | 0);
       P.chartDrawAxisDecor(w, h);
       return;
     }

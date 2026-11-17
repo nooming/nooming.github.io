@@ -129,7 +129,13 @@
         ? "PSO 为启发式近似解，可与匈牙利结果对比偏差；下方实验室可调粒子数与迭代。"
         : "车辆数较少时优先匈牙利（全局最优、无迭代曲线）。";
     }
-    if (isPso) P.syncPsoLabInputsFromScenario();
+    if (isPso) {
+      P.syncPsoLabInputsFromScenario();
+      requestAnimationFrame(() => {
+        P.syncChartCanvasSize?.();
+        P.drawChart?.(P.lastChartSeries || [], P.lastChartOptimizer || "pso");
+      });
+    }
   };
 
   P.wirePsoLabPanel = function () {
