@@ -138,6 +138,52 @@
     return Array.from({ length: count }, (_, i) => i * (duration / Math.max(1, count)));
   };
 
+  P._objectiveWeights = function (schedule, scenario) {
+    const raw =
+      (schedule && schedule.objective_weights) ||
+      (scenario && scenario.soft_constraints && scenario.soft_constraints.objective_weights) ||
+      {};
+    return {
+      entrance_balance: Math.max(0, Number(raw.entrance_balance) || 0),
+      fairness_range: Math.max(0, Number(raw.fairness_range) || 0),
+    };
+  };
+
+  P._entrancePenalty = function (entranceIndex, counts, entranceCount, assignedSoFar) {
+    if (entranceCount <= 1 || assignedSoFar <= 0) return 0;
+    const target = (assignedSoFar + 1) / entranceCount;
+    const projected = (counts[entranceIndex] || 0) + 1;
+    return Math.max(0, projected - target) ** 2;
+  };
+
+  P._objectiveMetrics = function (breakdown) {
+    if (!breakdown.length) {
+      return { total_time: 0, fairness_walk_range: 0, entrance_load_variance: 0 };
+    }
+    const total = breakdown.reduce((sum, b) => sum + Number(b.total_time || 0), 0);
+    const byBuilding = new Map();
+    for (const b of breakdown) {
+      const bi = Number(b.destination_index) || 0;
+      if (!byBuilding.has(bi)) byBuilding.set(bi, []);
+      byBuilding.get(bi).push(Number(b.walk_time) || 0);
+    }
+    const averages = [...byBuilding.values()].map(
+      (arr) => arr.reduce((a, b) => a + b, 0) / Math.max(1, arr.length)
+    );
+    const fairness = averages.length >= 2 ? Math.max(...averages) - Math.min(...averages) : 0;
+    const entCounts = new Map();
+    for (const b of breakdown) {
+      const ei = Number(b.entrance_index) || 0;
+      entCounts.set(ei, (entCounts.get(ei) || 0) + 1);
+    }
+    const counts = [...entCounts.values()];
+    const mean = counts.length ? counts.reduce((a, b) => a + b, 0) / counts.length : 0;
+    const variance = counts.length
+      ? counts.reduce((sum, c) => sum + (c - mean) ** 2, 0) / counts.length
+      : 0;
+    return { total_time: total, fairness_walk_range: fairness, entrance_load_variance: variance };
+  };
+
   P.runRollingLocal = function (schedule) {
     const sched = { ...(schedule || {}) };
     const ctx = P.optimizer?.buildCostContext?.(P.scenario);
@@ -149,6 +195,10 @@
     const arrivals = P.buildLocalArrivals(nVeh, sched);
     sched.arrivals_sec = arrivals;
     const dwellS = Math.max(0, Number(sched.dwell_min) || 0) * 60;
+    const weights = P._objectiveWeights(sched, ctx.s);
+    const entranceCount = Math.max(1, ctx.prep.entrancesPos.length || 1);
+    const entranceCounts = new Array(entranceCount).fill(0);
+    let assignedSoFar = 0;
     const free = new Set(Array.from({ length: nSlot }, (_, i) => i));
     const slotFreeAt = new Array(nSlot).fill(0);
     const assign = new Array(nVeh).fill(-1);
@@ -159,6 +209,9 @@
         if (Number.isInteger(j) && j >= 0 && j < nSlot && free.has(j)) {
           assign[i] = j;
           free.delete(j);
+          const ei = ctx.resolveDrive(j, i).entranceIndex;
+          if (ei >= 0 && ei < entranceCount) entranceCounts[ei] += 1;
+          assignedSoFar += 1;
           if (dwellS > 0) {
             const drive = ctx.resolveDrive(j, i);
             const walk = ctx.prep.walkMat[j][ctx.vehTargets[i]] / ctx.vWalk;
@@ -179,16 +232,22 @@
       }
       let bestJ = -1;
       let bestC = Infinity;
+      let bestEi = 0;
       for (let j = 0; j < nSlot; j++) {
         if (dwellS > 0) {
           if (slotFreeAt[j] > arrivals[vi] + 1e-6) continue;
         } else if (!free.has(j)) {
           continue;
         }
-        const c = ctx.cost[vi][j];
+        const drive = ctx.resolveDrive(j, vi);
+        const balancePenalty =
+          weights.entrance_balance *
+          P._entrancePenalty(drive.entranceIndex, entranceCounts, entranceCount, assignedSoFar);
+        const c = ctx.cost[vi][j] + balancePenalty;
         if (c < bestC) {
           bestC = c;
           bestJ = j;
+          bestEi = drive.entranceIndex;
         }
       }
       if (bestJ < 0) {
@@ -196,6 +255,8 @@
         continue;
       }
       assign[vi] = bestJ;
+      if (bestEi >= 0 && bestEi < entranceCount) entranceCounts[bestEi] += 1;
+      assignedSoFar += 1;
       if (dwellS > 0) {
         const drive = ctx.resolveDrive(bestJ, vi);
         const walk = ctx.prep.walkMat[bestJ][ctx.vehTargets[vi]] / ctx.vWalk;
@@ -249,6 +310,11 @@
     if (typeof pack !== "function") {
       return { success: false, message: "本地结果打包模块未加载", timeline: { frames: [], stats: {}, duration: 0 } };
     }
+    const objectiveMetrics = P._objectiveMetrics(breakdown);
+    const compositeCost =
+      objectiveMetrics.total_time +
+      weights.fairness_range * objectiveMetrics.fairness_walk_range +
+      weights.entrance_balance * objectiveMetrics.entrance_load_variance * 10;
     const result = pack(ctx.s, {
       gbestValue: total,
       historyBest: [total],
@@ -271,6 +337,9 @@
       timeline: P.runSimulationLocal(result, sched),
       assignment_log: log,
       rolling_total_cost: total,
+      objective_metrics: objectiveMetrics,
+      objective_weights: weights,
+      composite_cost: compositeCost,
       policy: "rolling_fifo_greedy",
       schedule_realized: { mode: sched.mode || "uniform", arrivals_sec: arrivals, seed: sched.seed },
     };

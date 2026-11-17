@@ -202,6 +202,16 @@
                 </div>
                 <p id="pso-lab-last-stats" class="panel-note"></p>
 
+                <div class="chart-toolbar">
+                  <label class="chart-toggle"><input id="chart-zoom-convergence" type="checkbox" checked /> 聚焦收敛</label>
+                  <label class="chart-toggle"><input id="chart-show-exact-ref" type="checkbox" checked /> 显示 exact 基准</label>
+                </div>
+                <div class="chart-wrap chart-wrap--tall">
+                  <canvas id="chart" width="640" height="360"></canvas>
+                </div>
+                <p id="chart-caption" class="chart-caption"></p>
+                <p id="chart-meta" class="chart-meta" hidden></p>
+
                 <div class="pso-lab__title">Benchmark / 推荐配置</div>
                 <div class="prop-grid prop-grid--pair">
                   <div class="prop-field">
@@ -430,11 +440,6 @@
             <span id="metric-walk"></span>
             <span id="metric-total"></span>
             <span id="metric-mismatch"></span>
-            <canvas id="chart" width="1" height="1"></canvas>
-            <p id="chart-caption"></p>
-            <p id="chart-meta" hidden></p>
-            <input type="checkbox" id="chart-zoom-convergence" checked />
-            <input type="checkbox" id="chart-show-exact-ref" checked />
             <div id="run-progress" hidden><span id="run-progress-label"></span></div>
             <span id="run-bar-summary"></span>
           </div>
