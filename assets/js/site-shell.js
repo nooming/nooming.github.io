@@ -147,7 +147,6 @@
                     { label: "围棋", href: "/app/play/games/board-games/go/" },
                     { label: "象棋", href: "/app/play/games/board-games/chess/" },
                     { label: "星铎棋", href: "/app/play/games/board-games/star-duo/" },
-                    { label: "德州扑克", href: "/app/play/games/card-games/texas/" },
                     { label: "UNO", href: "/app/play/games/card-games/uno/" },
                     { label: "红心大战", href: "/app/play/games/card-games/hearts/" },
                     { label: "小恐龙", href: "/app/play/games/dino/" },
@@ -386,12 +385,6 @@
             l2CardWhen: /\/card-games\//,
             l2Card: [
                 {
-                    id: "texas",
-                    label: "德州",
-                    href: "/app/play/games/card-games/texas/",
-                    match: /\/texas/,
-                },
-                {
                     id: "uno",
                     label: "UNO",
                     href: "/app/play/games/card-games/uno/",
@@ -410,12 +403,6 @@
                     label: "五子棋",
                     icon: "i-go",
                     href: "/app/play/games/board-games/gomoku/",
-                },
-                {
-                    id: "texas",
-                    label: "德州",
-                    icon: "i-spade",
-                    href: "/app/play/games/card-games/texas/",
                 },
                 {
                     id: "dino",
@@ -458,12 +445,6 @@
                 },
             ],
             mobileCard: [
-                {
-                    id: "texas",
-                    label: "德州",
-                    icon: "i-spade",
-                    href: "/app/play/games/card-games/texas/",
-                },
                 {
                     id: "uno",
                     label: "UNO",
@@ -1206,6 +1187,11 @@
         a.rel = "noopener noreferrer";
         a.textContent = "沪ICP备2026061427号";
         p.appendChild(a);
+        p.appendChild(document.createTextNode(" · "));
+        var privacy = document.createElement("a");
+        privacy.href = "/privacy/";
+        privacy.textContent = "隐私说明";
+        p.appendChild(privacy);
         footer.appendChild(p);
     }
 

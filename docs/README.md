@@ -82,6 +82,7 @@ GitHub Pages 仅作为源码托管，不再是生产入口。
 │   ├── read/                   # 阅读
 │   ├── play/                   # 娱乐
 │   └── citywalk/               # 源码保留，未上线
+├── privacy/                    # 隐私说明
 ├── docs/                       # 开发文档与更新记录
 ├── sitemap.xml
 └── robots.txt
@@ -111,7 +112,7 @@ GitHub Pages 仅作为源码托管，不再是生产入口。
 2. 需要被搜索引擎发现时，更新 `sitemap.xml`
 3. 需要公共 Toast / 返回顶部时，从页面目录引用根 `assets/js/utils.js`
 4. 页面若含本地数据，明确写出“仅存本机浏览器”
-5. 上线前检查页脚 ICP
+5. 上线前检查页脚 ICP 与 `/privacy/` 链接
 6. 不在未完成合规的情况下恢复 Citywalk / physics 入口
 
 ## 许可证

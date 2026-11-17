@@ -10,7 +10,7 @@
     const API_BASE =
         _h === 'localhost' || _h === '127.0.0.1' || _h === '[::1]' || _h === '::1'
             ? 'http://localhost:5000'
-            : 'https://noomings-backend.zeabur.app';
+            : '';
     const CW_API = `${API_BASE}/api/citywalk`;
 
     let _user = null;

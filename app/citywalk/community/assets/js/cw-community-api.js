@@ -9,7 +9,7 @@
         const h = global.location && global.location.hostname;
         return (h === 'localhost' || h === '127.0.0.1' || h === '[::1]' || h === '::1')
             ? 'http://localhost:5000/api/citywalk'
-            : 'https://noomings-backend.zeabur.app/api/citywalk';
+            : '/api/citywalk';
     }
 
     async function authHeaders() {

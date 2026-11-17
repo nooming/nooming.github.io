@@ -1873,7 +1873,7 @@ async function importSharedRouteById(shareId, options={}){
   const apiBase=(window.CitywalkAuth&&CitywalkAuth.CW_API)
     ||((location.hostname==='localhost'||location.hostname==='127.0.0.1')
       ?'http://localhost:5000/api/citywalk'
-      :'https://noomings-backend.zeabur.app/api/citywalk');
+      :'/api/citywalk');
   try{
     showToast('正在载入分享的路线…');
     const res=await fetch(apiBase+'/routes/share/'+encodeURIComponent(shareId));

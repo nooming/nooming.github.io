@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="noomings.com 隐私说明：本地计算、浏览器存储、摄像头与服务器日志。">
+    <meta name="theme-color" content="#FFFA00">
+    <title>隐私说明 · noomings</title>
+    <script src="/assets/js/shell-prefs-boot.js"></script>
+    <link rel="stylesheet" href="/assets/css/common.css">
+    <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="privacy.css">
+</head>
+<body class="page-container privacy-page">
+    <div class="container privacy-wrap">
+        <header class="privacy-header">
+            <a class="privacy-brand" href="/" aria-label="noomings 首页">
+                <img src="/assets/brand/noomings-mark.svg" alt="" width="36" height="36">
+                <span>noomings</span>
+            </a>
+            <a class="privacy-back" href="/">返回首页</a>
+        </header>
+
+        <main class="privacy-main">
+            <p class="privacy-kicker">PRIVACY / 本地优先</p>
+            <h1>隐私说明</h1>
+            <p class="privacy-updated">更新日期：2026-11-17</p>
+
+            <p>noomings.com 是一个个人非商用静态网站。站点没有账号、评论、上传、支付或广告系统，核心工具尽量在浏览器本地运行。</p>
+
+            <h2>1. 哪些数据只在浏览器本地</h2>
+            <p>以下内容由浏览器处理，本站不会主动上传到服务器：</p>
+            <ul>
+                <li><strong>笔记：</strong>绘图、文本和页面数据保存在浏览器存储中，可通过页面内导出功能自行备份。</li>
+                <li><strong>停车方案：</strong>场景、车辆、优化和仿真结果保存在浏览器中，不上传服务器。</li>
+                <li><strong>另一个我：</strong>出生日期、时间、地点和性别只用于当前页面内的本地排盘与叙事计算；页面不会把生辰信息发送到服务器。</li>
+                <li><strong>摄像头工具：</strong>风扇转速页面在获得授权后读取摄像头画面，帧差和频率计算在浏览器内完成；本站不录制、不保存、不上传摄像头画面。</li>
+                <li><strong>心理测试与抽卡规划：</strong>作答、设置和计算结果只用于页面展示或保存在浏览器本地。</li>
+            </ul>
+
+            <h2>2. 浏览器存储</h2>
+            <p>部分工具使用 <code>localStorage</code> 或类似机制保存设置、最近记录和本地方案。它不等同于登录账号，也不会自动同步到其他设备。你可以通过浏览器的“清除网站数据”删除；部分页面也提供导出、清空或重置入口。</p>
+
+            <h2>3. 服务器日志</h2>
+            <p>网站由腾讯云服务器和 Nginx 提供静态文件。服务器可能按云服务商的安全与运维配置记录访问日志，包括 IP 地址、浏览器 User-Agent、访问时间、请求路径和响应状态。这些日志用于安全防护、故障排查和基础统计，不用于建立个人画像或广告投放。</p>
+
+            <h2>4. 第三方资源与外链</h2>
+            <p>部分工具会从公共 CDN 加载开源库、字体或 OCR 模型，例如 jsDelivr。浏览器请求这些资源时，CDN 服务商可能收到 IP 地址、User-Agent 等常规请求信息，具体以其隐私政策为准。本站不接入广告、行为分析或跨站跟踪脚本。</p>
+            <p>站内指向 GitHub、B 站等外部站点的链接，只有在你主动点击后才会跳转；外部站点的数据处理由其自身政策约束。</p>
+
+            <h2>5. 不收集与不共享</h2>
+            <ul>
+                <li>不出售、出租或交换个人信息。</li>
+                <li>不要求实名注册，不建立用户账号。</li>
+                <li>不收集支付信息，不提供付费服务。</li>
+                <li>不主动收集通讯录、精确位置或生物识别模板。</li>
+            </ul>
+
+            <h2>6. 你的选择</h2>
+            <ul>
+                <li>拒绝摄像头权限，或在使用后于浏览器设置中撤销权限。</li>
+                <li>使用浏览器“清除网站数据”删除本地笔记、方案和设置。</li>
+                <li>不使用需要填写生辰信息的页面；该页面不是网站的必要功能。</li>
+                <li>通过浏览器无痕模式访问，避免保留本地数据。</li>
+            </ul>
+
+            <h2>7. 未成年人</h2>
+            <p>本站是个人学习与工具站，不面向未成年人提供注册、付费或社交服务。未成年人应在监护人指导下使用，并避免在公共设备上保存私人笔记或生辰信息。</p>
+
+            <h2>8. 变更与联系</h2>
+            <p>隐私说明更新时会修改本页日期。若对数据处理有疑问，可通过 <a href="https://github.com/nooming/nooming.github.io/issues" target="_blank" rel="noopener noreferrer">GitHub Issues</a> 联系。</p>
+        </main>
+
+        <footer class="site-footer privacy-footer" role="contentinfo">
+            <p>© 2026 noomings · 非商用</p>
+            <p class="site-footer__icp">
+                <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">沪ICP备2026061427号</a>
+                <span aria-hidden="true"> · </span>
+                <a href="/privacy/">隐私说明</a>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

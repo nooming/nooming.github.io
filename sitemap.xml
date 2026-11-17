@@ -3,6 +3,7 @@
     <!-- 主页 -->
     <url>
         <loc>https://noomings.com/</loc>
+<loc>https://noomings.com/privacy/</loc>
         <lastmod>2026-11-09</lastmod>
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
@@ -187,7 +188,6 @@
         <priority>0.7</priority>
     </url>
     <url>
-        <loc>https://noomings.com/app/play/games/card-games/texas/</loc>
         <lastmod>2026-04-18</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>

@@ -141,5 +141,5 @@ const _h = window.location.hostname;
 const API_BASE_URL =
     _h === 'localhost' || _h === '127.0.0.1' || _h === '[::1]' || _h === '::1'
         ? 'http://localhost:5000'
-        : 'https://noomings-backend.zeabur.app';
+        : '';
 const CW_API = `${API_BASE_URL}/api/citywalk`;

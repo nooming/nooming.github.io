@@ -84,7 +84,7 @@
                         <ul style="margin-left: 20px; margin-top: 5px;">
                             <li>查看请求URL（Request URL）</li>
                             <li>查看请求方法（GET/POST等）</li>
-                            <li>查看请求头信息（Request Headers），包括Cookie、Authorization、Referer等</li>
+                            <li>查看请求头信息（Request Headers），例如 Referer、User-Agent 等</li>
                             <li>查看响应头（Response Headers），了解服务器返回的信息</li>
                         </ul>
                     </li>
@@ -121,28 +121,7 @@
             </div>
 
             <div class="article-step">
-                <strong>步骤6：处理需要认证的请求</strong>
-                <p>某些付费资源需要登录或特殊权限，需要复制完整的请求信息：</p>
-                <ul >
-                    <li><strong>复制请求头</strong>：在Headers标签中，找到 <code>Request Headers</code> 部分，复制关键的Header：
-                        <div class="article-code">
-Authorization: Bearer xxxxxx<br>
-Cookie: session_id=xxxxx; token=xxxxx<br>
-Referer: https://example.com<br>
-User-Agent: Mozilla/5.0...
-                        </div>
-                    </li>
-                    <li><strong>使用Postman或Python重现请求</strong>：
-                        <ul style="margin-left: 20px; margin-top: 5px;">
-                            <li>将复制的cURL命令导入Postman，或转换为Python代码</li>
-                            <li>保持相同的请求头、Cookie、参数，模拟浏览器请求</li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-
-            <div class="article-step">
-                <strong>步骤7：分析动态加载的资源</strong>
+                <strong>步骤6：分析动态加载的资源</strong>
                 <p>很多现代网站使用AJAX动态加载内容，需要特殊处理：</p>
                 <ul >
                     <li><strong>保持Network面板打开</strong>：在页面交互时（点击按钮、滚动加载等），观察新出现的请求</li>
@@ -153,7 +132,7 @@ User-Agent: Mozilla/5.0...
             </div>
 
             <div class="article-step">
-                <strong>步骤8：使用Console（控制台）执行JavaScript</strong>
+                <strong>步骤7：使用Console（控制台）执行JavaScript</strong>
                 <p>Console面板可以执行JavaScript代码，用于提取页面数据：</p>
                 <ul >
                     <li>打开 <strong>Console</strong> 标签</li>
@@ -175,7 +154,6 @@ document.querySelector('.content').innerText
                 <ul style="margin-left: 20px; margin-top: 10px;">
                     <li>某些网站使用<strong>DRM（数字版权管理）</strong>加密，即使获取到URL也无法直接播放（如Netflix、Disney+等）</li>
                     <li>某些资源使用<strong>临时签名URL</strong>，URL有时效性，过期后无法访问</li>
-                    <li>某些API需要<strong>动态Token</strong>，每次请求都需要重新获取认证信息</li>
                     <li>某些网站使用<strong>视频流分片</strong>（如m3u8），需要下载所有分片并合并</li>
                 </ul>
             </div>
@@ -192,7 +170,7 @@ document.querySelector('.content').innerText
 
     <footer class="site-footer" role="contentinfo">
         <p>© 2026 noomings · 非商用</p>
-            <p class="site-footer__icp"><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">沪ICP备2026061427号</a></p>
+            <p class="site-footer__icp"><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">沪ICP备2026061427号</a><span aria-hidden="true"> · </span><a href="/privacy/">隐私说明</a></p>
     </footer>
 
     <!-- 返回顶部按钮 -->
@@ -201,6 +179,6 @@ document.querySelector('.content').innerText
     <script src="../../../assets/js/utils.js" defer></script>
     <script src="../../../assets/js/article.js" defer></script>
     <script src="/assets/js/shell-preferences.js" defer></script>
-    <script src="/assets/js/site-shell.js?v=20261117b" defer></script>
+    <script src="/assets/js/site-shell.js?v=20261117c" defer></script>
 </body>
 </html>
