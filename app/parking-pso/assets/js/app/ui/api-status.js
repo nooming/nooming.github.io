@@ -51,7 +51,7 @@
     const el = document.getElementById("api-status");
     if (window.PARKING_LOCAL_ONLY) {
       P.apiOnline = false;
-      applyApiStatusUi(el, "本地计算 · 数据仅保存在本机", "offline");
+      applyApiStatusUi(el, "本地计算", "offline");
       document.querySelectorAll("[data-requires-api]").forEach((node) => { node.hidden = true; });
       return false;
     }
