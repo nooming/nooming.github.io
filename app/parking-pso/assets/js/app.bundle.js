@@ -6,6 +6,7 @@
   const PK_PREFIX = "/api/parking";
 
   function apiBase() {
+    if (window.PARKING_LOCAL_ONLY) return "";
     if (typeof window.PARKING_API_BASE === "string" && window.PARKING_API_BASE) {
       return window.PARKING_API_BASE.replace(/\/$/, "");
     }
@@ -13,7 +14,7 @@
     if (h === "localhost" || h === "127.0.0.1" || h === "[::1]" || h === "::1") {
       return "http://127.0.0.1:5000";
     }
-    return "https://noomings-backend.zeabur.app";
+    return "";
   }
 
   async function request(path, options) {
@@ -3663,6 +3664,7 @@ P.runOptimize = async function () {
   function compactText(text) {
     if (!text) return text;
     if (text.indexOf("检查") === 0) return "检查中";
+    if (text.indexOf("本地计算") === 0) return "本地";
     if (text.indexOf("离线") === 0) return "离线";
     if (text === "在线") return "在线";
     return text;
@@ -3694,6 +3696,12 @@ P.runOptimize = async function () {
 
   P.refreshApiStatus = async function () {
     const el = document.getElementById("api-status");
+    if (window.PARKING_LOCAL_ONLY) {
+      P.apiOnline = false;
+      applyApiStatusUi(el, "本地计算 · 数据仅保存在本机", "offline");
+      document.querySelectorAll("[data-requires-api]").forEach((node) => { node.hidden = true; });
+      return false;
+    }
     applyApiStatusUi(el, "检查 API…", "pending");
     if (!P.api?.health) {
       P.apiOnline = false;
@@ -3898,7 +3906,7 @@ P.runOptimize = async function () {
     const modeEl = document.createElement("p");
     modeEl.className = "panel-note plan-lib-mode";
     modeEl.textContent =
-      P.plansMode === "online" ? "方案库：云端（SQLite）" : "方案库：离线（本机缓存）";
+      P.plansMode === "online" ? "方案库：云端（SQLite）" : "方案库：本机（浏览器缓存）";
     list.appendChild(modeEl);
     if (!P.namedPlans.length) {
       const empty = document.createElement("p");
@@ -3918,7 +3926,7 @@ P.runOptimize = async function () {
         '<div class="plan-card-metrics">' +
         (m.gbest_value != null ? "总时间 " + m.gbest_value.toFixed(1) + " s · " : "") +
         (m.slot_utilization != null ? "利用率 " + Math.round(m.slot_utilization * 100) + "%" : "") +
-        (plan.remote ? " · 云端" : " · 本地") +
+        (plan.remote ? " · 云端" : " · 本机") +
         "</div>";
       const actions = document.createElement("div");
       actions.className = "toolbar";
@@ -4234,7 +4242,7 @@ P.runOptimize = async function () {
     let stats = { requested, placed: 0, skipped: requested };
 
     try {
-      if (P.api?.autoSlots) {
+      if (P.apiOnline && P.api?.autoSlots) {
         const res = await P.api.autoSlots(P.scenario, requested);
         if (res.slots?.length) {
           const before = res.slots.length;
@@ -4346,7 +4354,7 @@ P.runOptimize = async function () {
       console.warn("suggest plans failed", e);
     }
     list.innerHTML =
-      '<p class="panel-note">在线服务暂不可用 · 当前使用本地缓存，云端方案与保存暂不可用。</p>';
+      '<p class="panel-note">本机版本暂不提供方案建议；可使用「自动车位」和本地优化。</p>';
   };
 })();
 
@@ -5100,7 +5108,9 @@ P.runOptimize = async function () {
       toolbar.classList.toggle("toolbar--simulate-has-play", step && hasTimeline);
     }
     const mcBtn = document.getElementById("btn-monte-carlo");
-    if (mcBtn) mcBtn.hidden = !stochastic;
+    if (mcBtn) mcBtn.hidden = window.PARKING_LOCAL_ONLY || !stochastic;
+    const compareBtn = document.getElementById("btn-run-arrival-compare");
+    if (compareBtn) compareBtn.hidden = !!window.PARKING_LOCAL_ONLY;
     const playSim = document.getElementById("btn-sim-play");
     if (playSim) {
       playSim.hidden = step && !hasTimeline;

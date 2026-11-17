@@ -17,6 +17,7 @@
   function compactText(text) {
     if (!text) return text;
     if (text.indexOf("检查") === 0) return "检查中";
+    if (text.indexOf("本地计算") === 0) return "本地";
     if (text.indexOf("离线") === 0) return "离线";
     if (text === "在线") return "在线";
     return text;
@@ -48,6 +49,12 @@
 
   P.refreshApiStatus = async function () {
     const el = document.getElementById("api-status");
+    if (window.PARKING_LOCAL_ONLY) {
+      P.apiOnline = false;
+      applyApiStatusUi(el, "本地计算 · 数据仅保存在本机", "offline");
+      document.querySelectorAll("[data-requires-api]").forEach((node) => { node.hidden = true; });
+      return false;
+    }
     applyApiStatusUi(el, "检查 API…", "pending");
     if (!P.api?.health) {
       P.apiOnline = false;

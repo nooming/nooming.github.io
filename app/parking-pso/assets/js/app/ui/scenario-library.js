@@ -173,7 +173,7 @@
     const modeEl = document.createElement("p");
     modeEl.className = "panel-note plan-lib-mode";
     modeEl.textContent =
-      P.plansMode === "online" ? "方案库：云端（SQLite）" : "方案库：离线（本机缓存）";
+      P.plansMode === "online" ? "方案库：云端（SQLite）" : "方案库：本机（浏览器缓存）";
     list.appendChild(modeEl);
     if (!P.namedPlans.length) {
       const empty = document.createElement("p");
@@ -193,7 +193,7 @@
         '<div class="plan-card-metrics">' +
         (m.gbest_value != null ? "总时间 " + m.gbest_value.toFixed(1) + " s · " : "") +
         (m.slot_utilization != null ? "利用率 " + Math.round(m.slot_utilization * 100) + "%" : "") +
-        (plan.remote ? " · 云端" : " · 本地") +
+        (plan.remote ? " · 云端" : " · 本机") +
         "</div>";
       const actions = document.createElement("div");
       actions.className = "toolbar";

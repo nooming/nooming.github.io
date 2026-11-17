@@ -9,7 +9,7 @@
   <link rel="icon" href="/assets/brand/noomings-mark.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
   <title>停车方案设计器</title>
-  <script>window.PARKING_API_BASE = window.PARKING_API_BASE || "";</script>
+  <script>window.PARKING_LOCAL_ONLY = true; window.PARKING_API_BASE = "";</script>
   <link rel="stylesheet" href="assets/styles/tokens.css" />
   <link rel="stylesheet" href="assets/styles/app.css" />
   <link rel="stylesheet" href="assets/styles/app-theme.css" />
@@ -28,7 +28,7 @@
       </div>
       <p id="api-status" class="app-topbar__status api-status api-status--pending" role="status">
         <span class="app-topbar__status-dot" aria-hidden="true"></span>
-        <span class="app-topbar__status-label">检查 API…</span>
+        <span class="app-topbar__status-label">本地计算</span>
       </p>
     </div>
   </header>
@@ -136,7 +136,7 @@
               <details class="panel panel--fold">
                 <summary>使用说明与数据</summary>
                 <p class="panel-note">场景会自动保存到本机浏览器（不同步）；换设备前请「导出 JSON」备份。撤销/重做保留最近 40 步。</p>
-                <p class="panel-note">离线时「运行优化」用本地 exact 算法，「运行仿真」生成本地估算时间轴；云端方案库与保存需后端可用。</p>
+                <p class="panel-note">本地模式：优化、仿真、方案库都在本机浏览器运行，数据不上传。</p>
                 <p class="panel-note">文件与场景不上传服务器；问题反馈：<a href="https://github.com/nooming/nooming.github.io/issues" target="_blank" rel="noopener noreferrer">GitHub Issues</a>。</p>
               </details>
               <details class="panel panel--fold" id="plan-library-panel">
@@ -316,8 +316,8 @@
                   <div class="toolbar toolbar--simulate">
                     <div id="sim-toolbar-batch" class="toolbar__group">
                       <button type="button" class="primary" id="btn-run-sim">运行仿真</button>
-                      <button type="button" id="btn-run-arrival-compare">到达对照</button>
-                      <button type="button" id="btn-monte-carlo">随机抽样 ×20</button>
+                      <button type="button" id="btn-run-arrival-compare" data-requires-api>到达对照</button>
+                      <button type="button" id="btn-monte-carlo" data-requires-api>随机抽样 ×20</button>
                     </div>
                     <button type="button" id="btn-sim-play">播放/暂停</button>
                   </div>

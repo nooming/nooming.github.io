@@ -1,6 +1,6 @@
 # 停车方案设计器（parking-pso）
 
-SITP「社区停车动态调度与在线优化决策系统」前端。备案期间生产 API：`https://noomings-backend.zeabur.app` 的 `/api/parking/*`；备案通过后改为 `https://api.noomings.com`（见 `deploy/tencent/README.md`、`noomings_backend/README.md`）。
+**本地优先版本**：不依赖后端 API，优化、仿真、方案库都在浏览器本机完成。生产入口仍是 `index.html`，源码入口是 `index.dev.html`。
 
 **动态到达与在线滚动**：见 [docs/DYNAMIC-PARKING-PLAN.md](docs/DYNAMIC-PARKING-PLAN.md)。
 
@@ -20,9 +20,10 @@ SITP「社区停车动态调度与在线优化决策系统」前端。备案期�
 
 ## 离线行为
 
-- API 不可用时顶栏显示「离线」，方案库走本机缓存；
-- 「运行优化」仍用本地 exact 优化；
-- 「运行仿真」在离线时自动先算一次本地 exact，再生成「本地估算」时间轴，不发请求。
+- 不发起后端请求，顶栏显示「本地计算」；
+- 优化用本地 exact；PSO 引擎保留，但当前界面未开放；
+- 仿真是本地估算；服务端滚动/蒙特卡洛暂不启用；
+- 方案库、场景自动保存都在本机浏览器。
 
 ## 编辑与恢复
 

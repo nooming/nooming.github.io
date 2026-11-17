@@ -4,6 +4,7 @@
   const PK_PREFIX = "/api/parking";
 
   function apiBase() {
+    if (window.PARKING_LOCAL_ONLY) return "";
     if (typeof window.PARKING_API_BASE === "string" && window.PARKING_API_BASE) {
       return window.PARKING_API_BASE.replace(/\/$/, "");
     }
@@ -11,7 +12,7 @@
     if (h === "localhost" || h === "127.0.0.1" || h === "[::1]" || h === "::1") {
       return "http://127.0.0.1:5000";
     }
-    return "https://noomings-backend.zeabur.app";
+    return "";
   }
 
   async function request(path, options) {

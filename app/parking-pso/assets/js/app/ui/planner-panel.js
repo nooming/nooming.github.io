@@ -69,7 +69,7 @@
     let stats = { requested, placed: 0, skipped: requested };
 
     try {
-      if (P.api?.autoSlots) {
+      if (P.apiOnline && P.api?.autoSlots) {
         const res = await P.api.autoSlots(P.scenario, requested);
         if (res.slots?.length) {
           const before = res.slots.length;
@@ -181,6 +181,6 @@
       console.warn("suggest plans failed", e);
     }
     list.innerHTML =
-      '<p class="panel-note">在线服务暂不可用 · 当前使用本地缓存，云端方案与保存暂不可用。</p>';
+      '<p class="panel-note">本机版本暂不提供方案建议；可使用「自动车位」和本地优化。</p>';
   };
 })();

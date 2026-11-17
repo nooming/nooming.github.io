@@ -90,7 +90,9 @@
       toolbar.classList.toggle("toolbar--simulate-has-play", step && hasTimeline);
     }
     const mcBtn = document.getElementById("btn-monte-carlo");
-    if (mcBtn) mcBtn.hidden = !stochastic;
+    if (mcBtn) mcBtn.hidden = window.PARKING_LOCAL_ONLY || !stochastic;
+    const compareBtn = document.getElementById("btn-run-arrival-compare");
+    if (compareBtn) compareBtn.hidden = !!window.PARKING_LOCAL_ONLY;
     const playSim = document.getElementById("btn-sim-play");
     if (playSim) {
       playSim.hidden = step && !hasTimeline;
