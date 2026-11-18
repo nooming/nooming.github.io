@@ -1,6 +1,6 @@
 /* 排盘 worker：只有点“展开我的平行人生”时才创建，算完即弃。
    引擎以 importScripts 加载，避免把 bazi.js 源码 fetch 下来再拼 blob（CSP / file:// 都不友好）。 */
-importScripts('bazi.js');
+importScripts('bazi.js?v=20261118story');
 
 self.onmessage = function (event) {
   var payload = event.data || {};

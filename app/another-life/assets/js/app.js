@@ -4,7 +4,7 @@
   const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   // 排盘引擎与字形文件都不再首屏下载：点“展开”时才拉 bazi.js，进命盘页时才拉 fire-glyphs.js。
-  const BAZI_SRC = 'assets/js/bazi.js?v=20261110ss';
+  const BAZI_SRC = 'assets/js/bazi.js?v=20261118story';
   let baziLoad = null;
   function loadBazi() {
     if (window.BAZI) return Promise.resolve(window.BAZI);
@@ -304,7 +304,7 @@
     try {
       return await new Promise((resolve, reject) => {
         let worker;
-        try { worker = new Worker('assets/js/bazi-worker.js'); }
+        try { worker = new Worker('assets/js/bazi-worker.js?v=20261118story'); }
         catch (error) { const e = new Error('worker 不可用'); e.infra = true; reject(e); return; }
         const timer = setTimeout(() => { worker.terminate(); const e = new Error('推演超时，请重试'); e.infra = false; reject(e); }, 20000);
         worker.onmessage = (event) => {
